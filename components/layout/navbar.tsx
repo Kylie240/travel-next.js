@@ -7,17 +7,34 @@ import { Menu, X, Search, User } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 
-const navigation = [
+// This is a placeholder for actual auth check - replace with your auth system
+const useAuth = () => {
+  // Replace this with actual auth logic
+  return {
+    isAuthenticated: false, // Set to false by default
+    user: null
+  }
+}
+
+const publicNavigation = [
   { name: "Home", href: "/" },
   { name: "Explore", href: "/explore" },
-  { name: "Create", href: "/create" },
   { name: "About", href: "/about" },
+]
+
+const privateNavigation = [
+  { name: "Dashboard", href: "/dashboard" },
+  { name: "Create", href: "/create" },
 ]
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
+  const { isAuthenticated, user } = useAuth()
+
+  // Combine navigation items based on auth status
+  const navigation = [...publicNavigation, ...(isAuthenticated ? privateNavigation : [])]
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,12 +97,23 @@ export default function Navbar() {
             >
               <Search className="h-5 w-5" />
             </Button>
-            <Button
-              className={scrolled ? "" : "bg-white text-black hover:bg-white/90"}
-            >
-              <User className="h-5 w-5 mr-2" />
-              Sign In
-            </Button>
+            {isAuthenticated ? (
+              <Button
+                onClick={() => {/* Add logout handler */}}
+                className={scrolled ? "" : "bg-white text-black hover:bg-white/90"}
+              >
+                <User className="h-5 w-5 mr-2" />
+                Sign Out
+              </Button>
+            ) : (
+              <Button
+                onClick={() => window.location.href = "/login"}
+                className={scrolled ? "" : "bg-white text-black hover:bg-white/90"}
+              >
+                <User className="h-5 w-5 mr-2" />
+                Sign In
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -137,10 +165,23 @@ export default function Navbar() {
                   <Search className="h-5 w-5 mr-2" />
                   Search
                 </Button>
-                <Button className="w-full justify-start">
-                  <User className="h-5 w-5 mr-2" />
-                  Sign In
-                </Button>
+                {isAuthenticated ? (
+                  <Button 
+                    className="w-full justify-start"
+                    onClick={() => {/* Add logout handler */}}
+                  >
+                    <User className="h-5 w-5 mr-2" />
+                    Sign Out
+                  </Button>
+                ) : (
+                  <Button 
+                    className="w-full justify-start"
+                    onClick={() => window.location.href = "/login"}
+                  >
+                    <User className="h-5 w-5 mr-2" />
+                    Sign In
+                  </Button>
+                )}
               </div>
             </div>
           </motion.div>

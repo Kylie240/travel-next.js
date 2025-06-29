@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Users, Search } from "lucide-react"
+import { Calendar, MapPin, Users, Search, Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Snowflake } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 // Dummy data for itineraries
@@ -13,40 +13,95 @@ const itineraries = [
     id: 1,
     title: "Japanese Cultural Journey",
     description: "Experience the best of Japan's ancient traditions and modern wonders",
-    image: "/images/japan.jpg",
+    image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1470&auto=format&fit=crop",
     duration: "14 days",
-    destinations: ["Tokyo", "Kyoto", "Osaka"],
+    cities: ["Tokyo", "Kyoto", "Osaka"],
+    countries: ["Japan"],
     price: "$3,499",
     tags: ["culture", "food", "history"],
+    status: "popular"
   },
   {
     id: 2,
     title: "Italian Food & Wine Tour",
     description: "Savor the flavors of Italy's finest culinary regions",
-    image: "/images/italy.jpg",
+    image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1400&auto=format&fit=crop",
     duration: "10 days",
-    destinations: ["Rome", "Florence", "Venice"],
+    cities: ["Rome", "Florence", "Venice"],
+    countries: ["Italy"],
     price: "$2,899",
     tags: ["food", "wine", "culture"],
+    status: "highly rated"
   },
   {
     id: 3,
     title: "Costa Rica Adventure",
     description: "Explore rainforests, volcanoes, and pristine beaches",
-    image: "/images/costa-rica.jpg",
+    image: "https://images.unsplash.com/photo-1518181835702-6eef8b4b2113?q=80&w=1400&auto=format&fit=crop",
     duration: "7 days",
-    destinations: ["San José", "Arenal", "Manuel Antonio"],
+    cities: ["San José", "Arenal", "Manuel Antonio"],
+    countries: ["Costa Rica"],
     price: "$1,999",
-    tags: ["adventure", "nature", "beach"],
+    tags: ["adventure", "nature", "beach"]
   },
-  // Add more itineraries...
+  {
+    id: 4,
+    title: "Greek Islands Explorer",
+    description: "Island hop through the stunning Cyclades archipelago",
+    image: "https://images.unsplash.com/photo-1533105079780-92b9be482077?q=80&w=1374&auto=format&fit=crop",
+    duration: "12 days",
+    cities: ["Athens", "Santorini", "Mykonos"],
+    countries: ["Greece"],
+    price: "$2,799",
+    tags: ["beach", "culture", "history"],
+    status: "most viewed"
+  },
+  {
+    id: 5,
+    title: "Thai Adventure",
+    description: "From bustling cities to serene beaches",
+    image: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1400&auto=format&fit=crop",
+    duration: "10 days",
+    cities: ["Bangkok", "Chiang Mai", "Phuket"],
+    countries: ["Thailand"],
+    price: "$1,899",
+    tags: ["adventure", "culture", "food"],
+    status: "popular"
+  },
+  {
+    id: 6,
+    title: "Swiss Alps Explorer",
+    description: "Mountain adventures in the heart of Europe",
+    image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=1400&auto=format&fit=crop",
+    duration: "8 days",
+    cities: ["Zurich", "Lucerne", "Interlaken"],
+    countries: ["Switzerland"],
+    price: "$3,299",
+    tags: ["adventure", "nature", "history"],
+    status: "highly rated"
+  }
 ]
 
 const filters = {
-  destinations: ["Japan", "Italy", "Costa Rica", "Thailand", "France"],
-  duration: ["1-7 days", "8-14 days", "15+ days"],
-  budget: ["$0-$1000", "$1000-$3000", "$3000+"],
-  tags: ["adventure", "culture", "food", "nature", "beach", "history", "wine"],
+  destinations: ["Japan", "Italy", "Costa Rica", "Thailand", "Greece", "Switzerland"],
+  duration: ["1-3 days", "4-7 days", "8-14 days", "15-21 days", "21+ days"],
+  budget: ["Under $1000", "$1000-$2000", "$2000-$3000", "$3000-$5000", "$5000+"],
+  tags: [
+    { name: "adventure", icon: Mountain },
+    { name: "food", icon: Utensils },
+    { name: "culture", icon: Building },
+    { name: "beach", icon: Palmtree },
+    { name: "photography", icon: Camera },
+    { name: "camping", icon: Tent },
+    { name: "cycling", icon: Bike },
+    { name: "cruise", icon: Ship },
+    { name: "wine", icon: Wine },
+    { name: "wellness", icon: Heart },
+    { name: "festivals", icon: Music },
+    { name: "luxury", icon: Sparkles },
+    { name: "surfing", icon: Waves },
+    { name: "winter", icon: Snowflake },
+  ]
 }
 
 export default function ExplorePage() {
@@ -140,15 +195,16 @@ export default function ExplorePage() {
 
           {/* Tags */}
           <div className="flex flex-wrap gap-2">
-            {filters.tags.map((tag) => (
+            {filters.tags.map(({ name, icon: Icon }) => (
               <Button
-                key={tag}
-                variant={selectedFilters.tags.includes(tag) ? "default" : "outline"}
+                key={name}
+                variant={selectedFilters.tags.includes(name) ? "default" : "outline"}
                 size="sm"
-                onClick={() => toggleTag(tag)}
+                onClick={() => toggleTag(name)}
                 className="capitalize"
               >
-                {tag}
+                <Icon className="w-4 h-4 mr-2" />
+                {name}
               </Button>
             ))}
           </div>
@@ -157,42 +213,81 @@ export default function ExplorePage() {
         {/* Itineraries Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {itineraries.map((itinerary) => (
-            <motion.div
-              key={itinerary.id}
-              className="bg-white rounded-lg shadow-md overflow-hidden card-hover"
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Link href={`/itinerary/${itinerary.id}`}>
-                <div className="relative h-48">
+            <Link href={`/itinerary/${itinerary.id}`} className="block relative" key={itinerary.id}>
+              {/* Background cutout shape */}
+              <div className="absolute -top-3 -left-3 bg-gray-50">
+                <div className="relative w-[140px] h-[64px]">
+                  <div className="absolute top-0 left-0 w-full h-full">
+                    <div className="absolute bottom-0 right-0 w-[30px] h-[30px] bg-white" />
+                    <div className="absolute bottom-0 right-0 w-[32px] h-[32px] bg-gray-50 rounded-tl-xl" />
+                  </div>
+                </div>
+              </div>
+              
+              <motion.div
+                className="overflow-hidden relative"
+                whileHover={{ y: -5 }}
+                transition={{ duration: 0.2 }}
+              >
+                {/* Card cutout overlay */}
+                <div className="absolute -top-3 -left-3 bg-white">
+                  <div className="relative w-[140px] h-[64px]">
+                    <div className="absolute top-0 left-0 w-full h-full">
+                      <div className="absolute bottom-0 right-0 w-[30px] h-[30px]" />
+                      <div className="absolute bottom-0 right-0 w-[32px] h-[32px] rounded-tl-xl" />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Image Container */}
+                <div className="relative h-56">
                   <Image
                     src={itinerary.image}
                     alt={itinerary.title}
                     fill
-                    className="object-cover"
+                    className="object-cover rounded-lg"
                   />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">{itinerary.title}</h3>
-                  <p className="text-gray-600 mb-4">{itinerary.description}</p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      {itinerary.duration}
+                  {/* Status Badge */}
+                  {itinerary.status && (
+                    <div className="absolute top-4 left-4 z-20">
+                      <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-full capitalize">
+                        {itinerary.status === "highly rated" ? "Top Rated" :
+                         itinerary.status === "most viewed" ? "Trending" :
+                         "Popular"}
+                      </span>
                     </div>
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      {itinerary.destinations[0]}
+                  )}
+                </div>
+
+                {/* Content Container */}
+                <div className="py-6 px-2 h-[230px]">
+                  <h3 className="text-2xl font-semibold mb-1">{itinerary.title}</h3>
+                  {/* <p className="text-gray-600 text-sm mb-4">{itinerary.description}</p> */}
+                  
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center flex-1">
+                      {/* <MapPin className="h-4 w-4 mr-1 flex-shrink-0" /> */}
+                      <div className="flex text-lg font-medium text-gray-500 mb-1">
+                        <span className=" mr-1">
+                          {itinerary.countries.length > 2 
+                            ? "Multi Country Trip"
+                            : itinerary.countries.join(' & ')}
+                        </span>
+                        in {itinerary.duration}
+                      </div>
                     </div>
                     <div className="flex items-center">
                       <Users className="h-4 w-4 mr-1" />
                       2-4
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-travel-600">
-                      {itinerary.price}
+                  <div className="mb-4">
+                    <span className="text-sm text-gray-500 truncate">
+                      {itinerary.cities.join(' · ')}
                     </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <div className="flex gap-2">
                       {itinerary.tags.slice(0, 2).map((tag) => (
                         <span
@@ -203,10 +298,13 @@ export default function ExplorePage() {
                         </span>
                       ))}
                     </div>
+                    <span className="px-4 py-1.5 bg-black/80 text-white text-xl rounded-full capitalize">
+                        {itinerary.price}
+                      </span>
                   </div>
                 </div>
-              </Link>
-            </motion.div>
+              </motion.div>
+            </Link>
           ))}
         </div>
       </div>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { SearchArea } from "@/components/ui/search-area"
 import { ItineraryCard } from "@/components/ui/itinerary-card"
 import { useRef } from "react"
+import { ItinerarySection } from "@/components/ui/itinerary-section"
 
 // Sample data for featured itineraries
 const multiCountryItineraries = [
@@ -389,82 +390,6 @@ const fadeInUp = {
   transition: { duration: 0.5 }
 }
 
-interface ItinerarySectionProps {
-  title: string;
-  description: string;
-  itineraries: Array<{
-    id: string;
-    title: string;
-    destination?: string;
-    countries?: string[];
-    imageUrl: string;
-    duration: number;
-    price?: number;
-    discountedPrice?: number;
-  }>;
-}
-
-const ItinerarySection = ({ title, description, itineraries }: ItinerarySectionProps) => {
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (sectionRef.current) {
-      const scrollAmount = 272;
-      const newScrollPosition = sectionRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
-      sectionRef.current.scrollTo({
-        left: newScrollPosition,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="text-left mb-8">
-        <h2 className="text-3xl font-bold mb-2">{title}</h2>
-        <p className="text-gray-600 mx-auto">
-          {description}
-        </p>
-      </div>
-
-      <div className="relative">
-        <div 
-          ref={sectionRef}
-          className="flex overflow-x-auto gap-4 pb-4 no-scrollbar"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {itineraries.map((itinerary) => (
-            <ItineraryCard
-              key={itinerary.id}
-              {...itinerary}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center mt-6">
-        <button className="hover:bg-gray-200 rounded-full px-4 py-2 text-sm transition-colors bg-[#000000] text-[#ffffff]">
-          See all trips
-        </button>
-        <div className="flex space-x-2">
-          <button 
-            onClick={() => scroll('left')}
-            className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
-          >
-            <span className="text-gray-600">‹</span>
-          </button>
-          <button 
-            onClick={() => scroll('right')}
-            className="w-8 h-8 rounded-full bg-gray-800 text-white hover:bg-gray-700 flex items-center justify-center transition-colors"
-          >
-            <span>›</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 interface CountryCardProps {
   name: string;
   imageUrl: string;
@@ -474,44 +399,67 @@ interface CountryCardProps {
 
 const CountryCard = ({ name, imageUrl, tripCount, onClick }: CountryCardProps) => {
   return (
-    <div 
+    <button 
       onClick={onClick}
-      className="relative overflow-hidden rounded-lg cursor-pointer group"
+      className="relative rounded-lg bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
+      style={{ aspectRatio: '2/1' }}
     >
-      <div className="aspect-[4/3] relative">
-        <img
-          src={imageUrl}
-          alt={name}
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60" />
-        <div className="flex w-full h-full flex-col justify-center items-center absolute">
-          <h3 className="text-lg font-semibold text-white mb-1">{name}</h3>
-          <button className="bg-white rounded-full px-2 font-medium py-1 text-xs transition-colors bg-[#000000] text-black">
-            {tripCount} Trips
-          </button>
+      {/* Background image that only shows on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute inset-0">
+          <img
+            src={imageUrl}
+            alt={name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/60" />
         </div>
       </div>
-    </div>
+
+      {/* Text content */}
+      <div className="relative z-10 flex flex-col items-center justify-center h-full">
+        <span className="text-xl font-medium text-gray-900 group-hover:text-white mb-3">{name}</span>
+        <span className="px-3 py-1 rounded-full bg-gray-100 text-sm font-medium text-gray-700 group-hover:bg-white/20 group-hover:text-white transition-colors">
+          {tripCount} Trips
+        </span>
+      </div>
+    </button>
   );
 };
 
 interface CategoryCardProps {
   name: string;
   icon: any;
+  imageUrl: string;
   onClick?: () => void;
 }
 
-const CategoryCard = ({ name, icon: Icon, onClick }: CategoryCardProps) => {
+const CategoryCard = ({ name, icon: Icon, imageUrl, onClick }: CategoryCardProps) => {
   return (
     <button 
       onClick={onClick}
-      className="flex items-center gap-3 p-4 rounded-lg bg-white hover:bg-gray-50 border border-gray-200 transition-colors duration-200 w-full"
+      className="relative flex items-center gap-3 p-6 rounded-lg bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
+      style={{ aspectRatio: '2/1' }}
     >
-      <div className="bg-gray-100 rounded-full p-3">
-        <Icon className="w-5 h-5 text-gray-700" />
+      {/* Background image that only shows on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute inset-0">
+          <img
+            src={imageUrl}
+            alt={name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
       </div>
-      <span className="text-gray-900 font-medium">{name}</span>
+
+      {/* Icon and text content */}
+      <div className="relative z-10 flex items-center justify-center gap-3 w-full">
+        <div className="bg-gray-100 rounded-full p-3 group-hover:bg-white/20">
+          <Icon className="w-5 h-5 text-gray-700 group-hover:text-white" />
+        </div>
+        <span className="text-gray-900 font-medium group-hover:text-white">{name}</span>
+      </div>
     </button>
   );
 };
@@ -545,12 +493,20 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Popular Listings */}
+      <section className="py-16 bg-white">
+        <ItinerarySection
+          title="Popular Listings"
+          description="Discover our most booked destinations and experiences."
+          itineraries={popularListings}
+        />
+      </section>
+
       {/* Travel Categories */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-left mb-8">
-            <h2 className="text-3xl font-bold mb-2">Browse by category</h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-2xl">
               Find the perfect trip that matches your interests
             </p>
           </div>
@@ -560,20 +516,12 @@ export default function Home() {
                 key={category.id}
                 name={category.name}
                 icon={category.icon}
+                imageUrl={category.imageUrl}
                 onClick={() => console.log(`Clicked ${category.name}`)}
               />
             ))}
           </div>
         </div>
-      </section>
-
-      {/* Popular Listings */}
-      <section className="py-16 bg-white">
-        <ItinerarySection
-          title="Popular Listings"
-          description="Discover our most booked destinations and experiences."
-          itineraries={popularListings}
-        />
       </section>
 
       {/* Black Banner */}
@@ -604,10 +552,7 @@ export default function Home() {
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-left mb-12">
-            <h2 className="text-3xl font-bold mb-4">Where to next?</h2>
-            <p className="text-gray-600 mx-auto">
-              Explore our most visited destinations and find your next adventure
-            </p>
+            <h2 className="text-3xl font-semibold mb-4">Choose your next adventure's destination</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {popularCountries.map((country) => (
