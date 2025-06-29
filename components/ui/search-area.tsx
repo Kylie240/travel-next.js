@@ -25,7 +25,7 @@ export function SearchArea() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg">
+    <div className="w-full max-w-4xl mx-auto bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg relative z-[1]">
       <form onSubmit={handleSearch} className="flex items-end gap-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
           <div className="space-y-2">

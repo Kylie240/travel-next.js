@@ -12,13 +12,13 @@ export function middleware(request: NextRequest) {
   // Check if the path is a protected route
   const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route))
 
-  // Check if user is authenticated
+  // Check if user is authenticated by looking for Firebase session cookie
   const isAuthenticated = checkAuthStatus(request)
 
   // If the route is protected and the user is not authenticated,
-  // redirect to the login page
+  // redirect to the home page where they can use the auth dialog
   if (isProtectedRoute && !isAuthenticated) {
-    const response = NextResponse.redirect(new URL('/login', request.url))
+    const response = NextResponse.redirect(new URL('/', request.url))
     return response
   }
 
@@ -32,8 +32,7 @@ export const config = {
 
 // This is a placeholder function - replace with your actual auth check
 function checkAuthStatus(request: NextRequest): boolean {
-  // Replace this with your actual authentication check
-  // For example, checking for a valid session token in cookies
-  const token = request.cookies.get('auth-token')
-  return !!token
+  // Check for Firebase Auth session cookie
+  const firebaseSession = request.cookies.get('firebase-session-token')
+  return !!firebaseSession
 } 

@@ -6,6 +6,17 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Calendar, MapPin, Users, Search, Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Snowflake } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/ui/use-toast"
+import { cn } from "@/lib/utils"
+
+// This is a placeholder for actual auth check - replace with your auth system
+const useAuth = () => {
+  // Replace this with actual auth logic
+  return {
+    isAuthenticated: false,
+    user: null
+  }
+}
 
 // Dummy data for itineraries
 const itineraries = [
@@ -112,6 +123,9 @@ export default function ExplorePage() {
     budget: "",
     tags: [] as string[],
   })
+  const { isAuthenticated } = useAuth()
+  const { toast } = useToast()
+  const [likedItineraries, setLikedItineraries] = useState<number[]>([])
 
   const toggleTag = (tag: string) => {
     setSelectedFilters((prev) => ({
@@ -120,6 +134,29 @@ export default function ExplorePage() {
         ? prev.tags.filter((t) => t !== tag)
         : [...prev.tags, tag],
     }))
+  }
+
+  const toggleLike = (id: number, e: React.MouseEvent) => {
+    e.preventDefault() // Prevent the Link navigation
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to save itineraries",
+        duration: 3000,
+      })
+      return
+    }
+    
+    setLikedItineraries(prev => 
+      prev.includes(id) 
+        ? prev.filter(i => i !== id)
+        : [...prev, id]
+    )
+    
+    toast({
+      title: likedItineraries.includes(id) ? "Removed from favorites" : "Added to favorites",
+      duration: 2000,
+    })
   }
 
   return (
@@ -229,6 +266,32 @@ export default function ExplorePage() {
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.2 }}
               >
+                {/* Like Button */}
+                {isAuthenticated && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const newLiked = !likedItineraries.includes(itinerary.id);
+                      setLikedItineraries(prev => 
+                        newLiked ? [...prev, itinerary.id] : prev.filter(id => id !== itinerary.id)
+                      );
+                      toast({
+                        title: newLiked ? "Added to favorites" : "Removed from favorites",
+                        duration: 2000,
+                      });
+                    }}
+                    className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
+                  >
+                    <Heart 
+                      className={`w-5 h-5 transition-colors ${
+                        likedItineraries.includes(itinerary.id)
+                          ? "fill-red-500 text-red-500"
+                          : "text-gray-600"
+                      }`}
+                    />
+                  </button>
+                )}
+
                 {/* Card cutout overlay */}
                 <div className="absolute -top-3 -left-3 bg-white">
                   <div className="relative w-[140px] h-[64px]">
@@ -240,13 +303,37 @@ export default function ExplorePage() {
                 </div>
                 
                 {/* Image Container */}
-                <div className="relative h-56">
-                  <Image
-                    src={itinerary.image}
-                    alt={itinerary.title}
-                    fill
-                    className="object-cover rounded-lg"
-                  />
+                  <div className="relative h-56 left-clip">
+    {isAuthenticated && (
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          const newLiked = !likedItineraries.includes(itinerary.id);
+          setLikedItineraries(prev => 
+            newLiked ? [...prev, itinerary.id] : prev.filter(id => id !== itinerary.id)
+          );
+          toast({
+            title: newLiked ? "Added to favorites" : "Removed from favorites",
+            duration: 2000,
+          });
+        }}
+        className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
+      >
+        <Heart 
+          className={`w-5 h-5 transition-colors ${
+            likedItineraries.includes(itinerary.id)
+              ? "fill-red-500 text-red-500"
+              : "text-gray-600"
+          }`}
+        />
+      </button>
+    )}
+    <Image
+      src={itinerary.image}
+      alt={itinerary.title}
+      fill
+      className="object-cover rounded-lg"
+    />
                   {/* Status Badge */}
                   {itinerary.status && (
                     <div className="absolute top-4 left-4 z-20">
@@ -298,8 +385,8 @@ export default function ExplorePage() {
                         </span>
                       ))}
                     </div>
-                    <span className="px-4 py-1.5 bg-black/80 text-white text-xl rounded-full capitalize">
-                        {itinerary.price}
+                    <span className="px-2 py-1 bg-black text-white text-md rounded-full capitalize">
+                        Est. {itinerary.price}
                       </span>
                   </div>
                 </div>

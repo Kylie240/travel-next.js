@@ -2,19 +2,14 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, X, Search, User } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-
-// This is a placeholder for actual auth check - replace with your auth system
-const useAuth = () => {
-  // Replace this with actual auth logic
-  return {
-    isAuthenticated: false, // Set to false by default
-    user: null
-  }
-}
+import { AuthDialog } from "@/components/ui/auth-dialog"
+import { auth } from "@/lib/firebase"
+import { signOut } from "firebase/auth"
+import { useToast } from "@/components/ui/use-toast"
 
 const publicNavigation = [
   { name: "Home", href: "/" },
@@ -31,10 +26,17 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
-  const { isAuthenticated, user } = useAuth()
+  const router = useRouter()
+  const { toast } = useToast()
+  const [user, setUser] = useState(auth.currentUser)
 
-  // Combine navigation items based on auth status
-  const navigation = [...publicNavigation, ...(isAuthenticated ? privateNavigation : [])]
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user)
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,28 +47,55 @@ export default function Navbar() {
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll() // Check initial scroll position
+    handleScroll()
 
     return () => window.removeEventListener('scroll', handleScroll)
   }, [scrolled])
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth)
+      // Remove the session cookie
+      document.cookie = "firebase-session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+      toast({
+        title: "Signed out successfully",
+        description: "Come back soon!",
+      })
+      // If on a protected route, redirect to home
+      if (pathname.startsWith('/dashboard') || pathname.startsWith('/create')) {
+        router.push('/')
+      } else {
+        router.refresh()
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Combine navigation items based on auth status
+  const navigation = [...publicNavigation, ...(user ? privateNavigation : [])]
+
   return (
     <nav 
-      className={`fixed w-full z-50 transition-colors duration-200 ${
+      className={`fixed w-full z-[50] transition-colors duration-200 ${
         scrolled 
-          ? "bg-white/80 backdrop-blur-md border-b" 
+          ? "bg-white/40 backdrop-blur-md" 
           : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and primary navigation */}
+          <Link href="/" className="flex items-center">
+            <span className={`text-2xl font-bold ${scrolled ? 'text-travel-600' : 'text-white'}`}>
+              Travel 3.0
+            </span>
+          </Link>
           <div className="flex">
-            <Link href="/" className="flex items-center">
-              <span className={`text-2xl font-bold ${scrolled ? 'text-travel-600' : 'text-white'}`}>
-                Travel 3.0
-              </span>
-            </Link>
             <div className="hidden md:ml-6 md:flex md:space-x-8">
               {navigation.map((item) => (
                 <Link
@@ -97,22 +126,16 @@ export default function Navbar() {
             >
               <Search className="h-5 w-5" />
             </Button>
-            {isAuthenticated ? (
+            {user ? (
               <Button
-                onClick={() => {/* Add logout handler */}}
+                onClick={handleSignOut}
                 className={scrolled ? "" : "bg-white text-black hover:bg-white/90"}
               >
                 <User className="h-5 w-5 mr-2" />
                 Sign Out
               </Button>
             ) : (
-              <Button
-                onClick={() => window.location.href = "/login"}
-                className={scrolled ? "" : "bg-white text-black hover:bg-white/90"}
-              >
-                <User className="h-5 w-5 mr-2" />
-                Sign In
-              </Button>
+              <AuthDialog />
             )}
           </div>
 
@@ -165,22 +188,16 @@ export default function Navbar() {
                   <Search className="h-5 w-5 mr-2" />
                   Search
                 </Button>
-                {isAuthenticated ? (
+                {user ? (
                   <Button 
                     className="w-full justify-start"
-                    onClick={() => {/* Add logout handler */}}
+                    onClick={handleSignOut}
                   >
                     <User className="h-5 w-5 mr-2" />
                     Sign Out
                   </Button>
                 ) : (
-                  <Button 
-                    className="w-full justify-start"
-                    onClick={() => window.location.href = "/login"}
-                  >
-                    <User className="h-5 w-5 mr-2" />
-                    Sign In
-                  </Button>
+                  <AuthDialog />
                 )}
               </div>
             </div>

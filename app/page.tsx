@@ -9,6 +9,8 @@ import { SearchArea } from "@/components/ui/search-area"
 import { ItineraryCard } from "@/components/ui/itinerary-card"
 import { useRef } from "react"
 import { ItinerarySection } from "@/components/ui/itinerary-section"
+import { AuthDialog } from "@/components/ui/auth-dialog"
+import { BlackBanner } from "@/components/ui/black-banner"
 
 // Sample data for featured itineraries
 const multiCountryItineraries = [
@@ -480,7 +482,7 @@ export default function Home() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative z-[10] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="md:text-5xl lg:text-2xl text-white mb-6 text-[84px]">
             DISCOVER YOUR NEXT
             <span className="block font-bold text-white md:text-5xl lg:text-9xl">ADVENTURE</span>
@@ -525,19 +527,11 @@ export default function Home() {
       </section>
 
       {/* Black Banner */}
-      <section className="py-16 bg-black">
-        <div className="container text-white text-center">
-          <span className="flex justify-center items-center gap-2 mb-8 text-lg text-white">
-            <MapPin className="w-4 h-4" />
-            Create and save your own itineraries
-          </span>
-          <h2 className="text-5xl font-bold mb-4 text-white">In-house tech that guarantees unbeatable prices</h2>
-          <p className="text-xl font-light pb-8">SmartFare secures the lowest fares on flights & local services, guaranteeing you the best price.</p>
-          <button className="bg-white rounded-full px-4 py-2 text-sm transition-colors bg-[#000000] text-black">
-            See all trips
-          </button>
-        </div>
-      </section>
+      <BlackBanner 
+        subtitle="Create and save your own itineraries"
+        title="In-house tech that guarantees unbeatable prices"
+        description="SmartFare secures the lowest fares on flights & local services, guaranteeing you the best price."
+      />
 
       {/* Most Viewed */}
       <section className="py-16 bg-gray-50">
@@ -622,15 +616,10 @@ export default function Home() {
           </div>
 
           <div className="text-center mt-12">
-            <Button
-              onClick={() => (window.location.href = "/api/login")}
-              className="bg-[#000000] text-[#ffffff] hover:bg-primary/90 h-10 px-4 py-2 lime-primary hover:lime-light mr-4"
-            >
-              Start Creating
-            </Button>
+            <AuthDialog />
             <Button
               variant="outline"
-              className="border-primary text-primary hover:bg-primary hover:text-dark"
+              className="border-primary text-primary hover:bg-primary hover:text-dark ml-4"
             >
               Learn More
             </Button>
@@ -657,19 +646,11 @@ export default function Home() {
       </section>
 
       {/* Black Banner */}
-      <section className="py-16 bg-black">
-        <div className="container text-white text-center">
-          <span className="flex justify-center items-center gap-2 mb-8 text-lg text-white">
-            <MapPin className="w-4 h-4" />
-            Start earning today
-          </span>
-          <h2 className="text-5xl font-bold mb-4 text-white">Join our community of travelers</h2>
-          <p className="text-xl font-light pb-8">Sign up to earn money by sharing your travel experiences.</p>
-          <button className="bg-white rounded-full px-4 py-2 text-sm transition-colors bg-[#000000] text-black">
-            Sign up
-          </button>
-        </div>
-      </section>
+      <BlackBanner 
+        subtitle="Start earning today"
+        title="Join our community of travelers"
+        description="Sign up to earn money by sharing your travel experiences."
+      />
 
       {/* Tropical Vacations */}
       <section className="py-16 bg-gray-50">
@@ -678,31 +659,6 @@ export default function Home() {
           description="Escape to paradise with our handpicked selection of tropical getaways."
           itineraries={tropicalVacations}
         />
-      </section>
-
-      {/* Newsletter */}
-      <section className="py-16 bg-gray-100 border-t">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-3">Stay updated with travel inspiration</h2>
-            <p className="text-gray-600 mb-8">
-              Subscribe to our newsletter and get the latest travel tips, destinations, and exclusive offers.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200"
-              />
-              <button className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition-colors">
-                Subscribe
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 mt-4">
-              By subscribing, you agree to our Privacy Policy and consent to receive updates from us.
-            </p>
-          </div>
-        </div>
       </section>
     </div>
   );
