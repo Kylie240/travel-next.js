@@ -16,7 +16,6 @@ import {
 } from "firebase/auth"
 import { Button } from "./button"
 import { Input } from "./input"
-import { useToast } from "./use-toast"
 import { useRouter } from "next/navigation"
 
 const authSchema = z.object({
@@ -29,7 +28,7 @@ type AuthFormData = z.infer<typeof authSchema>
 export function AuthDialog() {
   const [isOpen, setIsOpen] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
-  const { toast } = useToast()
+  const [authError, setAuthError] = useState("")
   const router = useRouter()
   
   const {
@@ -43,67 +42,37 @@ export function AuthDialog() {
 
   const setSessionCookie = async (user: any) => {
     const token = await getIdToken(user)
-    // Set the token in a cookie that will be sent with requests
     document.cookie = `firebase-session-token=${token}; path=/; max-age=3600; SameSite=Strict`
   }
 
   const onSubmit = async (data: AuthFormData) => {
+    setAuthError("") // Clear any previous errors
     try {
       let userCredential;
       if (isSignUp) {
         userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password)
-        handleRegister(data);
       } else {
         userCredential = await signInWithEmailAndPassword(auth, data.email, data.password)
-        toast({
-          title: "Signed in successfully!",
-          description: "Welcome back!",
-        })
       }
       await setSessionCookie(userCredential.user)
       setIsOpen(false)
       reset()
-      router.refresh() // Refresh the page to update auth state
+      router.refresh()
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
+      setAuthError(error.message.replace("Firebase: ", "").replace(/\(auth.*\)/, ""))
     }
   }
 
-  const handleRegister = (e: any) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-
-    const {email, password} = Object.fromEntries(formData);
-
-    console.log(email, password);
-    
-    toast({
-      title: "Account created successfully!",
-      description: "Welcome to Travel 3.0",
-    })
-  }
-
   const handleGoogleSignIn = async () => {
+    setAuthError("") // Clear any previous errors
     try {
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
       await setSessionCookie(result.user)
       setIsOpen(false)
-      toast({
-        title: "Signed in successfully!",
-        description: "Welcome to Travel 3.0",
-      })
-      router.refresh() // Refresh the page to update auth state
+      router.refresh()
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
+      setAuthError(error.message.replace("Firebase: ", "").replace(/\(auth.*\)/, ""))
     }
   }
 
@@ -129,7 +98,7 @@ export function AuthDialog() {
             }
           </Dialog.Description>
 
-          <form onSubmit={handleRegister} className="mt-4 space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
             <div>
               <Input
                 type="email"
@@ -152,6 +121,9 @@ export function AuthDialog() {
                 <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
               )}
             </div>
+            {authError && (
+              <p className="text-sm text-red-500">{authError}</p>
+            )}
             <Button
               type="submit"
               className="w-full"

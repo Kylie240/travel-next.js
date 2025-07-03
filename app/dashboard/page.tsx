@@ -202,8 +202,8 @@ export default function DashboardPage() {
 
           <TabsContent value="itineraries">
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">My Itineraries</h2>
-              <div className="space-y-4">
+          <h2 className="text-xl font-semibold mb-4">My Itineraries</h2>
+          <div className="space-y-4">
                 {itineraries.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <MapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -218,19 +218,19 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   itineraries.map((itinerary) => (
-                    <Card key={itinerary.id} className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-medium mb-2">{itinerary.title}</h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              {itinerary.destinations.join(", ")}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {itinerary.duration}
-                            </span>
+              <Card key={itinerary.id} className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">{itinerary.title}</h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {itinerary.destinations.join(", ")}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {itinerary.duration}
+                      </span>
                             {itinerary.status === "published" && (
                               <>
                                 <span className="flex items-center gap-1">
@@ -243,38 +243,38 @@ export default function DashboardPage() {
                                 </span>
                               </>
                             )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.push(`/itinerary/${itinerary.id}/edit`)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className={`text-sm px-2 py-1 rounded-full ${
-                          itinerary.status === "published" 
-                            ? "bg-green-100 text-green-800" 
-                            : "bg-gray-100 text-gray-800"
-                        }`}>
-                          {itinerary.status.charAt(0).toUpperCase() + itinerary.status.slice(1)}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          Last edited: {new Date(itinerary.lastEdited).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </Card>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/itinerary/${itinerary.id}/edit`)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className={`text-sm px-2 py-1 rounded-full ${
+                    itinerary.status === "published" 
+                      ? "bg-green-100 text-green-800" 
+                      : "bg-gray-100 text-gray-800"
+                  }`}>
+                    {itinerary.status.charAt(0).toUpperCase() + itinerary.status.slice(1)}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Last edited: {new Date(itinerary.lastEdited).toLocaleDateString()}
+                  </span>
+                </div>
+              </Card>
                   ))
                 )}
               </div>
@@ -324,8 +324,8 @@ export default function DashboardPage() {
                       <input type="checkbox" className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" />
                       <span className="ml-2">Notify me when someone comments on my itinerary</span>
                     </label>
-                  </div>
-                </div>
+          </div>
+        </div>
                 <Button variant="outline">Save Settings</Button>
               </div>
             </Card>

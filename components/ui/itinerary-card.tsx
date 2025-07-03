@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Star, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -8,15 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface ItineraryCardProps {
-  id: string;
+  id: string | number;
   title: string;
   destination?: string;
   imageUrl: string;
-  duration: number;
-  price?: number;
+  duration: number | string;
+  price?: number | string;
   discountedPrice?: number;
   countries?: string[];
-  onClick?: (id: string) => void;
+  onClick?: (id: string | number) => void;
   className?: string;
 }
 
@@ -38,11 +39,12 @@ export function ItineraryCard({
     : destination || "";
 
   return (
-    <div 
+    <Link 
+      href={`/itinerary/${id}`}
       className="flex-none w-[300px] group cursor-pointer"
       onClick={handleCardClick}
     >
-      <div className="relative overflow-hidden rounded-lg h-[400px]">
+      <div className="relative overflow-hidden rounded-2xl h-[400px]">
         <img
           src={imageUrl}
           alt={title}
@@ -59,12 +61,12 @@ export function ItineraryCard({
           {price && (
             <div className="flex items-center mt-2">
               <span className="text-sm font-bold">
-                Est. ${price?.toLocaleString() || price?.toLocaleString()}
+                Est. ${typeof price === 'string' ? price.replace(/[^0-9]/g, '') : price?.toLocaleString()}
               </span>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 } 
