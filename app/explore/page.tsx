@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -8,7 +8,9 @@ import { Calendar, MapPin, Users, Mountain, Utensils, Building, Palmtree, Camera
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { AdvancedFilterDialog } from "@/components/ui/advanced-filter-dialog"
+import { QuickFilterList } from "@/components/ui/quick-filter-list"
 import { cn } from "@/lib/utils"
+import { useSearchParams } from "next/navigation"
 
 // This is a placeholder for actual auth check - replace with your auth system
 const useAuth = () => {
@@ -31,7 +33,12 @@ const itineraries = [
     countries: ["Japan"],
     price: "$3,499",
     tags: ["culture", "food", "history"],
-    status: "popular"
+    status: "popular",
+    continent: "Asia",
+    regions: ["East Asia"],
+    accommodation: ["Hotel", "Ryokan"],
+    transportation: ["Train", "Bus"],
+    rating: 4.8
   },
   {
     id: 2,
@@ -43,7 +50,12 @@ const itineraries = [
     countries: ["Italy"],
     price: "$2,899",
     tags: ["food", "wine", "culture"],
-    status: "highly rated"
+    status: "highly rated",
+    continent: "Europe",
+    regions: ["Southern Europe"],
+    accommodation: ["Hotel", "Villa"],
+    transportation: ["Train", "Private Car"],
+    rating: 4.9
   },
   {
     id: 3,
@@ -54,7 +66,12 @@ const itineraries = [
     cities: ["San José", "Arenal", "Manuel Antonio"],
     countries: ["Costa Rica"],
     price: "$1,999",
-    tags: ["adventure", "nature", "beach"]
+    tags: ["adventure", "nature", "beach"],
+    continent: "North America",
+    regions: ["Central America"],
+    accommodation: ["Resort", "Eco Lodge"],
+    transportation: ["Bus", "Private Car"],
+    rating: 4.7
   },
   {
     id: 4,
@@ -66,7 +83,12 @@ const itineraries = [
     countries: ["Greece"],
     price: "$2,799",
     tags: ["beach", "culture", "history"],
-    status: "most viewed"
+    status: "most viewed",
+    continent: "Europe",
+    regions: ["Southern Europe"],
+    accommodation: ["Hotel", "Villa"],
+    transportation: ["Ferry", "Private Car"],
+    rating: 4.6
   },
   {
     id: 5,
@@ -78,7 +100,12 @@ const itineraries = [
     countries: ["Thailand"],
     price: "$1,899",
     tags: ["adventure", "culture", "food"],
-    status: "popular"
+    status: "popular",
+    continent: "Asia",
+    regions: ["Southeast Asia"],
+    accommodation: ["Hotel", "Resort"],
+    transportation: ["Train", "Bus"],
+    rating: 4.5
   },
   {
     id: 6,
@@ -90,7 +117,12 @@ const itineraries = [
     countries: ["Switzerland"],
     price: "$3,299",
     tags: ["adventure", "nature", "history"],
-    status: "highly rated"
+    status: "highly rated",
+    continent: "Europe",
+    regions: ["Central Europe"],
+    accommodation: ["Hotel", "Chalet"],
+    transportation: ["Train", "Cable Car"],
+    rating: 4.8
   }
 ]
 
@@ -98,6 +130,7 @@ const filters = {
   destinations: ["Japan", "Italy", "Costa Rica", "Thailand", "Greece", "Switzerland"],
   duration: ["1-3 days", "4-7 days", "8-14 days", "15-21 days", "21+ days"],
   budget: ["Under $1000", "$1000-$2000", "$2000-$3000", "$3000-$5000", "$5000+"],
+  quickFilters: ["All", "Popular", "Most Viewed", "Best Rated", "New", "Trending", "Budget Friendly", "Luxury"],
   sortOptions: [
     { value: "popular", label: "Most Popular" },
     { value: "recent", label: "Most Recent" },
@@ -125,6 +158,7 @@ const filters = {
 }
 
 export default function ExplorePage() {
+  const searchParams = useSearchParams()
   const [selectedFilters, setSelectedFilters] = useState({
     destination: "",
     duration: "",
@@ -135,11 +169,28 @@ export default function ExplorePage() {
     continents: [] as string[],
     accommodation: [] as string[],
     transportation: [] as string[],
-    rating: ""
+    rating: "",
+    quickFilter: "All"
   })
   const { isAuthenticated } = useAuth()
   const { toast } = useToast()
   const [likedItineraries, setLikedItineraries] = useState<number[]>([])
+
+  // Initialize filters from URL params
+  useEffect(() => {
+    const destination = searchParams.get("destination")
+    const duration = searchParams.get("duration")
+    const budget = searchParams.get("budget")
+
+    if (destination || duration || budget) {
+      setSelectedFilters(prev => ({
+        ...prev,
+        destination: destination || "",
+        duration: duration || "",
+        budget: budget || "",
+      }))
+    }
+  }, [searchParams])
 
   const toggleLike = (id: number, e: React.MouseEvent) => {
     e.preventDefault() // Prevent the Link navigation
@@ -166,6 +217,22 @@ export default function ExplorePage() {
 
   // Filter itineraries based on all selected filters
   const filteredItineraries = itineraries.filter(itinerary => {
+    // Quick filter
+    if (selectedFilters.quickFilter !== "All") {
+      const quickFilterMap: { [key: string]: (i: typeof itinerary) => boolean } = {
+        "Popular": i => i.status === "popular",
+        "Most Viewed": i => i.status === "most viewed",
+        "Best Rated": i => i.status === "highly rated",
+        "New": i => i.id > itineraries.length - 2,
+        "Trending": i => i.status === "popular" || i.status === "most viewed",
+        "Budget Friendly": i => parseInt(i.price.replace(/\D/g, "")) < 2000,
+        "Luxury": i => parseInt(i.price.replace(/\D/g, "")) > 3000
+      }
+      if (quickFilterMap[selectedFilters.quickFilter] && !quickFilterMap[selectedFilters.quickFilter](itinerary)) {
+        return false
+      }
+    }
+
     // Basic filters
     if (selectedFilters.destination && !itinerary.countries.includes(selectedFilters.destination)) {
       return false
@@ -224,11 +291,13 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-gray-50 pt-2">
       <div className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-semibold mb-4">Search Results</h2>
         {/* Filters Bar */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="flex flex-col mb-8">
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <select
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
+                className="px-4 cursor-pointer py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
                 value={selectedFilters.destination}
                 onChange={(e) =>
                   setSelectedFilters((prev) => ({
@@ -246,7 +315,7 @@ export default function ExplorePage() {
               </select>
 
               <select
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
+                className="px-4 py-2 cursor-pointer border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
                 value={selectedFilters.duration}
                 onChange={(e) =>
                   setSelectedFilters((prev) => ({
@@ -255,7 +324,7 @@ export default function ExplorePage() {
                   }))
                 }
               >
-              <option value="">Any Duration</option>
+                <option value="">Any Duration</option>
                 {filters.duration.map((dur) => (
                   <option key={dur} value={dur}>
                     {dur}
@@ -264,7 +333,7 @@ export default function ExplorePage() {
               </select>
 
               <select
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
+                className="px-4 py-2 cursor-pointer border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
                 value={selectedFilters.budget}
                 onChange={(e) =>
                   setSelectedFilters((prev) => ({
@@ -273,43 +342,63 @@ export default function ExplorePage() {
                   }))
                 }
               >
-              <option value="">Any Budget</option>
-              {filters.budget.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
-              value={selectedFilters.sort}
-              onChange={(e) =>
-                setSelectedFilters((prev) => ({
-                  ...prev,
-                  sort: e.target.value,
-                }))
-              }
-            >
-              {filters.sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
+                <option value="">Any Budget</option>
+                {filters.budget.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
                   </option>
                 ))}
               </select>
             </div>
+            
+            <div className="flex justify-end">
+              <AdvancedFilterDialog
+                destinations={filters.destinations}
+                duration={filters.duration}
+                budget={filters.budget}
+                tags={filters.tags}
+                selectedFilters={selectedFilters}
+                onFilterChange={setSelectedFilters}
+              />
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <p>1000 Results</p>
+            <div className="flex items-center gap-2">
+              <p>Sort By:</p>
+              <select
+                className="px-4 py-2 cursor-pointer border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
+                value={selectedFilters.sort}
+                onChange={(e) =>
+                  setSelectedFilters((prev) => ({
+                    ...prev,
+                    sort: e.target.value,
+                  }))
+                }
+              >
+                {filters.sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-          <div className="flex justify-end">
-            <AdvancedFilterDialog
-              destinations={filters.destinations}
-              duration={filters.duration}
-              budget={filters.budget}
-              tags={filters.tags}
-              selectedFilters={selectedFilters}
-              onFilterChange={setSelectedFilters}
+          {/* Quick Filters */}
+          <div className="mt-4">
+            <QuickFilterList
+              filters={filters.quickFilters}
+              selectedFilter={selectedFilters.quickFilter}
+              onFilterChange={(filter) =>
+                setSelectedFilters((prev) => ({
+                  ...prev,
+                  quickFilter: filter,
+                }))
+              }
             />
           </div>
-          </div>
+        </div>
 
         {/* Active Filters Display */}
         {(selectedFilters.tags.length > 0 || 

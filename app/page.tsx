@@ -11,6 +11,7 @@ import { useRef } from "react"
 import { ItinerarySection } from "@/components/ui/itinerary-section"
 import { AuthDialog } from "@/components/ui/auth-dialog"
 import { BlackBanner } from "@/components/ui/black-banner"
+import { useRouter } from "next/navigation"
 
 // Sample data for featured itineraries
 const multiCountryItineraries = [
@@ -440,7 +441,7 @@ const CategoryCard = ({ name, icon: Icon, imageUrl, onClick }: CategoryCardProps
   return (
     <button 
       onClick={onClick}
-      className="relative flex items-center gap-3 p-6 rounded-lg bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
+      className="relative flex items-center gap-3 p-6 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
       style={{ aspectRatio: '2/1' }}
     >
       {/* Background image that only shows on hover */}
@@ -467,30 +468,50 @@ const CategoryCard = ({ name, icon: Icon, imageUrl, onClick }: CategoryCardProps
 };
 
 export default function Home() {
+  const router = useRouter()
+
+  const onEditProfile = () => {
+    router.push("/profile")
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[70vh] flex items-center mb-16 justify-start px-4 sm:px-6 lg:px-8">
         {/* Background Image */}
         <div
-          className="absolute inset-0 px-6 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0')`,
-          }}
+          className="absolute inset-x-4 sm:inset-x-6 lg:inset-x-8 inset-y-0 rounded-3xl overflow-hidden"
         >
-          <div className="absolute inset-0 bg-red/40"></div>
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: `url('https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0')`,
+            }}
+          >
+            <div className="absolute inset-0 bg-black/40"></div>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="relative z-[10] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="md:text-5xl lg:text-2xl text-white mb-6 text-[84px]">
-            DISCOVER YOUR NEXT
-            <span className="block font-bold text-white md:text-5xl lg:text-9xl">ADVENTURE</span>
+        <div className="relative z-[10] max-w-6xl mx-auto w-full">
+          <h1 className="md:text-5xl lg:text-8xl font-semibold text-white mb-6 text-[84px]">
+            DISCOVER YOUR NEXT ADVENTURE
           </h1>
-          <p className="text-xl text-white/90 mb-12 leading-relaxed max-w-2xl mx-auto">
-            Find unique travel experiences crafted by fellow explorers. From
-            hidden gems to popular destinations, your perfect journey awaits.
+          <p className="text-xl text-white mb-12 leading-relaxed text-left mx-auto">
+            Find travel experiences crafted by fellow explorers.
           </p>
+          <div className="flex gap-4">
+            <Button 
+              asChild
+              className="bg-white text-black bg-blue-300 hover:bg-white/90"
+            >
+              <Link href="/explore">
+                Explore Itineraries
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <div className="absolute bottom-[-60px] z-64 left-0 w-full px-4 sm:px-6 lg:px-8">
           <SearchArea />
         </div>
       </section>
@@ -563,7 +584,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-16 lg:py-24 bg-white">
+      {/* <section id="how-it-works" className="py-16 lg:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-dark mb-4">
@@ -625,7 +646,7 @@ export default function Home() {
             </Button>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Multi-country Itineraries */}
       <section className="py-16 bg-gray-50">

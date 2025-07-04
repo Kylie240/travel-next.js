@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "./button";
 import { Input } from "./input";
 import { Label } from "./label";
@@ -11,17 +12,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./select";
-import { MapPin, Calendar, Wallet, Search } from "lucide-react";
+import { MapPin, Calendar, Wallet, Search, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export function SearchArea() {
+  const router = useRouter();
   const [destination, setDestination] = useState("");
   const [duration, setDuration] = useState("");
   const [budget, setBudget] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle search logic here
-    console.log({ destination, duration, budget });
+    
+    // Basic validation
+    if (!destination.trim()) {
+      toast.error("Please enter a destination");
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+
+      // Build search params
+      const searchParams = new URLSearchParams({
+        destination: destination.trim(),
+        ...(duration && { duration }),
+        ...(budget && { budget }),
+      });
+
+      // Navigate to explore page with search params
+      router.push(`/explore?${searchParams.toString()}`);
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+      console.error("Search error:", error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -39,6 +66,7 @@ export function SearchArea() {
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               className="bg-white"
+              disabled={isSearching}
             />
           </div>
           
@@ -47,11 +75,13 @@ export function SearchArea() {
               <Calendar className="w-4 h-4" />
               Duration
             </Label>
-            <Select value={duration} onValueChange={setDuration}>
+            <Select value={duration} onValueChange={setDuration} disabled={isSearching}>
               <SelectTrigger id="duration" className="bg-white">
                 <SelectValue placeholder="Select duration" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">Any Duration</SelectItem>
+                <SelectItem value="1-3">1-3 days</SelectItem>
                 <SelectItem value="3-5">3-5 days</SelectItem>
                 <SelectItem value="6-8">6-8 days</SelectItem>
                 <SelectItem value="9-12">9-12 days</SelectItem>
@@ -65,11 +95,12 @@ export function SearchArea() {
               <Wallet className="w-4 h-4" />
               Budget Range
             </Label>
-            <Select value={budget} onValueChange={setBudget}>
+            <Select value={budget} onValueChange={setBudget} disabled={isSearching}>
               <SelectTrigger id="budget" className="bg-white">
                 <SelectValue placeholder="Select budget" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">Any Budget</SelectItem>
                 <SelectItem value="0-1000">$0 - $1,000</SelectItem>
                 <SelectItem value="1000-3000">$1,000 - $3,000</SelectItem>
                 <SelectItem value="3000-5000">$3,000 - $5,000</SelectItem>
@@ -79,8 +110,17 @@ export function SearchArea() {
           </div>
         </div>
 
-        <Button type="submit" size="icon" className="h-10 w-10 bg-black">
-          <Search className="h-4 w-4" />
+        <Button 
+          type="submit" 
+          size="icon" 
+          className="h-10 w-10 bg-black"
+          disabled={isSearching}
+        >
+          {isSearching ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="h-4 w-4" />
+          )}
         </Button>
       </form>
     </div>

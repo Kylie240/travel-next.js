@@ -25,6 +25,8 @@ interface AdvancedFilterDialogProps {
     accommodation: string[]
     transportation: string[]
     rating: string
+    sort: string
+    quickFilter: string
   }
   onFilterChange: (filters: {
     destination: string
@@ -36,6 +38,8 @@ interface AdvancedFilterDialogProps {
     accommodation: string[]
     transportation: string[]
     rating: string
+    sort: string
+    quickFilter: string
   }) => void
 }
 
