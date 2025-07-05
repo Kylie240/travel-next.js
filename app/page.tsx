@@ -477,7 +477,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center mb-16 justify-start px-4 sm:px-6 lg:px-8">
+      <section className="relative min-h-[600px] md:min-h-[600px] flex items-center mb-32 md:mb-16 justify-start px-4 sm:px-6 lg:px-8">
         {/* Background Image */}
         <div
           className="absolute inset-x-4 sm:inset-x-6 lg:inset-x-8 inset-y-0 rounded-3xl overflow-hidden"
@@ -488,13 +488,13 @@ export default function Home() {
               backgroundImage: `url('https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0')`,
             }}
           >
-            <div className="absolute inset-0 bg-black/40"></div>
+            <div className="absolute inset-0 bg-black/20"></div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="relative z-[10] max-w-6xl mx-auto w-full">
-          <h1 className="md:text-5xl lg:text-8xl font-semibold text-white mb-6 text-[84px]">
+        <div className="relative z-[10] max-w-6xl mx-auto w-full px-12">
+          <h1 className="md:text-6xl lg:text-7xl xl:text-8xl font-semibold text-white mb-6 text-4xl">
             DISCOVER YOUR NEXT ADVENTURE
           </h1>
           <p className="text-xl text-white mb-12 leading-relaxed text-left mx-auto">
@@ -511,7 +511,7 @@ export default function Home() {
             </Button>
           </div>
         </div>
-        <div className="absolute bottom-[-60px] z-64 left-0 w-full px-4 sm:px-6 lg:px-8">
+        <div className="absolute bottom-[-160px] md:bottom-[-60px] z-64 left-0 w-full px-16 lg:px-8">
           <SearchArea />
         </div>
       </section>
@@ -569,7 +569,7 @@ export default function Home() {
           <div className="text-left mb-12">
             <h2 className="text-3xl font-semibold mb-4">Choose your next adventure's destination</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {popularCountries.map((country) => (
               <CountryCard
                 key={country.id}

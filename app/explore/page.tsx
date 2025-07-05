@@ -4,20 +4,31 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Users, Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Snowflake, Star } from "lucide-react"
+import { Calendar, MapPin, Users, Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Snowflake, Star, Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { AdvancedFilterDialog } from "@/components/ui/advanced-filter-dialog"
 import { QuickFilterList } from "@/components/ui/quick-filter-list"
 import { cn } from "@/lib/utils"
 import { useSearchParams } from "next/navigation"
+import { auth } from "@/lib/firebase"
 
-// This is a placeholder for actual auth check - replace with your auth system
 const useAuth = () => {
-  // Replace this with actual auth logic
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState(auth.currentUser)
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAuthenticated(!!user)
+      setUser(user)
+    })
+
+    return () => unsubscribe()
+  }, [])
+
   return {
-    isAuthenticated: false,
-    user: null
+    isAuthenticated,
+    user
   }
 }
 
@@ -362,31 +373,9 @@ export default function ExplorePage() {
               />
             </div>
           </div>
-          <div className="flex justify-between">
-            <p>1000 Results</p>
-            <div className="flex items-center gap-2">
-              <p>Sort By:</p>
-              <select
-                className="px-4 py-2 cursor-pointer border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
-                value={selectedFilters.sort}
-                onChange={(e) =>
-                  setSelectedFilters((prev) => ({
-                    ...prev,
-                    sort: e.target.value,
-                  }))
-                }
-              >
-                {filters.sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
 
           {/* Quick Filters */}
-          <div className="mt-4">
+          <div className="mt-2">
             <QuickFilterList
               filters={filters.quickFilters}
               selectedFilter={selectedFilters.quickFilter}
@@ -436,51 +425,40 @@ export default function ExplorePage() {
           </div>
         )}
 
+        
+         <div className="flex justify-between items-center mb-8">
+            <p>1000 Results</p>
+            <div className="flex items-center gap-2">
+              <p>Sort By:</p>
+              <select
+                className="px-4 py-2 cursor-pointer border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
+                value={selectedFilters.sort}
+                onChange={(e) =>
+                  setSelectedFilters((prev) => ({
+                    ...prev,
+                    sort: e.target.value,
+                  }))
+                }
+              >
+                {filters.sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
         {/* Itineraries Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredItineraries.map((itinerary) => (
             <Link href={`/itinerary/${itinerary.id}`} className="block relative" key={itinerary.id}>
-              {/* Background cutout shape */}
-              <div className="absolute -top-3 -left-3 bg-gray-50">
-                <div className="relative w-[140px] h-[64px]">
-                  <div className="absolute top-0 left-0 w-full h-full">
-                    <div className="absolute bottom-0 right-0 w-[30px] h-[30px] bg-white" />
-                    <div className="absolute bottom-0 right-0 w-[32px] h-[32px] bg-gray-50 rounded-tl-xl" />
-                  </div>
-                </div>
-              </div>
               
               <motion.div
                 className="overflow-hidden relative"
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.2 }}
               >
-                {/* Like Button */}
-                {isAuthenticated && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const newLiked = !likedItineraries.includes(itinerary.id);
-                      setLikedItineraries(prev => 
-                        newLiked ? [...prev, itinerary.id] : prev.filter(id => id !== itinerary.id)
-                      );
-                      toast({
-                        title: newLiked ? "Added to favorites" : "Removed from favorites",
-                        duration: 2000,
-                      });
-                    }}
-                    className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
-                  >
-                    <Heart 
-                      className={`w-5 h-5 transition-colors ${
-                        likedItineraries.includes(itinerary.id)
-                          ? "fill-red-500 text-red-500"
-                          : "text-gray-600"
-                      }`}
-                    />
-                  </button>
-                )}
-
                 {/* Card cutout overlay */}
                 <div className="absolute -top-3 -left-3 bg-white">
                   <div className="relative w-[140px] h-[64px]">
@@ -508,7 +486,7 @@ export default function ExplorePage() {
         }}
         className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
       >
-        <Heart 
+        <Bookmark 
           className={`w-5 h-5 transition-colors ${
             likedItineraries.includes(itinerary.id)
               ? "fill-red-500 text-red-500"
@@ -521,12 +499,12 @@ export default function ExplorePage() {
       src={itinerary.image}
       alt={itinerary.title}
       fill
-      className="object-cover rounded-lg"
+      className="object-cover rounded-xl"
     />
                   {/* Status Badge */}
                   {itinerary.status && (
                     <div className="absolute top-4 left-4 z-20">
-                      <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-full capitalize">
+                      <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-lg capitalize">
                         {itinerary.status === "highly rated" ? "Top Rated" :
                          itinerary.status === "most viewed" ? "Trending" :
                          "Popular"}
@@ -536,27 +514,27 @@ export default function ExplorePage() {
                 </div>
 
                 {/* Content Container */}
-                <div className="py-6 px-2 h-[230px]">
-                  <h3 className="text-2xl font-semibold mb-1">{itinerary.title}</h3>
-                  {/* <p className="text-gray-600 text-sm mb-4">{itinerary.description}</p> */}
-                  
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                <div className="py-4 px-2 h-[230px]">
+                  <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center flex-1">
-                      {/* <MapPin className="h-4 w-4 mr-1 flex-shrink-0" /> */}
-                      <div className="flex text-lg font-medium text-gray-500 mb-1">
-                        <span className=" mr-1">
-                          {itinerary.countries.length > 2 
-                            ? "Multi Country Trip"
-                            : itinerary.countries.join(' & ')}
-                        </span>
-                        in {itinerary.duration}
-                      </div>
+                    <h3 className="text-xl font-semibold mb-1">{itinerary.title}</h3>
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center text-gray-600">
                       <Users className="h-4 w-4 mr-1" />
                       2-4
                     </div>
                   </div>
+                  
+                  <div className="flex text-lg font-medium text-gray-500 mb-1">
+                    <span className=" mr-1">
+                      {itinerary.countries.length > 2 
+                        ? "Multi Country Trip"
+                        : itinerary.countries.join(' & ')}
+                    </span>
+                    in {itinerary.duration}
+                  </div>
+                  <p className="text-gray-600 text-sm mb-2">{itinerary.description}</p>
+                  
                   <div className="mb-4">
                     <span className="text-sm text-gray-500 truncate">
                       {itinerary.cities.join(' · ')}
@@ -574,7 +552,7 @@ export default function ExplorePage() {
                         </span>
                       ))}
                     </div>
-                    <span className="px-2 py-1 bg-black text-white text-md rounded-full capitalize">
+                    <span className="px-2 py-1 bg-black text-white text-md rounded-xl capitalize">
                         Est. {itinerary.price}
                       </span>
                   </div>

@@ -37,8 +37,8 @@ export function SearchArea() {
       // Build search params
       const searchParams = new URLSearchParams({
         destination: destination.trim(),
-        ...(duration && { duration }),
-        ...(budget && { budget }),
+        ...(duration && duration !== "any" && { duration }),
+        ...(budget && budget !== "any" && { budget }),
       });
 
       // Navigate to explore page with search params
@@ -52,7 +52,7 @@ export function SearchArea() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg relative z-[1]">
+    <div className="w-full max-w-4xl mx-auto bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg relative z-[1]">
       <form onSubmit={handleSearch} className="flex items-end gap-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
           <div className="space-y-2">
@@ -80,7 +80,7 @@ export function SearchArea() {
                 <SelectValue placeholder="Select duration" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Duration</SelectItem>
+                <SelectItem value="any">Any Duration</SelectItem>
                 <SelectItem value="1-3">1-3 days</SelectItem>
                 <SelectItem value="3-5">3-5 days</SelectItem>
                 <SelectItem value="6-8">6-8 days</SelectItem>
@@ -100,7 +100,7 @@ export function SearchArea() {
                 <SelectValue placeholder="Select budget" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Budget</SelectItem>
+                <SelectItem value="any">Any Budget</SelectItem>
                 <SelectItem value="0-1000">$0 - $1,000</SelectItem>
                 <SelectItem value="1000-3000">$1,000 - $3,000</SelectItem>
                 <SelectItem value="3000-5000">$3,000 - $5,000</SelectItem>
