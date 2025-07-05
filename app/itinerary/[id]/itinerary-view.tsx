@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Users, Clock, Hotel, Car, Share2, Heart, StickyNote, Utensils, Bike, BedDouble, Train } from "lucide-react"
+import { Calendar, MapPin, Users, Clock, Hotel, Car, Share2, Heart, StickyNote, Utensils, Bike, BedDouble, Train, Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DaySection } from "@/components/ui/day-section"
 
@@ -19,9 +19,9 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="flex flex-col w-full md:px-8 gap-6 lg:flex-row lg:h-[520px]">
-        <div className="w-full h-full rounded-3xl">
-          <div className="flex-1 h-screen max-h-[900px] md:h-[520px] relative md:rounded-3xl overflow-hidden">
+      <div className="flex flex-col px-4 md:px-8 gap-6 lg:flex-row lg:h-[520px]">
+        <div className="w-full h-full rounded-3xl shadow-lg">
+          <div className="flex-1 h-[480px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
               src={itinerary.image}
               alt={itinerary.title}
@@ -35,53 +35,10 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-white lg:max-w-2xl m-8 md:m-0 p-6 rounded-2xl bg-white/10 backdrop-blur-md md:bg-transparent md:backdrop-blur-none"
+                  className="text-white lg:max-w-2xl m-0 p-6"
                 >
-                  <h1 className="text-3xl md:text-5xl font-bold mb-4">{itinerary.title}</h1>
-                  <div>
-                    <span className="text-sm text-white truncate">
-                      {itinerary.cities.join(' · ')}
-                    </span>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-center my-4 relative w-[90px]">
-                      <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-100/10 rounded-full">
-                        <Train />
-                      </div>
-                      <p className="text-xs mt-2">Transportation</p>
-                      <div className="absolute rounded-full -right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-black bg-white/80">
-                        <p className="text-xs">5</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center my-4 relative w-[90px]">
-                      <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-100/10 rounded-full">
-                        <BedDouble />
-                      </div>
-                      <p className="text-xs mt-2">Accomodations</p>
-                      <div className="absolute rounded-full -right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-black bg-white/80">
-                        <p className="text-xs">5</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center my-4 relative w-[90px]">
-                      <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-100/10 rounded-full">
-                        <Bike />
-                      </div>
-                      <p className="text-xs mt-2">Activities</p>
-                      <div className="absolute rounded-full -right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-black bg-white/80">
-                        <p className="text-xs">5</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center my-4 relative w-[90px]">
-                      <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-100/10 rounded-full">
-                        <Utensils />
-                      </div>
-                      <p className="text-xs mt-2">Food</p>
-                      <div className="absolute rounded-full -right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-black bg-white/80">
-                        <p className="text-xs">2</p>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-sm md:text-xl mb-6">{itinerary.description}</p>
+                  <h1 className="text-4xl max-w-[80%] md:max-w-none leading-[50px] md:leading-none md:text-3xl md:text-5xl font-bold mb-4">{itinerary.title}</h1>
+                  <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.description}</p>
                   <div className="flex items-center gap-6 text-sm">
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 mr-2" />
@@ -101,9 +58,82 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
             </div>
           </div>
         </div>
-        <div className="flex h-full w-full lg:w-[40%]">
+
+        {/* Mobile Items List */}
+        <div className="flex justify-between">
+          <div className="block px-4 md:hidden">
+            <h2 className="font-semibold text-xl mb-2">Trip Overview</h2>
+            <span className="text-sm text-black truncate">
+              {itinerary.cities.join(' · ')}
+            </span>
+            <p className="text-gray-600 mt-2">{itinerary.description}</p>
+            <div className="flex gap-4 hidden">
+              <div className="flex flex-col items-center my-4 relative w-[90px]">
+                <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
+                  <Train />
+                </div>
+                <p className="text-xs mt-2">Transportation</p>
+                <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
+                  <p className="text-xs">5</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center my-4 relative w-[90px]">
+                <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
+                  <BedDouble />
+                </div>
+                <p className="text-xs mt-2">Accomodations</p>
+                <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
+                  <p className="text-xs">5</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center my-4 relative w-[90px]">
+                <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
+                  <Bike />
+                </div>
+                <p className="text-xs mt-2">Activities</p>
+                <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
+                  <p className="text-xs">5</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center my-4 relative w-[90px]">
+                <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
+                  <Utensils />
+                </div>
+                <p className="text-xs mt-2">Food</p>
+                <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
+                  <p className="text-xs">2</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex w-full mt-3 justify-between">
+              <p>2 Transports |</p>
+              <p>2 Restaurnts</p>
+              <p>4 Accomodations</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-6 mb-6">
+              <div className="flex items-center gap-4 mb-4">
+                <Image
+                  src={itinerary.creator.image}
+                  alt={itinerary.creator.name}
+                  width={50}
+                  height={50}
+                  className="rounded-full"
+                />
+                <div>
+                  <p className="font-medium">{itinerary.creator.name}</p>
+                  <p className="text-sm text-gray-600">
+                    {itinerary.creator.trips} trips created
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <Bookmark size={60} />
+        </div>
+        
+        <div className="flex h-full w-full lg:w-[40%] hidden lg:block ">
           <div className="flex flex-col h-full gap-4">
-            <div className="w-full relative rounded-3xl h-[40%] overflow-hidden hidden lg:block">
+            <div className="w-full relative rounded-3xl h-[40%] overflow-hidden">
               <Image
                 src="https://uploads.exoticca.com/p/16561/50656/i/ism_horizontal_aspect_ratio_3_29.jpg"
                 alt="Secondary view"
@@ -112,47 +142,11 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
               />
               <div className="absolute inset-0 bg-black/20" />
             </div>
-            
-            
-              <div className="bg-gray-100 block lg:hidden rounded-lg p-6 mb-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <Image
-                    src={itinerary.creator.image}
-                    alt={itinerary.creator.name}
-                    width={48}
-                    height={48}
-                    className="rounded-full"
-                  />
-                  <div>
-                    <p className="font-medium">{itinerary.creator.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {itinerary.creator.trips} trips created
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-gray-500" />
-                    <span>{itinerary.duration}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Hotel className="h-5 w-5 text-gray-500" />
-                    <span>Hotels & Ryokans</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Car className="h-5 w-5 text-gray-500" />
-                    <span>Private & Public Transport</span>
-                  </div>
-                </div>
-              </div>
 
             <div className="lg:bg-gray-800 w-full lg:h-[40%] rounded-3xl p-4 text-black lg:text-white flex flex-col justify-end gap-2">
-              <h3 className="font-bold text-lg block lg:hidden">Description</h3>
-              <p className="text-gray-600 lg:text-white">
-              {itinerary.details}
-              </p>
+              {itinerary.description}
             </div>
-            <div className="bg-gray-800 hidden lg:block w-full h-[20%] rounded-3xl p-4 text-white flex flex-col justify-end">
+            <div className="bg-gray-800 w-full h-[20%] rounded-3xl p-4 text-white flex flex-col justify-end">
               View all photos
             </div>
           </div>
@@ -161,7 +155,7 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
 
       <div className="container mx-auto px-4 py-8">
         {/* Action Buttons */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="hidden flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
             <Button size="lg" className="gap-2">
               Book Now - {itinerary.price}
@@ -187,7 +181,7 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
         </div>
 
         {/* Category Tags */}
-        <div className="mb-6">
+        <div className="hidden mb-6">
           <div className="flex flex-wrap gap-2">
             {itinerary.categories.map((category: string) => (
               <span
