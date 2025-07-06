@@ -3,9 +3,11 @@
 import { useState } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Users, Clock, Hotel, Car, Share2, Heart, StickyNote, Utensils, Bike, BedDouble, Train, Bookmark } from "lucide-react"
+import { Calendar, MapPin, Users, Clock, Hotel, Car, Share2, Heart, StickyNote, Utensils, Bike, BedDouble, Train, Bookmark, Star, X, ChevronUp, ChevronDown, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DaySection } from "@/components/ui/day-section"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
+import { cn } from "@/lib/utils"
 
 interface ItineraryViewProps {
   itinerary: any // TODO: Add proper type
@@ -13,15 +15,34 @@ interface ItineraryViewProps {
 }
 
 export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewProps) {
-  const [currentDay, setCurrentDay] = useState(null)
+  const [activeDays, setActiveDays] = useState<number[]>([])
   const [isLiked, setIsLiked] = useState(false)
+  const [showFullDetails, setShowFullDetails] = useState(false)
+
+  const toggleDay = (dayNumber: number) => {
+    setActiveDays(prev => 
+      prev.includes(dayNumber) 
+        ? prev.filter(d => 
+          d !== dayNumber)
+        : [...prev, dayNumber]
+    )
+  }
+
+  const closeAllDays = () => {
+    setActiveDays([])
+  }
+
+  const openAllDays = () => {
+    const days = itinerary.schedule.map((day: any) => day.day)
+    setActiveDays(days)
+  }
 
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="flex flex-col px-4 md:px-8 gap-6 lg:flex-row lg:h-[520px]">
-        <div className="w-full h-full rounded-3xl shadow-lg">
-          <div className="flex-1 h-[480px] md:h-[520px] relative rounded-3xl overflow-hidden">
+      <div className="flex flex-col sticky h-[calc(100vh-70px)] md:h-screen px-2 md:px-8 gap-6 lg:flex-row lg:h-[520px]">
+        <div className="w-full lg:h-full rounded-3xl shadow-xl">
+          <div className="flex-1 h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
               src={itinerary.image}
               alt={itinerary.title}
@@ -37,7 +58,7 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
                   animate={{ opacity: 1, y: 0 }}
                   className="text-white lg:max-w-2xl m-0 p-6"
                 >
-                  <h1 className="text-4xl max-w-[80%] md:max-w-none leading-[50px] md:leading-none md:text-3xl md:text-5xl font-bold mb-4">{itinerary.title}</h1>
+                  <h1 className="text-3xl max-w-[80%] md:max-w-none leading-[40px] md:leading-none md:text-3xl md:text-5xl font-bold mb-4">{itinerary.title}</h1>
                   <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.description}</p>
                   <div className="flex items-center gap-6 text-sm">
                     <div className="flex items-center">
@@ -60,75 +81,129 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
         </div>
 
         {/* Mobile Items List */}
-        <div className="flex justify-between">
-          <div className="block px-4 md:hidden">
-            <h2 className="font-semibold text-xl mb-2">Trip Overview</h2>
-            <span className="text-sm text-black truncate">
-              {itinerary.cities.join(' · ')}
-            </span>
-            <p className="text-gray-600 mt-2">{itinerary.description}</p>
-            <div className="flex gap-4 hidden">
-              <div className="flex flex-col items-center my-4 relative w-[90px]">
-                <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
-                  <Train />
-                </div>
-                <p className="text-xs mt-2">Transportation</p>
-                <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
-                  <p className="text-xs">5</p>
+        <div className="flex flex-col justify-between h-full md:h-auto lg:hidden">
+          <div className="block px-4">
+            <div className="flex justify-between">
+              <div>
+                <h2 className="font-semibold text-xl mb-2">Trip Overview</h2>
+                {/* <div className="flex md:hidden mb-2">
+                  <Star fill />
+                  <p>4.8 · (123 reviews)</p>
+                </div> */}
+                <span className="text-sm text-black truncate">
+                  {itinerary.cities.join(' · ')}
+                </span>
+                <p className="text-gray-600 mt-2">{itinerary.description}</p>
+                <div className="flex gap-4 hidden">
+                  <div className="flex flex-col items-center my-4 relative w-[90px]">
+                    <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
+                      <Train />
+                    </div>
+                    <p className="text-xs mt-2">Transportation</p>
+                    <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
+                      <p className="text-xs">5</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center my-4 relative w-[90px]">
+                    <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
+                      <BedDouble />
+                    </div>
+                    <p className="text-xs mt-2">Accomodations</p>
+                    <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
+                      <p className="text-xs">5</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center my-4 relative w-[90px]">
+                    <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
+                      <Bike />
+                    </div>
+                    <p className="text-xs mt-2">Activities</p>
+                    <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
+                      <p className="text-xs">5</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center my-4 relative w-[90px]">
+                    <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
+                      <Utensils />
+                    </div>
+                    <p className="text-xs mt-2">Food</p>
+                    <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
+                      <p className="text-xs">2</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-col items-center my-4 relative w-[90px]">
-                <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
-                  <BedDouble />
-                </div>
-                <p className="text-xs mt-2">Accomodations</p>
-                <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
-                  <p className="text-xs">5</p>
-                </div>
-              </div>
-              <div className="flex flex-col items-center my-4 relative w-[90px]">
-                <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
-                  <Bike />
-                </div>
-                <p className="text-xs mt-2">Activities</p>
-                <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
-                  <p className="text-xs">5</p>
-                </div>
-              </div>
-              <div className="flex flex-col items-center my-4 relative w-[90px]">
-                <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
-                  <Utensils />
-                </div>
-                <p className="text-xs mt-2">Food</p>
-                <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
-                  <p className="text-xs">2</p>
-                </div>
+              <div className="flex">
+                <Bookmark size={35}
+                className={`transition-colors cursor-pointer ${
+                  itinerary.title.includes('Japan')
+                    ? "fill-red-500 text-red-500"
+                    : "text-gray-600"
+                }`}
+                />
+                <Share2 size={35} className="cursor-pointer" />
               </div>
             </div>
-            <div className="flex w-full mt-3 justify-between">
-              <p>2 Transports |</p>
-              <p>2 Restaurnts</p>
+            
+            <div className="w-full flex justify-around my-3 justify-between">
+              <p>2 Transports</p>
+              <span>|</span>
+              <p>2 Restaurants</p>
+              <span>|</span>
               <p>4 Accomodations</p>
+              <span className="hidden md:block">|</span>
+              <div className="hidden md:flex">
+                <Star fill />
+                <Star fill />
+                <Star fill />
+                <Star fill />
+                <Star fill />
+              </div>
             </div>
-            <div className="bg-gray-50 rounded-xl p-6 mb-6">
-              <div className="flex items-center gap-4 mb-4">
+          </div>
+
+          <div className="bg-gray-100 flex flex-col gap-2 w-full rounded-xl p-4">
+            <div className="flex justify-between w-full">
+              <div className="flex items-center gap-4">
                 <Image
                   src={itinerary.creator.image}
                   alt={itinerary.creator.name}
                   width={50}
-                  height={50}
+                  height={56}
                   className="rounded-full"
                 />
                 <div>
-                  <p className="font-medium">{itinerary.creator.name}</p>
+                  <p className="font-medium">Created by {itinerary.creator.name}</p>
                   <p className="text-sm text-gray-600">
-                    {itinerary.creator.trips} trips created
+                    {itinerary.creator.title} · {itinerary.creator.trips} trips created
                   </p>
                 </div>
               </div>
+              <button className="hover:bg-gray-200 rounded-lg px-8 text-sm transition-colors bg-[#000000] text-[#ffffff]">
+                Follow
+              </button>
+            </div>
+            <div>
+              <p className={cn(
+                "text-md text-gray-700",
+                !showFullDetails && "line-clamp-2"
+              )}>
+                {itinerary.details}
+              </p>
+              {itinerary.details.length > 100 && (
+                <button 
+                  onClick={() => setShowFullDetails(!showFullDetails)}
+                  className="text-sm text-gray-500 hover:text-gray-700 mt-1 flex items-center gap-1"
+                >
+                  {showFullDetails ? 'Show less' : 'Read more'}
+                  <ChevronRight className={cn(
+                    "h-4 w-4 transition-transform",
+                    showFullDetails && "rotate-90"
+                  )} />
+                </button>
+              )}
             </div>
           </div>
-          <Bookmark size={60} />
         </div>
         
         <div className="flex h-full w-full lg:w-[40%] hidden lg:block ">
@@ -198,71 +273,205 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Schedule */}
           <div className="lg:col-span-2">
-            <h2 className="text-2xl font-semibold mb-6">Itinerary Schedule</h2>
-            <div className="flex flex-col gap-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold">Itinerary Schedule</h2>
+              {activeDays.length > 0 ? (
+                <div onClick={closeAllDays} className="flex cursor-pointer items-center gap-2">
+                Close All
+                <ChevronUp size={16} />
+              </div>
+              ) : (
+                <div onClick={openAllDays} className="flex cursor-pointer items-center gap-2">
+                  Open All
+                  <ChevronDown size={16} />
+                </div>
+              )
+              }
+            </div>
+            <div className="flex flex-col">
               {itinerary.schedule.map((day: any) => (
                 <DaySection
                   key={day.day}
                   day={day}
-                  isActive={currentDay === day.day}
-                  onClick={() => setCurrentDay(currentDay === day.day ? null : day.day)}
+                  isActive={activeDays.includes(day.day)}
+                  onToggle={() => toggleDay(day.day)}
+                  onClose={() => toggleDay(day.day)}
                 />
               ))}
             </div>
+
+            {/* Creator Notes */}
+            <div className="mt-12 px-4 block lg:hidden">
+                <h3 className="text-lg font-semibold mb-4">Creator Notes</h3>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="preparation">
+                    <AccordionTrigger>Trip Preparation</AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="list-disc pl-4 space-y-2">
+                        <li>Best time to visit: {itinerary.bestTimeToVisit || 'Spring and Fall'}</li>
+                        <li>Recommended duration: {itinerary.duration}</li>
+                        <li>Budget estimate: {itinerary.budgetEstimate || 'Mid-range'}</li>
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="tips">
+                    <AccordionTrigger>Travel Tips</AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="list-disc pl-4 space-y-2">
+                        {itinerary.travelTips?.map((tip: string, index: number) => (
+                          <li key={index}>{tip}</li>
+                        )) || (
+                          <>
+                            <li>Book accommodations in advance</li>
+                            <li>Check local weather conditions</li>
+                            <li>Research local customs and etiquette</li>
+                          </>
+                        )}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="transportation">
+                    <AccordionTrigger>Transportation Guide</AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="list-disc pl-4 space-y-2">
+                        {itinerary.transportationTips?.map((tip: string, index: number) => (
+                          <li key={index}>{tip}</li>
+                        )) || (
+                          <>
+                            <li>Consider getting a rail pass</li>
+                            <li>Download local transport apps</li>
+                            <li>Book airport transfers in advance</li>
+                          </>
+                        )}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="cultural">
+                    <AccordionTrigger>Cultural Insights</AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="list-disc pl-4 space-y-2">
+                        {itinerary.culturalNotes?.map((note: string, index: number) => (
+                          <li key={index}>{note}</li>
+                        )) || (
+                          <>
+                            <li>Learn basic local phrases</li>
+                            <li>Respect local customs</li>
+                            <li>Try local specialties</li>
+                          </>
+                        )}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
           </div>
 
           {/* Right Column - Details & Notes */}
           <div className="hidden lg:block">
             <div className="sticky top-24">
               <h2 className="text-2xl font-semibold mb-6">Trip Details</h2>
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="relative h-12 w-12 rounded-full overflow-hidden">
                   <Image
-                    src={itinerary.creator.image}
+                    src={itinerary.creator.avatar}
                     alt={itinerary.creator.name}
-                    width={48}
-                    height={48}
-                    className="rounded-full"
+                    fill
+                    className="object-cover"
                   />
-                  <div>
-                    <p className="font-medium">{itinerary.creator.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {itinerary.creator.trips} trips created
-                    </p>
-                  </div>
                 </div>
-                <p className="text-gray-600 mb-6">{itinerary.details}</p>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-gray-500" />
-                    <span>{itinerary.duration}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Hotel className="h-5 w-5 text-gray-500" />
-                    <span>Hotels & Ryokans</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Car className="h-5 w-5 text-gray-500" />
-                    <span>Private & Public Transport</span>
-                  </div>
+                <div>
+                  <p className="font-medium">{itinerary.creator.name}</p>
+                  <p className="text-sm text-gray-600">
+                    {itinerary.creator.trips} trips created
+                  </p>
+                </div>
+              </div>
+              <p className="text-gray-600 mb-6">{itinerary.details}</p>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-gray-500" />
+                  <span>{itinerary.duration}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Hotel className="h-5 w-5 text-gray-500" />
+                  <span>Hotels & Ryokans</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Car className="h-5 w-5 text-gray-500" />
+                  <span>Private & Public Transport</span>
                 </div>
               </div>
 
-              {/* Add Note */}
-              {/* <div className="mt-6">
-                <h4 className="font-medium mb-2">Add Personal Note</h4>
-                <Textarea
-                  placeholder="Write your travel notes here..."
-                  className="min-h-[100px]"
-                />
-                <Button className="mt-2 w-full">Save Note</Button>
-              </div> */}
+              {/* Creator Notes */}
+              <div className="mt-8 hidden lg:block">
+                <h3 className="text-lg font-semibold mb-4">Creator Notes</h3>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="preparation">
+                    <AccordionTrigger>Trip Preparation</AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="list-disc pl-4 space-y-2">
+                        <li>Best time to visit: {itinerary.bestTimeToVisit || 'Spring and Fall'}</li>
+                        <li>Recommended duration: {itinerary.duration}</li>
+                        <li>Budget estimate: {itinerary.budgetEstimate || 'Mid-range'}</li>
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="tips">
+                    <AccordionTrigger>Travel Tips</AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="list-disc pl-4 space-y-2">
+                        {itinerary.travelTips?.map((tip: string, index: number) => (
+                          <li key={index}>{tip}</li>
+                        )) || (
+                          <>
+                            <li>Book accommodations in advance</li>
+                            <li>Check local weather conditions</li>
+                            <li>Research local customs and etiquette</li>
+                          </>
+                        )}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="transportation">
+                    <AccordionTrigger>Transportation Guide</AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="list-disc pl-4 space-y-2">
+                        {itinerary.transportationTips?.map((tip: string, index: number) => (
+                          <li key={index}>{tip}</li>
+                        )) || (
+                          <>
+                            <li>Consider getting a rail pass</li>
+                            <li>Download local transport apps</li>
+                            <li>Book airport transfers in advance</li>
+                          </>
+                        )}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="cultural">
+                    <AccordionTrigger>Cultural Insights</AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="list-disc pl-4 space-y-2">
+                        {itinerary.culturalNotes?.map((note: string, index: number) => (
+                          <li key={index}>{note}</li>
+                        )) || (
+                          <>
+                            <li>Learn basic local phrases</li>
+                            <li>Respect local customs</li>
+                            <li>Try local specialties</li>
+                          </>
+                        )}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Similar Itineraries */}
-        <div className="mt-16">
+        <div className="mt-24">
           <h2 className="text-2xl font-semibold mb-6">Similar Itineraries</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {similarItineraries.map((item) => (
