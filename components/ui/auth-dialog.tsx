@@ -42,7 +42,9 @@ export function AuthDialog() {
 
   const setSessionCookie = async (user: any) => {
     const token = await getIdToken(user)
-    document.cookie = `firebase-session-token=${token}; path=/; max-age=3600; SameSite=Strict`
+    // Set both cookies for compatibility
+    document.cookie = `__session=${token}; path=/; max-age=3600; SameSite=Strict`
+    document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Strict`
   }
 
   const onSubmit = async (data: AuthFormData) => {

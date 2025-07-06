@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Circle, Hotel, MapPin, Map, Search, Utensils, Car, ChevronUp, Footprints } from "lucide-react";
+import { Circle, Hotel, MapPin, Map, Utensils, Car, ChevronUp } from "lucide-react";
+import { TbWalk } from "react-icons/tb";
 
 export interface DaySectionProps {
   day: {
@@ -92,7 +93,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
                       ) : activity.type === 'transportation' ? (
                         <Car />
                       ) : activity.type === 'sightseeing' ? (
-                        <Footprints />
+                        <TbWalk size={28}/>
                       ) : activity.type === 'culture' ? (
                         <Map />
                       ) : ''}

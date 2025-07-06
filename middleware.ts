@@ -33,6 +33,9 @@ export const config = {
 // This is a placeholder function - replace with your actual auth check
 function checkAuthStatus(request: NextRequest): boolean {
   // Check for Firebase Auth session cookie
-  const firebaseSession = request.cookies.get('firebase-session-token')
-  return !!firebaseSession
+  const firebaseSession = request.cookies.get('__session') // Firebase uses __session cookie
+  const firebaseToken = request.cookies.get('firebase-token') // Fallback for token
+  const authHeader = request.headers.get('Authorization')?.split('Bearer ')[1]
+  
+  return !!(firebaseSession || firebaseToken || authHeader)
 } 

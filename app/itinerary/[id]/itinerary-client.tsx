@@ -17,8 +17,7 @@ const itinerary = {
     "Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun.",
   image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1470&auto=format&fit=crop",
   duration: "14 days",
-  countries: ["Japan"],
-  cities: ["Tokyo", "Kyoto", "Osaka", "Hakone", "Nara"],
+  destinations: ["Tokyo", "Kyoto", "Osaka", "Hakone", "Nara"],
   price: "$3,499",
   rating: 4.8,
   reviews: 24,
@@ -132,8 +131,7 @@ const similarItineraries = [
     title: "South Korean Adventure",
     destination: "Seoul",
     countries: ["South Korea"],
-    cities: ["Tokyo", "Kyoto", "Ontario"],
-    imageUrl: "https://images.unsplash.com/photo-1470004914212-05527e49370b?q=80&w=1374&auto=format&fit=crop",
+    imageUrl: "https://images.unsplash.com/photo-1538485399081-7c8272e0fe66?q=80&w=1374&auto=format&fit=crop",
     duration: 10,
     price: 2899,
   },
@@ -142,7 +140,6 @@ const similarItineraries = [
     title: "Taiwan Food & Culture",
     destination: "Taipei",
     countries: ["Taiwan"],
-    cities: ["Tokyo", "Kyoto", "Ontario"],
     imageUrl: "https://images.unsplash.com/photo-1470004914212-05527e49370b?q=80&w=1374&auto=format&fit=crop",
     duration: 7,
     price: 1999,
@@ -152,7 +149,6 @@ const similarItineraries = [
     title: "Vietnam Heritage Tour",
     destination: "Hanoi",
     countries: ["Vietnam"],
-    cities: ["Tokyo", "Kyoto", "Ontario"],
     imageUrl: "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1470&auto=format&fit=crop",
     duration: 12,
     price: 2499,
@@ -162,7 +158,6 @@ const similarItineraries = [
     title: "Thailand Island Hopping",
     destination: "Bangkok",
     countries: ["Thailand"],
-    cities: ["Tokyo", "Kyoto", "Ontario"],
     imageUrl: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1439&auto=format&fit=crop",
     duration: 14,
     price: 2699,
@@ -207,7 +202,7 @@ export default function ItineraryClient({ params }: Props) {
                 </div>
                 <div className="flex items-center">
                   <MapPin className="h-5 w-5 mr-2" />
-                  {itinerary.countries[0]}
+                  {itinerary.destinations[0]}
                 </div>
                 <div className="flex items-center">
                   <Users className="h-5 w-5 mr-2" />
@@ -262,6 +257,40 @@ export default function ItineraryClient({ params }: Props) {
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Schedule */}
+          <div className="lg:col-span-2">
+            <h2 className="text-2xl font-semibold mb-6">Itinerary Schedule</h2>
+            <div className="space-y-6">
+              {itinerary.schedule.map((day) => (
+                <DaySection
+                  key={day.day}
+                  day={day}
+                  isActive={currentDay === day.day}
+                  onClick={() => setCurrentDay(day.day)}
+                />
+              ))}
+              
+
+              {/* Creator Notes */}
+              <h3 className="text-xl font-semibold mb-4">Creator Notes</h3>
+              <Accordion type="single" collapsible className="w-full">
+                {itinerary.creator.notes.map((note, index) => (
+                  <AccordionItem key={index} value={`note-${index}`}>
+                    <AccordionTrigger className="text-left">
+                      <div className="flex items-center gap-2">
+                        <StickyNote className="h-4 w-4" />
+                        {note.title}
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-gray-600">{note.content}</p>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          </div>
+
           {/* Right Column - Details & Notes */}
           <div>
             <div className="sticky top-24">
@@ -299,40 +328,15 @@ export default function ItineraryClient({ params }: Props) {
                 </div>
               </div>
 
-            </div>
-          </div>
-
-          {/*  Column - Schedule */}
-          <div className="lg:col-span-2">
-            <h2 className="text-2xl font-semibold mb-6">Itinerary Schedule</h2>
-            <div className="space-y-6">
-              {itinerary.schedule.map((day) => (
-                <DaySection
-                  key={day.day}
-                  day={day}
-                  isActive={currentDay === day.day}
-                  onClick={() => setCurrentDay(day.day)}
+              {/* Add Note */}
+              {/* <div className="mt-6">
+                <h4 className="font-medium mb-2">Add Personal Note</h4>
+                <Textarea
+                  placeholder="Write your travel notes here..."
+                  className="min-h-[100px]"
                 />
-              ))}
-              
-
-              {/* Creator Notes */}
-              <h3 className="text-xl font-semibold mb-4">Creator Notes</h3>
-              <Accordion type="single" collapsible className="w-full">
-                {itinerary.creator.notes.map((note, index) => (
-                  <AccordionItem key={index} value={`note-${index}`}>
-                    <AccordionTrigger className="text-left">
-                      <div className="flex items-center gap-2">
-                        <StickyNote className="h-4 w-4" />
-                        {note.title}
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <p className="text-gray-600">{note.content}</p>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+                <Button className="mt-2 w-full">Save Note</Button>
+              </div> */}
             </div>
           </div>
         </div>

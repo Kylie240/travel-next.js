@@ -2,176 +2,790 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MapPin, Calendar, Plus, Minus } from "lucide-react"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
+import { MapPin, Calendar, Plus, Minus, Image as ImageIcon, Clock, Hotel, Utensils, Map, Search, Car, GripVertical, Trash2 } from "lucide-react"
+import { auth } from "@/lib/firebase"
+import { BlackBanner } from "@/components/ui/black-banner"
+import { PenSquare } from "lucide-react"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-// This is a placeholder for actual auth check - replace with your auth system
-const useAuth = () => {
-  // Replace this with actual auth logic
-  return {
-    isAuthenticated: true, // Temporarily true for development
-    user: {
-      name: "John Doe",
-      email: "john@example.com"
-    }
-  }
+interface TripDay {
+  id: string;
+  image?: string;
+  cityName: string;
+  countryName: string;
+  title: string;
+  description: string;
+  notes?: string;
+  activities: Array<{
+    id: string;
+    time?: string;
+    image?: string;
+    title: string;
+    description: string;
+    type: 'food' | 'sightseeing' | 'culture' | 'transportation' | 'accommodation';
+    link: string;
+    photos?: string[];
+    price?: number;
+  }>;
+  accommodation: {
+    name: string;
+    type: string;
+    location: string;
+    price?: number;
+    photos?: string[];
+  };
 }
 
-interface Destination {
-  id: string;
+interface TripData {
   name: string;
-  duration: number;
+  shortDescription: string;
+  mainImage: string;
+  detailedOverview: string;
+  length: number;
+  countries: string[];
+  days: TripDay[];
+  categories: string[];
+  notes: string[];
+}
+
+const ACTIVITY_TYPES = [
+  { value: 'food', label: 'Food & Dining', icon: Utensils },
+  { value: 'sightseeing', label: 'Sightseeing', icon: Search },
+  { value: 'culture', label: 'Cultural Activity', icon: Map },
+  { value: 'transportation', label: 'Transportation', icon: Car },
+  { value: 'accommodation', label: 'Accommodation', icon: Hotel },
+];
+
+const INITIAL_DAY: TripDay = {
+  id: '1',
+  cityName: '',
+  countryName: '',
+  activities: [],
+  accommodation: {
+    name: '',
+    type: '',
+    location: '',
+  }
+};
+
+function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveDay }: { 
+  day: TripDay; 
+  onUpdate: (updates: Partial<TripDay>) => void;
+  onRemoveActivity: (activityId: string) => void;
+  onAddActivity: () => void;
+  onRemoveDay: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: day.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <AccordionItem value={day.id} className="border rounded-lg p-4 mb-4 bg-white">
+        <div className="flex items-center gap-4">
+          <div {...attributes} {...listeners} className="cursor-grab hover:text-gray-600">
+            <GripVertical size={20} />
+          </div>
+          <div className="flex-1">
+            <AccordionTrigger>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 text-left">
+                  <h3 className="text-lg font-semibold">Day {parseInt(day.id)}</h3>
+                  {day.cityName && (
+                    <p className="text-sm text-gray-600">
+                      {day.cityName}, {day.countryName}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </AccordionTrigger>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.preventDefault();
+              onRemoveDay();
+            }}
+            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <AccordionContent>
+          <div className="space-y-4 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>City</Label>
+                <Input
+                  value={day.cityName}
+                  onChange={e => onUpdate({ cityName: e.target.value })}
+                  placeholder="Tokyo"
+                />
+              </div>
+              <div>
+                <Label>Country</Label>
+                <Input
+                  value={day.countryName}
+                  onChange={e => onUpdate({ countryName: e.target.value })}
+                  placeholder="Japan"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label>Title</Label>
+                <Input
+                  value={day.title}
+                  onChange={e => onUpdate({ countryName: e.target.value })}
+                  placeholder="Tokyo Exploration"
+                />
+            </div>
+            
+            <div>
+              <Label>Image (optional)</Label>
+                <Input
+                  value={day.image}
+                  onChange={e => onUpdate({ countryName: e.target.value })}
+                  placeholder=""
+                />
+            </div>
+
+            <div>
+              <Label>Description</Label>
+                <Input
+                  value={day.description}
+                  onChange={e => onUpdate({ countryName: e.target.value })}
+                  placeholder="Discover the highlights of Tokyo's most famous districts"
+                />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label>Activities (optional)</Label>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={onAddActivity}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Activity
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {day.activities.map((activity, index) => (
+                  <div key={activity.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1 grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Time</Label>
+                          <Input
+                            type="time"
+                            value={activity.time || ''}
+                            onChange={e => onUpdate({
+                              activities: day.activities.map((a, i) =>
+                                i === index ? { ...a, time: e.target.value } : a
+                              )
+                            })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Type</Label>
+                          <select
+                            value={activity.type}
+                            onChange={e => onUpdate({
+                              activities: day.activities.map((a, i) =>
+                                i === index ? { ...a, type: e.target.value as any } : a
+                              )
+                            })}
+                            className="w-full p-2 border rounded-md"
+                          >
+                            {ACTIVITY_TYPES.map(type => (
+                              <option key={type.value} value={type.value}>
+                                {type.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRemoveActivity(activity.id)}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Title</Label>
+                        <Input
+                          value={activity.title}
+                          onChange={e => onUpdate({
+                            activities: day.activities.map((a, i) =>
+                              i === index ? { ...a, title: e.target.value } : a
+                            )
+                          })}
+                          placeholder="Activity title"
+                        />
+                      </div>
+                      <div>
+                      <Label>Image (optional)</Label>
+                        <Input
+                          value={day.image}
+                          onChange={e => onUpdate({ countryName: e.target.value })}
+                          placeholder=""
+                        />
+                      </div>
+                      <div>
+                        <Label>Description</Label>
+                        <textarea
+                          value={activity.description}
+                          onChange={e => onUpdate({
+                            activities: day.activities.map((a, i) =>
+                              i === index ? { ...a, description: e.target.value } : a
+                            )
+                          })}
+                          placeholder="Activity description"
+                          className="w-full p-2 border rounded-md min-h-[100px]"
+                        />
+                      </div>
+                      <div>
+                        <Label>Link</Label>
+                          <Input
+                            value={activity.link}
+                            onChange={e => onUpdate({ countryName: e.target.value })}
+                            placeholder="Add booking link, or a link to a website with more information"
+                          />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label>Accommodation</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  value={day.accommodation.name}
+                  onChange={e => onUpdate({
+                    accommodation: { ...day.accommodation, name: e.target.value }
+                  })}
+                  placeholder="Accommodation name"
+                />
+                <Input
+                  value={day.accommodation.type}
+                  onChange={e => onUpdate({
+                    accommodation: { ...day.accommodation, type: e.target.value }
+                  })}
+                  placeholder="Type (e.g., Hotel, Hostel)"
+                />
+              </div>
+              <div className="mt-2">
+                <Input
+                  value={day.accommodation.location}
+                  onChange={e => onUpdate({
+                    accommodation: { ...day.accommodation, location: e.target.value }
+                  })}
+                  placeholder="Location"
+                />
+              </div>
+            </div>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </div>
+  );
 }
 
 export default function CreatePage() {
   const router = useRouter()
-  const { isAuthenticated } = useAuth()
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [destinations, setDestinations] = useState<Destination[]>([
-    { id: "1", name: "", duration: 1 }
-  ])
+  const [user, setUser] = useState(auth.currentUser)
+  const [isLoading, setIsLoading] = useState(true)
+  const [currentStep, setCurrentStep] = useState(1)
+  const [tripData, setTripData] = useState<TripData>({
+    name: '',
+    shortDescription: '',
+    mainImage: '',
+    detailedOverview: '',
+    length: 1,
+    countries: [''],
+    days: [INITIAL_DAY],
+    categories: [],
+    notes: []
+  })
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login")
-    }
-  }, [isAuthenticated, router])
-
-  const addDestination = () => {
-    setDestinations([
-      ...destinations,
-      { id: Math.random().toString(), name: "", duration: 1 }
-    ])
-  }
-
-  const removeDestination = (id: string) => {
-    if (destinations.length > 1) {
-      setDestinations(destinations.filter(dest => dest.id !== id))
-    }
-  }
-
-  const updateDestination = (id: string, field: keyof Destination, value: string | number) => {
-    setDestinations(destinations.map(dest => 
-      dest.id === id ? { ...dest, [field]: value } : dest
-    ))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle form submission - integrate with your backend
-    console.log({
-      title,
-      description,
-      destinations
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user)
+      setIsLoading(false)
     })
+
+    return () => unsubscribe()
+  }, [])
+
+  const handleBasicInfoSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Create initial days based on trip length
+    const days = Array.from({ length: tripData.length }, (_, i) => ({
+      ...INITIAL_DAY,
+      id: (i + 1).toString()
+    }))
+    setTripData(prev => ({ ...prev, days }))
+    setCurrentStep(2)
   }
 
-  if (!isAuthenticated) {
-    return null // or a loading state
+  const handleDayPlanningSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setCurrentStep(3)
+  }
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    // TODO: Submit to backend
+    console.log(tripData)
+  }
+
+  const updateDay = (dayId: string, updates: Partial<TripDay>) => {
+    setTripData(prev => ({
+      ...prev,
+      days: prev.days.map(day => 
+        day.id === dayId ? { ...day, ...updates } : day
+      )
+    }))
+  }
+
+  const addActivity = (dayId: string) => {
+    const newActivity = {
+      id: Math.random().toString(),
+      title: '',
+      description: '',
+      type: 'sightseeing' as const
+    }
+    setTripData(prev => ({
+      ...prev,
+      days: prev.days.map(day => 
+        day.id === dayId 
+          ? { ...day, activities: [...day.activities, newActivity] }
+          : day
+      )
+    }))
+  }
+
+  const updateActivity = (dayId: string, activityId: string, updates: Partial<TripDay['activities'][0]>) => {
+    setTripData(prev => ({
+      ...prev,
+      days: prev.days.map(day => 
+        day.id === dayId 
+          ? {
+              ...day,
+              activities: day.activities.map(activity =>
+                activity.id === activityId
+                  ? { ...activity, ...updates }
+                  : activity
+              )
+            }
+          : day
+      )
+    }))
+  }
+
+  const removeActivity = (dayId: string, activityId: string) => {
+    setTripData(prev => ({
+      ...prev,
+      days: prev.days.map(day => 
+        day.id === dayId 
+          ? {
+              ...day,
+              activities: day.activities.filter(a => a.id !== activityId)
+            }
+          : day
+      )
+    }))
+  }
+
+  const removeDay = (dayId: string) => {
+    if (tripData.days.length <= 1) {
+      return; // Don't remove the last day
+    }
+    
+    const newDays = tripData.days.filter(day => day.id !== dayId);
+    // Renumber the remaining days
+    const updatedDays = newDays.map((day, index) => ({
+      ...day,
+      id: (index + 1).toString()
+    }));
+    
+    setTripData(prev => ({
+      ...prev,
+      days: updatedDays,
+      length: updatedDays.length
+    }));
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setTripData((prev) => {
+        const oldIndex = prev.days.findIndex((day) => day.id === active.id);
+        const newIndex = prev.days.findIndex((day) => day.id === over.id);
+        
+        const newDays = arrayMove(prev.days, oldIndex, newIndex);
+        // Update day IDs to maintain order
+        return {
+          ...prev,
+          days: newDays.map((day, index) => ({
+            ...day,
+            id: (index + 1).toString()
+          }))
+        };
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <BlackBanner
+        icon={<PenSquare className="w-4 h-4" />}
+        subtitle="Create an Itinerary"
+        title="Sign in to Start Creating"
+        description="Join our community to create and share your travel experiences with fellow adventurers."
+      />
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-3xl">
+      <div className="container mx-auto px-4 max-w-4xl">
         <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-3xl font-semibold mb-6">Create New Itinerary</h1>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic Information */}
-            <div className="space-y-4">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-semibold">Create New Itinerary</h1>
+            <div className="flex gap-2">
+              {[1, 2, 3].map(step => (
+                <div
+                  key={step}
+                  className={`w-3 h-3 rounded-full ${
+                    currentStep === step 
+                      ? 'bg-blue-500' 
+                      : currentStep > step 
+                        ? 'bg-green-500' 
+                        : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {currentStep === 1 && (
+            <form onSubmit={handleBasicInfoSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="name">Trip Name</Label>
                 <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter itinerary title"
+                  id="name"
+                  value={tripData.name}
+                  onChange={e => setTripData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter your trip name"
                   required
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="description">Description</Label>
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe your itinerary"
-                  className="w-full p-2 border rounded-md min-h-[100px]"
+                <Label htmlFor="shortDescription">Short Description</Label>
+                <Input
+                  id="shortDescription"
+                  value={tripData.shortDescription}
+                  onChange={e => setTripData(prev => ({ ...prev, shortDescription: e.target.value }))}
+                  placeholder="Give readers a quick overview of your trip"
                   required
                 />
               </div>
-            </div>
 
-            {/* Destinations */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Destinations</h2>
-              <div className="space-y-4">
-                {destinations.map((dest, index) => (
-                  <div key={dest.id} className="flex gap-4 items-start">
-                    <div className="flex-1">
-                      <Label htmlFor={`destination-${dest.id}`}>Destination {index + 1}</Label>
-                      <Input
-                        id={`destination-${dest.id}`}
-                        value={dest.name}
-                        onChange={(e) => updateDestination(dest.id, "name", e.target.value)}
-                        placeholder="Enter destination name"
-                        required
-                      />
-                    </div>
-                    <div className="w-32">
-                      <Label htmlFor={`duration-${dest.id}`}>Days</Label>
-                      <Input
-                        id={`duration-${dest.id}`}
-                        type="number"
-                        min="1"
-                        value={dest.duration}
-                        onChange={(e) => updateDestination(dest.id, "duration", parseInt(e.target.value))}
-                        required
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="mt-6"
-                      onClick={() => removeDestination(dest.id)}
-                      disabled={destinations.length === 1}
-                    >
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+              <div>
+                <Label htmlFor="mainImage">Main Image URL</Label>
+                <Input
+                  id="mainImage"
+                  value={tripData.mainImage}
+                  onChange={e => setTripData(prev => ({ ...prev, mainImage: e.target.value }))}
+                  placeholder="URL of the main trip image"
+                  required
+                />
               </div>
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addDestination}
-                className="mt-4"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Destination
-              </Button>
-            </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
+              <div>
+                <Label htmlFor="detailedOverview">Detailed Overview (optional)</Label>
+                <textarea
+                  id="detailedOverview"
+                  value={tripData.detailedOverview}
+                  onChange={e => setTripData(prev => ({ ...prev, detailedOverview: e.target.value }))}
+                  placeholder="Detailed description of your trip"
+                  className="w-full p-2 border rounded-md min-h-[150px]"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="length">Trip Length (days)</Label>
+                <Input
+                  id="length"
+                  type="number"
+                  min="1"
+                  value={tripData.length}
+                  onChange={e => setTripData(prev => ({ ...prev, length: parseInt(e.target.value) }))}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label>Countries</Label>
+                <div className="space-y-2">
+                  {tripData.countries.map((country, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={country}
+                        onChange={e => {
+                          const newCountries = [...tripData.countries]
+                          newCountries[index] = e.target.value
+                          setTripData(prev => ({ ...prev, countries: newCountries }))
+                        }}
+                        placeholder="Enter country name"
+                        required
+                      />
+                      {index === tripData.countries.length - 1 ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setTripData(prev => ({ 
+                            ...prev, 
+                            countries: [...prev.countries, ''] 
+                          }))}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            const newCountries = tripData.countries.filter((_, i) => i !== index)
+                            setTripData(prev => ({ ...prev, countries: newCountries }))
+                          }}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4">
+                <Button type="submit">
+                  Next: Plan Days
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {currentStep === 2 && (
+            <form onSubmit={handleDayPlanningSubmit} className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Day Planning</h2>
+              </div>
+
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
               >
-                Cancel
-              </Button>
-              <Button type="submit">
-                Create Itinerary
-              </Button>
-            </div>
-          </form>
+                <SortableContext
+                  items={tripData.days.map(day => day.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <Accordion type="multiple" className="space-y-4">
+                    {tripData.days.map((day) => (
+                      <SortableDay
+                        key={day.id}
+                        day={day}
+                        onUpdate={(updates) => updateDay(day.id, updates)}
+                        onRemoveActivity={(activityId) => removeActivity(day.id, activityId)}
+                        onAddActivity={() => addActivity(day.id)}
+                        onRemoveDay={() => removeDay(day.id)}
+                      />
+                    ))}
+                  </Accordion>
+                </SortableContext>
+              </DndContext>
+
+              <div className="flex w-full justify-start items-center gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const newDayId = (tripData.days.length + 1).toString();
+                      setTripData(prev => ({
+                        ...prev,
+                        length: prev.length + 1,
+                        days: [...prev.days, { ...INITIAL_DAY, id: newDayId }]
+                      }))
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Day
+                  </Button>
+                </div>
+
+              <div className="flex justify-end gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCurrentStep(1)}
+                >
+                  Previous
+                </Button>
+                <Button type="submit">
+                  Next: Final Details
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {currentStep === 3 && (
+            <form onSubmit={handleFinalSubmit} className="space-y-6">
+              <div>
+                <Label>Categories</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  {['Adventure', 'Culture', 'Food', 'Nature', 'Relaxation', 'Urban'].map(category => (
+                    <label key={category} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={tripData.categories.includes(category)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setTripData(prev => ({
+                              ...prev,
+                              categories: [...prev.categories, category]
+                            }))
+                          } else {
+                            setTripData(prev => ({
+                              ...prev,
+                              categories: prev.categories.filter(c => c !== category)
+                            }))
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      {category}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label>Useful Notes</Label>
+                <div className="space-y-2">
+                  {tripData.notes.map((note, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={note}
+                        onChange={e => {
+                          const newNotes = [...tripData.notes]
+                          newNotes[index] = e.target.value
+                          setTripData(prev => ({ ...prev, notes: newNotes }))
+                        }}
+                        placeholder="Add a useful note for readers"
+                      />
+                      {index === tripData.notes.length - 1 ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setTripData(prev => ({
+                            ...prev,
+                            notes: [...prev.notes, '']
+                          }))}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            const newNotes = tripData.notes.filter((_, i) => i !== index)
+                            setTripData(prev => ({ ...prev, notes: newNotes }))
+                          }}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4">
+                <Button type="button" variant="outline" onClick={() => setCurrentStep(2)}>
+                  Previous
+                </Button>
+                <Button type="submit">
+                  Create Itinerary
+                </Button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>

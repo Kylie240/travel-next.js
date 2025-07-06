@@ -14,7 +14,6 @@ import { auth } from "@/lib/firebase"
 
 const publicNavigation = [
   { name: "Explore", href: "/explore" },
-  { name: "Itinerary", href: "/itienerary" },
   { name: "About", href: "/about" },
 ]
 
@@ -25,7 +24,6 @@ export default function Navbar() {
   const [user, setUser] = useState(auth.currentUser)
   const isExplorePage = pathname === "/explore"
   const isLandingPage = pathname === "/"
-  const isItinerary = pathname === "/itinerary"
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -58,12 +56,7 @@ export default function Navbar() {
         scrolled 
           ? "bg-white/80 backdrop-blur-md shadow-sm" 
           : "bg-white"
-      } ${
-        isItinerary 
-          ? "text-white" 
-          : ""
-      }    
-      `}
+      }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
