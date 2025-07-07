@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { MapPin, Calendar, Plus, Minus, Image as ImageIcon, Clock, Hotel, Utensils, Map, Search, Car, GripVertical, Trash2 } from "lucide-react"
+import { MapPin, Calendar, Plus, Minus, Image as ImageIcon, Clock, Hotel, Utensils, Map, Search, Car, GripVertical, Trash2, Compass, Sun, Building, BookOpen, TreePine, CarFront, ShoppingBag } from "lucide-react"
 import { auth } from "@/lib/firebase"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
@@ -28,6 +28,8 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { CategoryCard } from "@/components/ui/category-card"
+import { cn } from "@/lib/utils"
 
 interface TripDay {
   id: string;
@@ -66,7 +68,11 @@ interface TripData {
   countries: string[];
   days: TripDay[];
   categories: string[];
-  notes: string[];
+  notes: {
+    id: string;
+    title: string;
+    content: string;
+  }[];
 }
 
 const ACTIVITY_TYPES = [
@@ -76,6 +82,23 @@ const ACTIVITY_TYPES = [
   { value: 'transportation', label: 'Transportation', icon: Car },
   { value: 'accommodation', label: 'Accommodation', icon: Hotel },
 ];
+
+const categories = [
+  { id: 'adventure', label: 'Adventure', icon: Compass },
+  { id: 'beach', label: 'Beach', icon: Sun },
+  { id: 'city', label: 'City Break', icon: Building },
+  { id: 'culture', label: 'Culture', icon: BookOpen },
+  { id: 'food', label: 'Food & Drink', icon: Utensils },
+  { id: 'relaxation', label: 'Relaxation', icon: Utensils },
+  { id: 'shopping', label: 'Shopping', icon: ShoppingBag },
+  { id: 'nature', label: 'Nature', icon: TreePine },
+  { id: 'wellness', label: 'Wellness', icon: TreePine },
+  { id: 'romantic', label: 'Romantic', icon: TreePine },
+  { id: 'solo', label: 'Solo Travel', icon: TreePine },
+  { id: 'budget', label: 'Budget Friendly', icon: TreePine },
+  { id: 'seniors', label: 'Seniors', icon: TreePine },
+  { id: 'road', label: 'Road Trip', icon: CarFront },
+]
 
 const INITIAL_DAY: TripDay = {
   id: '1',
@@ -88,6 +111,22 @@ const INITIAL_DAY: TripDay = {
     location: '',
   }
 };
+
+const updateNote = (noteId: string, updates: Partial<Note>) => {
+  setTripData(prev => ({
+    ...prev,
+    notes: prev.notes.map(note => 
+      note.id === noteId ? { ...note, ...updates } : note
+    )
+  }))
+}
+
+const removeNote = (noteId: string) => {
+  setTripData(prev => ({
+    ...prev,
+    notes: prev.notes.filter(note => note.id !== noteId)
+  }))
+}
 
 function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveDay }: { 
   day: TripDay; 
@@ -490,6 +529,17 @@ export default function CreatePage() {
     }
   };
 
+  const toggleCategory = (categoryId: string) => {
+    setTripData(prev => ({
+      ...prev,
+      categories: prev.categories.includes(categoryId)
+        ? prev.categories.filter(c => c !== categoryId)
+        : tripData.categories.length < 5 ?
+          [...prev.categories, categoryId]
+        : prev.categories
+    }))
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -706,73 +756,84 @@ export default function CreatePage() {
           {currentStep === 3 && (
             <form onSubmit={handleFinalSubmit} className="space-y-6">
               <div>
-                <Label>Categories</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  {['Adventure', 'Culture', 'Food', 'Nature', 'Relaxation', 'Urban'].map(category => (
-                    <label key={category} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={tripData.categories.includes(category)}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setTripData(prev => ({
-                              ...prev,
-                              categories: [...prev.categories, category]
-                            }))
-                          } else {
-                            setTripData(prev => ({
-                              ...prev,
-                              categories: prev.categories.filter(c => c !== category)
-                            }))
-                          }
-                        }}
-                        className="rounded border-gray-300"
-                      />
-                      {category}
-                    </label>
-                  ))}
+                <Label>Categories (select up to 5)</Label>
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-4 w-full">
+                  {categories.map((category) => {
+                    const isSelected = tripData.categories.includes(category.id)
+                    const Icon = category.icon
+                    return (
+                      <label key={category.id} className="flex items-center gap-2">
+                        <button onClick={() => toggleCategory(category.id)}
+                          className={`flex justify-center items-center gap-2 px-4 py-8 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}>
+                          <category.icon className="w-5 h-5 text-gray-700" />
+                          <span className="text-gray-900 font-medium">{category.label}</span>
+                        </button>
+                      </label>
+                    )
+                  })}
                 </div>
               </div>
 
               <div>
-                <Label>Useful Notes</Label>
-                <div className="space-y-2">
-                  {tripData.notes.map((note, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        value={note}
-                        onChange={e => {
-                          const newNotes = [...tripData.notes]
-                          newNotes[index] = e.target.value
-                          setTripData(prev => ({ ...prev, notes: newNotes }))
-                        }}
-                        placeholder="Add a useful note for readers"
-                      />
-                      {index === tripData.notes.length - 1 ? (
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Notes</h2>
+                    <p className="text-sm text-gray-600">Add important notes about your trip</p>
+                  </div>
+                  <Button 
+                    type="button"
+                    variant="outline"
+                    onClick={addNote}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Note
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {tripData.notes.map((note) => (
+                    <div key={note.id} className="bg-white rounded-lg border p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-4">
+                          <div>
+                            <Label>Title</Label>
+                            <Input
+                              value={note.title}
+                              onChange={(e) => updateNote(note.id, { title: e.target.value })}
+                              placeholder="Note title"
+                              className="mb-2"
+                            />
+                          </div>
+                          <div>
+                            <Label>Content</Label>
+                            <textarea
+                              value={note.content}
+                              onChange={(e) => updateNote(note.id, { content: e.target.value })}
+                              placeholder="Write your note here..."
+                              className="w-full min-h-[100px] p-2 border rounded-md"
+                            />
+                          </div>
+                        </div>
                         <Button
                           type="button"
-                          variant="outline"
-                          onClick={() => setTripData(prev => ({
-                            ...prev,
-                            notes: [...prev.notes, '']
-                          }))}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeNote(note.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
-                          <Plus className="w-4 h-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            const newNotes = tripData.notes.filter((_, i) => i !== index)
-                            setTripData(prev => ({ ...prev, notes: newNotes }))
-                          }}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                      )}
+                      </div>
                     </div>
                   ))}
+
+                  {tripData.notes.length === 0 && (
+                    <div className="text-center py-8 bg-white rounded-lg border">
+                      <PenSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-gray-500">No notes yet. Click "Add Note" to create one.</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
