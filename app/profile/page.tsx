@@ -237,6 +237,7 @@ export default function ProfilePage() {
                 <div 
                   key={user.id}
                   className="bg-white rounded-xl p-4 shadow-sm border flex items-center gap-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/profile/${user.username}`)}
                 >
                   <div className="relative w-12 h-12 flex-shrink-0">
                     <Image
