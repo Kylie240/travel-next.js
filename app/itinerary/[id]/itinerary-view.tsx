@@ -1,13 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Users, Clock, Hotel, Car, Share2, Heart, StickyNote, Utensils, Bike, BedDouble, Train, Bookmark, Star, X, ChevronUp, ChevronDown, ChevronRight } from "lucide-react"
+import { Calendar, MapPin, Users, Clock, Hotel, Car, Share2, Heart, Utensils, Bike, BedDouble, Train, Bookmark, Star, X, ChevronUp, ChevronDown, ChevronRight, Share, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DaySection } from "@/components/ui/day-section"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
+import { UserData } from "@/lib/types"
+import { auth } from "@/lib/firebase"
+import router from "next/router"
 
 interface ItineraryViewProps {
   itinerary: any // TODO: Add proper type
@@ -18,6 +21,17 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
   const [activeDays, setActiveDays] = useState<number[]>([])
   const [isLiked, setIsLiked] = useState(false)
   const [showFullDetails, setShowFullDetails] = useState(false)
+  const [user, setUser] = useState(auth.currentUser)
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        router.push("/")
+        return
+      }
+      setUser(user) 
+    })
+  }, [router])
 
   const toggleDay = (dayNumber: number) => {
     setActiveDays(prev => 
@@ -40,7 +54,7 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="flex flex-col sticky h-[calc(100vh-70px)] md:h-screen px-2 md:px-8 gap-6 lg:flex-row lg:h-[520px]">
+      <div className="flex flex-col sticky h-[calc(100vh-70px)] min-h-[800px] lg:min-h-fit md:h-screen px-2 md:px-8 gap-6 lg:flex-row lg:h-[520px]">
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
           <div className="flex-1 h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
@@ -81,7 +95,7 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
         </div>
 
         {/* Mobile Items List */}
-        <div className="flex flex-col justify-between h-full md:h-auto lg:hidden">
+        <div className="flex flex-col justify-between h-full lg:hidden">
           <div className="block px-4">
             <div className="flex justify-between">
               <div>
@@ -133,15 +147,22 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
                   </div>
                 </div>
               </div>
-              <div className="flex">
-                <Bookmark size={35}
-                className={`transition-colors cursor-pointer ${
-                  itinerary.title.includes('Japan')
-                    ? "fill-red-500 text-red-500"
-                    : "text-gray-600"
-                }`}
-                />
-                <Share2 size={35} className="cursor-pointer" />
+              <div className="flex gap-2">
+                {user?.uid !== itinerary.creator.id ? (
+                  <Edit size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2"
+                  onClick={() => {
+                    router.push(`/itinerary/${itinerary.id}/edit`)
+                  }} />
+                ) : (
+                  <Bookmark size={35}
+                  className={`transition-colors cursor-pointer h-10 w-10 ${
+                    itinerary.title.includes('Paris')
+                      ? "fill-red-500 text-red-500"
+                      : "text-black hover:bg-gray-200 rounded-full p-2"
+                  }`}
+                  />
+                )}
+                <Share size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2" />
               </div>
             </div>
             

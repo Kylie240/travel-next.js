@@ -170,6 +170,7 @@ export default function ProfilePage() {
                 <div 
                   key={itinerary.id}
                   className="group relative rounded-xl overflow-hidden cursor-pointer"
+                  onClick={() => router.push(`/itinerary/${itinerary.id}`)}
                 >
                   <div className="aspect-[4/3] relative">
                     <Image
@@ -515,7 +516,7 @@ export default function ProfilePage() {
           {/* Right Column: Settings Content */}
           <div className="md:col-span-2">
             {/* Background Image Section */}
-            <div className="relative h-64 mb-6 rounded-2xl overflow-hidden">
+            {/* <div className="relative h-64 mb-6 rounded-2xl overflow-hidden">
               <div
                 className="absolute inset-0 bg-cover bg-center"
                 style={{
@@ -527,7 +528,7 @@ export default function ProfilePage() {
                 <h1 className="text-3xl font-bold text-white mb-2">Welcome back {userData.name}</h1>
                 <p className="text-white text-opacity-90">{userData.title}</p>
               </div>
-            </div>
+            </div> */}
 
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-xl font-semibold mb-6">{activeSection}</h3>

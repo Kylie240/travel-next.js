@@ -26,6 +26,7 @@ export interface UserProfile extends Partial<FirebaseUser> {
 }
 
 export interface UserData {
+  id: string
   name: string
   username?: string
   title?: string

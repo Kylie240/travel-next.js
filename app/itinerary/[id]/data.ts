@@ -13,6 +13,7 @@ export const itinerary = {
   categories: ["Culture", "Food & Dining", "History", "Urban Exploration", "Nature", "Photography"],
   details: "This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours.",
   creator: {
+    id: "1",
     name: "Sarah Chen",
     title: "Solo Traveller",
     image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1470&auto=format&fit=crop",

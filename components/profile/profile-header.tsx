@@ -11,7 +11,7 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ user, onEditProfile, disableEdit = false }: ProfileHeaderProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+    <div className={`bg-white ${ !disableEdit ? 'rounded-2xl shadow-sm mb-8' : ''} p-6`}>
       {!disableEdit && 
         <div className="flex flex-col items-center gap-6">
           <div className="relative w-32 h-32">
@@ -75,35 +75,35 @@ export function ProfileHeader({ user, onEditProfile, disableEdit = false }: Prof
         <div className="flex flex-col items-center gap-6">
           <div className="flex relative">
             <div className="relative w-32 h-32">
-              <div className="w-32 h-32 relative rounded-full">
+              <div className="w-24 h-24 relative rounded-full">
                 <Image
                   src={user.image}
                   alt={user.name}
                   fill
-                  className="object-cover rounded-full"
+                  className="object-cover rounded-full cursor-pointer"
                   sizes="(max-width: 128px) 100vw, 128px"
                 />
-                <div className="absolute block md:hidden top-0 right-0">
+                <div className="absolute block md:hidden -top-1 -right-3">
                   {user.isFollowing ? (
-                    <div onClick={() => {}}><Minus className="h-8 w-10 m-2 rounded-full border border-2 border-black bg-white hover:bg-gray-500 text-black" /></div>
+                    <div onClick={() => {}}><Minus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-black bg-white hover:bg-gray-500 text-black" /></div>
                   ) : (
-                    <div onClick={() => {}}><Plus className="h-8 w-10 m-2 rounded-full border border-2 border-white bg-black hover:bg-gray-500 text-white" /></div>
+                    <div onClick={() => {}}><Plus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-white bg-black hover:bg-gray-500 text-white" /></div>
                   )}
                 </div>
               </div>
             </div>
-            <div className="flex-1 text-center md:text-left px-8">
-              <div className="flex gap-2">
+            <div className="flex-1 text-left px-8">
+              <div className="flex gap-4">
                 <h1 className="text-2xl font-bold">{user.name}</h1>
                 <div className="hidden md:block">
                   {user.isFollowing ? (
-                    <Button variant="outline" onClick={() => {}}>Following</Button>
+                    <Button variant="outline" style={{height: '30px', width : '90px'}} onClick={() => {}}>Following</Button>
                   ) : (
-                    <Button onClick={() => {}}>Follow</Button>
+                    <Button style={{height: '30px', width : '90px', backgroundColor: 'black', color: 'white'}} onClick={() => {}}>Follow</Button>
                   )}
                 </div>
               </div>
-              <p className="text-gray-600 mb-4">@{user.username}</p>
+              <p className="text-gray-600 mb-2">@{user.username}</p>
               <p className="text-gray-600 mb-4">
                 <MapPin className="inline-block h-4 w-4 mr-1" />
                 {user.location} · Joined {user.joined}
