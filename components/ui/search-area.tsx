@@ -108,12 +108,25 @@ export function SearchArea() {
               </SelectContent>
             </Select>
           </div>
+
+          <Button 
+          type="submit" 
+          size="icon" 
+          className="h-10 w-full mt-1 bg-black block md:hidden"
+          disabled={isSearching}
+        >
+          {isSearching ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <p>Search</p>
+          )}
+        </Button>
         </div>
 
         <Button 
           type="submit" 
           size="icon" 
-          className="h-10 w-10 bg-black"
+          className="h-10 w-10 bg-black hidden md:flex"
           disabled={isSearching}
         >
           {isSearching ? (

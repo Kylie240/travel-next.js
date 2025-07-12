@@ -1,18 +1,18 @@
 "use client"
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { ChevronDown, LogOut, LayoutDashboard, Settings, PenSquare, Heart, User } from "lucide-react"
+import { ChevronDown, LogOut, LayoutDashboard, Settings, PenSquare, Heart, User, ChevronUp, Info, Globe } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { auth } from "@/lib/firebase"
 import { signOut } from "firebase/auth"
 import { useToast } from "./use-toast"
-import Image from "next/image"
-import Link from "next/link"
+import { useState } from "react"
 
 export function UserMenu() {
   const router = useRouter()
   const { toast } = useToast()
   const user = auth.currentUser
+  const [isOpen, setIsOpen] = useState(false)
 
   const handleSignOut = async () => {
     try {
@@ -34,7 +34,7 @@ export function UserMenu() {
   }
 
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenu.Trigger asChild>
         <button className="flex items-center space-x-2 rounded-full bg-white/90 p-1.5 pr-3 hover:bg-white/100 transition-colors">
           <div className="relative h-8 w-8 rounded-full bg-travel-50 flex items-center justify-center overflow-hidden">
@@ -50,7 +50,11 @@ export function UserMenu() {
               </span>
             )}
           </div>
-          <ChevronDown className="h-4 w-4 text-gray-600" />
+          {isOpen ? (
+            <ChevronUp className="h-4 w-4 text-gray-600" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-gray-600" />
+          )}
         </button>
       </DropdownMenu.Trigger>
 
@@ -64,9 +68,27 @@ export function UserMenu() {
             {user?.displayName || user?.email}
           </div>
 
+          <div className="py-2 border-b border-gray-100 flex flex-col md:hidden">
+            <DropdownMenu.Item
+              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+              onClick={() => router.push('/explore')}
+            >
+              <Globe className="mr-2 h-4 w-4" />
+              Explore
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+              onClick={() => router.push('/about')}
+            >
+              <Info className="mr-2 h-4 w-4" />
+              About
+            </DropdownMenu.Item>
+          </div>
+
           <div className="py-2">
             <DropdownMenu.Item
-              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-travel-50 hover:text-travel-900 rounded-md cursor-pointer"
+              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
               onClick={() => router.push('/profile')}
             >
               <User className="mr-2 h-4 w-4" />
@@ -74,7 +96,7 @@ export function UserMenu() {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-travel-50 hover:text-travel-900 rounded-md cursor-pointer"
+              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
               onClick={() => router.push('/dashboard')}
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -82,7 +104,7 @@ export function UserMenu() {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-travel-50 hover:text-travel-900 rounded-md cursor-pointer"
+              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
               onClick={() => router.push('/create')}
             >
               <PenSquare className="mr-2 h-4 w-4" />
@@ -90,7 +112,7 @@ export function UserMenu() {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-travel-50 hover:text-travel-900 rounded-md cursor-pointer"
+              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
               onClick={() => router.push('/dashboard?tab=favorites')}
             >
               <Heart className="mr-2 h-4 w-4" />
@@ -98,7 +120,7 @@ export function UserMenu() {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-travel-50 hover:text-travel-900 rounded-md cursor-pointer"
+              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
               onClick={() => router.push('/dashboard?tab=settings')}
             >
               <Settings className="mr-2 h-4 w-4" />

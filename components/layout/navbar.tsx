@@ -87,48 +87,54 @@ export default function Navbar() {
           </div>
 
           {/* Centered Search Bar */}
-          <div className={`hidden md:flex flex-1 justify-center px-8 transition-opacity duration-200 ${
+          <div className={`flex flex-1 justify-center px-8 transition-opacity duration-200 ${
             isLandingPage && !scrolled ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}>
             <NavbarSearch isScrolled={scrolled || !isLandingPage} />
           </div>
 
-          {/* Secondary Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
-            {!isExplorePage && (
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="text-gray-700 hover:text-black hover:bg-gray-100"
-                onClick={() => window.location.href = '/explore'}
-              >
-                <Search className="h-5 w-5" />
-              </Button>
-            )}
-            <LocaleMenu />
-            {user ? (
-              <UserMenu />
-            ) : (
-              <AuthDialog />
-            )}
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="flex items-center md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(!isOpen)}
-              aria-expanded="false"
-              className="text-gray-700 hover:text-black hover:bg-gray-100"
-            >
-              <span className="sr-only">Open main menu</span>
-              {isOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
+          <div className="flex items-center">
+            
+            {!isExplorePage && !scrolled && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="text-gray-700 hover:text-black hover:bg-gray-100 flex items-center"
+                  onClick={() => window.location.href = '/explore'}
+                >
+                  <Search className="h-5 w-5" />
+                </Button>
               )}
-            </Button>
+
+            {/* Mobile menu button */}
+            <div className="flex items-center hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsOpen(!isOpen)}
+                aria-expanded="false"
+                className="text-gray-700 hover:text-black hover:bg-gray-100"
+              >
+                <span className="sr-only">Open main menu</span>
+                {isOpen ? (
+                  <X className="block h-6 w-6" aria-hidden="true" />
+                ) : (
+                  <Menu className="block h-6 w-6" aria-hidden="true" />
+                )}
+              </Button>
+            </div>
+
+            {/* User and Language */}
+            <div className="flex items-center space-x-2">
+              <div className="hidden">
+                <LocaleMenu />
+              </div>
+              {user ? (
+                <UserMenu />
+              ) : (
+                <AuthDialog />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -157,7 +163,7 @@ export default function Navbar() {
                   {item.name}
                 </Link>
               ))}
-              <div className="mt-4 flex flex-col space-y-2 px-3">
+              <div className="hidden mt-4 flex flex-col space-y-2 px-3">
                 {isExplorePage || (!isExplorePage && window.scrollY > 10) ? (
                   <div className="py-2">
                     <NavbarSearch />
@@ -168,7 +174,7 @@ export default function Navbar() {
                     Search
                   </Button>
                 )}
-                <div className="flex items-center justify-between py-2">
+                <div className="hidden flex items-center justify-between py-2">
                   <span className="text-sm font-medium text-gray-700">Language & Currency</span>
                   <LocaleMenu />
                 </div>

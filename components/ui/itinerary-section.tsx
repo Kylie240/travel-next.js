@@ -1,8 +1,10 @@
 import { useRef } from "react";
 import { ItineraryCard } from "./itinerary-card";
+import { useRouter } from "next/navigation";
 
 export interface ItinerarySectionProps {
   title: string;
+  type: string;
   description: string;
   itineraries: Array<{
     id: string;
@@ -16,8 +18,9 @@ export interface ItinerarySectionProps {
   }>;
 }
 
-export const ItinerarySection = ({ title, description, itineraries }: ItinerarySectionProps) => {
+export const ItinerarySection = ({ title, description, itineraries, type }: ItinerarySectionProps) => {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const scroll = (direction: 'left' | 'right') => {
     if (sectionRef.current) {
@@ -49,14 +52,18 @@ export const ItinerarySection = ({ title, description, itineraries }: ItineraryS
             <ItineraryCard
               key={itinerary.id}
               {...itinerary}
+              onClick={() => router.push(`/itinerary/${itinerary.id}`)}
             />
           ))}
         </div>
       </div>
 
       <div className="flex justify-between items-center mt-6">
-        <button className="hover:bg-gray-200 rounded-lg px-4 py-2 text-sm transition-colors bg-[#000000] text-[#ffffff]">
-          See all trips
+        <button 
+          onClick={() => router.push(`/explore?type=${type}`)}
+          className="hover:bg-gray-200 rounded-lg px-4 py-2 text-sm transition-colors bg-[#000000] text-[#ffffff]"
+        >
+          See {type.includes("-") ? "" : "all"} {type.split("-").join(" ")} trips
         </button>
         <div className="flex space-x-2">
           <button 

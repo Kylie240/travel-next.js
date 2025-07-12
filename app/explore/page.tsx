@@ -303,41 +303,6 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        {/* Categories Section */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-6">Popular Categories</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <CategoryCard
-              name="Adventure"
-              icon={Mountain}
-              imageUrl="https://images.unsplash.com/photo-1519681393784-d120267933ba"
-              onClick={() => setSelectedFilters(prev => ({ ...prev, tags: ['adventure'] }))}
-              className="aspect-[4/3]"
-            />
-            <CategoryCard
-              name="Food & Dining"
-              icon={Utensils}
-              imageUrl="https://images.unsplash.com/photo-1504674900247-0877df9cc836"
-              onClick={() => setSelectedFilters(prev => ({ ...prev, tags: ['food'] }))}
-              className="aspect-[4/3]"
-            />
-            <CategoryCard
-              name="Beach"
-              icon={Palmtree}
-              imageUrl="https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
-              onClick={() => setSelectedFilters(prev => ({ ...prev, tags: ['beach'] }))}
-              className="aspect-[4/3]"
-            />
-            <CategoryCard
-              name="Cultural"
-              icon={Building}
-              imageUrl="https://images.unsplash.com/photo-1533050487297-09b450131914"
-              onClick={() => setSelectedFilters(prev => ({ ...prev, tags: ['culture'] }))}
-              className="aspect-[4/3]"
-            />
-          </div>
-        </section>
-
         <h2 className="text-2xl font-semibold mb-4">Search Results</h2>
         {/* Filters Bar */}
         <div className="flex flex-col mb-8">

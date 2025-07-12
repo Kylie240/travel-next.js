@@ -401,9 +401,12 @@ interface CountryCardProps {
 }
 
 const CountryCard = ({ name, imageUrl, tripCount, onClick }: CountryCardProps) => {
+  const router = useRouter();
   return (
     <button 
-      onClick={onClick}
+      onClick={() => {
+        router.push(`/explore?destination=${name}`);
+      }}
       className="relative rounded-lg bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
       style={{ aspectRatio: '2/1' }}
     >
@@ -475,9 +478,9 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative min-h-[600px] md:min-h-[600px] flex items-center mb-32 md:mb-16 justify-start px-4 sm:px-6 lg:px-8">
+      <section className="relative max-w-screen md:max-w-none min-h-[700px] md:min-h-[600px] flex items-center mb-32 md:mb-16 justify-center px-4 sm:px-6 lg:px-8">
         {/* Background Image */}
         <div className="absolute inset-x-4 sm:inset-x-6 lg:inset-x-8 inset-y-0 rounded-3xl overflow-hidden">
           <div
@@ -490,7 +493,7 @@ export default function Home() {
         </div>
 
         {/* Content */}
-        <div className="relative z-[10] max-w-6xl mx-auto w-full px-12">
+        <div className="relative z-[10] max-w-6xl w-full px-12 md:px-[4rem] lg:px-[4.4rem] xl:px-0 pb-48 md:pb-0">
           <h1 className="md:text-6xl lg:text-7xl xl:text-8xl font-semibold text-white mb-6 text-4xl">
             DISCOVER YOUR NEXT ADVENTURE
           </h1>
@@ -498,17 +501,14 @@ export default function Home() {
             Find travel experiences crafted by fellow explorers.
           </p>
           <div className="flex gap-4">
-            <Button 
-              asChild
-              className="bg-white text-black bg-blue-300 hover:bg-white/90"
-            >
-              <Link href="/explore">
-                Explore Itineraries
-              </Link>
-            </Button>
+            <Link href="/explore">
+              <button className="hover:bg-gray-700 rounded-lg p-4 text-md transition-colors bg-[#000000] text-[#ffffff]">
+                Explore All Itineraries
+              </button>
+            </Link>
           </div>
         </div>
-        <div className="absolute bottom-[-160px] md:bottom-[-60px] z-64 left-0 w-full px-16 lg:px-8">
+        <div className="absolute bottom-[-140px] px-4 sm:px-6 lg:px-8 md:bottom-[-60px] z-64 left-0 w-full md:px-16 lg:px-8">
           <SearchArea />
         </div>
       </section>
@@ -516,6 +516,7 @@ export default function Home() {
       {/* Popular Listings */}
       <section className="py-16 bg-white">
         <ItinerarySection
+          type="popular"
           title="Popular Listings"
           description="Discover our most booked destinations and experiences."
           itineraries={popularListings}
@@ -554,6 +555,7 @@ export default function Home() {
       {/* Most Viewed */}
       <section className="py-16 bg-gray-50">
         <ItinerarySection
+          type="most-viewed"
           title="Most Viewed"
           description="See what other travelers are exploring right now."
           itineraries={mostViewed}
@@ -580,74 +582,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How It Works */}
-      {/* <section id="how-it-works" className="py-16 lg:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-dark mb-4">
-              How TravelShare Works
-            </h2>
-            <p className="text-xl text-dark/70 max-w-2xl mx-auto">
-              Join our community of travelers and start sharing your adventures
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-12">
-            <div className="text-center">
-              <div className="lime-primary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-                <MapPin className="w-8 h-8 text-dark" />
-              </div>
-              <h3 className="text-xl font-bold text-dark mb-4">
-                Create Your Itinerary
-              </h3>
-              <p className="text-dark/70 leading-relaxed">
-                Design detailed travel plans with destinations, activities,
-                accommodations, and insider tips from your experiences.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="lime-primary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-                <Share2 className="w-8 h-8 text-dark" />
-              </div>
-              <h3 className="text-xl font-bold text-dark mb-4">
-                Share & Connect
-              </h3>
-              <p className="text-dark/70 leading-relaxed">
-                Publish your itineraries to our community, follow other
-                travelers, and build your reputation as a travel expert.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="lime-primary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-                <Users className="w-8 h-8 text-dark" />
-              </div>
-              <h3 className="text-xl font-bold text-dark mb-4">
-                Earn from Expertise
-              </h3>
-              <p className="text-dark/70 leading-relaxed">
-                Monetize your premium itineraries, offer personalized planning
-                services, and earn from your travel knowledge.
-              </p>
-            </div>
-          </div>
-
-          <div className="text-center mt-12">
-            <AuthDialog />
-            <Button
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary hover:text-dark ml-4"
-            >
-              Learn More
-            </Button>
-          </div>
-        </div>
-      </section> */}
-
       {/* Multi-country Itineraries */}
       <section className="py-16 bg-gray-50">
         <ItinerarySection
+          type="multi-country"
           title="Multi-country itineraries"
           description="Explore our multi-country tours! Let yourself be surprised by our extended version top sellers."
           itineraries={multiCountryItineraries}
@@ -657,6 +595,7 @@ export default function Home() {
       {/* Solo Trips */}
       <section className="py-16 bg-white">
         <ItinerarySection
+          type="solo"
           title="Solo Trips"
           description="Perfect itineraries for independent travelers seeking adventure and self-discovery."
           itineraries={soloTrips}
@@ -673,6 +612,7 @@ export default function Home() {
       {/* Tropical Vacations */}
       <section className="py-16 bg-gray-50">
         <ItinerarySection
+          type="tropical"
           title="Tropical Vacations"
           description="Escape to paradise with our handpicked selection of tropical getaways."
           itineraries={tropicalVacations}
