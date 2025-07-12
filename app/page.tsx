@@ -441,9 +441,10 @@ interface CategoryCardProps {
 }
 
 const CategoryCard = ({ name, icon: Icon, imageUrl, onClick }: CategoryCardProps) => {
+  const router = useRouter();
   return (
     <button 
-      onClick={onClick}
+      onClick={() => router.push(`/explore?category=${name.toLowerCase()}`)}
       className="relative flex items-center gap-3 p-6 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
       style={{ aspectRatio: '2/1' }}
     >

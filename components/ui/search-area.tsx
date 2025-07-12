@@ -26,17 +26,12 @@ export function SearchArea() {
     e.preventDefault();
     
     // Basic validation
-    if (!destination.trim()) {
-      toast.error("Please enter a destination");
-      return;
-    }
-
     try {
       setIsSearching(true);
 
       // Build search params
       const searchParams = new URLSearchParams({
-        destination: destination.trim(),
+        ...(destination && destination !== "any" && { destination }),
         ...(duration && duration !== "any" && { duration }),
         ...(budget && budget !== "any" && { budget }),
       });
@@ -62,7 +57,7 @@ export function SearchArea() {
             </Label>
             <Input
               id="destination"
-              placeholder="Where do you want to go?"
+              placeholder="Any destination"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               className="bg-white"
@@ -77,7 +72,7 @@ export function SearchArea() {
             </Label>
             <Select value={duration} onValueChange={setDuration} disabled={isSearching}>
               <SelectTrigger id="duration" className="bg-white">
-                <SelectValue placeholder="Select duration" />
+                <SelectValue placeholder="Any duration"/>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Duration</SelectItem>
@@ -96,8 +91,8 @@ export function SearchArea() {
               Budget Range
             </Label>
             <Select value={budget} onValueChange={setBudget} disabled={isSearching}>
-              <SelectTrigger id="budget" className="bg-white">
-                <SelectValue placeholder="Select budget" />
+              <SelectTrigger id="budget" className="bg-white" defaultValue="any">
+                <SelectValue placeholder="Any budget" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Budget</SelectItem>
