@@ -1,15 +1,9 @@
 "use client"
 
-import { motion } from "framer-motion"
-import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, MapPin, Calendar, Users, ChevronRight, Share2, Mountain, Palmtree, Building, Utensils, Camera, Tent, Bike, Ship } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Mountain, Palmtree, Building, Utensils, Camera, Tent, Bike, Ship } from "lucide-react"
 import { SearchArea } from "@/components/ui/search-area"
-import { ItineraryCard } from "@/components/ui/itinerary-card"
-import { useRef } from "react"
 import { ItinerarySection } from "@/components/ui/itinerary-section"
-import { AuthDialog } from "@/components/ui/auth-dialog"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { useRouter } from "next/navigation"
 
@@ -509,7 +503,7 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        <div className="absolute bottom-[-140px] px-4 sm:px-6 lg:px-8 md:bottom-[-60px] z-64 left-0 w-full md:px-16 lg:px-8">
+        <div className="absolute bottom-[-140px] sm:px-12 lg:px-8 md:bottom-[-60px] z-64 left-0 w-full md:px-16 lg:px-8">
           <SearchArea />
         </div>
       </section>

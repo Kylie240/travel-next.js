@@ -4,15 +4,16 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Users, Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Snowflake, Star, Bookmark } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Users, Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Snowflake, Star, Bookmark, Footprints } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { AdvancedFilterDialog } from "@/components/ui/advanced-filter-dialog"
 import { QuickFilterList } from "@/components/ui/quick-filter-list"
-import { cn } from "@/lib/utils"
 import { useSearchParams } from "next/navigation"
 import { auth } from "@/lib/firebase"
-import { CategoryCard } from "@/components/ui/category-card"
+import { FaSkiing } from "react-icons/fa"
+import { GiSnorkel } from "react-icons/gi"
+import { FaSafari } from "react-icons/fa"
+import { FaHiking } from "react-icons/fa"
 
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -44,7 +45,8 @@ const itineraries = [
     cities: ["Tokyo", "Kyoto", "Osaka"],
     countries: ["Japan"],
     price: "$3,499",
-    tags: ["culture", "food", "history"],
+    itineraryTags: ["cultural", "romantic"],
+    activityTags: ["culture", "food", "history"],
     status: "popular",
     continent: "Asia",
     regions: ["East Asia"],
@@ -61,7 +63,8 @@ const itineraries = [
     cities: ["Rome", "Florence", "Venice"],
     countries: ["Italy"],
     price: "$2,899",
-    tags: ["food", "wine", "culture"],
+    itineraryTags: ["culinary", "romantic"],
+    activityTags: ["food", "wine", "culture"],
     status: "highly rated",
     continent: "Europe",
     regions: ["Southern Europe"],
@@ -78,7 +81,8 @@ const itineraries = [
     cities: ["San José", "Arenal", "Manuel Antonio"],
     countries: ["Costa Rica"],
     price: "$1,999",
-    tags: ["adventure", "nature", "beach"],
+    itineraryTags: ["tropical", "action packed"],
+    activityTags: ["adventure", "nature", "beach"],
     continent: "North America",
     regions: ["Central America"],
     accommodation: ["Resort", "Eco Lodge"],
@@ -94,7 +98,8 @@ const itineraries = [
     cities: ["Athens", "Santorini", "Mykonos"],
     countries: ["Greece"],
     price: "$2,799",
-    tags: ["beach", "culture", "history"],
+    itineraryTags: ["road trip", "tropical"],
+    activityTags: ["beach", "culture", "history"],
     status: "most viewed",
     continent: "Europe",
     regions: ["Southern Europe"],
@@ -111,7 +116,8 @@ const itineraries = [
     cities: ["Bangkok", "Chiang Mai", "Phuket"],
     countries: ["Thailand"],
     price: "$1,899",
-    tags: ["adventure", "culture", "food"],
+    itineraryTags: ["budget", "volunteering"],
+    activityTags: ["adventure", "culture", "food"],
     status: "popular",
     continent: "Asia",
     regions: ["Southeast Asia"],
@@ -128,7 +134,8 @@ const itineraries = [
     cities: ["Zurich", "Lucerne", "Interlaken"],
     countries: ["Switzerland"],
     price: "$3,299",
-    tags: ["adventure", "nature", "history"],
+    itineraryTags: ["romantic", "wellness", "luxury"],
+    activityTags: ["adventure", "nature", "history"],
     status: "highly rated",
     continent: "Europe",
     regions: ["Central Europe"],
@@ -144,14 +151,27 @@ const filters = {
   budget: ["Under $1000", "$1000-$2000", "$2000-$3000", "$3000-$5000", "$5000+"],
   quickFilters: ["All", "Popular", "Most Viewed", "Best Rated", "New", "Trending", "Budget Friendly", "Luxury"],
   sortOptions: [
-    { value: "popular", label: "Most Popular" },
-    { value: "recent", label: "Most Recent" },
+    // { value: "popular", label: "Most Popular" },
+    // { value: "recent", label: "Most Recent" },
     { value: "price-low", label: "Price: Low to High" },
     { value: "price-high", label: "Price: High to Low" },
     { value: "duration-short", label: "Duration: Shortest" },
     { value: "duration-long", label: "Duration: Longest" },
   ],
-  tags: [
+  itineraryTags: [
+    { name: "relaxing", icon: Mountain },
+    { name: "culinary", icon: Utensils },
+    { name: "cultural", icon: Building },
+    { name: "tropical", icon: Palmtree },
+    { name: "romantic", icon: Camera },
+    { name: "wellness", icon: Tent },
+    { name: "luxury", icon: Bike },
+    { name: "budget", icon: Ship },
+    { name: "road trip", icon: Wine },
+    { name: "volunteering", icon: Heart },
+    { name: "action packed", icon: Music },
+  ]
+  activityTags: [
     { name: "adventure", icon: Mountain },
     { name: "food", icon: Utensils },
     { name: "culture", icon: Building },
@@ -165,8 +185,12 @@ const filters = {
     { name: "festivals", icon: Music },
     { name: "luxury", icon: Sparkles },
     { name: "surfing", icon: Waves },
-    { name: "winter", icon: Snowflake },
-  ]
+    { name: "hiking", icon: <FaHiking /> },
+    { name: "skiing", icon: <FaSkiing /> },
+    { name: "tour", icon: Footprints },
+    { name: "safari", icon: FaSafari },
+    { name: "snorkeling", icon: <GiSnorkel /> },
+  ],
 }
 
 export default function ExplorePage() {
@@ -362,7 +386,6 @@ export default function ExplorePage() {
                 ))}
               </select>
             </div>
-            
             <div className="flex justify-end">
               <AdvancedFilterDialog
                 destinations={filters.destinations}
@@ -375,18 +398,31 @@ export default function ExplorePage() {
             </div>
           </div>
 
-          {/* Quick Filters */}
-          <div className="mt-2">
-            <QuickFilterList
-              filters={filters.quickFilters}
-              selectedFilter={selectedFilters.quickFilter}
-              onFilterChange={(filter) =>
-                setSelectedFilters((prev) => ({
-                  ...prev,
-                  quickFilter: filter,
-                }))
-              }
-            />
+          <div className="flex hidden justify-between items-center max-w-screen-lg mx-auto gap-2">
+            {/* Quick Filters */}
+            <div className="mt-2 flex-1">
+              <QuickFilterList
+                filters={filters.quickFilters}
+                selectedFilter={selectedFilters.quickFilter}
+                onFilterChange={(filter) =>
+                  setSelectedFilters((prev) => ({
+                    ...prev,
+                    quickFilter: filter,
+                  }))
+                }
+              />
+            </div>
+            
+            <div className="flex justify-end">
+              <AdvancedFilterDialog
+                destinations={filters.destinations}
+                duration={filters.duration}
+                budget={filters.budget}
+                tags={filters.tags}
+                selectedFilters={selectedFilters}
+                onFilterChange={setSelectedFilters}
+              />
+            </div>
           </div>
         </div>
 

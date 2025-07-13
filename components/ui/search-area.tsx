@@ -60,7 +60,7 @@ export function SearchArea() {
               placeholder="Any destination"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              className="bg-white"
+              className="bg-white placeholder:text-black"
               disabled={isSearching}
             />
           </div>

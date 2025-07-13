@@ -1,7 +1,7 @@
 "use client"
 
 import * as Dialog from "@radix-ui/react-dialog"
-import { X, SlidersHorizontal, Star, Check } from "lucide-react"
+import { X, SlidersHorizontal, Check } from "lucide-react"
 import { Button } from "./button"
 import { cn } from "@/lib/utils"
 
@@ -42,6 +42,12 @@ interface AdvancedFilterDialogProps {
     quickFilter: string
   }) => void
 }
+
+const itineraryItems = [
+  "accomodations",
+  "activities",
+  "transportation"
+]
 
 const continents = [
   "Asia",
@@ -84,7 +90,6 @@ const accommodationTypes = [
   "Luxury Villa",
   "Eco Lodge",
   "Guesthouse",
-  "Ryokan"
 ]
 
 const transportationTypes = [
@@ -172,6 +177,7 @@ export function AdvancedFilterDialog({
               </Dialog.Close>
             </div>
           </div>
+          
 
           <div className="p-6 space-y-6 overflow-y-auto">
             {/* Continent Filter */}
@@ -179,59 +185,39 @@ export function AdvancedFilterDialog({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Continents
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {continents.map((continent) => (
-                  <label
-                    key={continent}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors",
-                      selectedFilters.continents.includes(continent)
-                        ? "bg-travel-50 text-travel-900"
-                        : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                    )}
-                  >
-                    <div className={cn(
-                      "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
-                      selectedFilters.continents.includes(continent)
-                        ? "border-travel-600 bg-travel-600 text-white"
-                        : "border-gray-300"
-                    )}>
-                      {selectedFilters.continents.includes(continent) && (
-                        <Check className="h-3 w-3" />
-                      )}
+              <div className="grid grid-cols-3 gap-2">
+                {continents.map((continent) => {
+                  const isSelected = selectedFilters.continents.includes(continent)
+                  return (
+                    <div key={continent} className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`} onClick={() => handleContinentToggle(continent)}>
+                      {isSelected ? <Check className="h-5 w-5 bg-black p-1 text-white rounded-full" /> : <div className="h-5 w-5 bg-gray-white rounded-full border border-1 border-gray-300" />}
+                      {continent}
                     </div>
-                    <span className="text-sm">{continent}</span>
-                  </label>
-                ))}
+                  )
+                })}
               </div>
             </div>
 
             {/* Region Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            {/* <div>
+              <label className="block text-md font-semibold text-gray-700 mb-3">
                 Region
               </label>
-              <select
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900"
-                value={selectedFilters.regions[0] || ""}
-                onChange={(e) =>
-                  onFilterChange({
-                    ...selectedFilters,
-                    regions: e.target.value ? [e.target.value] : [],
-                  })
-                }
-              >
-                <option value="">Any Region</option>
-                {regions.map((region) => (
-                  <option key={region} value={region}>
-                    {region}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="flex flex-wrap gap-2">
+                {regions.map((region) => {
+                  const isSelected = selectedFilters.regions.includes(region)
+                  return (
+                    <div key={region} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-full text-sm font-medium cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100" : ""}`} onClick={() => handleRegionToggle(region)}>
+                      {isSelected ? <Check className="h-5 w-5 bg-black p-1 text-white rounded-full" /> : <div className="h-5 w-5 bg-gray-white rounded-full border border-1 border-gray-300" />}
+                      {region}
+                    </div>
+                  )
+                })}
+              </div>
+            </div> */}
 
             {/* Rating Filter */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Minimum Rating
               </label>
@@ -252,7 +238,7 @@ export function AdvancedFilterDialog({
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
 
             {/* Accommodation Types */}
             <div>
@@ -308,27 +294,22 @@ export function AdvancedFilterDialog({
 
             {/* Tags Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-md font-semibold text-gray-700 mb-3">
                 Activity Tags
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 space-y-1">
                 {tags.map((tag) => {
                   const Icon = tag.icon
                   const isSelected = selectedFilters.tags.includes(tag.name)
                   return (
-                    <button
+                    <div
                       key={tag.name}
                       onClick={() => handleTagToggle(tag.name)}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
-                        isSelected
-                          ? "bg-travel-100 text-travel-900"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      )}
+                      className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
                     >
-                      {Icon && <Icon className="h-4 w-4" />}
+                      {!Icon.includes("/>") && <Icon className="h-5 w-5" />}
                       {tag.name}
-                    </button>
+                    </div>
                   )
                 })}
               </div>
