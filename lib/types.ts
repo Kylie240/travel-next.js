@@ -36,6 +36,7 @@ export interface UserData {
   bio: string
   website: string
   email: string | null
+  isFollowing?: boolean
   social: {
     facebook: string
     instagram: string

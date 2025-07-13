@@ -50,11 +50,12 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
     const days = itinerary.schedule.map((day: any) => day.day)
     setActiveDays(days)
   }
+  
 
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="flex flex-col sticky h-[calc(100vh-70px)] min-h-[800px] lg:min-h-fit md:h-screen px-2 md:px-8 gap-6 lg:flex-row lg:h-[520px]">
+      <div className="flex flex-col sticky h-[calc(100vh-70px)] min-h-[800px] lg:min-h-fit md:minn-h-screen md:h-screen px-2 md:px-8 gap-6 lg:flex-row lg:h-[520px]">
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
           <div className="flex-1 h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
@@ -100,13 +101,24 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
             <div className="flex justify-between">
               <div>
                 <h2 className="font-semibold text-xl mb-2">Trip Overview</h2>
-                {/* <div className="flex md:hidden mb-2">
-                  <Star fill />
-                  <p>4.8 · (123 reviews)</p>
-                </div> */}
                 <span className="text-sm text-black truncate">
                   {itinerary.cities.join(' · ')}
                 </span>
+                
+                {/* Category Tags */}
+                <div className="mb-4 mt-2">
+                  <div className="flex flex-wrap gap-2">
+                    {itinerary.itineraryTags.map((category: string) => (
+                      <span
+                        key={category}
+                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
+                      >
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
                 <p className="text-gray-600 mt-2">{itinerary.description}</p>
                 <div className="flex gap-4 hidden">
                   <div className="flex flex-col items-center my-4 relative w-[90px]">
@@ -162,7 +174,7 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
                   }`}
                   />
                 )}
-                <Share size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2" />
+                <Share size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2" onClick={() => {navigator.clipboard.writeText(window.location.href); toast.success('Copied to clipboard')}} />
               </div>
             </div>
             
@@ -242,54 +254,21 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
             <div className="lg:bg-gray-800 w-full lg:h-[40%] rounded-3xl p-4 text-black lg:text-white flex flex-col justify-end gap-2">
               {itinerary.description}
             </div>
-            <div className="bg-gray-800 w-full h-[20%] rounded-3xl p-4 text-white flex flex-col justify-end">
-              View all photos
+            <div className="bg-gray-800 relative w-full h-[20%] rounded-3xl p-4 text-white flex flex-col justify-end"
+            style={{
+              backgroundImage: `url(${itinerary.image})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}>
+              <div className="absolute bottom-0 bottom-1 right-1">
+                View all photos
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Action Buttons */}
-        <div className="hidden flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <Button size="lg" className="gap-2">
-              Book Now - {itinerary.price}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsLiked(!isLiked)}
-              className={isLiked ? "text-red-500" : ""}
-            >
-              <Heart className="h-5 w-5" />
-            </Button>
-            <Button variant="outline" size="icon">
-              <Share2 className="h-5 w-5" />
-            </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold">{itinerary.rating}</span>
-            <div className="text-sm text-gray-600">
-              ({itinerary.reviews} reviews)
-            </div>
-          </div>
-        </div>
-
-        {/* Category Tags */}
-        <div className="hidden mb-6">
-          <div className="flex flex-wrap gap-2">
-            {itinerary.categories.map((category: string) => (
-              <span
-                key={category}
-                className="px-3 py-1 bg-travel-50 text-travel-900 rounded-full text-sm font-medium"
-              >
-                {category}
-              </span>
-            ))}
-          </div>
-        </div>
-
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Schedule */}
@@ -409,17 +388,18 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
               </div>
               <p className="text-gray-600 mb-6">{itinerary.details}</p>
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-gray-500" />
-                  <span>{itinerary.duration}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Hotel className="h-5 w-5 text-gray-500" />
-                  <span>Hotels & Ryokans</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Car className="h-5 w-5 text-gray-500" />
-                  <span>Private & Public Transport</span>
+                {/* Category Tags */}
+                <div className="mb-4 mt-2">
+                  <div className="flex flex-wrap gap-2">
+                    {itinerary.itineraryTags.map((category: string) => (
+                      <span
+                        key={category}
+                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
+                      >
+                        {category}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -498,7 +478,10 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
             {similarItineraries.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => {
+                  router.push(`/itinerary/${item.id}`)
+                }}
               >
                 <div className="relative h-48">
                   <Image

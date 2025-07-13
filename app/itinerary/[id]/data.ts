@@ -10,7 +10,8 @@ export const itinerary = {
   price: "$3,499",
   rating: 4.8,
   reviews: 24,
-  categories: ["Culture", "Food & Dining", "History", "Urban Exploration", "Nature", "Photography"],
+  itineraryTags: ["Culture", "Food & Dining", "History", "Urban Exploration", "Nature", "Photography"],
+  activityTags: ["Sightseeing", "Food & Dining", "History", "Urban Exploration", "Nature", "Photography"],
   details: "This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours.",
   creator: {
     id: "1",
@@ -42,6 +43,7 @@ export const itinerary = {
       day: 1,
       title: "Arrival in Tokyo",
       description: "Land at Narita International Airport and transfer to your hotel in Tokyo",
+      notes: "This is a test note",
       image: 'https://plus.unsplash.com/premium_photo-1661964177687-57387c2cbd14?w=800&auto=&fit=&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8amFwYW58ZW58MHx8MHx8fDA%3D',
       activities: [
         {
@@ -76,6 +78,7 @@ export const itinerary = {
       day: 2,
       title: "Tokyo Exploration",
       description: "Discover the highlights of Tokyo's most famous districts",
+      notes: "",
       image: '',
       activities: [
         {
@@ -118,6 +121,7 @@ export const itinerary = {
       day: 3,
       title: "Kicking it in Kyoto",
       description: "Discover the highlights of Tokyo's most famous districts",
+      notes: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.",
       image: '',
       activities: [
         {
@@ -160,6 +164,7 @@ export const itinerary = {
       day: 4,
       title: "Arrival in Tokyo",
       description: "Land at Narita International Airport and transfer to your hotel in Tokyo",
+      notes: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.",
       image: 'https://images.unsplash.com/photo-1554797589-7241bb691973?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       activities: [
         {
@@ -194,6 +199,7 @@ export const itinerary = {
       day: 5,
       title: "Tokyo Exploration",
       description: "Discover the highlights of Tokyo's most famous districts",
+      notes: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.",
       image: '',
       activities: [
         {

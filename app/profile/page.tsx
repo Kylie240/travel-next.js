@@ -10,6 +10,7 @@ import { auth } from "@/lib/firebase"
 import { UserData } from "@/lib/types"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
+import { SettingsSidebar } from "@/components/ui/settings-sidebar"
 
 const dummyItineraries = [
   {
@@ -82,9 +83,22 @@ export default function ProfilePage() {
   const router = useRouter()
   const [user, setUser] = useState(auth.currentUser)
   const [activeSection, setActiveSection] = useState("Dashboard")
+  const [showSettingsSidebar, setShowSettingsSidebar] = useState(false)
 
   const handleEditProfile = () => {
-    setActiveSection("Edit Profile")
+    if (window.innerWidth < 768) {
+      setShowSettingsSidebar(true)
+      setActiveSection("Edit Profile")
+    } else {
+      setActiveSection("Edit Profile")
+    }
+  }
+
+  const handleSectionClick = (sectionTitle: string) => {
+    if (window.innerWidth < 768) {
+      setShowSettingsSidebar(true)
+    }
+    setActiveSection(sectionTitle)
   }
 
   useEffect(() => {
@@ -110,8 +124,9 @@ export default function ProfilePage() {
   const creationTime = user.metadata.creationTime ? new Date(user.metadata.creationTime) : new Date()
 
   const userData: UserData = {
-    name: user.displayName || user.email?.split("@")[0] || "User",
-    username: "testinUsers",
+    id: user?.uid || "default-id",
+    name: "Kylie",
+    username: "kyloww",
     title: "Budget Traveller",
     image: "https://media.licdn.com/dms/image/D4E03AQH1o4Avl01RCA/profile-displayphoto-shrink_800_800/0/1698873322772?e=2147483647&v=beta&t=bU_iaAUxnhokAcSmCwTi-LFF1MTZ12S4OruFTeeneoQ",
     // image: user.photoURL || "/images/avatar.jpg",
@@ -229,36 +244,6 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
-
-          {/* Following Section */}
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Following</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {followingUsers.map((user) => (
-                <div 
-                  key={user.id}
-                  className="bg-white rounded-xl p-4 shadow-sm border flex items-center gap-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/profile/${user.username}`)}
-                >
-                  <div className="relative w-12 h-12 flex-shrink-0">
-                    <Image
-                      src={user.image}
-                      alt={user.name}
-                      fill
-                      className="rounded-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{user.name}</h4>
-                    <p className="text-sm text-gray-600">@{user.username}</p>
-                    <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                      <MapPin className="h-3 w-3" /> {user.location}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       )
     },
@@ -361,80 +346,80 @@ export default function ProfilePage() {
               placeholder="Confirm your new password"
             />
           </div>
+          <Button>Update Password</Button>
           <div>
             <label className="block text-sm font-medium mb-2">Deactivate Account</label>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mb-4">
             Deactivating your account means that your account will no longer be available. 
             You will not be able to sign in and your profile will not be accessible. 
             Any reviews, photos, and tips that you have contributed may continue to be displayed on the site.
             </p>
-            <a href="">Deactivate</a>
+            <a className="underline" href="">Deactivate</a>
           </div>
-          <Button>Update Password</Button>
         </div>
       )
     },
-    {
-      title: "Communication preferences",
-      description: "Choose how you want to be notified",
-      content: (
-        <div className="space-y-6">
-          <div>
-            <h3 className="font-medium mb-4">Email Notifications</h3>
-            <div className="space-y-3">
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" defaultChecked />
-                New followers
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" defaultChecked />
-                Comments on your itineraries
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" defaultChecked />
-                Likes on your itineraries
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" defaultChecked />
-                Trip recommendations
-              </label>
-            </div>
-          </div>
-          <Button>Save Preferences</Button>
-        </div>
-      )
-    },
-    {
-      title: "Travel preferences",
-      description: "Set your travel style and interests",
-      content: (
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">Travel Style</label>
-            <div className="space-y-2">
-              {["Budget", "Mid-range", "Luxury", "Backpacker", "Digital Nomad"].map((style) => (
-                <label key={style} className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  {style}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Interests</label>
-            <div className="space-y-2">
-              {["Culture", "Nature", "Adventure", "Food", "Photography", "History"].map((interest) => (
-                <label key={interest} className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  {interest}
-                </label>
-              ))}
-            </div>
-          </div>
-          <Button>Save Preferences</Button>
-        </div>
-      )
-    },
+    // {
+    //   title: "Communication preferences",
+    //   description: "Choose how you want to be notified",
+    //   content: (
+    //     <div className="space-y-6">
+    //       <div>
+    //         <h3 className="font-medium mb-4">Email Notifications</h3>
+    //         <div className="space-y-3">
+    //           <label className="flex items-center">
+    //             <input type="checkbox" className="mr-2" defaultChecked />
+    //             New followers
+    //           </label>
+    //           <label className="flex items-center">
+    //             <input type="checkbox" className="mr-2" defaultChecked />
+    //             Comments on your itineraries
+    //           </label>
+    //           <label className="flex items-center">
+    //             <input type="checkbox" className="mr-2" defaultChecked />
+    //             Likes on your itineraries
+    //           </label>
+    //           <label className="flex items-center">
+    //             <input type="checkbox" className="mr-2" defaultChecked />
+    //             Trip recommendations
+    //           </label>
+    //         </div>
+    //       </div>
+    //       <Button>Save Preferences</Button>
+    //     </div>
+    //   )
+    // },
+    // {
+    //   title: "Travel preferences",
+    //   description: "Set your travel style and interests",
+    //   content: (
+    //     <div className="space-y-6">
+    //       <div>
+    //         <label className="block text-sm font-medium mb-2">Travel Style</label>
+    //         <div className="space-y-2">
+    //           {["Budget", "Mid-range", "Luxury", "Backpacker", "Digital Nomad"].map((style) => (
+    //             <label key={style} className="flex items-center">
+    //               <input type="checkbox" className="mr-2" />
+    //               {style}
+    //             </label>
+    //           ))}
+    //         </div>
+    //       </div>
+    //       <div>
+    //         <label className="block text-sm font-medium mb-2">Interests</label>
+    //         <div className="space-y-2">
+    //           {["Culture", "Nature", "Adventure", "Food", "Photography", "History"].map((interest) => (
+    //             <label key={interest} className="flex items-center">
+    //               <input type="checkbox" className="mr-2" />
+    //               {interest}
+    //             </label>
+    //           ))}
+    //         </div>
+    //       </div>
+    //       <Button>Save Preferences</Button>
+    //     </div>
+    //   )
+    // },
     {
       title: "Site preferences",
       description: "Customize your experience",
@@ -458,14 +443,14 @@ export default function ProfilePage() {
               <option value="JPY">JPY (¥)</option>
             </select>
           </div>
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium mb-2">Theme</label>
             <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
               <option value="light">Light</option>
               <option value="dark">Dark</option>
               <option value="system">System</option>
             </select>
-          </div>
+          </div> */}
           <Button>Save Preferences</Button>
         </div>
       )
@@ -473,70 +458,81 @@ export default function ProfilePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-        {/* Background Image */}
-      {/* <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden">
+    <div className="min-h-screen bg-white md:bg-gray-50">
+      {/* Background Image Section */}
+      <div className="hidden lg:block relative h-64 mb-6 md:rounded-2xl overflow-hidden">
         <div
-          className="absolute inset-0 px-6 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: `url('https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0')`,
+            backgroundImage: `url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop')`,
           }}
-        >
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-30" />
+        <div className="absolute bottom-0 left-0 p-6">
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome back {userData.name}</h1>
+          {userData.location && (
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-white" />
+              <p className="text-white text-opacity-90">{userData.location}</p>
+            </div>
+          )}
         </div>
-      </section> */}
+      </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left Column: Profile Header + Settings Navigation */}
-          <div className="space-y-6">
+      <div className="md:container md:mx-auto md:px-4 md:py-8">
+        <div className="grid md:grid-cols-1 lg:grid-cols-3 space-y-6 lg:space-y-0 lg:gap-6 relative">
+          {/* Left Column: Profile Header*/}
+          <div className="space-y-6 lg:space-y-0 relative pt-40 lg:pt-0">
+            <div
+              className="lg:hidden w-full h-64 absolute md:rounded-t-2xl inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop')`,
+              }}
+            />
             {/* Profile Header */}
             <ProfileHeader 
               user={userData} 
               onEditProfile={handleEditProfile}
             />
-            
-            {/* Settings Navigation */}
-            <div className="">
-              {settingsSections.map((section) => (
-                <button
-                  key={section.title}
-                  onClick={() => setActiveSection(section.title)}
-                  className={`w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left ${
-                    activeSection === section.title ? "bg-white" : ""
-                  }`}
-                >
-                  <div>
-                    <h3 className="font-medium">{section.title}</h3>
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Right Column: Settings Content */}
-          <div className="md:col-span-2">
-            {/* Background Image Section */}
-            {/* <div className="relative h-64 mb-6 rounded-2xl overflow-hidden">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{
-                  backgroundImage: `url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop')`,
-                }}
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-30" />
-              <div className="absolute bottom-0 left-0 p-6">
-                <h1 className="text-3xl font-bold text-white mb-2">Welcome back {userData.name}</h1>
-                <p className="text-white text-opacity-90">{userData.title}</p>
+          <div className="md:col-span-2 p-2 md:p-0">
+            <h2 className="text-2xl font-bold mb-4 pl-4 block md:hidden">Settings</h2>
+            <div className="bg-white md:rounded-xl lg:shadow-sm md:p-6 space-y-6">
+              {/* Settings Navigation */}
+              <div className="flex flex-col md:flex-row">
+                {settingsSections.map((section) => (
+                  <button
+                    key={section.title}
+                    onClick={() => handleSectionClick(section.title)}
+                    className={`w-full p-4 md:rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors text-left ${
+                      activeSection === section.title ? "md:bg-gray-100" : ""
+                    }`}
+                  >
+                    <div>
+                      <h3 className="font-medium">{section.title}</h3>
+                    </div>
+                  </button>
+                ))}
               </div>
-            </div> */}
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-xl font-semibold mb-6">{activeSection}</h3>
-              {settingsSections.find(section => section.title === activeSection)?.content}
+              <div className="hidden md:block">
+                <h3 className="text-xl font-semibold mb-6">{activeSection}</h3>
+                {settingsSections.find(section => section.title === activeSection)?.content}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <SettingsSidebar
+        isOpen={showSettingsSidebar}
+        onClose={() => setShowSettingsSidebar(false)}
+        title={activeSection}
+      >
+        {settingsSections.find(section => section.title === activeSection)?.content}
+      </SettingsSidebar>
     </div>
   )
 }

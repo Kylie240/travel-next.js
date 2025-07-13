@@ -41,7 +41,7 @@ const itineraries = [
     title: "Japanese Cultural Journey",
     description: "Experience the best of Japan's ancient traditions and modern wonders",
     image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1470&auto=format&fit=crop",
-    duration: "14 days",
+    duration: "14",
     cities: ["Tokyo", "Kyoto", "Osaka"],
     countries: ["Japan"],
     price: "$3,499",
@@ -59,10 +59,10 @@ const itineraries = [
     title: "Italian Food & Wine Tour",
     description: "Savor the flavors of Italy's finest culinary regions",
     image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1400&auto=format&fit=crop",
-    duration: "10 days",
+    duration: "10",
     cities: ["Rome", "Florence", "Venice"],
     countries: ["Italy"],
-    price: "$2,899",
+    price: "",
     itineraryTags: ["culinary", "romantic"],
     activityTags: ["food", "wine", "culture"],
     status: "highly rated",
@@ -77,9 +77,9 @@ const itineraries = [
     title: "Costa Rica Adventure",
     description: "Explore rainforests, volcanoes, and pristine beaches",
     image: "https://images.unsplash.com/photo-1518181835702-6eef8b4b2113?q=80&w=1400&auto=format&fit=crop",
-    duration: "7 days",
+    duration: "7",
     cities: ["San José", "Arenal", "Manuel Antonio"],
-    countries: ["Costa Rica"],
+    countries: ["Costa Rica", "Panama"],
     price: "$1,999",
     itineraryTags: ["tropical", "action packed"],
     activityTags: ["adventure", "nature", "beach"],
@@ -94,9 +94,9 @@ const itineraries = [
     title: "Greek Islands Explorer",
     description: "Island hop through the stunning Cyclades archipelago",
     image: "https://images.unsplash.com/photo-1533105079780-92b9be482077?q=80&w=1374&auto=format&fit=crop",
-    duration: "12 days",
+    duration: "12",
     cities: ["Athens", "Santorini", "Mykonos"],
-    countries: ["Greece"],
+    countries: ["Greece", "Turkey", "Bulgaria"],
     price: "$2,799",
     itineraryTags: ["road trip", "tropical"],
     activityTags: ["beach", "culture", "history"],
@@ -112,10 +112,10 @@ const itineraries = [
     title: "Thai Adventure",
     description: "From bustling cities to serene beaches",
     image: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1400&auto=format&fit=crop",
-    duration: "10 days",
+    duration: "10",
     cities: ["Bangkok", "Chiang Mai", "Phuket"],
     countries: ["Thailand"],
-    price: "$1,899",
+    price: "",
     itineraryTags: ["budget", "volunteering"],
     activityTags: ["adventure", "culture", "food"],
     status: "popular",
@@ -130,7 +130,7 @@ const itineraries = [
     title: "Swiss Alps Explorer",
     description: "Mountain adventures in the heart of Europe",
     image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=1400&auto=format&fit=crop",
-    duration: "8 days",
+      duration: "8",
     cities: ["Zurich", "Lucerne", "Interlaken"],
     countries: ["Switzerland"],
     price: "$3,299",
@@ -170,7 +170,7 @@ const filters = {
     { name: "road trip", icon: Wine },
     { name: "volunteering", icon: Heart },
     { name: "action packed", icon: Music },
-  ]
+  ],
   activityTags: [
     { name: "adventure", icon: Mountain },
     { name: "food", icon: Utensils },
@@ -185,11 +185,11 @@ const filters = {
     { name: "festivals", icon: Music },
     { name: "luxury", icon: Sparkles },
     { name: "surfing", icon: Waves },
-    { name: "hiking", icon: <FaHiking /> },
-    { name: "skiing", icon: <FaSkiing /> },
+    { name: "hiking", icon: FaHiking },
+    { name: "skiing", icon: FaSkiing },
     { name: "tour", icon: Footprints },
     { name: "safari", icon: FaSafari },
-    { name: "snorkeling", icon: <GiSnorkel /> },
+    { name: "snorkeling", icon: GiSnorkel },
   ],
 }
 
@@ -199,7 +199,8 @@ export default function ExplorePage() {
     destination: "",
     duration: "",
     budget: "",
-    tags: [] as string[],
+    itineraryTags: [] as string[],
+    activityTags: [] as string[],
     sort: "popular",
     regions: [] as string[],
     continents: [] as string[],
@@ -273,7 +274,7 @@ export default function ExplorePage() {
     if (selectedFilters.destination && !itinerary.countries.includes(selectedFilters.destination)) {
       return false
     }
-    if (selectedFilters.tags.length > 0 && !selectedFilters.tags.some(tag => itinerary.tags.includes(tag))) {
+    if (selectedFilters.itineraryTags.length > 0 && !selectedFilters.itineraryTags.some(tag => itinerary.itineraryTags.includes(tag))) {
       return false
     }
 
@@ -391,7 +392,8 @@ export default function ExplorePage() {
                 destinations={filters.destinations}
                 duration={filters.duration}
                 budget={filters.budget}
-                tags={filters.tags}
+                itineraryTags={filters.itineraryTags}
+                activityTags={filters.activityTags}
                 selectedFilters={selectedFilters}
                 onFilterChange={setSelectedFilters}
               />
@@ -418,7 +420,8 @@ export default function ExplorePage() {
                 destinations={filters.destinations}
                 duration={filters.duration}
                 budget={filters.budget}
-                tags={filters.tags}
+                itineraryTags={filters.itineraryTags}
+                activityTags={filters.activityTags}
                 selectedFilters={selectedFilters}
                 onFilterChange={setSelectedFilters}
               />
@@ -427,7 +430,8 @@ export default function ExplorePage() {
         </div>
 
         {/* Active Filters Display */}
-        {(selectedFilters.tags.length > 0 || 
+        {(selectedFilters.itineraryTags.length > 0 || 
+          selectedFilters.activityTags.length > 0 || 
           selectedFilters.accommodation.length > 0 || 
           selectedFilters.transportation.length > 0 || 
           selectedFilters.rating || 
@@ -454,7 +458,12 @@ export default function ExplorePage() {
                 {trans}
               </div>
             ))}
-            {selectedFilters.tags.map(tag => (
+            {selectedFilters.itineraryTags.map(tag => (
+              <div key={tag} className="bg-travel-50 text-travel-900 px-3 py-1 rounded-full text-sm font-medium">
+                {tag}
+              </div>
+            ))}
+            {selectedFilters.activityTags.map(tag => (
               <div key={tag} className="bg-travel-50 text-travel-900 px-3 py-1 rounded-full text-sm font-medium">
                 {tag}
               </div>
@@ -536,7 +545,7 @@ export default function ExplorePage() {
       src={itinerary.image}
       alt={itinerary.title}
       fill
-      className="object-cover rounded-xl"
+      className="object-cover rounded-2xl"
     />
                   {/* Status Badge */}
                   {itinerary.status && (
@@ -556,19 +565,28 @@ export default function ExplorePage() {
                     <div className="flex items-center flex-1">
                     <h3 className="text-xl font-semibold mb-1">{itinerary.title}</h3>
                     </div>
-                    <div className="flex items-center text-gray-600">
+                    {/* <div className="flex items-center text-gray-600">
                       <Users className="h-4 w-4 mr-1" />
                       2-4
-                    </div>
+                    </div> */}
                   </div>
                   
                   <div className="flex text-lg font-medium text-gray-500 mb-1">
+                  {itinerary.duration} 
+                  {itinerary.countries.length <= 2  ? 
+                    <span className="mx-1">
+                      {parseInt(itinerary.duration) > 1 ? " days in " : " day in "}
+                    </span>
+                  :
+                  <span className="mx-1">
+                    day 
+                  </span>
+                  }
                     <span className=" mr-1">
                       {itinerary.countries.length > 2 
-                        ? "Multi Country Trip"
+                        ? "multi-country trip"
                         : itinerary.countries.join(' & ')}
                     </span>
-                    in {itinerary.duration}
                   </div>
                   <p className="text-gray-600 text-sm mb-2">{itinerary.description}</p>
                   
@@ -580,7 +598,7 @@ export default function ExplorePage() {
 
                   <div className="flex items-center justify-between">
                     <div className="flex gap-2">
-                      {itinerary.tags.slice(0, 2).map((tag) => (
+                      {itinerary.itineraryTags.slice(0, 2).map((tag) => (
                         <span
                           key={tag}
                           className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize"
@@ -589,9 +607,11 @@ export default function ExplorePage() {
                         </span>
                       ))}
                     </div>
-                    <span className="px-2 py-1 bg-black text-white text-md rounded-xl capitalize">
+                    {itinerary.price && (
+                      <span className="px-2 py-1 bg-black text-white text-md rounded-xl capitalize">
                         Est. {itinerary.price}
                       </span>
+                    )}
                   </div>
                 </div>
               </motion.div>

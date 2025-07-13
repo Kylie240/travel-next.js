@@ -11,6 +11,7 @@ export interface DaySectionProps {
     title: string;
     description: string;
     image: string;
+    notes: string;
     activities: Array<{
       time: string;
       title: string;
@@ -58,8 +59,8 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
           </div>) 
         }
           <div className={`absolute top-[50px] md:top-[70px] cursor-pointer left-[60px] z-[4] ${day.image ? 'text-white' : 'text-gray-700'}`} onClick={onToggle}>
-            <h2 className="font-bold text-xl md:text-2xl">Day {day.day} : {day.title}</h2>
-            <p className="text-sm md:text-lg font-medium">{day.description}</p>
+            <h2 className={`text-xl md:text-2xl ${day.image ? 'font-bold' : 'font-semibold'}`}>Day {day.day} : {day.title}</h2>
+            <p className={`text-sm md:text-lg ${day.image ? 'font-medium' : 'font-normal'}`}>{day.description}</p>
           </div>
         <motion.div
           initial={false}
@@ -75,11 +76,18 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
                     e.stopPropagation();
                     onClose();
                   }}
-                  className="float-right sticky top-[68px] z-[10] mb-4 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 rounded-md bg-black text-white"
+                  className="float-right sticky top-[68px] z-[10] mb-4 px-1 py-1 text-sm text-gray-600 hover:text-gray-400 rounded-md bg-gray-900 text-white"
                 >
                   <ChevronUp />
                 </button>
               )}
+              {/* Day Notes */}
+              {day.notes && 
+                <div className="my-4 pl-4 pb-4">
+                  <p className="text-gray-600 text-sm mb-2">{day.notes}</p>
+                </div>
+              }
+              
               <div className="clear-both"></div>
               {/* Activities */}
               <div className="space-y-4">
@@ -105,7 +113,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
                     </div>
                     <p className="text-gray-600 text-sm mb-2">{activity.details}</p>
                     <p className="text-sm text-gray-500">{activity.location}</p>
-                    <div className="relative h-40 mt-2 rounded-lg overflow-hidden">
+                    <div className="relative h-60 mt-2 rounded-lg overflow-hidden">
                       <Image
                         src={activity.image}
                         alt={activity.title}

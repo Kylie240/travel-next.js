@@ -14,12 +14,14 @@ interface AdvancedFilterDialogProps {
   destinations: string[]
   duration: string[]
   budget: string[]
-  tags: FilterOption[]
+  itineraryTags: FilterOption[]
+  activityTags: FilterOption[]
   selectedFilters: {
     destination: string
     duration: string
     budget: string
-    tags: string[]
+    itineraryTags: string[]
+    activityTags: string[]
     regions: string[]
     continents: string[]
     accommodation: string[]
@@ -32,7 +34,8 @@ interface AdvancedFilterDialogProps {
     destination: string
     duration: string
     budget: string
-    tags: string[]
+    itineraryTags: string[]
+    activityTags: string[]
     regions: string[]
     continents: string[]
     accommodation: string[]
@@ -116,15 +119,23 @@ export function AdvancedFilterDialog({
   destinations,
   duration,
   budget,
-  tags,
+  itineraryTags,
+  activityTags,
   selectedFilters,
   onFilterChange,
 }: AdvancedFilterDialogProps) {
-  const handleTagToggle = (tag: string) => {
-    const newTags = selectedFilters.tags.includes(tag)
-      ? selectedFilters.tags.filter((t) => t !== tag)
-      : [...selectedFilters.tags, tag]
-    onFilterChange({ ...selectedFilters, tags: newTags })
+  const handleItineraryTagToggle = (tag: string) => {
+    const newTags = selectedFilters.itineraryTags.includes(tag)
+      ? selectedFilters.itineraryTags.filter((t) => t !== tag)
+      : [...selectedFilters.itineraryTags, tag]
+    onFilterChange({ ...selectedFilters, itineraryTags: newTags })
+  }
+
+  const handleActivityTagToggle = (tag: string) => {
+    const newTags = selectedFilters.activityTags.includes(tag)
+      ? selectedFilters.activityTags.filter((t) => t !== tag)
+      : [...selectedFilters.activityTags, tag]
+    onFilterChange({ ...selectedFilters, activityTags: newTags })
   }
 
   const handleRegionToggle = (region: string) => {
@@ -240,6 +251,34 @@ export function AdvancedFilterDialog({
               </select>
             </div> */}
 
+            
+
+          {/* Itinerary Tags Filter */}
+          <div>
+            <div>
+              <label className="block text-md font-semibold text-gray-700 mb-3">
+                Itinerary Tags
+              </label>
+              <div className="flex flex-wrap gap-2 space-y-1">
+                {itineraryTags.map((tag) => {
+                  const Icon = tag.icon
+                  const isSelected = selectedFilters.itineraryTags.includes(tag.name)
+                  return (
+                    <div
+                      key={tag.name}
+                      onClick={() => handleItineraryTagToggle(tag.name)}
+                      className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
+                    >
+                      {Icon && <Icon className="h-5 w-5" />}
+                      {tag.name}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+
             {/* Accommodation Types */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -292,22 +331,22 @@ export function AdvancedFilterDialog({
               </div>
             </div>
 
-            {/* Tags Filter */}
+            {/* Activity Tags Filter */}
             <div>
               <label className="block text-md font-semibold text-gray-700 mb-3">
                 Activity Tags
               </label>
               <div className="flex flex-wrap gap-2 space-y-1">
-                {tags.map((tag) => {
+                {activityTags.map((tag) => {
                   const Icon = tag.icon
-                  const isSelected = selectedFilters.tags.includes(tag.name)
+                  const isSelected = selectedFilters.activityTags.includes(tag.name)
                   return (
                     <div
                       key={tag.name}
-                      onClick={() => handleTagToggle(tag.name)}
+                      onClick={() => handleActivityTagToggle(tag.name)}
                       className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
                     >
-                      {!Icon.includes("/>") && <Icon className="h-5 w-5" />}
+                      {Icon && <Icon className="h-5 w-5" />}
                       {tag.name}
                     </div>
                   )
@@ -327,7 +366,8 @@ export function AdvancedFilterDialog({
                     accommodation: [],
                     transportation: [],
                     rating: "",
-                    tags: [],
+                    itineraryTags: [],
+                    activityTags: [],
                   })
                 }
               >
