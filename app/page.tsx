@@ -12,6 +12,7 @@ const multiCountryItineraries = [
   {
     id: "1",
     title: "Mystical Japan Journey",
+    description: "Experience the best of Japan",
     destination: "Japan",
     countries: ["Tokyo", "Kyoto", "Mount Fuji"],
     imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1470&auto=format&fit=crop",
@@ -22,6 +23,7 @@ const multiCountryItineraries = [
   {
     id: "2",
     title: "Greek Islands Explorer",
+    description: "Experience the best of Greece",
     destination: "Greece",
     countries: ["Athens", "Santorini", "Mykonos"],
     imageUrl: "https://images.unsplash.com/photo-1533105079780-92b9be482077?q=80&w=1374&auto=format&fit=crop",
@@ -32,6 +34,7 @@ const multiCountryItineraries = [
   {
     id: "3",
     title: "Machu Picchu & Sacred Valley",
+    description: "Experience the best of Peru",
     destination: "Peru",
     countries: ["Lima", "Cusco", "Machu Picchu"],
     imageUrl: "https://images.unsplash.com/photo-1526392060635-9d6019884377?q=80&w=1470&auto=format&fit=crop",
@@ -42,6 +45,7 @@ const multiCountryItineraries = [
   {
     id: "4",
     title: "Vietnam Heritage Trail",
+    description: "Experience the best of Vietnam",
     destination: "Vietnam",
     countries: ["Hanoi", "Ha Long Bay", "Hoi An"],
     imageUrl: "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1470&auto=format&fit=crop",
@@ -52,6 +56,7 @@ const multiCountryItineraries = [
   {
     id: "5",
     title: "African Safari Adventure",
+    description: "Experience the best of Africa",
     destination: "Tanzania",
     countries: ["Serengeti", "Ngorongoro", "Zanzibar"],
     imageUrl: "https://images.unsplash.com/photo-1516426122078-c23e76319801?q=80&w=1468&auto=format&fit=crop",
@@ -62,6 +67,7 @@ const multiCountryItineraries = [
   {
     id: "6",
     title: "Iceland Ring Road",
+    description: "Experience the best of Iceland",
     destination: "Iceland",
     countries: ["Reykjavik", "Golden Circle", "Vik"],
     imageUrl: "https://images.unsplash.com/photo-1504893524553-b855bce32c67?q=80&w=1470&auto=format&fit=crop",
@@ -72,6 +78,7 @@ const multiCountryItineraries = [
   {
     id: "7",
     title: "Morocco Desert Magic",
+    description: "Experience the best of Morocco",
     destination: "Morocco",
     countries: ["Marrakech", "Sahara", "Fes"],
     imageUrl: "https://images.unsplash.com/photo-1539020140153-e479b8c22e70?q=80&w=1470&auto=format&fit=crop",
@@ -82,6 +89,7 @@ const multiCountryItineraries = [
   {
     id: "8",
     title: "Turkish Delight",
+    description: "Experience the best of Turkey",
     destination: "Turkey",
     countries: ["Istanbul", "Cappadocia", "Pamukkale"],
     imageUrl: "https://images.unsplash.com/photo-1527838832700-5059252407fa?q=80&w=1498&auto=format&fit=crop",
@@ -95,6 +103,7 @@ const soloTrips = [
   {
     id: "s1",
     title: "Backpacking Southeast Asia",
+    description: "Experience the best of Southeast Asia",
     destination: "Thailand",
     countries: ["Bangkok", "Chiang Mai", "Phuket"],
     imageUrl: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1400&auto=format&fit=crop",
@@ -105,6 +114,7 @@ const soloTrips = [
   {
     id: "s2",
     title: "New Zealand Adventure",
+    description: "Experience the best of New Zealand",
     destination: "New Zealand",
     countries: ["Auckland", "Queenstown", "Wellington"],
     imageUrl: "https://images.unsplash.com/photo-1469521669194-babb45599def?q=80&w=1400&auto=format&fit=crop",
@@ -115,6 +125,7 @@ const soloTrips = [
   {
     id: "s3",
     title: "Portugal Solo Explorer",
+    description: "Experience the best of Portugal",
     destination: "Portugal",
     countries: ["Lisbon", "Porto", "Algarve"],
     imageUrl: "https://images.unsplash.com/photo-1555881400-74d7acbe3cf7?q=80&w=1400&auto=format&fit=crop",
@@ -125,6 +136,7 @@ const soloTrips = [
   {
     id: "s4",
     title: "Japan Solo Journey",
+    description: "Experience the best of Japan",
     destination: "Japan",
     countries: ["Tokyo", "Osaka", "Kyoto"],
     imageUrl: "https://images.unsplash.com/photo-1493780474015-ba834fd0ce2f?q=80&w=1400&auto=format&fit=crop",
@@ -138,6 +150,7 @@ const tropicalVacations = [
   {
     id: "t1",
     title: "Maldives Paradise",
+    description: "Experience the best of Maldives",
     destination: "Maldives",
     countries: ["Male", "Maafushi", "Hulhumale"],
     imageUrl: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?q=80&w=1400&auto=format&fit=crop",
@@ -148,6 +161,7 @@ const tropicalVacations = [
   {
     id: "t2",
     title: "Caribbean Island Hopping",
+    description: "Experience the best of Caribbean",
     destination: "Caribbean",
     countries: ["Jamaica", "Bahamas", "St. Lucia"],
     imageUrl: "https://images.unsplash.com/photo-1599561046251-bfb9465b4c44?q=80&w=1400&auto=format&fit=crop",
@@ -158,6 +172,7 @@ const tropicalVacations = [
   {
     id: "t3",
     title: "Bali Beach Retreat",
+    description: "Experience the best of Bali",
     destination: "Indonesia",
     countries: ["Seminyak", "Ubud", "Nusa Dua"],
     imageUrl: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1400&auto=format&fit=crop",
@@ -168,6 +183,7 @@ const tropicalVacations = [
   {
     id: "t4",
     title: "Seychelles Luxury",
+    description: "Experience the best of Seychelles",
     destination: "Seychelles",
     countries: ["Mahé", "Praslin", "La Digue"],
     imageUrl: "https://images.unsplash.com/photo-1439066615861-d1af74d74000?q=80&w=1400&auto=format&fit=crop",
@@ -181,6 +197,7 @@ const popularListings = [
   {
     id: "p1",
     title: "Paris & French Riviera",
+    description: "Experience the best of Paris and the French Riviera",
     destination: "France",
     countries: ["Paris", "Nice", "Cannes"],
     imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1400&auto=format&fit=crop",
@@ -191,6 +208,7 @@ const popularListings = [
   {
     id: "p2",
     title: "Italian Classics",
+    description: "Experience the best of Italy",
     destination: "Italy",
     countries: ["Rome", "Florence", "Venice"],
     imageUrl: "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?q=80&w=1400&auto=format&fit=crop",
@@ -201,6 +219,7 @@ const popularListings = [
   {
     id: "p3",
     title: "Swiss Alps Explorer",
+    description: "Experience the best of Switzerland",
     destination: "Switzerland",
     countries: ["Zurich", "Lucerne", "Interlaken"],
     imageUrl: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=1400&auto=format&fit=crop",
@@ -211,6 +230,7 @@ const popularListings = [
   {
     id: "p4",
     title: "Spain Highlights",
+    description: "Experience the best of Spain",
     destination: "Spain",
     countries: ["Barcelona", "Madrid", "Seville"],
     imageUrl: "https://images.unsplash.com/photo-1543783207-ec64e4d95325?q=80&w=1400&auto=format&fit=crop",
@@ -224,6 +244,7 @@ const mostViewed = [
   {
     id: "m1",
     title: "Dubai Luxury & Desert",
+    description: "Experience the best of Dubai and the UAE",
     destination: "UAE",
     countries: ["Dubai", "Abu Dhabi"],
     imageUrl: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1400&auto=format&fit=crop",
@@ -234,6 +255,7 @@ const mostViewed = [
   {
     id: "m2",
     title: "Egypt Pyramids & Nile",
+    description: "Explore the pyramids of Egypt and the Nile River",
     destination: "Egypt",
     countries: ["Cairo", "Luxor", "Aswan"],
     imageUrl: "https://images.unsplash.com/photo-1539768942893-daf53e448371?q=80&w=1400&auto=format&fit=crop",
@@ -244,6 +266,7 @@ const mostViewed = [
   {
     id: "m3",
     title: "Costa Rica Adventure",
+    description: "Experience the best of Costa Rica",
     destination: "Costa Rica",
     countries: ["San Jose", "Arenal", "Manuel Antonio"],
     imageUrl: "https://images.unsplash.com/photo-1518181835702-6eef8b4b2113?q=80&w=1400&auto=format&fit=crop",
@@ -254,6 +277,7 @@ const mostViewed = [
   {
     id: "m4",
     title: "Australian Outback",
+    description: "Experience the best of Australia",
     destination: "Australia",
     countries: ["Sydney", "Uluru", "Cairns"],
     imageUrl: "https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?q=80&w=1400&auto=format&fit=crop",

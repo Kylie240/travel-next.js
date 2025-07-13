@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Globe, Camera, Users, ChevronRight, Heart, MapPin } from "lucide-react"
 import { ProfileHeader } from "@/components/profile/profile-header"
@@ -16,6 +15,7 @@ const dummyItineraries = [
   {
     id: 1,
     title: "Weekend in Paris",
+    description: "Experience the best of Paris and the French Riviera",
     image: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=2070&auto=format&fit=crop",
     likes: 24,
     days: 3
@@ -23,6 +23,7 @@ const dummyItineraries = [
   {
     id: 2,
     title: "Tokyo Adventure",
+    description: "Experience the best of Japan",
     image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=2067&auto=format&fit=crop",
     likes: 18,
     days: 7
@@ -30,6 +31,7 @@ const dummyItineraries = [
   {
     id: 3,
     title: "New York City Guide",
+    description: "Experience the best of New York City",
     image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=2070&auto=format&fit=crop",
     likes: 32,
     days: 4
@@ -40,6 +42,7 @@ const dummyFavorites = [
   {
     id: 4,
     title: "Barcelona Food Tour",
+    description: "Experience the best of Barcelona",
     image: "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?q=80&w=2070&auto=format&fit=crop",
     author: "FoodieExplorer",
     likes: 45,
@@ -48,6 +51,7 @@ const dummyFavorites = [
   {
     id: 5,
     title: "Swiss Alps Hiking",
+    description: "Experience the best of Switzerland",
     image: "https://images.unsplash.com/photo-1531210483974-4f8c1f33fd35?q=80&w=2070&auto=format&fit=crop",
     author: "AdventureSeeker",
     likes: 56,
@@ -60,6 +64,7 @@ const followingUsers = [
     id: 1,
     name: "Sarah Thompson",
     username: "wanderlust_sarah",
+    description: "Experience the best of London",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=2787&auto=format&fit=crop",
     location: "London, UK"
   },
@@ -67,6 +72,7 @@ const followingUsers = [
     id: 2,
     name: "Alex Rivera",
     username: "travel_alex",
+    description: "Experience the best of Barcelona",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=2787&auto=format&fit=crop",
     location: "Barcelona, Spain"
   },
@@ -74,6 +80,7 @@ const followingUsers = [
     id: 3,
     name: "Emma Chen",
     username: "emma_explores",
+    description: "Experience the best of Singapore",
     image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=2787&auto=format&fit=crop",
     location: "Singapore"
   }
@@ -460,7 +467,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-white md:bg-gray-50">
       {/* Background Image Section */}
-      <div className="hidden lg:block relative h-64 mb-6 md:rounded-2xl overflow-hidden">
+      {/* <div className="hidden lg:block relative h-64 mb-6 md:rounded-2xl overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -477,14 +484,14 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
-      </div>
+      </div> */}
 
       <div className="md:container md:mx-auto md:px-4 md:py-8">
         <div className="grid md:grid-cols-1 lg:grid-cols-3 space-y-6 lg:space-y-0 lg:gap-6 relative">
           {/* Left Column: Profile Header*/}
-          <div className="space-y-6 lg:space-y-0 relative pt-40 lg:pt-0">
+          <div className="space-y-6 lg:space-y-0 relative lg:pt-0">
             <div
-              className="lg:hidden w-full h-64 absolute md:rounded-t-2xl inset-0 bg-cover bg-center"
+              className="hidden w-full h-64 absolute md:rounded-t-2xl inset-0 bg-cover bg-center"
               style={{
                 backgroundImage: `url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop')`,
               }}

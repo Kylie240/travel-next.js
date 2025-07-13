@@ -11,6 +11,7 @@ interface ItineraryCardProps {
   price?: number | string;
   discountedPrice?: number;
   countries?: string[];
+  description?: string;
   onClick?: (id: string | number) => void;
   className?: string;
 }
@@ -22,7 +23,7 @@ export function ItineraryCard({
   imageUrl,
   duration,
   price,
-  discountedPrice,
+  description,
   countries = [],
   onClick,
   className,
@@ -38,7 +39,7 @@ export function ItineraryCard({
       className="flex-none w-[300px] group cursor-pointer"
       onClick={handleCardClick}
     >
-      <div className="relative overflow-hidden rounded-2xl h-[400px]">
+      <div className="relative overflow-hidden rounded-2xl h-[440px]">
         <img
           src={imageUrl}
           alt={title}
@@ -49,14 +50,12 @@ export function ItineraryCard({
           <h3 className="font-bold text-2xl mb-1">
             {title}
           </h3>
-          <p className="text-xs opacity-90">
-            {destinationText} in {duration} Days
-          </p>
-          {price && (
-            <div className="flex items-center mt-2">
-              <span className="text-sm font-bold">
-                Est. ${typeof price === 'string' ? price.replace(/[^0-9]/g, '') : price?.toLocaleString()}
-              </span>
+          <span className="text-sm opacity-90">
+            {countries.map((country) => country).join("  ")}
+          </span>
+          {duration && (
+            <div className="flex font-bold items-center mt-2">
+              {duration} Days
             </div>
           )}
         </div>

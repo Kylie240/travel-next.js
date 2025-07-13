@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 import Image from "next/image"
 import { Button } from "./button"
+import { useRouter } from "next/navigation"
 
 interface User {
   id: string
@@ -22,6 +23,7 @@ interface FollowersDialogProps {
 }
 
 export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowToggle }: FollowersDialogProps) {
+  const router = useRouter()
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -33,7 +35,8 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
 
           <div className="space-y-4">
             {users.map((user) => (
-              <div key={user.id} className="flex items-center justify-between">
+              <div key={user.id} className="flex items-center justify-between cursor-pointer"
+              onClick={() => router.push(`/profile/${user.id}`)}>
                 <div className="flex items-center gap-3">
                   <div className="relative w-10 h-10">
                     <Image
@@ -46,18 +49,21 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
                   </div>
                   <div>
                     <p className="font-semibold">{user.name}</p>
-                    <p className="text-sm text-gray-600">@{user.username}</p>
+                    <p className="text-sm text-gray-600">{user.username}</p>
                   </div>
                 </div>
-                {onFollowToggle && (
+                
                   <Button
                     variant={user.isFollowing ? "outline" : "default"}
-                    onClick={() => onFollowToggle(user.id)}
-                    className="h-9"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onFollowToggle?.(user.id)
+                    }}
+                    className={`h-9 rounded-xl ${user.isFollowing ? "" : "bg-gray-700"}`}
                   >
                     {user.isFollowing ? "Following" : "Follow"}
                   </Button>
-                )}
+                
               </div>
             ))}
           </div>

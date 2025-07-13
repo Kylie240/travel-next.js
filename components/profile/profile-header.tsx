@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { useState } from "react"
-import { Camera, MapPin, Minus, MinusCircle, Plus, PlusCircle, Share, Share2 } from "lucide-react"
+import { Camera, MapPin, Minus, Plus, Share } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FollowersDialog } from "@/components/ui/followers-dialog"
 import { UserData } from "@/lib/types"
@@ -41,7 +41,7 @@ export function ProfileHeader({ user, onEditProfile, disableEdit = false, onFoll
     <div className={`bg-white ${ !disableEdit ? 'rounded-2xl md:shadow-sm mb-8' : ''} p-6`}>
       {!disableEdit && 
         <div className="flex flex-col items-center gap-6">
-          <div className="absolute top-[280px] right-4">
+          <div className="absolute top-6 right-4 block md:hidden">
             <Button variant="outline" onClick={() => {navigator.clipboard.writeText(window.location.href); toast.success('Copied to clipboard')}}><Share /></Button>
           </div>
           <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-32 lg:h-32">
