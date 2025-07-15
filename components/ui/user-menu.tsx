@@ -1,7 +1,7 @@
 "use client"
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { ChevronDown, LogOut, LayoutDashboard, Settings, PenSquare, Heart, User, ChevronUp, Info, Globe } from "lucide-react"
+import { ChevronDown, LogOut, Settings, PenSquare, Heart, User, ChevronUp, Info, Globe, Bookmark } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { auth } from "@/lib/firebase"
 import { signOut } from "firebase/auth"
@@ -95,14 +95,16 @@ export function UserMenu() {
               Profile
             </DropdownMenu.Item>
 
-            {/* <DropdownMenu.Item
+            <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push(`/profile?tab=${encodeURIComponent('Login & Security')}`)}
             >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Dashboard
-            </DropdownMenu.Item> */}
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </DropdownMenu.Item>
 
+            <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
+            
             <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
               onClick={() => router.push('/create')}
@@ -113,18 +115,18 @@ export function UserMenu() {
 
             <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-              onClick={() => router.push('/dashboard?tab=favorites')}
+              onClick={() => router.push('/my-itineraries')}
             >
-              <Heart className="mr-2 h-4 w-4" />
-              Favorites
+              <PenSquare className="mr-2 h-4 w-4" />
+              My Itineraries
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-              onClick={() => router.push('/dashboard?tab=settings')}
+              onClick={() => router.push('/favorites')}
             >
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
+              <Bookmark className="mr-2 h-4 w-4" />
+              Favorites
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />

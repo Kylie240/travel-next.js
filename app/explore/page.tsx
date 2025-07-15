@@ -498,7 +498,7 @@ export default function ExplorePage() {
           </div>
 
         {/* Itineraries Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
           {filteredItineraries.map((itinerary) => (
             <Link href={`/itinerary/${itinerary.id}`} className="block relative" key={itinerary.id}>
               
@@ -527,16 +527,16 @@ export default function ExplorePage() {
                       </span>
                     </div>
                   )}
-                  <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                  <div className="absolute top-4 right-4">
+                    <button className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full">
+                      <Bookmark className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="p-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
                     <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
                     <span className="text-sm text-white/80 truncate">
                       {itinerary.cities.join(' · ')}
                     </span>
-                    <div className="absolute bottom-0 right-0">
-                      <button className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full">
-                        <Bookmark className="h-5 w-5" />
-                      </button>
-                    </div>
                   </div>
                 </div>
 
@@ -547,7 +547,7 @@ export default function ExplorePage() {
                     </div>
                   </div>
                   
-                  <div className="flex text-[20px] font-regular my-1">
+                  <div className="flex text-[20px] font-medium my-1">
                   {itinerary.duration} 
                   {itinerary.countries.length <= 2  ? 
                     <span className="mx-1">
@@ -564,10 +564,10 @@ export default function ExplorePage() {
                         : itinerary.countries.join(' & ')}
                     </span>
                   </div>
-                  <p className="text-gray-600 text-md mb-2">{itinerary.description}</p>
+                  <p className="text-gray-600 line-clamp-4 leading-5 text-md mb-2">{itinerary.description}</p>
 
-                  <div className="flex flex-wrap gap-2 items-center justify-between">
-                    <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-start gap-2">
                       {itinerary.itineraryTags.slice(0, 2).map((tag) => (
                         <span
                           key={tag}
@@ -577,11 +577,13 @@ export default function ExplorePage() {
                         </span>
                       ))}
                     </div>
-                    {itinerary.price && (
-                      <span className="px-2 py-1 max-h-[32px] gap-2 bg-black text-white text-md rounded-xl capitalize">
-                        Est. {itinerary.price}
-                      </span>
-                    )}
+                    <div className="flex justify-end">
+                      {itinerary.price && (
+                        <span className="px-2 py-1 max-h-[32px] gap-2 bg-black text-white text-md rounded-xl capitalize">
+                          Est. {itinerary.price}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
