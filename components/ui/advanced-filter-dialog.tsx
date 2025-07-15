@@ -191,17 +191,17 @@ export function AdvancedFilterDialog({
           </div>
           
 
-          <div className="p-6 space-y-6 overflow-y-auto">
+          <div className="p-6 space-y-8 overflow-y-auto">
             {/* Continent Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-lg font-semibold text-gray-900 mb-2">
                 Continents
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 space-y-1">
                 {continents.map((continent) => {
                   const isSelected = selectedFilters.continents.includes(continent)
                   return (
-                    <div key={continent} className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`} onClick={() => handleContinentToggle(continent)}>
+                    <div key={continent} className={`flex items-center gap-1.5 px-4 py-3 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`} onClick={() => handleContinentToggle(continent)}>
                       {isSelected ? <Check className="h-5 w-5 bg-black p-1 text-white rounded-full" /> : <div className="h-5 w-5 bg-gray-white rounded-full border border-1 border-gray-300" />}
                       {continent}
                     </div>
@@ -252,12 +252,12 @@ export function AdvancedFilterDialog({
               </select>
             </div> */}
 
-            
+          <div className="border-b border-1 border-gray-300"></div>
 
           {/* Itinerary Tags Filter */}
           <div>
             <div>
-              <label className="block text-md font-semibold text-gray-700 mb-3">
+              <label className="block text-lg font-semibold text-gray-900 mb-3">
                 Itinerary Tags
               </label>
               <div className="flex flex-wrap gap-2 space-y-1">
@@ -268,7 +268,7 @@ export function AdvancedFilterDialog({
                     <div
                       key={tag.name}
                       onClick={() => handleItineraryTagToggle(tag.name)}
-                      className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
+                      className={`flex items-center gap-1.5 px-4 py-3 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
                     >
                       {Icon && <Icon className="h-5 w-5" />}
                       {tag.name}
@@ -279,9 +279,9 @@ export function AdvancedFilterDialog({
             </div>
           </div>
 
-
+          <div className="border-b border-1 border-gray-300"></div>
             {/* Accommodation Types */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Accommodation Types
               </label>
@@ -304,10 +304,10 @@ export function AdvancedFilterDialog({
                   )
                 })}
               </div>
-            </div>
+            </div> */}
 
             {/* Transportation Types */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Transportation Types
               </label>
@@ -330,11 +330,11 @@ export function AdvancedFilterDialog({
                   )
                 })}
               </div>
-            </div>
+            </div> */}
 
             {/* Activity Tags Filter */}
             <div>
-              <label className="block text-md font-semibold text-gray-700 mb-3">
+              <label className="block text-lg font-semibold text-gray-900 mb-5">
                 Activity Tags
               </label>
               <div className="flex flex-wrap gap-2 space-y-1">
@@ -345,7 +345,7 @@ export function AdvancedFilterDialog({
                     <div
                       key={tag.name}
                       onClick={() => handleActivityTagToggle(tag.name)}
-                      className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
+                      className={`flex items-center gap-1.5 px-4 py-3 rounded-xl text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
                     >
                       {Icon && <Icon className="h-5 w-5" />}
                       {tag.name}
@@ -356,7 +356,7 @@ export function AdvancedFilterDialog({
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="mt-6 flex justify-between gap-3 border-t border-1 border-gray-300 p-6">
             <Dialog.Close asChild>
               <Button
                 variant="outline"
@@ -372,11 +372,11 @@ export function AdvancedFilterDialog({
                   })
                 }
               >
-                Reset
+                Clear Filters
               </Button>
             </Dialog.Close>
             <Dialog.Close asChild>
-              <Button>Apply Filters</Button>
+              <Button className="bg-black text-white hover:bg-gray-800">Apply Filters</Button>
             </Dialog.Close>
           </div>
         </Dialog.Content>
