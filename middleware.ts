@@ -30,12 +30,29 @@ export const config = {
   matcher: ['/dashboard/:path*', '/create/:path*']
 }
 
-// This is a placeholder function - replace with your actual auth check
+// Check for Firebase Auth session
 function checkAuthStatus(request: NextRequest): boolean {
-  // Check for Firebase Auth session cookie
-  const firebaseSession = request.cookies.get('__session') // Firebase uses __session cookie
-  const firebaseToken = request.cookies.get('firebase-token') // Fallback for token
-  const authHeader = request.headers.get('Authorization')?.split('Bearer ')[1]
+  // Get all cookies as a string
+  const cookieHeader = request.headers.get('cookie') || ''
   
-  return !!(firebaseSession || firebaseToken || authHeader)
+  // Parse cookies into an object
+  const cookies = cookieHeader.split(';').reduce((acc: { [key: string]: string }, cookie) => {
+    const [key, value] = cookie.trim().split('=')
+    if (key && value) {
+      acc[key] = value
+    }
+    return acc
+  }, {})
+
+  // Check for Firebase session cookie
+  const firebaseSession = cookies['__session']
+  
+  // Check for Firebase ID token in cookie or Authorization header
+  const firebaseToken = cookies['firebase-token'] || request.headers.get('Authorization')?.split('Bearer ')[1]
+
+  // Return true if either session cookie or token exists and is not 'undefined' or empty
+  return !!(
+    (firebaseSession && firebaseSession !== 'undefined') || 
+    (firebaseToken && firebaseToken !== 'undefined')
+  )
 } 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Users, Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Snowflake, Star, Bookmark, Footprints } from "lucide-react"
+import { Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Star, Bookmark, Footprints } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { AdvancedFilterDialog } from "@/components/ui/advanced-filter-dialog"
 import { QuickFilterList } from "@/components/ui/quick-filter-list"
@@ -14,6 +14,7 @@ import { FaSkiing } from "react-icons/fa"
 import { GiSnorkel } from "react-icons/gi"
 import { FaSafari } from "react-icons/fa"
 import { FaHiking } from "react-icons/fa"
+import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -326,68 +327,80 @@ export default function ExplorePage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-white py-8">
       <div className="container mx-auto px-4">
         <h2 className="text-2xl font-semibold mb-4">Search Results</h2>
         {/* Filters Bar */}
         <div className="flex flex-col mb-8">
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <select
-                className="px-4 cursor-pointer py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
+              <Select
                 value={selectedFilters.destination}
-                onChange={(e) =>
+                onValueChange={(value) =>
                   setSelectedFilters((prev) => ({
                     ...prev,
-                    destination: e.target.value,
+                    destination: value === "all" ? "" : value,
                   }))
                 }
               >
-                <option value="">All Destinations</option>
-                {filters.destinations.map((dest) => (
-                  <option key={dest} value={dest}>
-                    {dest}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full rounded-xl px-3 py-2.5">
+                  <SelectValue placeholder="Destination" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Destinations</SelectItem>
+                  {filters.destinations.map((dest) => (
+                    <SelectItem key={dest} value={dest}>
+                      {dest}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <select
-                className="px-4 py-2 cursor-pointer border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
-                value={selectedFilters.duration}
-                onChange={(e) =>
+              <Select
+                value={selectedFilters.duration === "" ? "all" : selectedFilters.duration}
+                onValueChange={(value) =>
                   setSelectedFilters((prev) => ({
                     ...prev,
-                    duration: e.target.value,
+                    duration: value === "all" ? "" : value,
                   }))
                 }
               >
-                <option value="">Any Duration</option>
-                {filters.duration.map((dur) => (
-                  <option key={dur} value={dur}>
-                    {dur}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full rounded-xl px-3 py-2.5">
+                  <SelectValue placeholder="Duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any Duration</SelectItem>
+                  {filters.duration.map((dur) => (
+                    <SelectItem key={dur} value={dur}>
+                      {dur}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <select
-                className="px-4 py-2 cursor-pointer border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
-                value={selectedFilters.budget}
-                onChange={(e) =>
+              <Select
+                value={selectedFilters.budget === "" ? "all" : selectedFilters.budget}
+                onValueChange={(value) =>
                   setSelectedFilters((prev) => ({
                     ...prev,
-                    budget: e.target.value,
+                    budget: value === "all" ? "" : value,
                   }))
                 }
               >
-                <option value="">Any Budget</option>
-                {filters.budget.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full rounded-xl px-3 py-2.5">
+                  <SelectValue placeholder="Budget" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any Budget</SelectItem>
+                  {filters.budget.map((b) => (
+                    <SelectItem key={b} value={b}>
+                      {b}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end rounded-xl">
               <AdvancedFilterDialog
                 destinations={filters.destinations}
                 duration={filters.duration}
@@ -415,17 +428,6 @@ export default function ExplorePage() {
               />
             </div>
             
-            <div className="flex justify-end">
-              <AdvancedFilterDialog
-                destinations={filters.destinations}
-                duration={filters.duration}
-                budget={filters.budget}
-                itineraryTags={filters.itineraryTags}
-                activityTags={filters.activityTags}
-                selectedFilters={selectedFilters}
-                onFilterChange={setSelectedFilters}
-              />
-            </div>
           </div>
         </div>
 
@@ -496,82 +498,56 @@ export default function ExplorePage() {
           </div>
 
         {/* Itineraries Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
           {filteredItineraries.map((itinerary) => (
             <Link href={`/itinerary/${itinerary.id}`} className="block relative" key={itinerary.id}>
               
               <motion.div
-                className="overflow-hidden relative"
+                className="group relative overflow-hidden cursor-pointer bg-white"
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.2 }}
               >
-                {/* Card cutout overlay */}
-                <div className="absolute -top-3 -left-3 bg-white">
-                  <div className="relative w-[140px] h-[64px]">
-                    <div className="absolute top-0 left-0 w-full h-full">
-                      <div className="absolute bottom-0 right-0 w-[30px] h-[30px]" />
-                      <div className="absolute bottom-0 right-0 w-[32px] h-[32px] rounded-tl-xl" />
-                    </div>
-                  </div>
-                </div>
                 
                 {/* Image Container */}
-                  <div className="relative h-56 left-clip">
-    {isAuthenticated && (
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          const newLiked = !likedItineraries.includes(itinerary.id);
-          setLikedItineraries(prev => 
-            newLiked ? [...prev, itinerary.id] : prev.filter(id => id !== itinerary.id)
-          );
-          toast({
-            title: newLiked ? "Added to favorites" : "Removed from favorites",
-            duration: 2000,
-          });
-        }}
-        className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
-      >
-        <Bookmark 
-          className={`w-5 h-5 transition-colors ${
-            likedItineraries.includes(itinerary.id)
-              ? "fill-red-500 text-red-500"
-              : "text-gray-600"
-          }`}
-        />
-      </button>
-    )}
-    <Image
-      src={itinerary.image}
-      alt={itinerary.title}
-      fill
-      className="object-cover rounded-2xl"
-    />
-                  {/* Status Badge */}
+                <div className="relative aspect-[3/2] md:aspect-[4/5] relative rounded-2xl overflow-hidden">
+                    <Image
+                      src={itinerary.image}
+                      alt={itinerary.title}
+                      fill
+                      className="object-cover"
+                    />
+                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                  {/* Badges */}
                   {itinerary.status && (
                     <div className="absolute top-4 left-4 z-20">
-                      <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-lg capitalize">
+                      <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-xl capitalize">
                         {itinerary.status === "highly rated" ? "Top Rated" :
                          itinerary.status === "most viewed" ? "Trending" :
                          "Popular"}
                       </span>
                     </div>
                   )}
+                  <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                    <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
+                    <span className="text-sm text-white/80 truncate">
+                      {itinerary.cities.join(' · ')}
+                    </span>
+                    <div className="absolute bottom-0 right-0">
+                      <button className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full">
+                        <Bookmark className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Content Container */}
-                <div className="py-4 px-2 h-[230px]">
+                <div className="py-2 px-4">
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center flex-1">
-                    <h3 className="text-xl font-semibold mb-1">{itinerary.title}</h3>
                     </div>
-                    {/* <div className="flex items-center text-gray-600">
-                      <Users className="h-4 w-4 mr-1" />
-                      2-4
-                    </div> */}
                   </div>
                   
-                  <div className="flex text-lg font-medium text-gray-500 mb-1">
+                  <div className="flex text-[20px] font-regular my-1">
                   {itinerary.duration} 
                   {itinerary.countries.length <= 2  ? 
                     <span className="mx-1">
@@ -588,15 +564,9 @@ export default function ExplorePage() {
                         : itinerary.countries.join(' & ')}
                     </span>
                   </div>
-                  <p className="text-gray-600 text-sm mb-2">{itinerary.description}</p>
-                  
-                  <div className="mb-4">
-                    <span className="text-sm text-gray-500 truncate">
-                      {itinerary.cities.join(' · ')}
-                    </span>
-                  </div>
+                  <p className="text-gray-600 text-md mb-2">{itinerary.description}</p>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap gap-2 items-center justify-between">
                     <div className="flex gap-2">
                       {itinerary.itineraryTags.slice(0, 2).map((tag) => (
                         <span
@@ -608,7 +578,7 @@ export default function ExplorePage() {
                       ))}
                     </div>
                     {itinerary.price && (
-                      <span className="px-2 py-1 bg-black text-white text-md rounded-xl capitalize">
+                      <span className="px-2 py-1 max-h-[32px] gap-2 bg-black text-white text-md rounded-xl capitalize">
                         Est. {itinerary.price}
                       </span>
                     )}

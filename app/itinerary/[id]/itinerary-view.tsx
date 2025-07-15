@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Users, Clock, Hotel, Car, Share2, Heart, Utensils, Bike, BedDouble, Train, Bookmark, Star, X, ChevronUp, ChevronDown, ChevronRight, Share, Edit } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Calendar, MapPin, Users, Utensils, Bike, BedDouble, Train, Bookmark, Star, X, ChevronUp, ChevronDown, ChevronRight, Share, Edit } from "lucide-react"
 import { DaySection } from "@/components/ui/day-section"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
-import { UserData } from "@/lib/types"
 import { auth } from "@/lib/firebase"
 import router from "next/router"
+import { toast } from "sonner"
 
 interface ItineraryViewProps {
   itinerary: any // TODO: Add proper type
@@ -184,14 +183,6 @@ export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewPr
               <p>2 Restaurants</p>
               <span>|</span>
               <p>4 Accomodations</p>
-              <span className="hidden md:block">|</span>
-              <div className="hidden md:flex">
-                <Star fill />
-                <Star fill />
-                <Star fill />
-                <Star fill />
-                <Star fill />
-              </div>
             </div>
           </div>
 

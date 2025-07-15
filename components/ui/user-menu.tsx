@@ -95,13 +95,13 @@ export function UserMenu() {
               Profile
             </DropdownMenu.Item>
 
-            <DropdownMenu.Item
+            {/* <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
               onClick={() => router.push('/dashboard')}
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               Dashboard
-            </DropdownMenu.Item>
+            </DropdownMenu.Item> */}
 
             <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"

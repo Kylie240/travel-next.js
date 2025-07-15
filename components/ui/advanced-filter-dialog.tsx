@@ -169,9 +169,10 @@ export function AdvancedFilterDialog({
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <Button variant="outline" size="icon" className="shrink-0">
+        <button className="flex items-center gap-2 rounded-xl bg-white border border-1 border-gray-300 px-3 py-2.5">
+          <span className="text-sm">Filters</span>
           <SlidersHorizontal className="h-5 w-5" />
-        </Button>
+        </button>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />

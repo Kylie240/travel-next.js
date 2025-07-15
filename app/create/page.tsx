@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { MapPin, Calendar, Plus, Minus, Image as ImageIcon, Clock, Hotel, Utensils, Map, Search, Car, GripVertical, Trash2, Compass, Sun, Building, BookOpen, TreePine, CarFront, ShoppingBag } from "lucide-react"
+import { Plus, Minus, Image as Hotel, Utensils, Map, Search, Car, GripVertical, Trash2, Compass, Sun, Building, BookOpen, TreePine, CarFront, ShoppingBag } from "lucide-react"
 import { auth } from "@/lib/firebase"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
