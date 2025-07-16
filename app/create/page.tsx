@@ -272,7 +272,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                                 i === index ? { ...a, type: e.target.value as any } : a
                               )
                             })}
-                            className="w-full p-2 border rounded-md"
+                            className="w-full p-2 border rounded-xl"
                           >
                             {ACTIVITY_TYPES.map(type => (
                               <option key={type.value} value={type.value}>
@@ -323,7 +323,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                             )
                           })}
                           placeholder="Activity description"
-                          className="w-full p-2 border rounded-md min-h-[100px]"
+                          className="w-full p-2 border rounded-xl min-h-[100px]"
                         />
                       </div>
                       <div>
@@ -561,21 +561,25 @@ export default function CreatePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-2xl shadow p-6">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-semibold">Create New Itinerary</h1>
             <div className="flex gap-2">
               {[1, 2, 3].map(step => (
                 <div
                   key={step}
-                  className={`w-3 h-3 rounded-full ${
+                  className={`rounded-full w-8 h-8 flex items-center justify-center ${
                     currentStep === step 
-                      ? 'bg-blue-500' 
+                      ? 'bg-black' 
                       : currentStep > step 
                         ? 'bg-green-500' 
-                        : 'bg-gray-300'
+                        : 'bg-white border border-gray-200'
                   }`}
-                />
+                >
+                  <span className={`${currentStep === step ? "text-white" : "text-gray-700"}`}>
+                    {step}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
@@ -588,19 +592,19 @@ export default function CreatePage() {
                   id="name"
                   value={tripData.name}
                   onChange={e => setTripData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter your trip name"
+                  placeholder="Japanese Cultural Journey"
                   required
                 />
               </div>
 
               <div>
                 <Label htmlFor="shortDescription">Short Description</Label>
-                <Input
+                <textarea
                   id="shortDescription"
                   value={tripData.shortDescription}
                   onChange={e => setTripData(prev => ({ ...prev, shortDescription: e.target.value }))}
-                  placeholder="Give readers a quick overview of your trip"
-                  required
+                  placeholder="Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun."
+                  className="w-full p-2 border rounded-xl h-[70px]"
                 />
               </div>
 
@@ -621,13 +625,13 @@ export default function CreatePage() {
                   id="detailedOverview"
                   value={tripData.detailedOverview}
                   onChange={e => setTripData(prev => ({ ...prev, detailedOverview: e.target.value }))}
-                  placeholder="Detailed description of your trip"
-                  className="w-full p-2 border rounded-md min-h-[150px]"
+                  placeholder="This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours."
+                  className="w-full p-2 border rounded-xl min-h-[150px]"
                 />
               </div>
 
               <div>
-                <Label htmlFor="length">Trip Length (days)</Label>
+                <Label htmlFor="length">Number of Days</Label>
                 <Input
                   id="length"
                   type="number"
@@ -810,7 +814,7 @@ export default function CreatePage() {
                               value={note.content}
                               onChange={(e) => updateNote(note.id, { content: e.target.value })}
                               placeholder="Write your note here..."
-                              className="w-full min-h-[100px] p-2 border rounded-md"
+                              className="w-full min-h-[100px] p-2 border rounded-xl"
                             />
                           </div>
                         </div>
