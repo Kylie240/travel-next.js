@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, Image as Hotel, Utensils, Map, Search, Car, GripVertical, Trash2, Compass, Sun, Building, BookOpen, TreePine, CarFront, ShoppingBag } from "lucide-react"
+import { Plus, Minus, Image as Hotel, Utensils, Map, Search, Car, GripVertical, Trash2 } from "lucide-react"
 import { auth } from "@/lib/firebase"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
@@ -27,8 +27,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CategoryCard } from "@/components/ui/category-card"
-import { cn } from "@/lib/utils"
+import { activityTags, itineraryTags } from "@/lib/constants/tags"
 
 interface TripDay {
   id: string;
@@ -41,6 +40,7 @@ interface TripDay {
   activities: Array<{
     id: string;
     time?: string;
+    duration?: string;
     image?: string;
     title: string;
     description: string;
@@ -74,35 +74,12 @@ interface TripData {
   }[];
 }
 
-const ACTIVITY_TYPES = [
-  { value: 'food', label: 'Food & Dining', icon: Utensils },
-  { value: 'sightseeing', label: 'Sightseeing', icon: Search },
-  { value: 'culture', label: 'Cultural Activity', icon: Map },
-  { value: 'transportation', label: 'Transportation', icon: Car },
-  { value: 'accommodation', label: 'Accommodation', icon: Hotel },
-];
-
-const categories = [
-  { id: 'adventure', label: 'Adventure', icon: Compass },
-  { id: 'beach', label: 'Beach', icon: Sun },
-  { id: 'city', label: 'City Break', icon: Building },
-  { id: 'culture', label: 'Culture', icon: BookOpen },
-  { id: 'food', label: 'Food & Drink', icon: Utensils },
-  { id: 'relaxation', label: 'Relaxation', icon: Utensils },
-  { id: 'shopping', label: 'Shopping', icon: ShoppingBag },
-  { id: 'nature', label: 'Nature', icon: TreePine },
-  { id: 'wellness', label: 'Wellness', icon: TreePine },
-  { id: 'romantic', label: 'Romantic', icon: TreePine },
-  { id: 'solo', label: 'Solo Travel', icon: TreePine },
-  { id: 'budget', label: 'Budget Friendly', icon: TreePine },
-  { id: 'seniors', label: 'Seniors', icon: TreePine },
-  { id: 'road', label: 'Road Trip', icon: CarFront },
-]
-
 const INITIAL_DAY: TripDay = {
   id: '1',
   cityName: '',
   countryName: '',
+  title: '',
+  description: '',
   activities: [],
   accommodation: {
     name: '',
@@ -110,22 +87,6 @@ const INITIAL_DAY: TripDay = {
     location: '',
   }
 };
-
-const updateNote = (noteId: string, updates: Partial<Note>) => {
-  setTripData(prev => ({
-    ...prev,
-    notes: prev.notes.map(note => 
-      note.id === noteId ? { ...note, ...updates } : note
-    )
-  }))
-}
-
-const removeNote = (noteId: string) => {
-  setTripData(prev => ({
-    ...prev,
-    notes: prev.notes.filter(note => note.id !== noteId)
-  }))
-}
 
 function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveDay }: { 
   day: TripDay; 
@@ -151,7 +112,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
 
   return (
     <div ref={setNodeRef} style={style}>
-      <AccordionItem value={day.id} className="border rounded-lg p-4 mb-4 bg-white">
+      <AccordionItem value={day.id} className="border rounded-xl p-8 mb-4 bg-white">
         <div className="flex items-center gap-4">
           <div {...attributes} {...listeners} className="cursor-grab hover:text-gray-600">
             <GripVertical size={20} />
@@ -188,58 +149,64 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>City</Label>
+                <Label className="text-[16px] font-medium mb-3 ml-1">City</Label>
                 <Input
                   value={day.cityName}
                   onChange={e => onUpdate({ cityName: e.target.value })}
+                  className="rounded-xl"
                   placeholder="Tokyo"
                 />
               </div>
               <div>
-                <Label>Country</Label>
+                <Label className="text-[16px] font-medium mb-3 ml-1">Country</Label>
                 <Input
                   value={day.countryName}
                   onChange={e => onUpdate({ countryName: e.target.value })}
+                  className="rounded-xl"
                   placeholder="Japan"
                 />
               </div>
             </div>
             
             <div>
-              <Label>Title</Label>
+              <Label className="text-[16px] font-medium mb-3 ml-1">Title</Label>
                 <Input
                   value={day.title}
-                  onChange={e => onUpdate({ countryName: e.target.value })}
+                  onChange={e => onUpdate({ title: e.target.value })}
+                  className="rounded-xl"
                   placeholder="Tokyo Exploration"
                 />
             </div>
             
             <div>
-              <Label>Image (optional)</Label>
+              <Label className="text-[16px] font-medium mb-3 ml-1">Image <span className="text-gray-500 text-sm">(optional)</span></Label>
                 <Input
                   value={day.image}
-                  onChange={e => onUpdate({ countryName: e.target.value })}
+                  onChange={e => onUpdate({ image: e.target.value })}
+                  className="rounded-xl"
                   placeholder=""
                 />
             </div>
 
             <div>
-              <Label>Description</Label>
+              <Label className="text-[16px] font-medium mb-3 ml-1">Description</Label>
                 <Input
                   value={day.description}
-                  onChange={e => onUpdate({ countryName: e.target.value })}
+                  onChange={e => onUpdate({ description: e.target.value })}
                   placeholder="Discover the highlights of Tokyo's most famous districts"
+                  className="rounded-xl"
                 />
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <Label>Activities (optional)</Label>
+                <Label className="text-[16px] font-medium mb-3 ml-1">Activities <span className="text-gray-500 text-sm">(optional)</span></Label>
                 <Button 
                   type="button" 
                   variant="outline" 
                   size="sm"
                   onClick={onAddActivity}
+                  className="rounded-xl"
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Activity
@@ -248,14 +215,26 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
 
               <div className="space-y-4">
                 {day.activities.map((activity, index) => (
-                  <div key={activity.id} className="border rounded-lg p-4">
+                  <div key={activity.id} className="border rounded-lg p-4">  
+                    <div className="w-full flex justify-end">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRemoveActivity(activity.id)}
+                        className="rounded-xl"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                    </div>          
                     <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1 grid grid-cols-2 gap-4">
+                      <div className="flex-1 grid grid-cols-3 gap-4">
                         <div>
-                          <Label>Time</Label>
+                          <Label className="text-[16px] font-medium mb-3 ml-1">Time <span className="text-gray-500 text-sm">(optional)</span></Label>
                           <Input
                             type="time"
                             value={activity.time || ''}
+                            className="rounded-xl"
                             onChange={e => onUpdate({
                               activities: day.activities.map((a, i) =>
                                 i === index ? { ...a, time: e.target.value } : a
@@ -264,7 +243,23 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                           />
                         </div>
                         <div>
-                          <Label>Type</Label>
+                          <Label className="text-[16px] font-medium mb-3 ml-1">Duration <span className="text-gray-500 text-sm">(optional)</span></Label>
+                          <Input
+                            type="number"
+                            value={activity.duration || ''}
+                            className="rounded-xl"
+                            onChange={e => onUpdate({
+                              activities: day.activities.map((a, i) => {
+                                if (i === index) {
+                                  return { ...a, duration: e.target.value }
+                                }
+                                return a
+                              })
+                            })}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[16px] font-medium mb-3 ml-1">Type</Label>
                           <select
                             value={activity.type}
                             onChange={e => onUpdate({
@@ -272,29 +267,21 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                                 i === index ? { ...a, type: e.target.value as any } : a
                               )
                             })}
-                            className="w-full p-2 border rounded-xl"
+                            className="w-full p-2 border rounded-xl cursor-pointer"
                           >
-                            {ACTIVITY_TYPES.map(type => (
-                              <option key={type.value} value={type.value}>
-                                {type.label}
+                            {activityTags.map(tag => (
+                              <option key={tag.name} value={tag.name}>
+                                {tag.name}
                               </option>
                             ))}
                           </select>
                         </div>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveActivity(activity.id)}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
                     </div>
 
                     <div className="space-y-4">
                       <div>
-                        <Label>Title</Label>
+                        <Label className="text-[16px] font-medium mb-3 ml-1">Title</Label>
                         <Input
                           value={activity.title}
                           onChange={e => onUpdate({
@@ -303,18 +290,20 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                             )
                           })}
                           placeholder="Activity title"
+                          className="rounded-xl"
                         />
                       </div>
                       <div>
-                      <Label>Image (optional)</Label>
+                      <Label className="text-[16px] font-medium mb-3 ml-1">Image <span className="text-gray-500 text-sm">(optional)</span></Label>
                         <Input
                           value={day.image}
                           onChange={e => onUpdate({ countryName: e.target.value })}
+                          className="rounded-xl"
                           placeholder=""
                         />
                       </div>
                       <div>
-                        <Label>Description</Label>
+                        <Label className="text-[16px] font-medium mb-3 ml-1">Description</Label>
                         <textarea
                           value={activity.description}
                           onChange={e => onUpdate({
@@ -323,15 +312,20 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                             )
                           })}
                           placeholder="Activity description"
-                          className="w-full p-2 border rounded-xl min-h-[100px]"
+                          className="w-full p-2 border rounded-xl min-h-[100px] rounded-xl"
                         />
                       </div>
                       <div>
-                        <Label>Link</Label>
+                        <Label className="text-[16px] font-medium mb-3 ml-1">Link</Label>
                           <Input
                             value={activity.link}
-                            onChange={e => onUpdate({ countryName: e.target.value })}
+                            onChange={e => onUpdate({
+                              activities: day.activities.map((a, i) =>
+                                i === index ? { ...a, link: e.target.value } : a
+                              )
+                            })}
                             placeholder="Add booking link, or a link to a website with more information"
+                            className="rounded-xl"
                           />
                       </div>
                     </div>
@@ -341,7 +335,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
             </div>
 
             <div>
-              <Label>Accommodation</Label>
+              <Label className="text-[16px] font-medium mb-3 ml-1">Accommodation <span className="text-gray-500 text-sm">(optional)</span></Label>
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   value={day.accommodation.name}
@@ -349,6 +343,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                     accommodation: { ...day.accommodation, name: e.target.value }
                   })}
                   placeholder="Accommodation name"
+                  className="rounded-xl"
                 />
                 <Input
                   value={day.accommodation.type}
@@ -356,6 +351,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                     accommodation: { ...day.accommodation, type: e.target.value }
                   })}
                   placeholder="Type (e.g., Hotel, Hostel)"
+                  className="rounded-xl"
                 />
               </div>
               <div className="mt-2">
@@ -365,6 +361,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                     accommodation: { ...day.accommodation, location: e.target.value }
                   })}
                   placeholder="Location"
+                  className="rounded-xl"
                 />
               </div>
             </div>
@@ -392,6 +389,22 @@ export default function CreatePage() {
     notes: []
   })
 
+  const updateNote = (noteId: string, updates: Partial<TripData['notes'][0]>) => {
+    setTripData(prev => ({
+      ...prev,
+      notes: prev.notes.map(note => 
+        note.id === noteId ? { ...note, ...updates } : note
+      )
+    }))
+  }
+
+  const removeNote = (noteId: string) => {
+    setTripData(prev => ({
+      ...prev,
+      notes: prev.notes.filter(note => note.id !== noteId)
+    }))
+  }
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user)
@@ -418,7 +431,7 @@ export default function CreatePage() {
   }
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // TODO: Submit to backend
     console.log(tripData)
   }
@@ -437,7 +450,8 @@ export default function CreatePage() {
       id: Math.random().toString(),
       title: '',
       description: '',
-      type: 'sightseeing' as const
+      type: 'sightseeing' as const,
+      link: ''
     }
     setTripData(prev => ({
       ...prev,
@@ -533,7 +547,7 @@ export default function CreatePage() {
       ...prev,
       categories: prev.categories.includes(categoryId)
         ? prev.categories.filter(c => c !== categoryId)
-        : tripData.categories.length < 5 ?
+        : tripData.categories.length < 3 ?
           [...prev.categories, categoryId]
         : prev.categories
     }))
@@ -561,8 +575,8 @@ export default function CreatePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="bg-white rounded-2xl shadow p-6">
-          <div className="flex justify-between items-center mb-8">
+        <div className="bg-white rounded-2xl p-12 shadow p-6">
+          <div className="flex justify-between items-center py-4 mb-8">
             <h1 className="text-3xl font-semibold">Create New Itinerary</h1>
             <div className="flex gap-2">
               {[1, 2, 3].map(step => (
@@ -587,18 +601,19 @@ export default function CreatePage() {
           {currentStep === 1 && (
             <form onSubmit={handleBasicInfoSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="name">Trip Name</Label>
+                <Label className="text-md font-medium mb-3 ml-1" htmlFor="name">Trip Name</Label>
                 <Input
                   id="name"
                   value={tripData.name}
                   onChange={e => setTripData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Japanese Cultural Journey"
+                  className="rounded-xl"
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="shortDescription">Short Description</Label>
+                <Label className="text-md font-medium mb-3 ml-1" htmlFor="shortDescription">Short Description</Label>
                 <textarea
                   id="shortDescription"
                   value={tripData.shortDescription}
@@ -609,18 +624,19 @@ export default function CreatePage() {
               </div>
 
               <div>
-                <Label htmlFor="mainImage">Main Image URL</Label>
+                <Label className="text-md font-medium mb-3 ml-1" htmlFor="mainImage">Main Image URL</Label>
                 <Input
                   id="mainImage"
                   value={tripData.mainImage}
                   onChange={e => setTripData(prev => ({ ...prev, mainImage: e.target.value }))}
                   placeholder="URL of the main trip image"
+                  className="rounded-xl"
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="detailedOverview">Detailed Overview (optional)</Label>
+                <Label className="text-md font-medium mb-3 ml-1" htmlFor="detailedOverview">Detailed Overview <span className="text-gray-500 text-sm">(optional)</span></Label>
                 <textarea
                   id="detailedOverview"
                   value={tripData.detailedOverview}
@@ -631,19 +647,20 @@ export default function CreatePage() {
               </div>
 
               <div>
-                <Label htmlFor="length">Number of Days</Label>
+                <Label className="text-md font-medium mb-3 ml-1" htmlFor="length">Number of Days</Label>
                 <Input
                   id="length"
                   type="number"
                   min="1"
                   value={tripData.length}
                   onChange={e => setTripData(prev => ({ ...prev, length: parseInt(e.target.value) }))}
+                  className="rounded-xl"
                   required
                 />
               </div>
 
               <div>
-                <Label>Countries</Label>
+                <Label className="text-md font-medium mb-3 ml-1" htmlFor="countries">Countries</Label>
                 <div className="space-y-2">
                   {tripData.countries.map((country, index) => (
                     <div key={index} className="flex gap-2">
@@ -654,7 +671,8 @@ export default function CreatePage() {
                           newCountries[index] = e.target.value
                           setTripData(prev => ({ ...prev, countries: newCountries }))
                         }}
-                        placeholder="Enter country name"
+                        placeholder="Japan"
+                        className="rounded-xl"
                         required
                       />
                       {index === tripData.countries.length - 1 ? (
@@ -757,19 +775,29 @@ export default function CreatePage() {
           )}
 
           {currentStep === 3 && (
-            <form onSubmit={handleFinalSubmit} className="space-y-6">
+            <form onSubmit={handleFinalSubmit} className="space-y-6" onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+              }
+            }}>
               <div>
-                <Label>Categories (select up to 5)</Label>
+                <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
                 <div className="grid grid-cols-3 md:grid-cols-4 gap-4 w-full">
-                  {categories.map((category) => {
-                    const isSelected = tripData.categories.includes(category.id)
+                  {itineraryTags.map((category) => {
+                    const isSelected = tripData.categories.includes(category.name)
                     const Icon = category.icon
                     return (
-                      <label key={category.id} className="flex items-center gap-2">
-                        <button onClick={() => toggleCategory(category.id)}
-                          className={`flex justify-center items-center gap-2 px-4 py-8 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}>
+                      <label key={category.name} className="flex items-center gap-2">
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleCategory(category.name);
+                          }}
+                          className={`flex justify-center items-center gap-2 px-4 py-6 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
+                        >
                           <category.icon className="w-5 h-5 text-gray-700" />
-                          <span className="text-gray-900 font-medium">{category.label}</span>
+                          <span className="text-gray-900 font-medium">{category.name}</span>
                         </button>
                       </label>
                     )
@@ -786,7 +814,13 @@ export default function CreatePage() {
                   <Button 
                     type="button"
                     variant="outline"
-                    onClick={addNote}
+                    onClick={() => {
+                      const newNoteId = (tripData.notes.length + 1).toString();
+                      setTripData(prev => ({
+                        ...prev,
+                        notes: [...prev.notes, { id: newNoteId, title: '', content: '' }]
+                      }))
+                    }}
                     className="flex items-center gap-2"
                   >
                     <Plus className="h-4 w-4" />
@@ -800,16 +834,16 @@ export default function CreatePage() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-4">
                           <div>
-                            <Label>Title</Label>
+                            <Label className="text-[16px] font-medium mb-3 ml-1">Title</Label>
                             <Input
                               value={note.title}
                               onChange={(e) => updateNote(note.id, { title: e.target.value })}
                               placeholder="Note title"
-                              className="mb-2"
+                              className="mb-2 rounded-xl"
                             />
                           </div>
                           <div>
-                            <Label>Content</Label>
+                            <Label className="text-[16px] font-medium mb-3 ml-1">Content</Label>
                             <textarea
                               value={note.content}
                               onChange={(e) => updateNote(note.id, { content: e.target.value })}

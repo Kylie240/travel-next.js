@@ -4,17 +4,14 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Star, Bookmark, Footprints } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { AdvancedFilterDialog } from "@/components/ui/advanced-filter-dialog"
 import { QuickFilterList } from "@/components/ui/quick-filter-list"
 import { useSearchParams } from "next/navigation"
 import { auth } from "@/lib/firebase"
-import { FaSkiing } from "react-icons/fa"
-import { GiSnorkel } from "react-icons/gi"
-import { FaSafari } from "react-icons/fa"
-import { FaHiking } from "react-icons/fa"
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { activityTags, itineraryTags, sortOptions, quickFilters } from "@/lib/constants/tags"
+import { Bookmark, Star } from "lucide-react"
 
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -150,48 +147,10 @@ const filters = {
   destinations: ["Japan", "Italy", "Costa Rica", "Thailand", "Greece", "Switzerland"],
   duration: ["1-3 days", "4-7 days", "8-14 days", "15-21 days", "21+ days"],
   budget: ["Under $1000", "$1000-$2000", "$2000-$3000", "$3000-$5000", "$5000+"],
-  quickFilters: ["All", "Popular", "Most Viewed", "Best Rated", "New", "Trending", "Budget Friendly", "Luxury"],
-  sortOptions: [
-    // { value: "popular", label: "Most Popular" },
-    // { value: "recent", label: "Most Recent" },
-    { value: "price-low", label: "Price: Low to High" },
-    { value: "price-high", label: "Price: High to Low" },
-    { value: "duration-short", label: "Duration: Shortest" },
-    { value: "duration-long", label: "Duration: Longest" },
-  ],
-  itineraryTags: [
-    { name: "relaxing", icon: Mountain },
-    { name: "culinary", icon: Utensils },
-    { name: "cultural", icon: Building },
-    { name: "tropical", icon: Palmtree },
-    { name: "romantic", icon: Camera },
-    { name: "wellness", icon: Tent },
-    { name: "luxury", icon: Bike },
-    { name: "budget", icon: Ship },
-    { name: "road trip", icon: Wine },
-    { name: "volunteering", icon: Heart },
-    { name: "action packed", icon: Music },
-  ],
-  activityTags: [
-    { name: "adventure", icon: Mountain },
-    { name: "food", icon: Utensils },
-    { name: "culture", icon: Building },
-    { name: "beach", icon: Palmtree },
-    { name: "photography", icon: Camera },
-    { name: "camping", icon: Tent },
-    { name: "cycling", icon: Bike },
-    { name: "cruise", icon: Ship },
-    { name: "wine", icon: Wine },
-    { name: "wellness", icon: Heart },
-    { name: "festivals", icon: Music },
-    { name: "luxury", icon: Sparkles },
-    { name: "surfing", icon: Waves },
-    { name: "hiking", icon: FaHiking },
-    { name: "skiing", icon: FaSkiing },
-    { name: "tour", icon: Footprints },
-    { name: "safari", icon: FaSafari },
-    { name: "snorkeling", icon: GiSnorkel },
-  ],
+  quickFilters,
+  sortOptions,
+  itineraryTags,
+  activityTags,
 }
 
 export default function ExplorePage() {

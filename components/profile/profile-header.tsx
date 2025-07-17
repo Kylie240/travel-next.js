@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { FollowersDialog } from "@/components/ui/followers-dialog"
 import { UserData } from "@/lib/types"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface ProfileHeaderProps {
   user: UserData
@@ -18,6 +19,7 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ user, onEditProfile, disableEdit = false, onFollowToggle }: ProfileHeaderProps) {
   const [showFollowers, setShowFollowers] = useState(false)
   const [showFollowing, setShowFollowing] = useState(false)
+  const router = useRouter()
 
   // Placeholder data - replace with actual data from your backend
   const mockUsers = [
@@ -76,7 +78,7 @@ export function ProfileHeader({ user, onEditProfile, disableEdit = false, onFoll
             )}
             <p className="text-gray-700 mb-4 max-w-2xl">{user.bio}</p>
             <div className="grid grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-2 xl:gap-6 mb-4">
-              <div>
+              <div className="cursor-pointer" onClick={() => router.push("/my-itineraries")}>
                 <div className="font-semibold">{user.stats.trips}</div>
                 <div className="text-sm text-gray-600">Trips</div>
               </div>
@@ -88,7 +90,7 @@ export function ProfileHeader({ user, onEditProfile, disableEdit = false, onFoll
                 <div className="font-semibold">{user.stats.following}</div>
                 <div className="text-sm text-gray-600">Following</div>
               </div>
-              <div>
+              <div className="cursor-pointer" onClick={() => router.push("/favorites")}>
                 <div className="font-semibold">{user.stats.likes}</div>
                 <div className="text-sm text-gray-600">Likes</div>
               </div>

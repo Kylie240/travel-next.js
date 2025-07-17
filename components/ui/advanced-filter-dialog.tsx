@@ -3,7 +3,6 @@
 import * as Dialog from "@radix-ui/react-dialog"
 import { X, SlidersHorizontal, Check } from "lucide-react"
 import { Button } from "./button"
-import { cn } from "@/lib/utils"
 
 interface FilterOption {
   name: string

@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
 
 // Configure matcher for routes that need to trigger this middleware
 export const config = {
-  matcher: ['/dashboard/:path*', '/create/:path*']
+  // matcher: ['/dashboard/:path*', '/create/:path*']
 }
 
 // Check for Firebase Auth session
