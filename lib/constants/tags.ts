@@ -1,16 +1,17 @@
-import { Mountain, Utensils, Building, Palmtree, Camera, Tent, Bike, Ship, Wine, Heart, Music, Sparkles, Waves, Star, Bookmark, Footprints, TentTree, Palette, ShoppingBag, Dumbbell, Drama, Trees, BaggageClaim, Car, Presentation } from "lucide-react"
-import { FaSkiing, FaSafari, FaHiking } from "react-icons/fa"
-import { GiAmphora, GiSnorkel } from "react-icons/gi"
+import { Mountain, Utensils, Building, Palmtree, Camera, Ship, Wine, Heart, Music, TentTree, Palette, ShoppingBag, Dumbbell, Drama, Trees, BaggageClaim, Car, Presentation, HandPlatter, Caravan, Coins, HeartHandshake, RollerCoaster, Handshake, HandHeart, ChefHat, Briefcase, Backpack, BookMarked, Church, Skull, Sprout, Sailboat, CalendarFold, Syringe, Sparkles } from "lucide-react"
+import { FaCity, FaHandSparkles, FaPersonWalkingLuggage } from "react-icons/fa6";
+import { PiFarm } from "react-icons/pi";
 import { BiSpa } from "react-icons/bi";
-import { LuAmphora, LuBinoculars, LuCookingPot } from "react-icons/lu";
+import { LuAmphora, LuBinoculars, LuBriefcaseMedical, LuCookingPot, LuTicketsPlane } from "react-icons/lu";
 import { MdOutlineNightlife } from "react-icons/md";
+import { TbYoga } from "react-icons/tb";
 
 export const activityTags = [
   { name: "outdoor", icon: TentTree },
   { name: "dining", icon: Utensils },
   { name: "art & culture", icon: Palette },
   { name: "sightseeing", icon: Camera },
-  { name: "cruise", icon: Ship },
+  { name: "nautical", icon: Sailboat },
   { name: "wellness", icon: BiSpa },
   { name: "beauty", icon: Heart },
   { name: "shopping", icon: ShoppingBag },
@@ -28,16 +29,31 @@ export const activityTags = [
 ]
 
 export const itineraryTags = [
-  { name: "relaxing", icon: Mountain },
-  { name: "culinary", icon: Utensils },
+  { name: "relaxing", icon: Sparkles },
+  { name: "wellness", icon: TbYoga },
+  { name: "culinary", icon: ChefHat },
+  { name: "business", icon: Briefcase },
   { name: "cultural", icon: Building },
+  { name: "backpacking", icon: Backpack },
   { name: "tropical", icon: Palmtree },
-  { name: "romantic", icon: Camera },
-  { name: "wellness", icon: Tent },
-  { name: "luxury", icon: Bike },
-  { name: "budget", icon: Ship },
-  { name: "road trip", icon: Wine },
-  { name: "volunteering", icon: Heart },
+  { name: "romantic", icon: Wine },
+  { name: "wellness", icon: HandHeart },
+  { name: "solo", icon: FaPersonWalkingLuggage },
+  { name: "weekend", icon: CalendarFold },
+  { name: "cruise", icon: Ship },
+  { name: "sustainable", icon: Sprout },
+  { name: "medical", icon: Syringe },
+  { name: "educational", icon: BookMarked },
+  { name: "rural", icon: PiFarm },
+  { name: "urban", icon: FaCity },
+  { name: "spiritual", icon: Church },
+  { name: "dark tourism", icon: Skull },
+  { name: "luxury", icon: HandPlatter },
+  { name: "budget", icon: Coins },
+  { name: "road trip", icon: Caravan },
+  { name: "volunteering", icon: Handshake },
+  { name: "adventure", icon: RollerCoaster },
+  { name: "multi-country", icon: LuTicketsPlane },
   { name: "action packed", icon: Music },
 ]
 

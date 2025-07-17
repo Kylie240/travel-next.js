@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, Image as Hotel, Utensils, Map, Search, Car, GripVertical, Trash2 } from "lucide-react"
+import { Plus, Minus, Image, GripVertical, Trash2 } from "lucide-react"
 import { auth } from "@/lib/firebase"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
@@ -49,6 +49,7 @@ interface TripDay {
     photos?: string[];
     price?: number;
   }>;
+  showAccommodation: boolean;
   accommodation: {
     name: string;
     type: string;
@@ -81,6 +82,7 @@ const INITIAL_DAY: TripDay = {
   title: '',
   description: '',
   activities: [],
+  showAccommodation: false,
   accommodation: {
     name: '',
     type: '',
@@ -112,7 +114,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
 
   return (
     <div ref={setNodeRef} style={style}>
-      <AccordionItem value={day.id} className="border rounded-xl p-8 mb-4 bg-white">
+      <AccordionItem value={day.id} className="border rounded-xl py-2 px-4 sm:p-4 sm:px-6 md:p-8 mb-4 bg-white">
         <div className="flex items-center gap-4">
           <div {...attributes} {...listeners} className="cursor-grab hover:text-gray-600">
             <GripVertical size={20} />
@@ -147,7 +149,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
 
         <AccordionContent>
           <div className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-[16px] font-medium mb-3 ml-1">City</Label>
                 <Input
@@ -228,7 +230,7 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                       </Button>
                     </div>          
                     <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1 grid grid-cols-3 gap-4">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                           <Label className="text-[16px] font-medium mb-3 ml-1">Time <span className="text-gray-500 text-sm">(optional)</span></Label>
                           <Input
@@ -335,35 +337,50 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
             </div>
 
             <div>
-              <Label className="text-[16px] font-medium mb-3 ml-1">Accommodation <span className="text-gray-500 text-sm">(optional)</span></Label>
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  value={day.accommodation.name}
-                  onChange={e => onUpdate({
-                    accommodation: { ...day.accommodation, name: e.target.value }
-                  })}
-                  placeholder="Accommodation name"
-                  className="rounded-xl"
-                />
-                <Input
-                  value={day.accommodation.type}
-                  onChange={e => onUpdate({
-                    accommodation: { ...day.accommodation, type: e.target.value }
-                  })}
-                  placeholder="Type (e.g., Hotel, Hostel)"
-                  className="rounded-xl"
-                />
+              <div className="flex justify-between items-center mb-2">
+                <Label className="text-[16px] font-medium mb-3 ml-1">Accommodation<span className="text-gray-500 text-sm">(optional)</span></Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onUpdate({ showAccommodation: !day.showAccommodation })}
+                  className={`rounded-xl ${day.showAccommodation ? 'bg-gray-100' : ''}`}
+                >
+                  {day.showAccommodation ? 'Remove' : 'Add'}
+                </Button>
               </div>
-              <div className="mt-2">
-                <Input
-                  value={day.accommodation.location}
-                  onChange={e => onUpdate({
-                    accommodation: { ...day.accommodation, location: e.target.value }
-                  })}
-                  placeholder="Location"
-                  className="rounded-xl"
-                />
-              </div>
+              {day.showAccommodation && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      value={day.accommodation.name}
+                      onChange={e => onUpdate({
+                        accommodation: { ...day.accommodation, name: e.target.value }
+                      })}
+                      placeholder="Accommodation name"
+                      className="rounded-xl"
+                    />
+                    <Input
+                      value={day.accommodation.type}
+                      onChange={e => onUpdate({
+                        accommodation: { ...day.accommodation, type: e.target.value }
+                      })}
+                      placeholder="Type (e.g., Hotel, Hostel)"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="mt-2">
+                    <Input
+                      value={day.accommodation.location}
+                      onChange={e => onUpdate({
+                        accommodation: { ...day.accommodation, location: e.target.value }
+                      })}
+                      placeholder="Location"
+                      className="rounded-xl"
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </AccordionContent>
@@ -434,6 +451,12 @@ export default function CreatePage() {
     e.preventDefault();
     // TODO: Submit to backend
     console.log(tripData)
+  }
+
+  const saveDraft = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Save draft to backend
+    console.log('Saving draft:', tripData);
   }
 
   const updateDay = (dayId: string, updates: Partial<TripDay>) => {
@@ -573,11 +596,11 @@ export default function CreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <div className="bg-white rounded-2xl p-12 shadow p-6">
+    <div className="min-h-screen bg-gray-50 py-4 md:py-8">
+      <div className="md:container mx-auto md:px-4 md:max-w-4xl">
+        <div className="bg-white md:rounded-2xl p-4 md:p-12 md:shadow p-6">
           <div className="flex justify-between items-center py-4 mb-8">
-            <h1 className="text-3xl font-semibold">Create New Itinerary</h1>
+            <h1 className="text-2xl ms:text-3xl font-semibold">Create New Itinerary</h1>
             <div className="flex gap-2">
               {[1, 2, 3].map(step => (
                 <div
@@ -704,6 +727,9 @@ export default function CreatePage() {
               </div>
 
               <div className="flex justify-end gap-4">
+                <Button type="button" variant="outline"  onClick={saveDraft}>
+                  Save as Draft
+                </Button>
                 <Button type="submit">
                   Next: Plan Days
                 </Button>
@@ -767,6 +793,9 @@ export default function CreatePage() {
                 >
                   Previous
                 </Button>
+                <Button type="button" variant="outline" onClick={saveDraft}>
+                  Save as Draft
+                </Button>
                 <Button type="submit">
                   Next: Final Details
                 </Button>
@@ -782,7 +811,7 @@ export default function CreatePage() {
             }}>
               <div>
                 <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-4 w-full">
+                <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
                   {itineraryTags.map((category) => {
                     const isSelected = tripData.categories.includes(category.name)
                     const Icon = category.icon
@@ -794,7 +823,7 @@ export default function CreatePage() {
                             e.preventDefault();
                             toggleCategory(category.name);
                           }}
-                          className={`flex justify-center items-center gap-2 px-4 py-6 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
+                          className={`flex justify-center items-center gap-2 px-4 py-3 sm:py-4 md:gap-2 md:py-6 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
                         >
                           <category.icon className="w-5 h-5 text-gray-700" />
                           <span className="text-gray-900 font-medium">{category.name}</span>
@@ -808,9 +837,10 @@ export default function CreatePage() {
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <h2 className="text-lg font-semibold">Notes</h2>
+                    <h2 className="text-lg font-semibold">Notes<span className="text-gray-500 text-sm">(optional)</span></h2>
                     <p className="text-sm text-gray-600">Add important notes about your trip</p>
                   </div>
+                  {tripData.notes.length === 0 && (
                   <Button 
                     type="button"
                     variant="outline"
@@ -826,6 +856,7 @@ export default function CreatePage() {
                     <Plus className="h-4 w-4" />
                     Add Note
                   </Button>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -872,11 +903,32 @@ export default function CreatePage() {
                     </div>
                   )}
                 </div>
+                {tripData.notes.length > 0 && (
+                <div className="flex w-full justify-start items-center gap-4 mt-4 ">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const newNoteId = (tripData.notes.length + 1).toString();
+                      setTripData(prev => ({
+                        ...prev,
+                        notes: [...prev.notes, { id: newNoteId, title: '', content: '' }]
+                      }))
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Note
+                  </Button>
+                </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-4">
                 <Button type="button" variant="outline" onClick={() => setCurrentStep(2)}>
                   Previous
+                </Button>
+                <Button type="button" variant="outline" onClick={saveDraft}>
+                  Save as Draft
                 </Button>
                 <Button type="submit">
                   Create Itinerary
