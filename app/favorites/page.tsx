@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Bookmark, Heart } from "lucide-react"
+import { Bookmark, Heart, Search } from "lucide-react"
 import { auth } from "@/lib/firebase"
+import { Input } from "@/components/ui/input"
 
 const dummyFavorites = [
   {
@@ -33,6 +34,7 @@ const dummyFavorites = [
 export default function FavoritesPage() {
   const router = useRouter()
   const [user, setUser] = useState(auth.currentUser)
+  const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -46,6 +48,15 @@ export default function FavoritesPage() {
     return () => unsubscribe()
   }, [router])
 
+  const filteredFavorites = dummyFavorites.filter(itinerary => 
+    itinerary.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    itinerary.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    itinerary.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    itinerary.countries.some(country => 
+      country.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  )
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -58,12 +69,23 @@ export default function FavoritesPage() {
     <div className="min-h-screen bg-white py-8">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl md:text-4xl font-semibold mb-6">Favorite Itineraries</h1>
+          <h1 className="text-2xl md:text-4xl font-semibold">Favorite Itineraries</h1>
         </div>
 
-        {dummyFavorites.length > 0 ? (
+        <div className="relative mb-8">
+          <Input
+            type="text"
+            placeholder="Search favorites by title, description, author or country..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 rounded-xl"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        </div>
+
+        {filteredFavorites.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
-            {dummyFavorites.map((itinerary) => (
+            {filteredFavorites.map((itinerary) => (
               <motion.div
                 key={itinerary.id}
                 whileHover={{ y: -5 }}
@@ -71,7 +93,7 @@ export default function FavoritesPage() {
                 className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
                 onClick={() => router.push(`/itinerary/${itinerary.id}`)}
               >
-                <div className="relative aspect-[4/5] relative">
+                <div className="relative aspect-[4/5]">
                   <Image
                     src={itinerary.image}
                     alt={itinerary.title}

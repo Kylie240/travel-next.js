@@ -74,8 +74,9 @@ export default function MyItinerariesPage() {
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.2 }}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
+                onClick={() => {itinerary.status === 'published' ? router.push(`/itinerary/${itinerary.id}`) : router.push(`/create?itineraryId=${itinerary.id}`)}}
               >
-                <div className="relative aspect-[4/5] relative">
+                <div className="relative aspect-[4/5]">
                   <Image
                     src={itinerary.image}
                     alt={itinerary.title}

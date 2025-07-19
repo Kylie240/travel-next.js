@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, Image, GripVertical, Trash2 } from "lucide-react"
+import { Plus, Minus, Image, GripVertical, Trash2, ChevronDown, ChevronUp } from "lucide-react"
 import { auth } from "@/lib/firebase"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
@@ -28,6 +28,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { activityTags, itineraryTags } from "@/lib/constants/tags"
+import { sampleItinerary } from "@/lib/constants/sample-itinerary"
 
 interface TripDay {
   id: string;
@@ -60,6 +61,8 @@ interface TripDay {
 }
 
 interface TripData {
+  id?: string;
+  status: 'draft' | 'published';
   name: string;
   shortDescription: string;
   mainImage: string;
@@ -67,11 +70,12 @@ interface TripData {
   length: number;
   countries: string[];
   days: TripDay[];
-  categories: string[];
+  itineraryTags: string[];
   notes: {
     id: string;
     title: string;
     content: string;
+    expanded: boolean;
   }[];
 }
 
@@ -391,18 +395,20 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
 
 export default function CreatePage() {
   const router = useRouter()
+  const isNewItinerary = useSearchParams().get('itineraryId') === null
+  const searchParams = useSearchParams()
   const [user, setUser] = useState(auth.currentUser)
-  const [isLoading, setIsLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState(1)
   const [tripData, setTripData] = useState<TripData>({
+    status: 'draft',
     name: '',
     shortDescription: '',
     mainImage: '',
     detailedOverview: '',
     length: 1,
-    countries: [''],
+    countries: [],
     days: [INITIAL_DAY],
-    categories: [],
+    itineraryTags: [],
     notes: []
   })
 
@@ -424,21 +430,76 @@ export default function CreatePage() {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        router.push("/")
+        return
+      }
       setUser(user)
-      setIsLoading(false)
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [router])
+
+  useEffect(() => {
+    const itineraryId = searchParams.get('itineraryId')    
+    // Map the itinerary data to the create page's data structure
+    const mappedData: TripData = {
+      status: 'draft',
+      name: sampleItinerary.title,
+      shortDescription: sampleItinerary.description,
+      mainImage: sampleItinerary.image,
+      detailedOverview: sampleItinerary.details,
+      length: sampleItinerary.schedule.length,
+      countries: sampleItinerary.countries,
+      days: sampleItinerary.schedule.map((day: any, index: number) => ({
+        id: (index + 1).toString(),
+        image: day.image,
+        cityName: day.activities[0]?.location?.split(', ')[0] || '',
+        countryName: day.activities[0]?.location?.split(', ')[1] || '',
+        title: day.title,
+        description: day.description,
+        notes: day.notes,
+        activities: day.activities.map((activity: any, actIndex: number) => ({
+          id: `${index + 1}-${actIndex + 1}`,
+          time: activity.time,
+          duration: '',
+          image: activity.image,
+          title: activity.title,
+          description: activity.details,
+          type: activity.type as any,
+          link: '',
+          price: 0,
+        })),
+        showAccommodation: !!day.accommodation,
+        accommodation: {
+          name: day.accommodation?.name || '',
+          type: day.accommodation?.type || '',
+          location: day.accommodation?.location || '',
+          price: 0,
+          photos: day.accommodation?.image ? [day.accommodation.image] : [],
+        }
+      })),
+      itineraryTags: sampleItinerary.itineraryTags,
+      notes: sampleItinerary.creator.notes.map((note: any, index: number) => ({
+        id: (index + 1).toString(),
+        title: note.title,
+        content: note.content,
+        expanded: false,
+      }))
+    }
+    setTripData(mappedData)
+  }, [searchParams])
 
   const handleBasicInfoSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Create initial days based on trip length
-    const days = Array.from({ length: tripData.length }, (_, i) => ({
-      ...INITIAL_DAY,
-      id: (i + 1).toString()
-    }))
-    setTripData(prev => ({ ...prev, days }))
+    // Only create initial days if we don't already have days data
+    if (tripData.days.length === 1 && !tripData.days[0].title) {
+      const days = Array.from({ length: tripData.length }, (_, i) => ({
+        ...INITIAL_DAY,
+        id: (i + 1).toString()
+      }))
+      setTripData(prev => ({ ...prev, days }))
+    }
     setCurrentStep(2)
   }
 
@@ -481,24 +542,6 @@ export default function CreatePage() {
       days: prev.days.map(day => 
         day.id === dayId 
           ? { ...day, activities: [...day.activities, newActivity] }
-          : day
-      )
-    }))
-  }
-
-  const updateActivity = (dayId: string, activityId: string, updates: Partial<TripDay['activities'][0]>) => {
-    setTripData(prev => ({
-      ...prev,
-      days: prev.days.map(day => 
-        day.id === dayId 
-          ? {
-              ...day,
-              activities: day.activities.map(activity =>
-                activity.id === activityId
-                  ? { ...activity, ...updates }
-                  : activity
-              )
-            }
           : day
       )
     }))
@@ -568,20 +611,12 @@ export default function CreatePage() {
   const toggleCategory = (categoryId: string) => {
     setTripData(prev => ({
       ...prev,
-      categories: prev.categories.includes(categoryId)
-        ? prev.categories.filter(c => c !== categoryId)
-        : tripData.categories.length < 3 ?
-          [...prev.categories, categoryId]
-        : prev.categories
+      itineraryTags: prev.itineraryTags.includes(categoryId)
+        ? prev.itineraryTags.filter(c => c !== categoryId)
+        : tripData.itineraryTags.length < 3 ?
+          [...prev.itineraryTags, categoryId]
+        : prev.itineraryTags
     }))
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    )
   }
 
   if (!user) {
@@ -598,14 +633,14 @@ export default function CreatePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-4 md:py-8">
       <div className="md:container mx-auto md:px-4 md:max-w-4xl">
-        <div className="bg-white md:rounded-2xl p-4 md:p-12 md:shadow p-6">
+        <div className="bg-white md:rounded-2xl p-4 md:p-12 md:shadow">
           <div className="flex justify-between items-center py-4 mb-8">
-            <h1 className="text-2xl ms:text-3xl font-semibold">Create New Itinerary</h1>
+            <h1 className="text-2xl ms:text-3xl font-semibold">{isNewItinerary ? "Create New" : "Edit"} Itinerary</h1>
             <div className="flex gap-2">
               {[1, 2, 3].map(step => (
-                <div
+                <div onClick={() => setCurrentStep(step)}
                   key={step}
-                  className={`rounded-full w-8 h-8 flex items-center justify-center ${
+                  className={`rounded-full w-8 h-8 flex items-center justify-center cursor-pointer ${
                     currentStep === step 
                       ? 'bg-black' 
                       : currentStep > step 
@@ -727,9 +762,11 @@ export default function CreatePage() {
               </div>
 
               <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline"  onClick={saveDraft}>
-                  Save as Draft
-                </Button>
+                {tripData.status === 'draft' && (
+                  <Button type="button" variant="outline"  onClick={saveDraft}>
+                    Save as Draft
+                  </Button>
+                )}
                 <Button type="submit">
                   Next: Plan Days
                 </Button>
@@ -813,7 +850,7 @@ export default function CreatePage() {
                 <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
                 <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
                   {itineraryTags.map((category) => {
-                    const isSelected = tripData.categories.includes(category.name)
+                    const isSelected = tripData.itineraryTags.includes(category.name)
                     const Icon = category.icon
                     return (
                       <label key={category.name} className="flex items-center gap-2">
@@ -837,7 +874,7 @@ export default function CreatePage() {
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <h2 className="text-lg font-semibold">Notes<span className="text-gray-500 text-sm">(optional)</span></h2>
+                    <h2 className="text-lg font-semibold">Notes <span className="text-gray-500 text-sm">(optional)</span></h2>
                     <p className="text-sm text-gray-600">Add important notes about your trip</p>
                   </div>
                   {tripData.notes.length === 0 && (
@@ -848,7 +885,7 @@ export default function CreatePage() {
                       const newNoteId = (tripData.notes.length + 1).toString();
                       setTripData(prev => ({
                         ...prev,
-                        notes: [...prev.notes, { id: newNoteId, title: '', content: '' }]
+                        notes: [...prev.notes, { id: newNoteId, title: '', content: '', expanded: true }]
                       }))
                     }}
                     className="flex items-center gap-2"
@@ -865,7 +902,57 @@ export default function CreatePage() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-4">
                           <div>
-                            <Label className="text-[16px] font-medium mb-3 ml-1">Title</Label>
+                            <div className="flex w-full justify-between items-center mb-3">
+                              <div className="flex justify-between items-center">
+                                {note.expanded ? (
+                                  <Label className="text-[16px] font-medium ml-1">Title</Label>
+                                ) : (
+                                  <Label className="text-[16px] font-medium ml-1">{note.title} <span className="text-gray-500 text-sm">(click to edit)</span></Label>
+                                )}
+    <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => updateNote(note.id, { expanded: !note.expanded })}
+                            className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                          >
+                            {note.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeNote(note.id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                              </div>
+                              {note.expanded && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => updateNote(note.id, { expanded: !note.expanded })}
+                                    className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                  >
+                                    {note.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeNote(note.id)}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
                             <Input
                               value={note.title}
                               onChange={(e) => updateNote(note.id, { title: e.target.value })}
@@ -883,15 +970,7 @@ export default function CreatePage() {
                             />
                           </div>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeNote(note.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        
                       </div>
                     </div>
                   ))}
@@ -912,7 +991,7 @@ export default function CreatePage() {
                       const newNoteId = (tripData.notes.length + 1).toString();
                       setTripData(prev => ({
                         ...prev,
-                        notes: [...prev.notes, { id: newNoteId, title: '', content: '' }]
+                        notes: [...prev.notes, { id: newNoteId, title: '', content: '', expanded: true }]
                       }))
                     }}
                   >
