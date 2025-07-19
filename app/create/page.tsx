@@ -898,45 +898,24 @@ export default function CreatePage() {
 
                 <div className="space-y-4">
                   {tripData.notes.map((note) => (
-                    <div key={note.id} className="bg-white rounded-lg border p-4">
+                    <div key={note.id} className="bg-white rounded-lg border p-4 cursor-pointer"
+                        onClick={() => updateNote(note.id, { expanded: !note.expanded })}>
                       <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-4">
+                        <div className="flex-1">
                           <div>
-                            <div className="flex w-full justify-between items-center mb-3">
+                            <div className="flex justify-between items-center">
                               <div className="flex justify-between items-center">
-                                {note.expanded ? (
-                                  <Label className="text-[16px] font-medium ml-1">Title</Label>
-                                ) : (
-                                  <Label className="text-[16px] font-medium ml-1">{note.title} <span className="text-gray-500 text-sm">(click to edit)</span></Label>
-                                )}
-    <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => updateNote(note.id, { expanded: !note.expanded })}
-                            className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                          >
-                            {note.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeNote(note.id)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                              {note.expanded ? (
+                                <Label className="text-[16px] font-medium ml-1">Title</Label>
+                              ) : (
+                                <Label className="text-[16px] font-medium ml-1">{note.title}</Label>
+                              )}
                               </div>
-                              {note.expanded && (
                                 <div className="flex gap-2">
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => updateNote(note.id, { expanded: !note.expanded })}
                                     className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                                   >
                                     {note.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -951,16 +930,16 @@ export default function CreatePage() {
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
-                              )}
                             </div>
+                          </div>
+                          { note.expanded && (
+                          <div>
                             <Input
                               value={note.title}
                               onChange={(e) => updateNote(note.id, { title: e.target.value })}
                               placeholder="Note title"
                               className="mb-2 rounded-xl"
                             />
-                          </div>
-                          <div>
                             <Label className="text-[16px] font-medium mb-3 ml-1">Content</Label>
                             <textarea
                               value={note.content}
@@ -969,6 +948,7 @@ export default function CreatePage() {
                               className="w-full min-h-[100px] p-2 border rounded-xl"
                             />
                           </div>
+                          )}
                         </div>
                         
                       </div>
