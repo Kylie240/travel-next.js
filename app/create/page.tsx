@@ -487,7 +487,9 @@ export default function CreatePage() {
         expanded: false,
       }))
     }
-    setTripData(mappedData)
+    if (itineraryId) {
+      setTripData(mappedData)
+    }
   }, [searchParams])
 
   const handleBasicInfoSubmit = (e: React.FormEvent) => {
@@ -500,11 +502,13 @@ export default function CreatePage() {
       }))
       setTripData(prev => ({ ...prev, days }))
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     setCurrentStep(2)
   }
 
   const handleDayPlanningSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     setCurrentStep(3)
   }
 
@@ -677,7 +681,7 @@ export default function CreatePage() {
                   value={tripData.shortDescription}
                   onChange={e => setTripData(prev => ({ ...prev, shortDescription: e.target.value }))}
                   placeholder="Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun."
-                  className="w-full p-2 border rounded-xl h-[70px]"
+                  className="w-full p-2 border rounded-xl h-[150px] md:h-[70px]"
                 />
               </div>
 
@@ -700,7 +704,7 @@ export default function CreatePage() {
                   value={tripData.detailedOverview}
                   onChange={e => setTripData(prev => ({ ...prev, detailedOverview: e.target.value }))}
                   placeholder="This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours."
-                  className="w-full p-2 border rounded-xl min-h-[150px]"
+                  className="w-full p-2 border rounded-xl min-h-[200px] md:min-h-[150px]"
                 />
               </div>
 
