@@ -6,7 +6,6 @@ import { X } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { auth } from "@/lib/firebase"
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
@@ -17,6 +16,7 @@ import {
 import { Button } from "./button"
 import { Input } from "./input"
 import { useRouter } from "next/navigation"
+import { auth } from "@/firebase/client"
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email"),

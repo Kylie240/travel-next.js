@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { User } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/firebase/client"
 
 type AuthContextType = {
     currentUser: User | null,

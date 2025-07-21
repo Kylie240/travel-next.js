@@ -3,7 +3,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { ChevronDown, LogOut, Settings, PenSquare, Heart, User, ChevronUp, Info, Globe, Bookmark } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/firebase/client"
 import { signOut } from "firebase/auth"
 import { useToast } from "./use-toast"
 import { useState } from "react"

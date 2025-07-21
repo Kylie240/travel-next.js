@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { MoreVertical, Edit, Trash2, PenSquare } from "lucide-react"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/firebase/client"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Globe, Camera, Users, Heart, MapPin, Bookmark } from "lucide-react"
 import { ProfileHeader } from "@/components/profile/profile-header"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/firebase/client"
 import { UserData } from "@/lib/types"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
@@ -197,13 +197,6 @@ export default function ProfilePage({ searchParams }: { searchParams: { tab: str
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">Following Feed</h3>
-              {/* <Button 
-                variant="outline" 
-                onClick={() => router.push('/explore')}
-                className="text-sm"
-              >
-                Discover Users
-              </Button> */}
             </div>
             
             {followingUsers.length > 0 ? (
@@ -241,7 +234,7 @@ export default function ProfilePage({ searchParams }: { searchParams: { tab: str
                           router.push(`/itinerary/${itinerary.id}`)
                         }}
                       >
-                        <div className="relative aspect-[4/5] relative">
+                        <div className="relative aspect-[4/5]">
                           <Image
                             src={itinerary.image}
                             alt={itinerary.title}
@@ -528,7 +521,6 @@ export default function ProfilePage({ searchParams }: { searchParams: { tab: str
             />
             {/* Profile Header */}
             <ProfileHeader 
-              user={userData} 
               onEditProfile={handleEditProfile}
             />
           </div>

@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { Bookmark, Heart, Search } from "lucide-react"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/firebase/client"
 import { Input } from "@/components/ui/input"
 
 const dummyFavorites = [
   {
-    id: 4,
+    id: 4,  
     title: "Barcelona Food Tour",
     description: "Experience the best of Barcelona",
     image: "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?q=80&w=2070&auto=format&fit=crop",

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { auth, db } from "@/lib/firebase"
+import { auth, db } from "@/firebase/client"
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore"
 import { 
   MapPin, 

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { Plus, Minus, Image, GripVertical, Trash2, ChevronDown, ChevronUp } from "lucide-react"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/firebase/client"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
 import {

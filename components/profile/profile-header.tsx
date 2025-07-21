@@ -1,25 +1,58 @@
 "use client"
 
 import Image from "next/image"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Camera, MapPin, Minus, Plus, Share } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FollowersDialog } from "@/components/ui/followers-dialog"
-import { UserData } from "@/lib/types"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { UserData } from "@/lib/types"
+import { auth, db } from "@/firebase/client"
 
 interface ProfileHeaderProps {
-  user: UserData
   onEditProfile: () => void
   disableEdit?: boolean
   onFollowToggle?: (userId: string) => void
 }
 
-export function ProfileHeader({ user, onEditProfile, disableEdit = false, onFollowToggle }: ProfileHeaderProps) {
+export function ProfileHeader({onEditProfile, disableEdit = false, onFollowToggle }: ProfileHeaderProps) {
   const [showFollowers, setShowFollowers] = useState(false)
   const [showFollowing, setShowFollowing] = useState(false)
   const router = useRouter()
+  const [user, setUser] = useState<UserData | null>(null)
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      // db.collection("users").doc(auth.currentUser.uid).get().then((doc) => {
+      //   setUser(doc.data() as UserData)
+      // })
+      setUser({
+        ...auth.currentUser,
+        bio: "Hello, I'm a traveler and I love to explore new places.",
+        title: "Traveler",
+        location: "New York, NY",
+        travelPreferences: {
+          interests: ["hiking", "photography", "food"],
+          travelStyle: ["adventure", "relaxing", "luxury"],
+          languages: ["English", "Spanish", "French"],
+          visitedCountries: ["United States", "Mexico", "France"]
+        },
+        social: {
+          twitter: "https://twitter.com/traveler",
+          instagram: "https://instagram.com/traveler",
+          facebook: "https://facebook.com/traveler"
+        },
+        stats: {
+          trips: 10,
+          followers: 100,
+          following: 100,
+          likes: 100
+        }
+      })
+    }
+    console.log(user?.displayName)
+  }, [auth.currentUser])
 
   // Placeholder data - replace with actual data from your backend
   const mockUsers = [
@@ -49,8 +82,8 @@ export function ProfileHeader({ user, onEditProfile, disableEdit = false, onFoll
           <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-32 lg:h-32">
             <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-32 lg:h-32 relative rounded-full overflow-hidden">
               <Image
-                src={user.image}
-                alt={user.name}
+                src={user?.photoURL || ""}  
+                alt={user?.displayName || ""}
                 fill
                 className="object-cover"
                 sizes="(max-width: 640px) 128px, (max-width: 1024px) 160px, 128px"
@@ -62,36 +95,26 @@ export function ProfileHeader({ user, onEditProfile, disableEdit = false, onFoll
           </div>
           <div className="flex-1 text-center md:text-left px-8">
             <div className="text-center flex flex-col items-center">
-              <h1 className="text-2xl font-bold">{user.name}</h1>
-              <p className="text-gray-600 mb-2">@{user.username}</p>
+              <h1 className="text-2xl font-bold">{user?.displayName}</h1>
+              <p className="text-gray-600 mb-2">@{user?.email}</p>
             </div>
-            <p className="font-semibold mb-4 max-w-2xl">{user.title}</p>
-            {user.website && (
-              <a 
-                href={user.website}
-                target="_blank"
-                rel="noopener noreferrer" 
-                className="text-blue-600 hover:text-blue-800 mb-4 block"
-              >
-                {new URL(user.website).hostname}
-              </a>
-            )}
-            <p className="text-gray-700 mb-4 max-w-2xl">{user.bio}</p>
+            <p className="font-semibold mb-4 max-w-2xl">{user?.title}</p>
+            <p className="text-gray-700 mb-4 max-w-2xl">{user?.bio}</p>
             <div className="grid grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-2 xl:gap-6 mb-4">
               <div className="cursor-pointer" onClick={() => router.push("/my-itineraries")}>
-                <div className="font-semibold">{user.stats.trips}</div>
+                <div className="font-semibold">{user?.stats.trips}</div>
                 <div className="text-sm text-gray-600">Trips</div>
               </div>
               <div className="cursor-pointer" onClick={() => setShowFollowers(true)}>
-                <div className="font-semibold">{user.stats.followers}</div>
+                <div className="font-semibold">{user?.stats.followers}</div>
                 <div className="text-sm text-gray-600">Followers</div>
               </div>
               <div className="cursor-pointer" onClick={() => setShowFollowing(true)}>
-                <div className="font-semibold">{user.stats.following}</div>
+                <div className="font-semibold">{user?.stats.following}</div>
                 <div className="text-sm text-gray-600">Following</div>
               </div>
               <div className="cursor-pointer" onClick={() => router.push("/favorites")}>
-                <div className="font-semibold">{user.stats.likes}</div>
+                <div className="font-semibold">{user?.stats.likes}</div>
                 <div className="text-sm text-gray-600">Likes</div>
               </div>
             </div>

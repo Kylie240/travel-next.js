@@ -7,7 +7,7 @@ import { Calendar, MapPin, Users, Utensils, Bike, BedDouble, Train, Bookmark, St
 import { DaySection } from "@/components/ui/day-section"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/firebase/client"
 import router from "next/router"
 import { toast } from "sonner"
 

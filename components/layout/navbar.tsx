@@ -10,7 +10,7 @@ import { AuthDialog } from "@/components/ui/auth-dialog"
 import { UserMenu } from "@/components/ui/user-menu"
 import { NavbarSearch } from "@/components/ui/navbar-search"
 import { LocaleMenu } from "@/components/ui/locale-menu"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/firebase/client"
 
 const publicNavigation = [
   { name: "Explore", href: "/explore" },
@@ -107,7 +107,7 @@ export default function Navbar() {
               )}
 
             {/* Mobile menu button */}
-            <div className="flex items-center hidden">
+            <div className="flex items-center">
               <Button
                 variant="ghost"
                 size="icon"
