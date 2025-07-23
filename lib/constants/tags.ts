@@ -37,7 +37,7 @@ export const itineraryTags = [
   { name: "backpacking", icon: Backpack },
   { name: "tropical", icon: Palmtree },
   { name: "romantic", icon: Wine },
-  { name: "wellness", icon: HandHeart },
+  { name: "digital nomad", icon: Camera },
   { name: "solo", icon: FaPersonWalkingLuggage },
   { name: "weekend", icon: CalendarFold },
   { name: "cruise", icon: Ship },

@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, Image, GripVertical, Trash2, ChevronDown, ChevronUp } from "lucide-react"
+import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp } from "lucide-react"
 import { auth } from "@/firebase/client"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
+import { useForm, useFieldArray } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 import {
   DndContext,
   closestCenter,
@@ -20,7 +23,6 @@ import {
   DragEndEvent
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
@@ -29,6 +31,9 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { activityTags, itineraryTags } from "@/lib/constants/tags"
 import { sampleItinerary } from "@/lib/constants/sample-itinerary"
+import { createSchema } from "@/validation/createSchema"
+
+type FormData = z.infer<typeof createSchema>
 
 interface TripDay {
   id: string;
@@ -46,7 +51,7 @@ interface TripDay {
     title: string;
     description: string;
     type: 'food' | 'sightseeing' | 'culture' | 'transportation' | 'accommodation';
-    link: string;
+    link?: string; // Make link optional to match the schema
     photos?: string[];
     price?: number;
   }>;
@@ -58,25 +63,6 @@ interface TripDay {
     price?: number;
     photos?: string[];
   };
-}
-
-interface TripData {
-  id?: string;
-  status: 'draft' | 'published';
-  name: string;
-  shortDescription: string;
-  mainImage: string;
-  detailedOverview: string;
-  length: number;
-  countries: string[];
-  days: TripDay[];
-  itineraryTags: string[];
-  notes: {
-    id: string;
-    title: string;
-    content: string;
-    expanded: boolean;
-  }[];
 }
 
 const INITIAL_DAY: TripDay = {
@@ -94,12 +80,11 @@ const INITIAL_DAY: TripDay = {
   }
 };
 
-function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveDay }: { 
-  day: TripDay; 
-  onUpdate: (updates: Partial<TripDay>) => void;
-  onRemoveActivity: (activityId: string) => void;
-  onAddActivity: () => void;
-  onRemoveDay: () => void;
+function SortableDay({ day, index, form, onRemoveDay }: { 
+  day: any; // Temporarily use any to fix type issues
+  index: number;
+  form: ReturnType<typeof useForm<FormData>>;
+  onRemoveDay: (index: number) => void;
 }) {
   const {
     attributes,
@@ -109,6 +94,11 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
     transition,
     isDragging
   } = useSortable({ id: day.id });
+
+  const { fields: activityFields, append: appendActivity, remove: removeActivity } = useFieldArray({
+    control: form.control,
+    name: `days.${index}.activities`
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -127,81 +117,78 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
             <AccordionTrigger>
               <div className="flex items-center gap-4">
                 <div className="flex-1 text-left">
-                  <h3 className="text-lg font-semibold">Day {parseInt(day.id)}</h3>
-                  {day.cityName && (
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Day {index + 1}</h3>
+                    
+                  </div>
+                  {form.watch(`days.${index}.cityName`) && (
                     <p className="text-sm text-gray-600">
-                      {day.cityName}, {day.countryName}
+                      {form.watch(`days.${index}.cityName`)}, {form.watch(`days.${index}.countryName`)}
                     </p>
                   )}
                 </div>
               </div>
             </AccordionTrigger>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.preventDefault();
-              onRemoveDay();
-            }}
-            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
         </div>
-
         <AccordionContent>
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-[16px] font-medium mb-3 ml-1">City</Label>
                 <Input
-                  value={day.cityName}
-                  onChange={e => onUpdate({ cityName: e.target.value })}
+                  {...form.register(`days.${index}.cityName`)}
                   className="rounded-xl"
                   placeholder="Tokyo"
                 />
+                {form.formState.errors.days?.[index]?.cityName && (
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.cityName?.message}</p>
+                )}
               </div>
               <div>
                 <Label className="text-[16px] font-medium mb-3 ml-1">Country</Label>
                 <Input
-                  value={day.countryName}
-                  onChange={e => onUpdate({ countryName: e.target.value })}
+                  {...form.register(`days.${index}.countryName`)}
                   className="rounded-xl"
                   placeholder="Japan"
                 />
+                {form.formState.errors.days?.[index]?.countryName && (
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.countryName?.message}</p>
+                )}
               </div>
             </div>
             
             <div>
               <Label className="text-[16px] font-medium mb-3 ml-1">Title</Label>
-                <Input
-                  value={day.title}
-                  onChange={e => onUpdate({ title: e.target.value })}
-                  className="rounded-xl"
-                  placeholder="Tokyo Exploration"
-                />
+              <Input
+                {...form.register(`days.${index}.title`)}
+                className="rounded-xl"
+                placeholder="Tokyo Exploration"
+              />
+              {form.formState.errors.days?.[index]?.title && (
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.title?.message}</p>
+              )}
             </div>
             
             <div>
               <Label className="text-[16px] font-medium mb-3 ml-1">Image <span className="text-gray-500 text-sm">(optional)</span></Label>
-                <Input
-                  value={day.image}
-                  onChange={e => onUpdate({ image: e.target.value })}
-                  className="rounded-xl"
-                  placeholder=""
-                />
+              <Input
+                {...form.register(`days.${index}.image`)}
+                className="rounded-xl"
+                placeholder=""
+              />
             </div>
 
             <div>
               <Label className="text-[16px] font-medium mb-3 ml-1">Description</Label>
-                <Input
-                  value={day.description}
-                  onChange={e => onUpdate({ description: e.target.value })}
-                  placeholder="Discover the highlights of Tokyo's most famous districts"
-                  className="rounded-xl"
-                />
+              <Input
+                {...form.register(`days.${index}.description`)}
+                placeholder="Discover the highlights of Tokyo's most famous districts"
+                className="rounded-xl"
+              />
+              {form.formState.errors.days?.[index]?.description && (
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.description?.message}</p>
+              )}
             </div>
 
             <div>
@@ -211,7 +198,13 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                   type="button" 
                   variant="outline" 
                   size="sm"
-                  onClick={onAddActivity}
+                  onClick={() => appendActivity({
+                    id: Math.random().toString(),
+                    title: '',
+                    description: '',
+                    type: 'sightseeing',
+                    link: ''
+                  })}
                   className="rounded-xl"
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -220,59 +213,41 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
               </div>
 
               <div className="space-y-4">
-                {day.activities.map((activity, index) => (
-                  <div key={activity.id} className="border rounded-lg p-4">  
+                {activityFields.map((activity, activityIndex) => (
+                  <div key={activity.id} className="border rounded-lg p-4">
                     <div className="w-full flex justify-end">
-                    <Button
+                      <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => onRemoveActivity(activity.id)}
+                        onClick={() => removeActivity(activityIndex)}
                         className="rounded-xl"
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
-                    </div>          
+                    </div>
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                           <Label className="text-[16px] font-medium mb-3 ml-1">Time <span className="text-gray-500 text-sm">(optional)</span></Label>
                           <Input
                             type="time"
-                            value={activity.time || ''}
+                            {...form.register(`days.${index}.activities.${activityIndex}.time`)}
                             className="rounded-xl"
-                            onChange={e => onUpdate({
-                              activities: day.activities.map((a, i) =>
-                                i === index ? { ...a, time: e.target.value } : a
-                              )
-                            })}
                           />
                         </div>
                         <div>
                           <Label className="text-[16px] font-medium mb-3 ml-1">Duration <span className="text-gray-500 text-sm">(optional)</span></Label>
                           <Input
                             type="number"
-                            value={activity.duration || ''}
+                            {...form.register(`days.${index}.activities.${activityIndex}.duration`)}
                             className="rounded-xl"
-                            onChange={e => onUpdate({
-                              activities: day.activities.map((a, i) => {
-                                if (i === index) {
-                                  return { ...a, duration: e.target.value }
-                                }
-                                return a
-                              })
-                            })}
                           />
                         </div>
                         <div>
                           <Label className="text-[16px] font-medium mb-3 ml-1">Type</Label>
                           <select
-                            value={activity.type}
-                            onChange={e => onUpdate({
-                              activities: day.activities.map((a, i) =>
-                                i === index ? { ...a, type: e.target.value as any } : a
-                              )
-                            })}
+                            {...form.register(`days.${index}.activities.${activityIndex}.type`)}
                             className="w-full p-2 border rounded-xl cursor-pointer"
                           >
                             {activityTags.map(tag => (
@@ -289,50 +264,41 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                       <div>
                         <Label className="text-[16px] font-medium mb-3 ml-1">Title</Label>
                         <Input
-                          value={activity.title}
-                          onChange={e => onUpdate({
-                            activities: day.activities.map((a, i) =>
-                              i === index ? { ...a, title: e.target.value } : a
-                            )
-                          })}
+                          {...form.register(`days.${index}.activities.${activityIndex}.title`)}
                           placeholder="Activity title"
                           className="rounded-xl"
                         />
-                      </div>
-                      <div>
-                      <Label className="text-[16px] font-medium mb-3 ml-1">Image <span className="text-gray-500 text-sm">(optional)</span></Label>
-                        <Input
-                          value={day.image}
-                          onChange={e => onUpdate({ countryName: e.target.value })}
-                          className="rounded-xl"
-                          placeholder=""
-                        />
+                        {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.title && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {form.formState.errors.days[index]?.activities?.[activityIndex]?.title?.message}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <Label className="text-[16px] font-medium mb-3 ml-1">Description</Label>
                         <textarea
-                          value={activity.description}
-                          onChange={e => onUpdate({
-                            activities: day.activities.map((a, i) =>
-                              i === index ? { ...a, description: e.target.value } : a
-                            )
-                          })}
+                          {...form.register(`days.${index}.activities.${activityIndex}.description`)}
                           placeholder="Activity description"
-                          className="w-full p-2 border rounded-xl min-h-[100px] rounded-xl"
+                          className="w-full p-2 border rounded-xl min-h-[100px]"
                         />
+                        {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.description && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {form.formState.errors.days[index]?.activities?.[activityIndex]?.description?.message}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <Label className="text-[16px] font-medium mb-3 ml-1">Link</Label>
-                          <Input
-                            value={activity.link}
-                            onChange={e => onUpdate({
-                              activities: day.activities.map((a, i) =>
-                                i === index ? { ...a, link: e.target.value } : a
-                              )
-                            })}
-                            placeholder="Add booking link, or a link to a website with more information"
-                            className="rounded-xl"
-                          />
+                        <Input
+                          {...form.register(`days.${index}.activities.${activityIndex}.link`)}
+                          placeholder="Add booking link, or a link to a website with more information"
+                          className="rounded-xl"
+                        />
+                        {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.link && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {form.formState.errors.days[index]?.activities?.[activityIndex]?.link?.message}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -347,38 +313,29 @@ function SortableDay({ day, onUpdate, onRemoveActivity, onAddActivity, onRemoveD
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => onUpdate({ showAccommodation: !day.showAccommodation })}
-                  className={`rounded-xl ${day.showAccommodation ? 'bg-gray-100' : ''}`}
+                  onClick={() => form.setValue(`days.${index}.showAccommodation`, !form.watch(`days.${index}.showAccommodation`))}
+                  className={`rounded-xl ${form.watch(`days.${index}.showAccommodation`) ? 'bg-gray-100' : ''}`}
                 >
-                  {day.showAccommodation ? 'Remove' : 'Add'}
+                  {form.watch(`days.${index}.showAccommodation`) ? 'Remove' : 'Add'}
                 </Button>
               </div>
-              {day.showAccommodation && (
+              {form.watch(`days.${index}.showAccommodation`) && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
-                      value={day.accommodation.name}
-                      onChange={e => onUpdate({
-                        accommodation: { ...day.accommodation, name: e.target.value }
-                      })}
+                      {...form.register(`days.${index}.accommodation.name`)}
                       placeholder="Accommodation name"
                       className="rounded-xl"
                     />
                     <Input
-                      value={day.accommodation.type}
-                      onChange={e => onUpdate({
-                        accommodation: { ...day.accommodation, type: e.target.value }
-                      })}
+                      {...form.register(`days.${index}.accommodation.type`)}
                       placeholder="Type (e.g., Hotel, Hostel)"
                       className="rounded-xl"
                     />
                   </div>
                   <div className="mt-2">
                     <Input
-                      value={day.accommodation.location}
-                      onChange={e => onUpdate({
-                        accommodation: { ...day.accommodation, location: e.target.value }
-                      })}
+                      {...form.register(`days.${index}.accommodation.location`)}
                       placeholder="Location"
                       className="rounded-xl"
                     />
@@ -399,33 +356,57 @@ export default function CreatePage() {
   const searchParams = useSearchParams()
   const [user, setUser] = useState(auth.currentUser)
   const [currentStep, setCurrentStep] = useState(1)
-  const [tripData, setTripData] = useState<TripData>({
-    status: 'draft',
-    name: '',
-    shortDescription: '',
-    mainImage: '',
-    detailedOverview: '',
-    length: 1,
-    countries: [],
-    days: [INITIAL_DAY],
-    itineraryTags: [],
-    notes: []
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(createSchema),
+    defaultValues: {
+      status: 'draft',
+      name: '',
+      shortDescription: '',
+      mainImage: '',
+      detailedOverview: '',
+      length: 1,
+      countries: [{ value: '' }],
+      days: [INITIAL_DAY],
+      itineraryTags: [],
+      notes: []
+    }
   })
 
-  const updateNote = (noteId: string, updates: Partial<TripData['notes'][0]>) => {
-    setTripData(prev => ({
-      ...prev,
-      notes: prev.notes.map(note => 
-        note.id === noteId ? { ...note, ...updates } : note
-      )
-    }))
-  }
+  const { fields: countryFields, append: appendCountry, remove: removeCountry } = useFieldArray<FormData>({
+    control: form.control,
+    name: "countries" as const
+  })
 
-  const removeNote = (noteId: string) => {
-    setTripData(prev => ({
-      ...prev,
-      notes: prev.notes.filter(note => note.id !== noteId)
-    }))
+  const { fields: dayFields, append: appendDay, remove: removeDay, move: moveDay } = useFieldArray<FormData>({
+    control: form.control,
+    name: "days" as const
+  })
+
+  const { fields: noteFields, append: appendNote, remove: removeNote } = useFieldArray<FormData>({
+    control: form.control,
+    name: "notes" as const
+  })
+
+  // Add the removeDay handler
+  const handleRemoveDay = (index: number) => {
+    if (dayFields.length <= 1) {
+      return // Don't remove the last day
+    }
+    
+    removeDay(index)
+    
+    // Update the length field
+    const newLength = form.getValues('length') - 1
+    form.setValue('length', newLength)
+    
+    // Update remaining days' IDs and titles
+    const updatedDays = form.getValues('days')
+    updatedDays.forEach((day, idx) => {
+      day.id = (idx + 1).toString()
+      day.title = `Day ${idx + 1}`
+    })
+    form.setValue('days', updatedDays)
   }
 
   useEffect(() => {
@@ -442,185 +423,185 @@ export default function CreatePage() {
 
   useEffect(() => {
     const itineraryId = searchParams.get('itineraryId')    
-    // Map the itinerary data to the create page's data structure
-    const mappedData: TripData = {
-      status: 'draft',
-      name: sampleItinerary.title,
-      shortDescription: sampleItinerary.description,
-      mainImage: sampleItinerary.image,
-      detailedOverview: sampleItinerary.details,
-      length: sampleItinerary.schedule.length,
-      countries: sampleItinerary.countries,
-      days: sampleItinerary.schedule.map((day: any, index: number) => ({
-        id: (index + 1).toString(),
-        image: day.image,
-        cityName: day.activities[0]?.location?.split(', ')[0] || '',
-        countryName: day.activities[0]?.location?.split(', ')[1] || '',
-        title: day.title,
-        description: day.description,
-        notes: day.notes,
-        activities: day.activities.map((activity: any, actIndex: number) => ({
-          id: `${index + 1}-${actIndex + 1}`,
-          time: activity.time,
-          duration: '',
-          image: activity.image,
-          title: activity.title,
-          description: activity.details,
-          type: activity.type as any,
-          link: '',
-          price: 0,
-        })),
-        showAccommodation: !!day.accommodation,
-        accommodation: {
-          name: day.accommodation?.name || '',
-          type: day.accommodation?.type || '',
-          location: day.accommodation?.location || '',
-          price: 0,
-          photos: day.accommodation?.image ? [day.accommodation.image] : [],
-        }
-      })),
-      itineraryTags: sampleItinerary.itineraryTags,
-      notes: sampleItinerary.creator.notes.map((note: any, index: number) => ({
-        id: (index + 1).toString(),
-        title: note.title,
-        content: note.content,
-        expanded: false,
-      }))
-    }
     if (itineraryId) {
-      setTripData(mappedData)
+      // Map the itinerary data to the form structure
+      const mappedData: FormData = {
+        status: 'draft',
+        name: sampleItinerary.title,
+        shortDescription: sampleItinerary.description,
+        mainImage: sampleItinerary.image,
+        detailedOverview: sampleItinerary.details,
+        length: sampleItinerary.schedule.length,
+        countries: sampleItinerary.countries.map(country => ({ value: country })),
+        days: sampleItinerary.schedule.map((day: any, index: number) => ({
+          id: (index + 1).toString(),
+          image: day.image,
+          cityName: day.activities[0]?.location?.split(', ')[0] || '',
+          countryName: day.activities[0]?.location?.split(', ')[1] || '',
+          title: day.title,
+          description: day.description,
+          notes: day.notes,
+          activities: day.activities.map((activity: any, actIndex: number) => ({
+            id: `${index + 1}-${actIndex + 1}`,
+            time: activity.time,
+            duration: '',
+            image: activity.image,
+            title: activity.title,
+            description: activity.details,
+            type: activity.type as any,
+            link: '',
+            price: 0,
+          })),
+          showAccommodation: !!day.accommodation,
+          accommodation: {
+            name: day.accommodation?.name || '',
+            type: day.accommodation?.type || '',
+            location: day.accommodation?.location || '',
+            price: 0,
+            photos: day.accommodation?.image ? [day.accommodation.image] : [],
+          }
+        })),
+        itineraryTags: sampleItinerary.itineraryTags,
+        notes: sampleItinerary.creator.notes.map((note: any, index: number) => ({
+          id: (index + 1).toString(),
+          title: note.title,
+          content: note.content,
+          expanded: false,
+        }))
+      }
+      form.reset(mappedData)
     }
-  }, [searchParams])
+  }, [searchParams, form])
 
-  const handleBasicInfoSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Only create initial days if we don't already have days data
-    if (tripData.days.length === 1 && !tripData.days[0].title) {
-      const days = Array.from({ length: tripData.length }, (_, i) => ({
-        ...INITIAL_DAY,
-        id: (i + 1).toString()
-      }))
-      setTripData(prev => ({ ...prev, days }))
+  const handleBasicInfoSubmit = async (data: FormData) => {
+    // Generate days based on the length input
+    const newDays = Array.from({ length: data.length }, (_, i) => ({
+      ...INITIAL_DAY,
+      id: (i + 1).toString(),
+      cityName: '',
+      countryName: '',
+      title: `Day ${i + 1}`,
+      description: '',
+      activities: [],
+      showAccommodation: false,
+      accommodation: {
+        name: '',
+        type: '',
+        location: '',
+      }
+    }))
+    form.setValue('days', newDays)
+
+    // Clean up empty country fields
+    const nonEmptyCountries = data.countries.filter(country => country.value.trim() !== '')
+    if (nonEmptyCountries.length > 0) {
+      form.setValue('countries', nonEmptyCountries)
     }
+
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    setCurrentStep(2)
   }
 
-  const handleDayPlanningSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  // Also update the length input handler to update days in real-time
+  const handleLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value)
+    if (value < 1) {
+      e.target.value = '1'
+      form.setValue('length', 1)
+      return
+    }
+    
+    form.setValue('length', value)
+    
+    // Update days array when length changes
+    const currentDays = form.getValues('days')
+    if (value > currentDays.length) {
+      // Add new days
+      const newDays = [...currentDays]
+      for (let i = currentDays.length; i < value; i++) {
+        newDays.push({
+          ...INITIAL_DAY,
+          id: (i + 1).toString(),
+          title: `Day ${i + 1}`
+        })
+      }
+      form.setValue('days', newDays)
+    } else if (value < currentDays.length) {
+      // Remove excess days
+      form.setValue('days', currentDays.slice(0, value))
+    }
+  }
+
+  const handleDayPlanningSubmit = async (data: FormData) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setCurrentStep(3)
   }
 
-  const handleFinalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Submit to backend
-    console.log(tripData)
+  const handleFinalSubmit = async () => {
+    const data = form.getValues()
+    console.log('Saving draft:', data)
+    try {
+      // Clean up empty country fields
+      const nonEmptyCountries = data.countries.filter(country => country.value.trim() !== '')
+      if (nonEmptyCountries.length > 0) {
+        form.setValue('countries', nonEmptyCountries)
+      }
+
+      // Clean up empty notes
+      const nonEmptyNotes = data.notes.filter(note => note.title.trim() !== '' || note.content.trim() !== '')
+      form.setValue('notes', nonEmptyNotes)
+
+      // Set status to published
+      form.setValue('status', 'published')
+
+      const finalData = form.getValues()
+      console.log('Final form data:', finalData)
+
+      // TODO: Submit to backend
+      // router.push('/my-itineraries')
+    } catch (error) {
+      console.error('Error submitting form:', error)
+    }
   }
 
-  const saveDraft = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveDraft = async () => {
+    const data = form.getValues()
     // TODO: Save draft to backend
-    console.log('Saving draft:', tripData);
+    console.log('Saving draft:', data)
   }
-
-  const updateDay = (dayId: string, updates: Partial<TripDay>) => {
-    setTripData(prev => ({
-      ...prev,
-      days: prev.days.map(day => 
-        day.id === dayId ? { ...day, ...updates } : day
-      )
-    }))
-  }
-
-  const addActivity = (dayId: string) => {
-    const newActivity = {
-      id: Math.random().toString(),
-      title: '',
-      description: '',
-      type: 'sightseeing' as const,
-      link: ''
-    }
-    setTripData(prev => ({
-      ...prev,
-      days: prev.days.map(day => 
-        day.id === dayId 
-          ? { ...day, activities: [...day.activities, newActivity] }
-          : day
-      )
-    }))
-  }
-
-  const removeActivity = (dayId: string, activityId: string) => {
-    setTripData(prev => ({
-      ...prev,
-      days: prev.days.map(day => 
-        day.id === dayId 
-          ? {
-              ...day,
-              activities: day.activities.filter(a => a.id !== activityId)
-            }
-          : day
-      )
-    }))
-  }
-
-  const removeDay = (dayId: string) => {
-    if (tripData.days.length <= 1) {
-      return; // Don't remove the last day
-    }
-    
-    const newDays = tripData.days.filter(day => day.id !== dayId);
-    // Renumber the remaining days
-    const updatedDays = newDays.map((day, index) => ({
-      ...day,
-      id: (index + 1).toString()
-    }));
-    
-    setTripData(prev => ({
-      ...prev,
-      days: updatedDays,
-      length: updatedDays.length
-    }));
-  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
-  );
+  )
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    const { active, over } = event
 
     if (over && active.id !== over.id) {
-      setTripData((prev) => {
-        const oldIndex = prev.days.findIndex((day) => day.id === active.id);
-        const newIndex = prev.days.findIndex((day) => day.id === over.id);
-        
-        const newDays = arrayMove(prev.days, oldIndex, newIndex);
-        // Update day IDs to maintain order
-        return {
-          ...prev,
-          days: newDays.map((day, index) => ({
-            ...day,
-            id: (index + 1).toString()
-          }))
-        };
-      });
+      const oldIndex = dayFields.findIndex((day) => day.id === active.id)
+      const newIndex = dayFields.findIndex((day) => day.id === over.id)
+      
+      // Move the day to the new position
+      moveDay(oldIndex, newIndex)
+      
+      // Update all day IDs and titles to maintain order
+      const updatedDays = form.getValues('days')
+      updatedDays.forEach((day, index) => {
+        day.id = (index + 1).toString()
+        day.title = day.title.replace(/Day \d+/, `Day ${index + 1}`)
+      })
+      form.setValue('days', updatedDays)
     }
-  };
+  }
 
   const toggleCategory = (categoryId: string) => {
-    setTripData(prev => ({
-      ...prev,
-      itineraryTags: prev.itineraryTags.includes(categoryId)
-        ? prev.itineraryTags.filter(c => c !== categoryId)
-        : tripData.itineraryTags.length < 3 ?
-          [...prev.itineraryTags, categoryId]
-        : prev.itineraryTags
-    }))
+    const currentTags = form.getValues('itineraryTags')
+    const newTags = currentTags.includes(categoryId)
+      ? currentTags.filter(c => c !== categoryId)
+      : currentTags.length < 3 ? [...currentTags, categoryId] : currentTags
+    form.setValue('itineraryTags', newTags)
   }
 
   if (!user) {
@@ -661,48 +642,51 @@ export default function CreatePage() {
           </div>
 
           {currentStep === 1 && (
-            <form onSubmit={handleBasicInfoSubmit} className="space-y-6">
+            <form onSubmit={form.handleSubmit(handleBasicInfoSubmit)} className="space-y-6">
               <div>
                 <Label className="text-md font-medium mb-3 ml-1" htmlFor="name">Trip Name</Label>
                 <Input
                   id="name"
-                  value={tripData.name}
-                  onChange={e => setTripData(prev => ({ ...prev, name: e.target.value }))}
+                  {...form.register("name")}
                   placeholder="Japanese Cultural Journey"
                   className="rounded-xl"
-                  required
                 />
+                {form.formState.errors.name && (
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
+                )}
               </div>
 
               <div>
                 <Label className="text-md font-medium mb-3 ml-1" htmlFor="shortDescription">Short Description</Label>
                 <textarea
                   id="shortDescription"
-                  value={tripData.shortDescription}
-                  onChange={e => setTripData(prev => ({ ...prev, shortDescription: e.target.value }))}
+                  {...form.register("shortDescription")}
                   placeholder="Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun."
                   className="w-full p-2 border rounded-xl h-[150px] md:h-[70px]"
                 />
+                {form.formState.errors.shortDescription && (
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.shortDescription.message}</p>
+                )}
               </div>
 
               <div>
                 <Label className="text-md font-medium mb-3 ml-1" htmlFor="mainImage">Main Image URL</Label>
                 <Input
                   id="mainImage"
-                  value={tripData.mainImage}
-                  onChange={e => setTripData(prev => ({ ...prev, mainImage: e.target.value }))}
+                  {...form.register("mainImage")}
                   placeholder="URL of the main trip image"
                   className="rounded-xl"
-                  required
                 />
+                {form.formState.errors.mainImage && (
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.mainImage.message}</p>
+                )}
               </div>
 
               <div>
                 <Label className="text-md font-medium mb-3 ml-1" htmlFor="detailedOverview">Detailed Overview <span className="text-gray-500 text-sm">(optional)</span></Label>
                 <textarea
                   id="detailedOverview"
-                  value={tripData.detailedOverview}
-                  onChange={e => setTripData(prev => ({ ...prev, detailedOverview: e.target.value }))}
+                  {...form.register("detailedOverview")}
                   placeholder="This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours."
                   className="w-full p-2 border rounded-xl min-h-[200px] md:min-h-[150px]"
                 />
@@ -714,64 +698,66 @@ export default function CreatePage() {
                   id="length"
                   type="number"
                   min="1"
-                  value={tripData.length}
-                  onChange={e => setTripData(prev => ({ ...prev, length: parseInt(e.target.value) }))}
+                  {...form.register("length", { valueAsNumber: true })}
                   className="rounded-xl"
-                  required
+                  onChange={handleLengthChange}
                 />
+                {form.formState.errors.length && (
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.length.message}</p>
+                )}
               </div>
 
               <div>
-                <Label className="text-md font-medium mb-3 ml-1" htmlFor="countries">Countries</Label>
+                <Label className="text-md font-medium mb-3 ml-1">Countries</Label>
                 <div className="space-y-2">
-                  {tripData.countries.map((country, index) => (
-                    <div key={index} className="flex gap-2">
+                  {countryFields.map((field, index) => (
+                    <div key={field.id} className="flex gap-2">
                       <Input
-                        value={country}
-                        onChange={e => {
-                          const newCountries = [...tripData.countries]
-                          newCountries[index] = e.target.value
-                          setTripData(prev => ({ ...prev, countries: newCountries }))
-                        }}
+                        {...form.register(`countries.${index}.value`)}
                         placeholder="Japan"
                         className="rounded-xl"
-                        required
                       />
-                      {index === tripData.countries.length - 1 ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setTripData(prev => ({ 
-                            ...prev, 
-                            countries: [...prev.countries, ''] 
-                          }))}
-                        >
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          if (index === countryFields.length - 1) {
+                            appendCountry({ value: '' })
+                          } else {
+                            removeCountry(index)
+                          }
+                        }}
+                      >
+                        {index === countryFields.length - 1 ? (
                           <Plus className="w-4 h-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            const newCountries = tripData.countries.filter((_, i) => i !== index)
-                            setTripData(prev => ({ ...prev, countries: newCountries }))
-                          }}
-                        >
+                        ) : (
                           <Minus className="w-4 h-4" />
-                        </Button>
-                      )}
+                        )}
+                      </Button>
                     </div>
+                  ))}
+                  {form.formState.errors.countries && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {form.formState.errors.countries.message}
+                    </p>
+                  )}
+                  {countryFields.map((field, index) => (
+                    form.formState.errors.countries?.[index]?.value && (
+                      <p key={field.id} className="text-red-500 text-sm mt-1">
+                        {form.formState.errors.countries[index]?.value?.message}
+                      </p>
+                    )
                   ))}
                 </div>
               </div>
 
               <div className="flex justify-end gap-4">
-                {tripData.status === 'draft' && (
-                  <Button type="button" variant="outline"  onClick={saveDraft}>
+                {form.getValues("status") === 'draft' && (
+                  <Button type="button" variant="outline" onClick={saveDraft}>
                     Save as Draft
                   </Button>
                 )}
-                <Button type="submit">
+                <Button type="submit" onClick={() => setCurrentStep(2)}>
                   Next: Plan Days
                 </Button>
               </div>
@@ -779,7 +765,7 @@ export default function CreatePage() {
           )}
 
           {currentStep === 2 && (
-            <form onSubmit={handleDayPlanningSubmit} className="space-y-6">
+            <form onSubmit={form.handleSubmit(handleDayPlanningSubmit)} className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Day Planning</h2>
               </div>
@@ -790,18 +776,17 @@ export default function CreatePage() {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={tripData.days.map(day => day.id)}
+                  items={dayFields.map(day => day.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <Accordion type="multiple" className="space-y-4">
-                    {tripData.days.map((day) => (
+                    {dayFields.map((day, index) => (
                       <SortableDay
                         key={day.id}
                         day={day}
-                        onUpdate={(updates) => updateDay(day.id, updates)}
-                        onRemoveActivity={(activityId) => removeActivity(day.id, activityId)}
-                        onAddActivity={() => addActivity(day.id)}
-                        onRemoveDay={() => removeDay(day.id)}
+                        index={index}
+                        form={form}
+                        onRemoveDay={handleRemoveDay}
                       />
                     ))}
                   </Accordion>
@@ -809,22 +794,19 @@ export default function CreatePage() {
               </DndContext>
 
               <div className="flex w-full justify-start items-center gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const newDayId = (tripData.days.length + 1).toString();
-                      setTripData(prev => ({
-                        ...prev,
-                        length: prev.length + 1,
-                        days: [...prev.days, { ...INITIAL_DAY, id: newDayId }]
-                      }))
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Day
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const newDayId = (dayFields.length + 1).toString();
+                    appendDay({ ...INITIAL_DAY, id: newDayId })
+                    form.setValue('length', dayFields.length + 1)
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Day
+                </Button>
+              </div>
 
               <div className="flex justify-end gap-4">
                 <Button
@@ -837,7 +819,7 @@ export default function CreatePage() {
                 <Button type="button" variant="outline" onClick={saveDraft}>
                   Save as Draft
                 </Button>
-                <Button type="submit">
+                <Button type="submit" onClick={() => setCurrentStep(3)}>
                   Next: Final Details
                 </Button>
               </div>
@@ -845,16 +827,12 @@ export default function CreatePage() {
           )}
 
           {currentStep === 3 && (
-            <form onSubmit={handleFinalSubmit} className="space-y-6" onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-              }
-            }}>
+            <form onSubmit={form.handleSubmit(handleFinalSubmit)} className="space-y-6">
               <div>
                 <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
                 <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
                   {itineraryTags.map((category) => {
-                    const isSelected = tripData.itineraryTags.includes(category.name)
+                    const isSelected = form.watch('itineraryTags').includes(category.name)
                     const Icon = category.icon
                     return (
                       <label key={category.name} className="flex items-center gap-2">
@@ -873,6 +851,9 @@ export default function CreatePage() {
                     )
                   })}
                 </div>
+                {form.formState.errors.itineraryTags && (
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.itineraryTags.message}</p>
+                )}
               </div>
 
               <div>
@@ -881,39 +862,36 @@ export default function CreatePage() {
                     <h2 className="text-lg font-semibold">Notes <span className="text-gray-500 text-sm">(optional)</span></h2>
                     <p className="text-sm text-gray-600">Add important notes about your trip</p>
                   </div>
-                  {tripData.notes.length === 0 && (
-                  <Button 
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const newNoteId = (tripData.notes.length + 1).toString();
-                      setTripData(prev => ({
-                        ...prev,
-                        notes: [...prev.notes, { id: newNoteId, title: '', content: '', expanded: true }]
-                      }))
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Note
-                  </Button>
+                  {noteFields.length === 0 && (
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const newNoteId = (noteFields.length + 1).toString();
+                        appendNote({ id: newNoteId, title: '', content: '', expanded: true })
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Note
+                    </Button>
                   )}
                 </div>
 
                 <div className="space-y-4">
-                  {tripData.notes.map((note) => (
+                  {noteFields.map((note, index) => (
                     <div key={note.id} className="bg-white rounded-lg border p-4 cursor-pointer"
-                        onClick={() => updateNote(note.id, { expanded: !note.expanded })}>
+                        onClick={() => form.setValue(`notes.${index}.expanded`, !form.watch(`notes.${index}.expanded`))}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div>
                             <div className="flex justify-between items-center">
                               <div className="flex justify-between items-center">
-                              {note.expanded ? (
-                                <Label className="text-[16px] font-medium ml-1">Title</Label>
-                              ) : (
-                                <Label className="text-[16px] font-medium ml-1">{note.title}</Label>
-                              )}
+                                {form.watch(`notes.${index}.expanded`) ? (
+                                  <Label className="text-[16px] font-medium ml-1">Title</Label>
+                                ) : (
+                                  <Label className="text-[16px] font-medium ml-1">{form.watch(`notes.${index}.title`)}</Label>
+                                )}
                               </div>
                                 <div className="flex gap-2">
                                   <Button
@@ -922,13 +900,13 @@ export default function CreatePage() {
                                     size="sm"
                                     className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                                   >
-                                    {note.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                    {form.watch(`notes.${index}.expanded`) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                   </Button>
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => removeNote(note.id)}
+                                    onClick={() => removeNote(index)}
                                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -936,22 +914,26 @@ export default function CreatePage() {
                                 </div>
                             </div>
                           </div>
-                          { note.expanded && (
-                          <div>
-                            <Input
-                              value={note.title}
-                              onChange={(e) => updateNote(note.id, { title: e.target.value })}
-                              placeholder="Note title"
-                              className="mb-2 rounded-xl"
-                            />
-                            <Label className="text-[16px] font-medium mb-3 ml-1">Content</Label>
-                            <textarea
-                              value={note.content}
-                              onChange={(e) => updateNote(note.id, { content: e.target.value })}
-                              placeholder="Write your note here..."
-                              className="w-full min-h-[100px] p-2 border rounded-xl"
-                            />
-                          </div>
+                          {form.watch(`notes.${index}.expanded`) && (
+                            <div>
+                              <Input
+                                {...form.register(`notes.${index}.title`)}
+                                placeholder="Note title"
+                                className="mb-2 rounded-xl"
+                              />
+                              {form.formState.errors.notes?.[index]?.title && (
+                                <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.title?.message}</p>
+                              )}
+                              <Label className="text-[16px] font-medium mb-3 ml-1">Content</Label>
+                              <textarea
+                                {...form.register(`notes.${index}.content`)}
+                                placeholder="Write your note here..."
+                                className="w-full min-h-[100px] p-2 border rounded-xl"
+                              />
+                              {form.formState.errors.notes?.[index]?.content && (
+                                <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.content?.message}</p>
+                              )}
+                            </div>
                           )}
                         </div>
                         
@@ -959,24 +941,21 @@ export default function CreatePage() {
                     </div>
                   ))}
 
-                  {tripData.notes.length === 0 && (
+                  {noteFields.length === 0 && (
                     <div className="text-center py-8 bg-white rounded-lg border">
                       <PenSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                       <p className="text-gray-500">No notes yet. Click "Add Note" to create one.</p>
                     </div>
                   )}
                 </div>
-                {tripData.notes.length > 0 && (
+                {noteFields.length > 0 && (
                 <div className="flex w-full justify-start items-center gap-4 mt-4 ">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      const newNoteId = (tripData.notes.length + 1).toString();
-                      setTripData(prev => ({
-                        ...prev,
-                        notes: [...prev.notes, { id: newNoteId, title: '', content: '', expanded: true }]
-                      }))
+                      const newNoteId = (noteFields.length + 1).toString();
+                      appendNote({ id: newNoteId, title: '', content: '', expanded: true });
                     }}
                   >
                     <Plus className="h-4 w-4 mr-1" />
@@ -987,13 +966,24 @@ export default function CreatePage() {
               </div>
 
               <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline" onClick={() => setCurrentStep(2)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setCurrentStep(2)}
+                >
                   Previous
                 </Button>
-                <Button type="button" variant="outline" onClick={saveDraft}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={saveDraft}
+                >
                   Save as Draft
                 </Button>
-                <Button type="submit">
+                <Button 
+                  type="submit"
+                  className="bg-black text-white hover:bg-gray-800"
+                >
                   Create Itinerary
                 </Button>
               </div>
