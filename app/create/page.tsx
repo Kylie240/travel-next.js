@@ -10,7 +10,7 @@ import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp } from "lucid
 import { auth } from "@/firebase/client"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
-import { useForm, useFieldArray } from "react-hook-form"
+import { useForm, useFieldArray, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import {
@@ -32,8 +32,12 @@ import { CSS } from '@dnd-kit/utilities';
 import { activityTags, itineraryTags } from "@/lib/constants/tags"
 import { sampleItinerary } from "@/lib/constants/sample-itinerary"
 import { createSchema } from "@/validation/createSchema"
-
+import { toast } from "sonner"
+import { firestore } from "@/firebase/server"
+import { useAuth } from "@/context/AuthContext"
+import { saveNewItinerary } from "./actions"
 type FormData = z.infer<typeof createSchema>
+
 
 interface TripDay {
   id: string;
@@ -359,6 +363,7 @@ export default function CreatePage() {
 
   const form = useForm<FormData>({
     resolver: zodResolver(createSchema),
+    mode: 'onSubmit',
     defaultValues: {
       status: 'draft',
       name: '',
@@ -473,31 +478,7 @@ export default function CreatePage() {
     }
   }, [searchParams, form])
 
-  const handleBasicInfoSubmit = async (data: FormData) => {
-    // Generate days based on the length input
-    const newDays = Array.from({ length: data.length }, (_, i) => ({
-      ...INITIAL_DAY,
-      id: (i + 1).toString(),
-      cityName: '',
-      countryName: '',
-      title: `Day ${i + 1}`,
-      description: '',
-      activities: [],
-      showAccommodation: false,
-      accommodation: {
-        name: '',
-        type: '',
-        location: '',
-      }
-    }))
-    form.setValue('days', newDays)
-
-    // Clean up empty country fields
-    const nonEmptyCountries = data.countries.filter(country => country.value.trim() !== '')
-    if (nonEmptyCountries.length > 0) {
-      form.setValue('countries', nonEmptyCountries)
-    }
-
+  const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -531,14 +512,7 @@ export default function CreatePage() {
     }
   }
 
-  const handleDayPlanningSubmit = async (data: FormData) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    setCurrentStep(3)
-  }
-
-  const handleFinalSubmit = async () => {
-    const data = form.getValues()
-    console.log('Saving draft:', data)
+  const handleFinalSubmit = async (data: z.infer<typeof createSchema>) => {
     try {
       // Clean up empty country fields
       const nonEmptyCountries = data.countries.filter(country => country.value.trim() !== '')
@@ -553,15 +527,46 @@ export default function CreatePage() {
       // Set status to published
       form.setValue('status', 'published')
 
-      const finalData = form.getValues()
-      console.log('Final form data:', finalData)
+      handleSaveItinerary()
 
-      // TODO: Submit to backend
-      // router.push('/my-itineraries')
     } catch (error) {
-      console.error('Error submitting form:', error)
+      toast.error('Error submitting form')
     }
   }
+
+  const handleSaveItinerary = async () => {
+    const token = await auth.currentUser?.getIdToken();
+
+    if (!token) {
+      return;
+    }
+
+    const response = await saveNewItinerary({
+      ...form.getValues(),
+      token,
+      creatorId: auth.currentUser?.uid || '',
+    })
+    console.log(response)
+    if (response.itineraryId) {
+      toast.success('Form submitted successfully');
+      router.push('/my-itineraries')
+    } else {
+      toast.error('Error submitting form')
+    }
+
+  }
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    // Validate the form
+    const isValid = await form.trigger()
+    if (isValid) {
+      handleFinalSubmit(data)
+    } else {
+      toast.error('Form validation failed')
+    }
+  }, (errors) => {
+    toast.error('Form validation errors')
+  })
 
   const saveDraft = async () => {
     const data = form.getValues()
@@ -616,381 +621,417 @@ export default function CreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 md:py-8">
-      <div className="md:container mx-auto md:px-4 md:max-w-4xl">
-        <div className="bg-white md:rounded-2xl p-4 md:p-12 md:shadow">
-          <div className="flex justify-between items-center py-4 mb-8">
-            <h1 className="text-2xl ms:text-3xl font-semibold">{isNewItinerary ? "Create New" : "Edit"} Itinerary</h1>
-            <div className="flex gap-2">
-              {[1, 2, 3].map(step => (
-                <div onClick={() => setCurrentStep(step)}
-                  key={step}
-                  className={`rounded-full w-8 h-8 flex items-center justify-center cursor-pointer ${
-                    currentStep === step 
-                      ? 'bg-black' 
-                      : currentStep > step 
-                        ? 'bg-green-500' 
-                        : 'bg-white border border-gray-200'
-                  }`}
-                >
-                  <span className={`${currentStep === step ? "text-white" : "text-gray-700"}`}>
-                    {step}
-                  </span>
-                </div>
-              ))}
+    <FormProvider {...form}> 
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault()
+          onSubmit(e)
+        }} 
+        className="min-h-screen bg-gray-50 py-4 md:py-8"
+        noValidate
+      >
+        <div className="md:container mx-auto md:px-4 md:max-w-4xl">
+          <div className="bg-white md:rounded-2xl p-4 md:p-12 md:shadow">
+            <div className="flex justify-between items-center py-4 mb-8">
+              <h1 className="text-2xl ms:text-3xl font-semibold">{isNewItinerary ? "Create New" : "Edit"} Itinerary</h1>
+              <div className="flex gap-2">
+                {[1, 2, 3].map(step => (
+                  <div onClick={() => setCurrentStep(step)}
+                    key={step}
+                    className={`rounded-full w-8 h-8 flex items-center justify-center cursor-pointer ${
+                      currentStep === step 
+                        ? 'bg-black' 
+                        : currentStep > step 
+                          ? 'bg-green-500' 
+                          : 'bg-white border border-gray-200'
+                    }`}
+                  >
+                    <span className={`${currentStep === step ? "text-white" : "text-gray-700"}`}>
+                      {step}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+            <div>
+              {currentStep === 1 && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="name">Trip Name</Label>
+                    <Input
+                      id="name"
+                      {...form.register("name")}
+                      placeholder="Japanese Cultural Journey"
+                      className="rounded-xl"
+                    />
+                    {form.formState.errors.name && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
+                    )}
+                  </div>
 
-          {currentStep === 1 && (
-            <form onSubmit={form.handleSubmit(handleBasicInfoSubmit)} className="space-y-6">
-              <div>
-                <Label className="text-md font-medium mb-3 ml-1" htmlFor="name">Trip Name</Label>
-                <Input
-                  id="name"
-                  {...form.register("name")}
-                  placeholder="Japanese Cultural Journey"
-                  className="rounded-xl"
-                />
-                {form.formState.errors.name && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
-                )}
-              </div>
+                  <div>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="shortDescription">Short Description</Label>
+                    <textarea
+                      id="shortDescription"
+                      {...form.register("shortDescription")}
+                      placeholder="Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun."
+                      className="w-full p-2 border rounded-xl h-[150px] md:h-[70px]"
+                    />
+                    {form.formState.errors.shortDescription && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.shortDescription.message}</p>
+                    )}
+                  </div>
 
-              <div>
-                <Label className="text-md font-medium mb-3 ml-1" htmlFor="shortDescription">Short Description</Label>
-                <textarea
-                  id="shortDescription"
-                  {...form.register("shortDescription")}
-                  placeholder="Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun."
-                  className="w-full p-2 border rounded-xl h-[150px] md:h-[70px]"
-                />
-                {form.formState.errors.shortDescription && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.shortDescription.message}</p>
-                )}
-              </div>
+                  <div>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="mainImage">Main Image URL</Label>
+                    <Input
+                      id="mainImage"
+                      {...form.register("mainImage")}
+                      placeholder="URL of the main trip image"
+                      className="rounded-xl"
+                    />
+                    {form.formState.errors.mainImage && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.mainImage.message}</p>
+                    )}
+                  </div>
 
-              <div>
-                <Label className="text-md font-medium mb-3 ml-1" htmlFor="mainImage">Main Image URL</Label>
-                <Input
-                  id="mainImage"
-                  {...form.register("mainImage")}
-                  placeholder="URL of the main trip image"
-                  className="rounded-xl"
-                />
-                {form.formState.errors.mainImage && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.mainImage.message}</p>
-                )}
-              </div>
+                  <div>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="detailedOverview">Detailed Overview <span className="text-gray-500 text-sm">(optional)</span></Label>
+                    <textarea
+                      id="detailedOverview"
+                      {...form.register("detailedOverview")}
+                      placeholder="This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours."
+                      className="w-full p-2 border rounded-xl min-h-[200px] md:min-h-[150px]"
+                    />
+                  </div>
 
-              <div>
-                <Label className="text-md font-medium mb-3 ml-1" htmlFor="detailedOverview">Detailed Overview <span className="text-gray-500 text-sm">(optional)</span></Label>
-                <textarea
-                  id="detailedOverview"
-                  {...form.register("detailedOverview")}
-                  placeholder="This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours."
-                  className="w-full p-2 border rounded-xl min-h-[200px] md:min-h-[150px]"
-                />
-              </div>
+                  <div>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="length">Number of Days</Label>
+                    <Input
+                      id="length"
+                      type="number"
+                      min="1"
+                      {...form.register("length", { valueAsNumber: true })}
+                      className="rounded-xl"
+                      onChange={handleLengthChange}
+                    />
+                    {form.formState.errors.length && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.length.message}</p>
+                    )}
+                  </div>
 
-              <div>
-                <Label className="text-md font-medium mb-3 ml-1" htmlFor="length">Number of Days</Label>
-                <Input
-                  id="length"
-                  type="number"
-                  min="1"
-                  {...form.register("length", { valueAsNumber: true })}
-                  className="rounded-xl"
-                  onChange={handleLengthChange}
-                />
-                {form.formState.errors.length && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.length.message}</p>
-                )}
-              </div>
+                  <div>
+                    <Label className="text-md font-medium mb-3 ml-1">Countries</Label>
+                    <div className="space-y-2">
+                      {countryFields.map((field, index) => (
+                        <div key={field.id} className="flex gap-2">
+                          <Input
+                            {...form.register(`countries.${index}.value`)}
+                            placeholder="Japan"
+                            className="rounded-xl"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              if (index === countryFields.length - 1) {
+                                appendCountry({ value: '' })
+                              } else {
+                                removeCountry(index)
+                              }
+                            }}
+                          >
+                            {index === countryFields.length - 1 ? (
+                              <Plus className="w-4 h-4" />
+                            ) : (
+                              <Minus className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </div>
+                      ))}
+                      {form.formState.errors.countries && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {form.formState.errors.countries.message}
+                        </p>
+                      )}
+                      {countryFields.map((field, index) => (
+                        form.formState.errors.countries?.[index]?.value && (
+                          <p key={field.id} className="text-red-500 text-sm mt-1">
+                            {form.formState.errors.countries[index]?.value?.message}
+                          </p>
+                        )
+                      ))}
+                    </div>
+                  </div>
 
-              <div>
-                <Label className="text-md font-medium mb-3 ml-1">Countries</Label>
-                <div className="space-y-2">
-                  {countryFields.map((field, index) => (
-                    <div key={field.id} className="flex gap-2">
-                      <Input
-                        {...form.register(`countries.${index}.value`)}
-                        placeholder="Japan"
-                        className="rounded-xl"
-                      />
+                  <div className="flex justify-end gap-4">
+                    {form.getValues("status") === 'draft' && (
+                      <Button type="button" variant="outline" onClick={saveDraft}>
+                        Save as Draft
+                      </Button>
+                    )}
+                    <Button 
+                      type="button" 
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setCurrentStep(2)
+                        scrollToTop()
+                      }}
+                    >
+                      Next: Plan Days
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-semibold">Day Planning</h2>
+                  </div>
+
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={dayFields.map(day => day.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <Accordion type="multiple" className="space-y-4">
+                        {dayFields.map((day, index) => (
+                          <SortableDay
+                            key={day.id}
+                            day={day}
+                            index={index}
+                            form={form}
+                            onRemoveDay={handleRemoveDay}
+                          />
+                        ))}
+                      </Accordion>
+                    </SortableContext>
+                  </DndContext>
+
+                  <div className="flex w-full justify-start items-center gap-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const newDayId = (dayFields.length + 1).toString();
+                        appendDay({ ...INITIAL_DAY, id: newDayId })
+                        form.setValue('length', dayFields.length + 1)
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Day
+                    </Button>
+                  </div>
+
+                  <div className="flex justify-end gap-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setCurrentStep(1)
+                        scrollToTop()
+                      }}
+                    >
+                      Previous
+                    </Button>
+                    <Button type="button" variant="outline" onClick={saveDraft}>
+                      Save as Draft
+                    </Button>
+                    <Button 
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setCurrentStep(3)
+                        scrollToTop()
+                      }}
+                    >
+                      Next: Final Details
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 3 && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
+                    <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
+                      {itineraryTags.map((category) => {
+                        const isSelected = form.watch('itineraryTags').includes(category.name)
+                        const Icon = category.icon
+                        return (
+                          <label key={category.name} className="flex items-center gap-2">
+                            <button 
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleCategory(category.name);
+                              }}
+                              className={`flex justify-center items-center gap-2 px-4 py-3 sm:py-4 md:gap-2 md:py-6 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
+                            >
+                              <category.icon className="w-5 h-5 text-gray-700" />
+                              <span className="text-gray-900 font-medium">{category.name}</span>
+                            </button>
+                          </label>
+                        )
+                      })}
+                    </div>
+                    {form.formState.errors.itineraryTags && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.itineraryTags.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <h2 className="text-lg font-semibold">Notes <span className="text-gray-500 text-sm">(optional)</span></h2>
+                        <p className="text-sm text-gray-600">Add important notes about your trip</p>
+                      </div>
+                      {noteFields.length === 0 && (
+                        <Button 
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            const newNoteId = (noteFields.length + 1).toString();
+                            appendNote({ id: newNoteId, title: '', content: '', expanded: true })
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Note
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      {noteFields.map((note, index) => (
+                        <div key={note.id} className="bg-white rounded-lg border p-4 cursor-pointer"
+                            onClick={() => form.setValue(`notes.${index}.expanded`, !form.watch(`notes.${index}.expanded`))}>
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div>
+                                <div className="flex justify-between items-center">
+                                  <div className="flex justify-between items-center">
+                                    {form.watch(`notes.${index}.expanded`) ? (
+                                      <Label className="text-[16px] font-medium ml-1">Title</Label>
+                                    ) : (
+                                      <Label className="text-[16px] font-medium ml-1">{form.watch(`notes.${index}.title`)}</Label>
+                                    )}
+                                  </div>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                      >
+                                        {form.watch(`notes.${index}.expanded`) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => removeNote(index)}
+                                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                </div>
+                              </div>
+                              {form.watch(`notes.${index}.expanded`) && (
+                                <div>
+                                  <Input
+                                    {...form.register(`notes.${index}.title`)}
+                                    placeholder="Note title"
+                                    className="mb-2 rounded-xl"
+                                  />
+                                  {form.formState.errors.notes?.[index]?.title && (
+                                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.title?.message}</p>
+                                  )}
+                                  <Label className="text-[16px] font-medium mb-3 ml-1">Content</Label>
+                                  <textarea
+                                    {...form.register(`notes.${index}.content`)}
+                                    placeholder="Write your note here..."
+                                    className="w-full min-h-[100px] p-2 border rounded-xl"
+                                  />
+                                  {form.formState.errors.notes?.[index]?.content && (
+                                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.content?.message}</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            
+                          </div>
+                        </div>
+                      ))}
+
+                      {noteFields.length === 0 && (
+                        <div className="text-center py-8 bg-white rounded-lg border">
+                          <PenSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                          <p className="text-gray-500">No notes yet. Click "Add Note" to create one.</p>
+                        </div>
+                      )}
+                    </div>
+                    {noteFields.length > 0 && (
+                    <div className="flex w-full justify-start items-center gap-4 mt-4 ">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => {
-                          if (index === countryFields.length - 1) {
-                            appendCountry({ value: '' })
-                          } else {
-                            removeCountry(index)
-                          }
+                          const newNoteId = (noteFields.length + 1).toString();
+                          appendNote({ id: newNoteId, title: '', content: '', expanded: true });
                         }}
                       >
-                        {index === countryFields.length - 1 ? (
-                          <Plus className="w-4 h-4" />
-                        ) : (
-                          <Minus className="w-4 h-4" />
-                        )}
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Note
                       </Button>
                     </div>
-                  ))}
-                  {form.formState.errors.countries && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {form.formState.errors.countries.message}
-                    </p>
-                  )}
-                  {countryFields.map((field, index) => (
-                    form.formState.errors.countries?.[index]?.value && (
-                      <p key={field.id} className="text-red-500 text-sm mt-1">
-                        {form.formState.errors.countries[index]?.value?.message}
-                      </p>
-                    )
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-4">
-                {form.getValues("status") === 'draft' && (
-                  <Button type="button" variant="outline" onClick={saveDraft}>
-                    Save as Draft
-                  </Button>
-                )}
-                <Button type="submit" onClick={() => setCurrentStep(2)}>
-                  Next: Plan Days
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {currentStep === 2 && (
-            <form onSubmit={form.handleSubmit(handleDayPlanningSubmit)} className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Day Planning</h2>
-              </div>
-
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={dayFields.map(day => day.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <Accordion type="multiple" className="space-y-4">
-                    {dayFields.map((day, index) => (
-                      <SortableDay
-                        key={day.id}
-                        day={day}
-                        index={index}
-                        form={form}
-                        onRemoveDay={handleRemoveDay}
-                      />
-                    ))}
-                  </Accordion>
-                </SortableContext>
-              </DndContext>
-
-              <div className="flex w-full justify-start items-center gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const newDayId = (dayFields.length + 1).toString();
-                    appendDay({ ...INITIAL_DAY, id: newDayId })
-                    form.setValue('length', dayFields.length + 1)
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Day
-                </Button>
-              </div>
-
-              <div className="flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCurrentStep(1)}
-                >
-                  Previous
-                </Button>
-                <Button type="button" variant="outline" onClick={saveDraft}>
-                  Save as Draft
-                </Button>
-                <Button type="submit" onClick={() => setCurrentStep(3)}>
-                  Next: Final Details
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {currentStep === 3 && (
-            <form onSubmit={form.handleSubmit(handleFinalSubmit)} className="space-y-6">
-              <div>
-                <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
-                <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
-                  {itineraryTags.map((category) => {
-                    const isSelected = form.watch('itineraryTags').includes(category.name)
-                    const Icon = category.icon
-                    return (
-                      <label key={category.name} className="flex items-center gap-2">
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            toggleCategory(category.name);
-                          }}
-                          className={`flex justify-center items-center gap-2 px-4 py-3 sm:py-4 md:gap-2 md:py-6 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
-                        >
-                          <category.icon className="w-5 h-5 text-gray-700" />
-                          <span className="text-gray-900 font-medium">{category.name}</span>
-                        </button>
-                      </label>
-                    )
-                  })}
-                </div>
-                {form.formState.errors.itineraryTags && (
-                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.itineraryTags.message}</p>
-                )}
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold">Notes <span className="text-gray-500 text-sm">(optional)</span></h2>
-                    <p className="text-sm text-gray-600">Add important notes about your trip</p>
+                    )}
                   </div>
-                  {noteFields.length === 0 && (
+
+                  <div className="flex justify-end gap-4">
                     <Button 
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        const newNoteId = (noteFields.length + 1).toString();
-                        appendNote({ id: newNoteId, title: '', content: '', expanded: true })
+                      type="button" 
+                      variant="outline" 
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setCurrentStep(2)
+                        scrollToTop()
                       }}
-                      className="flex items-center gap-2"
                     >
-                      <Plus className="h-4 w-4" />
-                      Add Note
+                      Previous
                     </Button>
-                  )}
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={saveDraft}
+                    >
+                      Save as Draft
+                    </Button>
+                    <Button 
+                      type="submit"
+                      className="bg-black text-white hover:bg-gray-800"
+                      onClick={(e) => {
+                        // Don't prevent default here - let the form submit
+                        console.log('Submit button clicked')
+                      }}
+                    >
+                      Create Itinerary
+                    </Button>
+                  </div>
                 </div>
-
-                <div className="space-y-4">
-                  {noteFields.map((note, index) => (
-                    <div key={note.id} className="bg-white rounded-lg border p-4 cursor-pointer"
-                        onClick={() => form.setValue(`notes.${index}.expanded`, !form.watch(`notes.${index}.expanded`))}>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div>
-                            <div className="flex justify-between items-center">
-                              <div className="flex justify-between items-center">
-                                {form.watch(`notes.${index}.expanded`) ? (
-                                  <Label className="text-[16px] font-medium ml-1">Title</Label>
-                                ) : (
-                                  <Label className="text-[16px] font-medium ml-1">{form.watch(`notes.${index}.title`)}</Label>
-                                )}
-                              </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                                  >
-                                    {form.watch(`notes.${index}.expanded`) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeNote(index)}
-                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                            </div>
-                          </div>
-                          {form.watch(`notes.${index}.expanded`) && (
-                            <div>
-                              <Input
-                                {...form.register(`notes.${index}.title`)}
-                                placeholder="Note title"
-                                className="mb-2 rounded-xl"
-                              />
-                              {form.formState.errors.notes?.[index]?.title && (
-                                <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.title?.message}</p>
-                              )}
-                              <Label className="text-[16px] font-medium mb-3 ml-1">Content</Label>
-                              <textarea
-                                {...form.register(`notes.${index}.content`)}
-                                placeholder="Write your note here..."
-                                className="w-full min-h-[100px] p-2 border rounded-xl"
-                              />
-                              {form.formState.errors.notes?.[index]?.content && (
-                                <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.content?.message}</p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        
-                      </div>
-                    </div>
-                  ))}
-
-                  {noteFields.length === 0 && (
-                    <div className="text-center py-8 bg-white rounded-lg border">
-                      <PenSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-gray-500">No notes yet. Click "Add Note" to create one.</p>
-                    </div>
-                  )}
-                </div>
-                {noteFields.length > 0 && (
-                <div className="flex w-full justify-start items-center gap-4 mt-4 ">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const newNoteId = (noteFields.length + 1).toString();
-                      appendNote({ id: newNoteId, title: '', content: '', expanded: true });
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Note
-                  </Button>
-                </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setCurrentStep(2)}
-                >
-                  Previous
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={saveDraft}
-                >
-                  Save as Draft
-                </Button>
-                <Button 
-                  type="submit"
-                  className="bg-black text-white hover:bg-gray-800"
-                >
-                  Create Itinerary
-                </Button>
-              </div>
-            </form>
-          )}
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </form>
+    </FormProvider>
   )
 } 
