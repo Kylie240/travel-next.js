@@ -33,8 +33,6 @@ import { activityTags, itineraryTags } from "@/lib/constants/tags"
 import { sampleItinerary } from "@/lib/constants/sample-itinerary"
 import { createSchema } from "@/validation/createSchema"
 import { toast } from "sonner"
-import { firestore } from "@/firebase/server"
-import { useAuth } from "@/context/AuthContext"
 import { saveNewItinerary } from "./actions"
 type FormData = z.infer<typeof createSchema>
 
@@ -527,45 +525,62 @@ export default function CreatePage() {
       // Set status to published
       form.setValue('status', 'published')
 
-      handleSaveItinerary()
-
+      await handleSaveItinerary()
     } catch (error) {
       toast.error('Error submitting form')
     }
   }
 
   const handleSaveItinerary = async () => {
-    const token = await auth.currentUser?.getIdToken();
+    try {
+      if (!auth.currentUser) {
+        toast.error('Please sign in to save your itinerary')
+        router.push('/') // Redirect to home/login page
+        return
+      }
 
-    if (!token) {
-      return;
+      const token = await auth.currentUser.getIdToken(true) // Force refresh the token
+      const userId = auth.currentUser.uid
+
+      const response = await saveNewItinerary({
+        ...form.getValues(),
+        token,
+        creatorId: userId,
+      })
+
+      if (response.itineraryId) {
+        toast.success('Form submitted successfully')
+        router.push('/my-itineraries')
+      } else {
+        throw new Error('Failed to save itinerary')
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+      if (error instanceof Error && error.message === 'Unauthorized') {
+        toast.error('Session expired. Please sign in again.')
+        router.push('/')
+      } else {
+        toast.error('Error saving itinerary')
+      }
+      throw error // Re-throw to be caught by handleFinalSubmit
     }
-
-    const response = await saveNewItinerary({
-      ...form.getValues(),
-      token,
-      creatorId: auth.currentUser?.uid || '',
-    })
-    console.log(response)
-    if (response.itineraryId) {
-      toast.success('Form submitted successfully');
-      router.push('/my-itineraries')
-    } else {
-      toast.error('Error submitting form')
-    }
-
   }
 
   const onSubmit = form.handleSubmit(async (data) => {
-    // Validate the form
-    const isValid = await form.trigger()
-    if (isValid) {
-      handleFinalSubmit(data)
-    } else {
-      toast.error('Form validation failed')
+    try {
+      const isValid = await form.trigger()
+      if (isValid) {
+        await handleFinalSubmit(data)
+      } else {
+        toast.error('Please fill in all required fields')
+      }
+    } catch (error) {
+      console.error('Submit error:', error)
+      toast.error('Error submitting form')
     }
   }, (errors) => {
-    toast.error('Form validation errors')
+    console.error('Validation errors:', errors)
+    toast.error('Please fill in all required fields')
   })
 
   const saveDraft = async () => {

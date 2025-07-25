@@ -56,7 +56,7 @@ export const saveNewItinerary = async (data: {
     const {token, ...itineraryData} = data;
     const verifiedToken = await auth.verifyIdToken(token);
 
-    if (!verifiedToken.admin) {
+    if (!verifiedToken.uid) {
         throw new Error("Unauthorized")
     }
 
