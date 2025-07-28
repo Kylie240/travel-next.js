@@ -8,7 +8,7 @@ export const daySchema = z.object({
     cityName: z.string().min(1, "City name is required"),
     countryName: z.string().min(1, "Country name is required"),
     title: z.string().min(1, "Title is required"),
-    description: z.string().min(1, "Description is required"),
+    description: z.string().optional(),
     notes: z.string().optional(),
     activities: z.array(activitySchema),
     showAccommodation: z.boolean(),
