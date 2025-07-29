@@ -9,32 +9,10 @@ import { auth } from "@/firebase/client"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 
-const dummyCreated = [
-  {
-    id: 1,
-    title: "Weekend in Paris",
-    description: "Experience the best of Paris and the French Riviera",
-    image: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=2070&auto=format&fit=crop",
-    countries: ["France"],
-    likes: 24,
-    days: 3,
-    status: "published"
-  },
-  {
-    id: 2,
-    title: "Tokyo Adventure",
-    description: "Experience the best of Japan",
-    image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=2067&auto=format&fit=crop",
-    countries: ["Japan"],
-    likes: 18,
-    days: 7,
-    status: "draft"
-  }
-]
-
 export default function MyItinerariesPage() {
   const router = useRouter()
   const [user, setUser] = useState(auth.currentUser)
+  const dummyCreated = [];
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {

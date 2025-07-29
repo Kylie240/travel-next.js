@@ -1,0 +1,1 @@
+export type ItineraryStatus = 'draft' | 'published' | 'archived' | 'deleted'
