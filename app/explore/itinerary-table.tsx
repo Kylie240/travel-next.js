@@ -1,7 +1,7 @@
 import { getItineraries } from "@/data/itineraries";
 
 export default async function ItineraryTable() {
-    const data = await getItineraries();
+    const {data} = await getItineraries();
     console.log({data});
     
     return (

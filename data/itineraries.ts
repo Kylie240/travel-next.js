@@ -1,6 +1,6 @@
+import "server-only"
 import { firestore } from "@/firebase/server"
 import { ItineraryStatus } from "@/types/itineraryStatus"
-import "server-only"
 
 type GetItineraryOptions = {
     filters?: {
@@ -61,7 +61,8 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
 
     const itinerariesSnapshot = await query
     .limit(pageSize)
-    .offset((page - 1) * pageSize).get();
+    .offset((page - 1) * pageSize)
+    .get();
 
     const itineraries = itinerariesSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -69,7 +70,7 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
     }))
 
     return {
-        itineraries,
+        data: itineraries,
         total: itinerariesSnapshot.size,
     }
 }

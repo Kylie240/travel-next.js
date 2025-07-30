@@ -8,11 +8,13 @@ import { MoreVertical, Edit, Trash2, PenSquare } from "lucide-react"
 import { auth } from "@/firebase/client"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
+import { Itinerary } from "@/types/itinerary"
 
 export default function MyItinerariesPage() {
   const router = useRouter()
   const [user, setUser] = useState(auth.currentUser)
-  const dummyCreated = [];
+  const dummyCreated: Itinerary[] = [];  
+  const itineraryLikes = 0;
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -56,8 +58,8 @@ export default function MyItinerariesPage() {
               >
                 <div className="relative aspect-[4/5]">
                   <Image
-                    src={itinerary.image}
-                    alt={itinerary.title}
+                    src={itinerary.mainImage}
+                    alt={itinerary.name}
                     fill
                     className="object-cover"
                   />
@@ -117,11 +119,11 @@ export default function MyItinerariesPage() {
                   className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white"
                   onClick={() => router.push(`/itinerary/${itinerary.id}`)}
                 >
-                  <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
+                  <h4 className="font-bold text-2xl mb-1">{itinerary.name}</h4>
                   <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
                     {itinerary.countries.map((country) => country).join(" · ")}
                   </p>
-                  <p className="text-sm mt-2">{itinerary.likes} likes</p>
+                  <p className="text-sm mt-2">{itineraryLikes} likes</p>
                 </div>
               </motion.div>
             ))}
