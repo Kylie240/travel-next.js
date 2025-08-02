@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AdvancedFilterDialog } from "@/components/ui/advanced-filter-dialog"
 import { activityTags, itineraryTags, quickFilters, sortOptions } from "@/lib/constants/tags"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { QuickFilterList } from "@/components/ui/quick-filter-list"
 
 const formSchema = z.object({
@@ -23,21 +23,24 @@ const formSchema = z.object({
 
 export default function FiltersForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            destination: "",
-            duration: "",
-            budget: "",
-            itineraryTags: [],
-            activityTags: [],
-            sort: "popular",
-            continents: [],
-            quickFilter: "All"
+            destination: searchParams.get("destination") || "",
+            duration: searchParams.get("duration") || "",
+            budget: searchParams.get("budget") || "",
+            itineraryTags: searchParams.get("itineraryTags") ? searchParams.get("itineraryTags")?.split(",") : [],
+            activityTags: searchParams.get("activityTags") ? searchParams.get("activityTags")?.split(",") : [],
+            sort: searchParams.get("sort") || "most-recent",
+            continents: searchParams.get("continents") ? searchParams.get("continents")?.split(",") : [],
+            quickFilter: searchParams.get("quickFilter") || "All"
         }
     })
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
+        console.log('onSubmit', data)
         const newSearchParams = new URLSearchParams();
         if (data.destination) newSearchParams.set("destination", data.destination);
         if (data.duration) newSearchParams.set("duration", data.duration);
@@ -45,7 +48,7 @@ export default function FiltersForm() {
         if (data.itineraryTags && data.itineraryTags.length > 0) newSearchParams.set("itineraryTags", data.itineraryTags.join(","));
         if (data.activityTags && data.activityTags.length > 0) newSearchParams.set("activityTags", data.activityTags.join(","));
         if (data.sort) newSearchParams.set("sort", data.sort);
-        if (data.continents) newSearchParams.set("continents", data.continents.join(","));
+        if (data.continents && data.continents.length > 0) newSearchParams.set("continents", data.continents.join(","));
         newSearchParams.set("page", "1");
 
         router.push(`/search?${newSearchParams.toString()}`);
@@ -137,7 +140,7 @@ export default function FiltersForm() {
                         onFilterChange={setSelectedFilters}
                     /> */}
                 </div>
-                <div className="flex hidden justify-between items-center max-w-screen-lg mx-auto gap-2">
+                <div className="hidden justify-between items-center max-w-screen-lg mx-auto gap-2">
                 {/* Quick Filters */}
                 <div className="mt-2 flex-1">
                 <QuickFilterList

@@ -1,76 +1,126 @@
 import "server-only"
 import { firestore } from "@/firebase/server"
 import { ItineraryStatus } from "@/types/itineraryStatus"
+import { Itinerary } from "@/types/itinerary"
 
 type GetItineraryOptions = {
     filters?: {
         destination?: string,
-        duration?: string,
-        budget?: string,
+        durationMin?: number,
+        durationMax?: number,
         continents?: string[],
         activityTags?: string[],
         itineraryTags?: string[],
         countries?: string[],
-        price?: {
-            min?: number;
-            max?: number;
-        }
+        budgetMin?: number,
+        budgetMax?: number,
         status?: ItineraryStatus[] | null,
-        pagination?: {
-            pageSize?: number;
-            page?: number;
-        }
+        sort?: string,
+        quickFilter?: string,
+    },
+    pagination?: {
+        pageSize?: number;
+        page?: number;
     }
 }
 
 export const getItineraries = async (options?: GetItineraryOptions) => {
-    const page = options?.filters?.pagination?.page || 1
-    const pageSize = options?.filters?.pagination?.pageSize || 10
-    const {destination, duration, budget, continents, activityTags, itineraryTags, countries, price, status} = options?.filters || {}
+    const page = options?.pagination?.page || 1
+    const pageSize = options?.pagination?.pageSize || 10
+    const {destination, durationMin, durationMax, budgetMin, budgetMax, continents, activityTags, itineraryTags, countries, status, sort, quickFilter} = options?.filters || {}
 
-    const query = firestore.collection('itineraries').orderBy('updated', 'desc')
+    let query = firestore
+        .collection('itineraries')
+        .orderBy('created', 'desc')
 
     if (destination) {
-        query.where('destination', '==', destination)
+        query = query.where('countries', 'array-contains-any', [destination])   
     }
-    if (duration) {
-        query.where('duration', '==', duration)
+    if (durationMin !== null && durationMin !== undefined) {
+        query = query.where('duration', '>=', durationMin)
     }
-    if (budget) {
-        query.where('budget', '==', budget)
+    if (durationMax !== null && durationMax !== undefined) {
+        query = query.where('duration', '<=', durationMax)
     }
-    if (continents) {
-        query.where('continents', 'array-contains-any', continents)
+    if (continents && continents.length > 0) {
+        query = query.where('continents', 'array-contains-any', continents)
     }
-    if (activityTags) {
-        query.where('activityTags', 'array-contains-any', activityTags)
+    if (activityTags && activityTags.length > 0) {
+        query = query.where('activityTags', 'array-contains-any', activityTags)
     }
-    if (itineraryTags) {
-        query.where('itineraryTags', 'array-contains-any', itineraryTags)
+    if (itineraryTags && itineraryTags.length > 0) {
+        query = query.where('itineraryTags', 'array-contains-any', itineraryTags)
     }
-    if (countries) {
-        query.where('countries', 'array-contains-any', countries)
+    if (countries && countries.length > 0) {
+        query = query.where('countries', 'array-contains-any', countries)
     }
-    if (price) {
-        query.where('price', '>=', price.min)
-        query.where('price', '<=', price.max)
+    if (budgetMin !== null && budgetMin !== undefined) {
+        query = query.where('budget', '>=', budgetMin)
+    }
+    if (budgetMax !== null && budgetMax !== undefined) {
+        query = query.where('budget', '<=', budgetMax)
     }
     if (status) {
-        query.where('status', 'in', status)
+        query = query.where('status', 'in', status)
     }
 
-    const itinerariesSnapshot = await query
-    .limit(pageSize)
-    .offset((page - 1) * pageSize)
-    .get();
+    // Handle sorting
+    if (sort) {
+        switch(sort) {
+            case 'most-recent':
+                query = query.orderBy('updated', 'desc');
+                break;
+            case 'most-viewed':
+                query = query.orderBy('views', 'desc');
+                break;
+            case 'best-rated':
+                query = query.orderBy('rating', 'desc');
+                break;
+            case 'price-low':
+                query = query.orderBy('price', 'asc');
+                break;
+            case 'price-high':
+                query = query.orderBy('price', 'desc');
+                break;
+            default:
+                query = query.orderBy('updated', 'desc');
+        }
+    } else {
+        query = query.orderBy('updated', 'desc')
+    }
 
-    const itineraries = itinerariesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-    }))
+    if (quickFilter && quickFilter !== 'All') {
+        query = query.where('quickFilter', '==', quickFilter)
+    }
 
-    return {
-        data: itineraries,
-        total: itinerariesSnapshot.size,
+    try {
+        const itinerariesSnapshot = await query
+            .limit(pageSize)
+            .offset((page - 1) * pageSize)
+            .get();
+
+        const itineraries = itinerariesSnapshot.docs.map(
+            doc => {
+                const data = doc.data()
+                return {
+                    id: doc.id,
+                    ...data,
+                } as Itinerary
+            }
+        )
+
+        const totalQuery = query.count();
+        const totalSnapshot = await totalQuery.get();
+        const total = totalSnapshot.data().count;
+
+        return {
+            data: itineraries,
+            total,
+            totalPages: Math.ceil(total / pageSize),
+            currentPage: page
+        }
+    } catch (error) {
+        console.error('Error fetching itineraries:', error);
+        throw error;
     }
 }

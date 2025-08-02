@@ -58,6 +58,9 @@ export const itineraryTags = [
 ]
 
 export const sortOptions = [
+  { value: "most-recent", label: "Most Recent" },
+  { value: "most-viewed", label: "Most Viewed" },
+  { value: "best-rated", label: "Best Rated" },
   { value: "price-low", label: "Price: Low to High" },
   { value: "price-high", label: "Price: High to Low" },
   { value: "duration-short", label: "Duration: Shortest" },
