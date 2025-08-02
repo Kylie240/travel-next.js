@@ -1,6 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import { motion } from "framer-motion"
 import { useToast } from "@/components/ui/use-toast"
 import { AdvancedFilterDialog } from "@/components/ui/advanced-filter-dialog"
 import { QuickFilterList } from "@/components/ui/quick-filter-list"
@@ -8,13 +11,13 @@ import { useSearchParams } from "next/navigation"
 import { auth } from "@/firebase/client"
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { activityTags, itineraryTags, sortOptions, quickFilters } from "@/lib/constants/tags"
-import { Star } from "lucide-react"
-import { Itinerary } from "@/types/itinerary"
+import { Bookmark, Star } from "lucide-react"
+import { getItineraries } from "@/data/itineraries"
+import ItineraryTable from "./itinerary-table"
 
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(auth.currentUser)
-  const [itineraries, setItineraries] = useState<Itinerary[]>([])
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -30,6 +33,9 @@ const useAuth = () => {
     user
   }
 }
+
+// Dummy data for itineraries
+const itineraries = []
 
 const filters = {
   destinations: ["Japan", "Italy", "Costa Rica", "Thailand", "Greece", "Switzerland"],
@@ -60,6 +66,8 @@ export default async function ExplorePage() {
   const { isAuthenticated } = useAuth()
   const { toast } = useToast()
   const [likedItineraries, setLikedItineraries] = useState<number[]>([])
+  const data = await getItineraries();
+  console.log({data});
 
   // Initialize filters from URL params
   useEffect(() => {
@@ -272,6 +280,8 @@ export default async function ExplorePage() {
             </div>
           </div>
 
+        {/* Itineraries Grid */}
+        <ItineraryTable />
       </div>
     </div>
   )

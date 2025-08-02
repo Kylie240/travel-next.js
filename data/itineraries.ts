@@ -124,3 +124,21 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
         throw error;
     }
 }
+
+export const getItineraryById = async (id: string) => {
+    const itinerary = await firestore.collection('itineraries').doc(id).get()
+    return itinerary.data() as Itinerary
+}
+
+export const getItineraryByUserId = async (userId: string) => {
+    const itineraries = await firestore.collection('itineraries').where('userId', '==', userId).get()
+    return itineraries.docs.map(doc => doc.data() as Itinerary)
+}
+
+export const deleteItineraryById = async (id: string) => {
+    await firestore.collection('itineraries').doc(id).delete()
+}
+
+export const updateItineraryById = async (id: string, data: Partial<Itinerary>) => {
+    await firestore.collection('itineraries').doc(id).update(data)
+}
