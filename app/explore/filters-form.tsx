@@ -51,7 +51,7 @@ export default function FiltersForm() {
         if (data.continents && data.continents.length > 0) newSearchParams.set("continents", data.continents.join(","));
         newSearchParams.set("page", "1");
 
-        router.push(`/search?${newSearchParams.toString()}`);
+        router.push(`/explore?${newSearchParams.toString()}`);
     }
 
     const filters = {

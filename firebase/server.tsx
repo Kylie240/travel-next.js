@@ -21,7 +21,6 @@ const serviceAccount = {
   let auth: Auth
   const currentApps = getApps();
   
-
   if(!currentApps.length) {
     const app = initializeApp({
       credential: admin.credential.cert(serviceAccount as ServiceAccount),

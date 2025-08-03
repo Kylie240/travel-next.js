@@ -1,5 +1,5 @@
 import "server-only"
-import { firestore } from "@/firebase/server"
+import { auth, firestore } from "@/firebase/server"
 import { ItineraryStatus } from "@/types/itineraryStatus"
 import { Itinerary } from "@/types/itinerary"
 
@@ -34,7 +34,7 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
         .orderBy('created', 'desc')
 
     if (destination) {
-        query = query.where('countries', 'array-contains-any', [destination])   
+        query = query.where('countries', 'array-contains', { value: destination })   
     }
     if (durationMin !== null && durationMin !== undefined) {
         query = query.where('duration', '>=', durationMin)
@@ -130,9 +130,27 @@ export const getItineraryById = async (id: string) => {
     return itinerary.data() as Itinerary
 }
 
-export const getItineraryByUserId = async (userId: string) => {
-    const itineraries = await firestore.collection('itineraries').where('userId', '==', userId).get()
-    return itineraries.docs.map(doc => doc.data() as Itinerary)
+export const getItineraryByUserId = async () => {
+    const userId = auth.currentUser?.uid
+
+    console.log(userId)
+    if (!userId) {
+        return;
+      }
+      const itinerariesSnapshot = await firestore
+        .collection("itineraries")
+        .where("creatorId", "==", userId)
+        .get();
+    
+      const itinerariesData = itinerariesSnapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          } as Itinerary)
+      );
+      console.log(itinerariesData)
+      return itinerariesData;
 }
 
 export const deleteItineraryById = async (id: string) => {
