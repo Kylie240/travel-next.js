@@ -11,6 +11,7 @@ export const saveNewItinerary = async (data: {
     shortDescription: string,
     mainImage: string,
     detailedOverview?: string,
+    duration: number,
     days: {
         id: string,
         image?: string,

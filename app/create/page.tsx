@@ -513,6 +513,11 @@ export default function CreatePage() {
 
   const handleFinalSubmit = async (data: z.infer<typeof createSchema>) => {
     try {
+      const nonEmptyDays = data.days.filter(day => day.activities.length > 0)
+      if (nonEmptyDays.length > 0) {
+        form.setValue('days', nonEmptyDays)
+      }
+
       // Clean up empty country fields
       const nonEmptyCountries = data.countries.filter(country => country.value.trim() !== '')
       if (nonEmptyCountries.length > 0) {
@@ -541,7 +546,8 @@ export default function CreatePage() {
       }
 
       const token = await auth.currentUser.getIdToken(true) // Force refresh the token
-      const userId = auth.currentUser.uid
+      const userId = auth.currentUser.uid;
+      const duration = form.getValues('days').length;
 
       const response = await saveNewItinerary({
         ...form.getValues(),

@@ -10,15 +10,9 @@ interface FilterOption {
 }
 
 interface AdvancedFilterDialogProps {
-  destinations: string[]
-  duration: string[]
-  budget: string[]
   itineraryTags: FilterOption[]
   activityTags: FilterOption[]
   selectedFilters: {
-    destination: string
-    duration: string
-    budget: string
     itineraryTags: string[]
     activityTags: string[]
     regions: string[]
@@ -30,9 +24,6 @@ interface AdvancedFilterDialogProps {
     quickFilter: string
   }
   onFilterChange: (filters: {
-    destination: string
-    duration: string
-    budget: string
     itineraryTags: string[]
     activityTags: string[]
     regions: string[]
@@ -115,9 +106,6 @@ const ratingOptions = [
 ]
 
 export function AdvancedFilterDialog({
-  destinations,
-  duration,
-  budget,
   itineraryTags,
   activityTags,
   selectedFilters,

@@ -10,6 +10,7 @@ export type Itinerary = {
     mainImage: string;
     length: number;
     countries: string[];
+    continents: string[];
     days: Day[];
     status: ItineraryStatus;
     itineraryTags: string[];
@@ -18,4 +19,8 @@ export type Itinerary = {
     created: Date;
     updated: Date;
     createdBy: string;
+    views?: number;
+    rating?: number;
+    price?: number;
+    quickFilter?: string;
 }

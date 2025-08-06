@@ -16,6 +16,7 @@ searchParams
     const sort = searchParamsValues.sort;
     const quickFilter = searchParamsValues.quickFilter;
     const destination = searchParamsValues.destination;
+    const duration = searchParamsValues?.duration;
     const durationMin = searchParamsValues?.durationMin;
     const durationMax = searchParamsValues?.durationMax;
     const budgetMin = searchParamsValues?.budgetMin;
@@ -33,6 +34,7 @@ searchParams
             sort,
             quickFilter,
             destination,
+            duration,
             durationMin,
             durationMax,
             budgetMin,
@@ -88,7 +90,7 @@ searchParams
                   <div className="p-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
                     <h4 className="font-bold text-2xl mb-1">{itinerary.name}</h4>
                     <span className="text-sm text-white/80 truncate">
-                      {itinerary.countries.join(' · ')}
+                      {itinerary.countries.map(country => country.).join(' · ')}
                       {/* change to citiies */}
                     </span>
                   </div>
@@ -116,7 +118,7 @@ searchParams
                     <span className=" mr-1">
                       {itinerary.countries.length > 2 
                         ? "multi-country trip"
-                        : itinerary.countries.join(' & ')}
+                        : itinerary.countries.map(country => country.value).join(' & ')}
                     </span>
                   </div>
                   <p className="text-gray-600 line-clamp-4 leading-5 text-md mb-2">{itinerary.shortDescription}</p>
@@ -124,7 +126,7 @@ searchParams
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-start gap-2">
                       {itinerary.itineraryTags.slice(0, 2).map((tag) => (
-                        <span
+                        <span 
                           key={tag}
                           className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize"
                         >

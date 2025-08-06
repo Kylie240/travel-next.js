@@ -6,6 +6,7 @@ import { Itinerary } from "@/types/itinerary"
 type GetItineraryOptions = {
     filters?: {
         destination?: string,
+        duration?: string,
         durationMin?: number,
         durationMax?: number,
         continents?: string[],
@@ -27,14 +28,24 @@ type GetItineraryOptions = {
 export const getItineraries = async (options?: GetItineraryOptions) => {
     const page = options?.pagination?.page || 1
     const pageSize = options?.pagination?.pageSize || 10
-    const {destination, durationMin, durationMax, budgetMin, budgetMax, continents, activityTags, itineraryTags, countries, status, sort, quickFilter} = options?.filters || {}
+    const {destination, duration, durationMin, durationMax, budgetMin, budgetMax, continents, activityTags, itineraryTags, countries, status, sort, quickFilter} = options?.filters || {}
 
     let query = firestore
         .collection('itineraries')
         .orderBy('created', 'desc')
 
     if (destination) {
-        query = query.where('countries', 'array-contains', { value: destination })   
+        query = query.where('countries', 'array-contains', destination)   
+    }
+    if (duration) {
+        const [min, max] = duration.split('-').map(Number)
+        if (min && max) {
+            query = query.where('duration', '>=', min).where('duration', '<=', max)
+        } else if (min) {
+            query = query.where('duration', '>=', min)
+        } else if (max) {
+            query = query.where('duration', '<=', max)
+        }
     }
     if (durationMin !== null && durationMin !== undefined) {
         query = query.where('duration', '>=', durationMin)
@@ -42,17 +53,17 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
     if (durationMax !== null && durationMax !== undefined) {
         query = query.where('duration', '<=', durationMax)
     }
-    if (continents && continents.length > 0) {
-        query = query.where('continents', 'array-contains-any', continents)
+    if (continents && continents.length === 1) {
+        query = query.where('continents', 'array-contains', continents[0])
     }
-    if (activityTags && activityTags.length > 0) {
-        query = query.where('activityTags', 'array-contains-any', activityTags)
+    if (activityTags && activityTags.length === 1) {
+        query = query.where('activityTags', 'array-contains', activityTags[0])
     }
-    if (itineraryTags && itineraryTags.length > 0) {
-        query = query.where('itineraryTags', 'array-contains-any', itineraryTags)
+    if (itineraryTags && itineraryTags.length === 1) {
+        query = query.where('itineraryTags', 'array-contains', itineraryTags[0])
     }
-    if (countries && countries.length > 0) {
-        query = query.where('countries', 'array-contains-any', countries)
+    if (countries && countries.length === 1) {
+        query = query.where('countries', 'array-contains', countries[0])
     }
     if (budgetMin !== null && budgetMin !== undefined) {
         query = query.where('budget', '>=', budgetMin)
@@ -60,7 +71,7 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
     if (budgetMax !== null && budgetMax !== undefined) {
         query = query.where('budget', '<=', budgetMax)
     }
-    if (status) {
+    if (status && status.length > 0) {
         query = query.where('status', 'in', status)
     }
 
@@ -94,24 +105,44 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
     }
 
     try {
-        const itinerariesSnapshot = await query
-            .limit(pageSize)
+        // If we have multiple tags to filter by, we need to do it in memory
+        let itinerariesSnapshot = await query
+            .limit(pageSize * 3) // Fetch more to account for post-filtering
             .offset((page - 1) * pageSize)
             .get();
 
-        const itineraries = itinerariesSnapshot.docs.map(
-            doc => {
-                const data = doc.data()
-                return {
-                    id: doc.id,
-                    ...data,
-                } as Itinerary
-            }
-        )
+        let itineraries = itinerariesSnapshot.docs.map(
+            doc => ({
+                id: doc.id,
+                ...doc.data(),
+            } as Itinerary)
+        );
 
-        const totalQuery = query.count();
-        const totalSnapshot = await totalQuery.get();
-        const total = totalSnapshot.data().count;
+        // Apply additional filters in memory if needed
+        if (continents && continents.length > 1) {
+            itineraries = itineraries.filter(item => 
+                item.continents?.some(c => continents.includes(c)) || false
+            );
+        }
+        if (activityTags && activityTags.length > 1) {
+            itineraries = itineraries.filter(item => 
+                item.activityTags?.some(tag => activityTags.includes(tag)) || false
+            );
+        }
+        if (itineraryTags && itineraryTags.length > 1) {
+            itineraries = itineraries.filter(item => 
+                item.itineraryTags?.some(tag => itineraryTags.includes(tag)) || false
+            );
+        }
+        if (countries && countries.length > 1) {
+            itineraries = itineraries.filter(item => 
+                item.countries?.some(c => countries.includes(c)) || false
+            );
+        }
+
+        // Slice to get the correct page
+        const total = itineraries.length;
+        itineraries = itineraries.slice(0, pageSize);
 
         return {
             data: itineraries,
@@ -130,27 +161,24 @@ export const getItineraryById = async (id: string) => {
     return itinerary.data() as Itinerary
 }
 
-export const getItineraryByUserId = async () => {
-    const userId = auth.currentUser?.uid
-
-    console.log(userId)
+export const getItineraryByUserId = async (userId?: string) => {
     if (!userId) {
-        return;
-      }
-      const itinerariesSnapshot = await firestore
+        return [];
+    }
+    
+    const itinerariesSnapshot = await firestore
         .collection("itineraries")
         .where("creatorId", "==", userId)
         .get();
-    
-      const itinerariesData = itinerariesSnapshot.docs.map(
-        (doc) =>
-          ({
+
+    const itinerariesData = itinerariesSnapshot.docs.map(
+        (doc) => ({
             id: doc.id,
             ...doc.data(),
-          } as Itinerary)
-      );
-      console.log(itinerariesData)
-      return itinerariesData;
+        } as Itinerary)
+    );
+    
+    return itinerariesData;
 }
 
 export const deleteItineraryById = async (id: string) => {
