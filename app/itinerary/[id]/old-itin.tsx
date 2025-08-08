@@ -1,17 +1,55 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Image from "next/image"
-import { Calendar, MapPin, Users, Utensils, Bike, BedDouble, Train, Bookmark, Star, X, ChevronUp, ChevronDown, ChevronRight, Share, Edit, Link } from "lucide-react"
+import { motion } from "framer-motion"
+import { Calendar, MapPin, Users, Utensils, Bike, BedDouble, Train, Bookmark, Star, X, ChevronUp, ChevronDown, ChevronRight, Share, Edit } from "lucide-react"
 import { DaySection } from "@/components/ui/day-section"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
+import { auth } from "@/firebase/client"
+import router from "next/router"
 import { toast } from "sonner"
 
 interface ItineraryViewProps {
   itinerary: any // TODO: Add proper type
+  similarItineraries: any[] // TODO: Add proper type
 }
 
-export function ItineraryView({ itinerary }: ItineraryViewProps) {
+export function ItineraryView({ itinerary, similarItineraries }: ItineraryViewProps) {
+  const [activeDays, setActiveDays] = useState<number[]>([])
+  const [isLiked, setIsLiked] = useState(false)
+  const [showFullDetails, setShowFullDetails] = useState(false)
+  const [user, setUser] = useState(auth.currentUser)
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        router.push("/")
+        return
+      }
+      setUser(user) 
+    })
+  }, [router])
+
+  const toggleDay = (dayNumber: number) => {
+    setActiveDays(prev => 
+      prev.includes(dayNumber) 
+        ? prev.filter(d => 
+          d !== dayNumber)
+        : [...prev, dayNumber]
+    )
+  }
+
+  const closeAllDays = () => {
+    setActiveDays([])
+  }
+
+  const openAllDays = () => {
+    const days = itinerary.schedule.map((day: any) => day.day)
+    setActiveDays(days)
+  }
+  
 
   return (
     <div className="min-h-screen bg-white">
@@ -29,12 +67,12 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
             <div className="absolute inset-0 bg-black/40" />
             <div className="absolute inset-0 flex items-end md:items-center">
               <div className="container px-0 mx-0 lg:mx-auto">
-                <div
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-white lg:max-w-2xl m-0 p-6"
                 >
-                  <h1 className="text-3xl max-w-[80%] md:max-w-none leading-[40px] md:leading-none md:text-3xl font-bold mb-4">{itinerary.title}</h1>
+                  <h1 className="text-3xl max-w-[80%] md:max-w-none leading-[40px] md:leading-none md:text-3xl md:text-5xl font-bold mb-4">{itinerary.title}</h1>
                   <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.description}</p>
                   <div className="flex items-center gap-6 text-sm">
                     <div className="flex items-center">
@@ -50,7 +88,7 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
                       2-4 people
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>
@@ -63,7 +101,7 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
               <div>
                 <h2 className="font-semibold text-xl mb-2">Trip Overview</h2>
                 <span className="text-sm text-black truncate">
-                  {itinerary.countries.map(country => country).join(' · ')}
+                  {itinerary.cities.join(' · ')}
                 </span>
                 
                 {/* Category Tags */}
@@ -81,7 +119,7 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
                 </div>
 
                 <p className="text-gray-600 mt-2">{itinerary.description}</p>
-                <div className="flex gap-4">
+                <div className="flex gap-4 hidden">
                   <div className="flex flex-col items-center my-4 relative w-[90px]">
                     <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
                       <Train />
@@ -121,13 +159,11 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
                 </div>
               </div>
               <div className="flex gap-2">
-                {itinerary.creatorId ? (
-                  <Link href={`/itinerary/${itinerary.id}/edit`} className="block relative" key={itinerary.id}>
-                    <Edit size={30} className="cursor-pointer block relative hover:bg-gray-200 h-10 w-10 rounded-full p-2"
-                      href={`/itinerary/${itinerary.id}/edit`}
-                      key={itinerary.id}
-                    />
-                  </Link>
+                {user?.uid !== itinerary.creator.id ? (
+                  <Edit size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2"
+                  onClick={() => {
+                    router.push(`/itinerary/${itinerary.id}/edit`)
+                  }} />
                 ) : (
                   <Bookmark size={35}
                   className={`transition-colors cursor-pointer h-10 w-10 ${
@@ -141,7 +177,7 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
               </div>
             </div>
             
-            <div className="w-full flex my-3 justify-between">
+            <div className="w-full flex justify-around my-3 justify-between">
               <p>2 Transports</p>
               <span>|</span>
               <p>2 Restaurants</p>
@@ -154,16 +190,16 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
             <div className="flex justify-between w-full">
               <div className="flex items-center gap-4">
                 <Image
-                  src={itinerary.creator?.avatar}
-                  alt={itinerary.creator?.name}
+                  src={itinerary.creator.image}
+                  alt={itinerary.creator.name}
                   width={50}
                   height={56}
                   className="rounded-full"
                 />
                 <div>
-                  <p className="font-medium">Created by {itinerary.creator?.name}</p>
+                  <p className="font-medium">Created by {itinerary.creator.name}</p>
                   <p className="text-sm text-gray-600">
-                    {itinerary.creator?.title} · {itinerary.creator?.trips} trips created
+                    {itinerary.creator.title} · {itinerary.creator.trips} trips created
                   </p>
                 </div>
               </div>
@@ -174,19 +210,19 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
             <div>
               <p className={cn(
                 "text-md text-gray-700",
-                false && "line-clamp-2"
+                !showFullDetails && "line-clamp-2"
               )}>
                 {itinerary.details}
               </p>
-              {itinerary.details?.length > 100 && (
+              {itinerary.details.length > 100 && (
                 <button 
-                  onClick={() => false}
+                  onClick={() => setShowFullDetails(!showFullDetails)}
                   className="text-sm text-gray-500 hover:text-gray-700 mt-1 flex items-center gap-1"
                 >
-                  {false ? 'Show less' : 'Read more'}
+                  {showFullDetails ? 'Show less' : 'Read more'}
                   <ChevronRight className={cn(
                     "h-4 w-4 transition-transform",
-                    false && "rotate-90"
+                    showFullDetails && "rotate-90"
                   )} />
                 </button>
               )}
@@ -215,7 +251,7 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}>
-              <div className="absolute bottom-0 right-1">
+              <div className="absolute bottom-0 bottom-1 right-1">
                 View all photos
               </div>
             </div>
@@ -230,7 +266,7 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
           <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold">Itinerary Schedule</h2>
-              {false ? (
+              {activeDays.length > 0 ? (
                 <div onClick={closeAllDays} className="flex cursor-pointer items-center gap-2">
                 Close All
                 <ChevronUp size={16} />
@@ -244,11 +280,11 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
               }
             </div>
             <div className="flex flex-col">
-              {itinerary.days.map((day: any) => (
+              {itinerary.schedule.map((day: any) => (
                 <DaySection
                   key={day.day}
                   day={day}
-                  isActive={false}
+                  isActive={activeDays.includes(day.day)}
                   onToggle={() => toggleDay(day.day)}
                   onClose={() => toggleDay(day.day)}
                 />
@@ -328,16 +364,16 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
               <div className="flex items-center gap-4 mb-6">
                 <div className="relative h-12 w-12 rounded-full overflow-hidden">
                   <Image
-                    src={itinerary.creator?.avatar}
-                    alt={itinerary.creator?.name}
+                    src={itinerary.creator.avatar}
+                    alt={itinerary.creator.name}
                     fill
                     className="object-cover"
                   />
                 </div>
                 <div>
-                  <p className="font-medium">{itinerary.creator?.name}</p>
+                  <p className="font-medium">{itinerary.creator.name}</p>
                   <p className="text-sm text-gray-600">
-                    {itinerary.creator?.trips} trips created
+                    {itinerary.creator.trips} trips created
                   </p>
                 </div>
               </div>
@@ -430,11 +466,13 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
         <div className="mt-24">
           <h2 className="text-2xl font-semibold mb-6">Similar Itineraries</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* {similarItineraries.map((item) => (
-              <Link href={`/itinerary/${item.id}`} className="block relative" key={item.id}>
+            {similarItineraries.map((item) => (
               <div
                 key={item.id}
                 className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => {
+                  router.push(`/itinerary/${item.id}`)
+                }}
               >
                 <div className="relative h-48">
                   <Image
@@ -455,8 +493,7 @@ export function ItineraryView({ itinerary }: ItineraryViewProps) {
                   </div>
                 </div>
               </div>
-              </Link>
-            ))} */}
+            ))}
           </div>
         </div>
       </div>

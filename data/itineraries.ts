@@ -111,11 +111,18 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
             .offset((page - 1) * pageSize)
             .get();
 
+        // Get initial results
         let itineraries = itinerariesSnapshot.docs.map(
-            doc => ({
-                id: doc.id,
-                ...doc.data(),
-            } as Itinerary)
+            doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    // Convert Firestore Timestamps to ISO strings
+                    created: data.created?.toDate().toISOString(),
+                    updated: data.updated?.toDate().toISOString(),
+                } as Itinerary
+            }
         );
 
         // Apply additional filters in memory if needed
@@ -157,8 +164,16 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
 }
 
 export const getItineraryById = async (id: string) => {
-    const itinerary = await firestore.collection('itineraries').doc(id).get()
-    return itinerary.data() as Itinerary
+    const itinerary = await firestore
+    .collection('itineraries')
+    .doc(id)
+    .get()
+
+    const itineraryData = {
+        id: itinerary.id,
+        ...itinerary.data(),
+    } as Itinerary;
+    return itineraryData;
 }
 
 export const getItineraryByUserId = async (userId?: string) => {
