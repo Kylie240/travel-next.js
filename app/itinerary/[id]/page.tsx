@@ -1,18 +1,33 @@
 import { Suspense } from "react"
 import Loading from "@/app/loading"
 import { similarItineraries } from "./data"
-import { ItineraryView } from "./itinerary-view"
 import { getItineraryById } from "@/data/itineraries"
 import { Calendar, MapPin, Users, Utensils, Bike, BedDouble, Train, Bookmark, ChevronUp, ChevronDown, ChevronRight, Share, Edit } from "lucide-react"
 import Image from "next/image"
 import { Itinerary } from "@/types/itinerary"
 import { DaySection } from "@/components/ui/day-section"
+import Link from "next/link"
+import { toast } from "sonner"
+import BookmarkElement from "./bookmark-element"
+import ScheduleSection from "./schedule-section"
+import NoteSection from "./note-section"
+import ShareElement from "./share-element"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const paramsValue = await params;
   const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
+  // const currentUser = await getCurrentUser();
+  const currentUser = {
+    uid: "123",
+    name: "John Doe",
+    title: "Traveler",
+    trips: 10,
+    avatar: "https://via.placeholder.com/150",
+    image: "https://via.placeholder.com/150",
+  };
   // const creator = await getUserById(itinerary.creatorId) as User;
   const creator = {
+    id: "123",
     name: "John Doe",
     title: "Traveler",
     trips: 10,
@@ -41,16 +56,16 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             <div className="absolute inset-0 flex items-end md:items-center">
               <div className="container px-0 mx-0 lg:mx-auto">
                 <div className="text-white lg:max-w-2xl m-0 p-6">
-                  <h1 className="text-3xl max-w-[80%] md:max-w-none leading-[40px] md:leading-none md:text-3xl md:text-5xl font-bold mb-4">{itinerary.name}</h1>
+                  <h1 className="text-3xl max-w-[80%] md:max-w-none leading-[40px] md:leading-none md:text-3xl lg:text-5xl font-bold mb-4">{itinerary.name}</h1>
                   <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.shortDescription}</p>
                   <div className="flex items-center gap-6 text-sm">
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 mr-2" />
-                      {itinerary.duration}
+                      {itinerary.shortDescription}
                     </div>
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 mr-2" />
-                      {getCountryValue(itinerary.countries[0])}
+                      {itinerary.countries.map((country: any) => country.value).join(' · ')}
                     </div>
                     <div className="flex items-center">
                       <Users className="h-5 w-5 mr-2" />
@@ -70,7 +85,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <div>
                 <h2 className="font-semibold text-xl mb-2">Trip Overview</h2>
                 <span className="text-sm text-black truncate">
-                  {itinerary.countries.map(getCountryValue).join(' · ')}
+                  {/* {itinerary.cities.map((city: any) => city.city).join(' · ')} */}
+                  {itinerary.countries.map((country: any) => country.value).join(' · ')}
                 </span>
                 
                 {/* Category Tags */}
@@ -127,23 +143,16 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   </div>
                 </div>
               </div>
-              {/* <div className="flex gap-2">
-                {user?.uid !== itinerary.creator.id ? (
-                  <Edit size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2"
-                  onClick={() => {
-                    router.push(`/itinerary/${itinerary.id}/edit`)
-                  }} />
+              <div className="flex gap-2">
+                {currentUser?.uid !== itinerary.creatorId ? (
+                  <Link href={`/itinerary/${itinerary.id}/edit`}>
+                    <Edit size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2"/>
+                  </Link>
                 ) : (
-                  <Bookmark size={35}
-                  className={`transition-colors cursor-pointer h-10 w-10 ${
-                    itinerary.title.includes('Paris')
-                      ? "fill-red-500 text-red-500"
-                      : "text-black hover:bg-gray-200 rounded-full p-2"
-                  }`}
-                  />
+                  <BookmarkElement itineraryId={itinerary.id} />
                 )}
-                <Share size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2" onClick={() => {navigator.clipboard.writeText(window.location.href); toast.success('Copied to clipboard')}} />
-              </div> */}
+                <ShareElement />
+              </div>
             </div>
             
             <div className="w-full flex justify-around my-3 justify-between">
@@ -176,14 +185,14 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 Follow
               </button>
             </div>
-            {/* <div>
-              <p className={cn(
+            <div>
+              {/* <p className={cn(
                 "text-md text-gray-700",
                 !showFullDetails && "line-clamp-2"
               )}>
                 {itinerary.details}
               </p>
-              {itinerary.details.length > 100 && (
+              {itinerary.details && itinerary.details.length > 100 && (
                 <button 
                   onClick={() => setShowFullDetails(!showFullDetails)}
                   className="text-sm text-gray-500 hover:text-gray-700 mt-1 flex items-center gap-1"
@@ -194,8 +203,9 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     showFullDetails && "rotate-90"
                   )} />
                 </button>
-              )}
-            </div> */}
+              )} */}
+              <p>{itinerary.details}</p>
+            </div>
           </div>
         </div>
         
@@ -220,7 +230,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}>
-              <div className="absolute bottom-0 bottom-1 right-1">
+              <div className="absolute bottom-1 right-1">
                 View all photos
               </div>
             </div>
@@ -232,133 +242,32 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Schedule */}
-          <div className="lg:col-span-2">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold">Itinerary Schedule</h2>
-              {itinerary.days.length > 0 ? (
-                <div  className="flex cursor-pointer items-center gap-2">
-                Close All
-                <ChevronUp size={16} />
-              </div>
-              ) : (
-                <div className="flex cursor-pointer items-center gap-2">
-                  Open All
-                  <ChevronDown size={16} />
-                </div>
-              )
-              }
-            </div>
-            <div className="flex flex-col">
-              {itinerary.days.map((day: any) => (
-                // <DaySection
-                //   key={day.day}
-                //   day={day}
-                //   isActive={activeDays.includes(day.day)}
-                //   onToggle={() => toggleDay(day.day)}
-                //   onClose={() => toggleDay(day.day)}
-                // />
-                <div key={day.day}>
-                  <h1>{day.day}</h1>
-                  <h1>{day.title}</h1>
-                  <h1>{day.description}</h1>
-                  <h1>{day.activities}</h1>
-                  <h1>{day.accommodations}</h1>
-                  <h1>{day.transportation}</h1>
-                  <h1>{day.culturalNotes}</h1>
-                </div>
-              ))}
-            </div>
-
-            {/* Creator Notes */}
-            {/* <div className="mt-12 px-4 block lg:hidden">
-                <h3 className="text-lg font-semibold mb-4">Creator Notes</h3>
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="preparation">
-                    <AccordionTrigger>Trip Preparation</AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-4 space-y-2">
-                        <li>Best time to visit: {itinerary.bestTimeToVisit || 'Spring and Fall'}</li>
-                        <li>Recommended duration: {itinerary.duration}</li>
-                        <li>Budget estimate: {itinerary.budgetEstimate || 'Mid-range'}</li>
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="tips">
-                    <AccordionTrigger>Travel Tips</AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-4 space-y-2">
-                        {itinerary.travelTips?.map((tip: string, index: number) => (
-                          <li key={index}>{tip}</li>
-                        )) || (
-                          <>
-                            <li>Book accommodations in advance</li>
-                            <li>Check local weather conditions</li>
-                            <li>Research local customs and etiquette</li>
-                          </>
-                        )}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="transportation">
-                    <AccordionTrigger>Transportation Guide</AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-4 space-y-2">
-                        {itinerary.transportationTips?.map((tip: string, index: number) => (
-                          <li key={index}>{tip}</li>
-                        )) || (
-                          <>
-                            <li>Consider getting a rail pass</li>
-                            <li>Download local transport apps</li>
-                            <li>Book airport transfers in advance</li>
-                          </>
-                        )}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="cultural">
-                    <AccordionTrigger>Cultural Insights</AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-4 space-y-2">
-                        {itinerary.culturalNotes?.map((note: string, index: number) => (
-                          <li key={index}>{note}</li>
-                        )) || (
-                          <>
-                            <li>Learn basic local phrases</li>
-                            <li>Respect local customs</li>
-                            <li>Try local specialties</li>
-                          </>
-                        )}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div> */}
-          </div>
+          <ScheduleSection schedule={itinerary.days} notes={itinerary.notes} />
 
           {/* Right Column - Details & Notes */}
           <div className="hidden lg:block">
             <div className="sticky top-24">
               <h2 className="text-2xl font-semibold mb-6">Trip Details</h2>
-              {/* <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="relative h-12 w-12 rounded-full overflow-hidden">
                   <Image
-                    src={itinerary.creator.avatar}
-                    alt={itinerary.creator.name}
+                    src={creator.image}
+                    alt={creator.name}
                     fill
                     className="object-cover"
                   />
                 </div>
                 <div>
-                  <p className="font-medium">{itinerary.creator.name}</p>
+                  <p className="font-medium">{creator.name}</p>
                   <p className="text-sm text-gray-600">
-                    {itinerary.creator.trips} trips created
+                    {creator.trips} trips created
                   </p>
                 </div>
-              </div> */}
+              </div>
               <p className="text-gray-600 mb-6">{itinerary.details}</p>
               <div className="space-y-4">
                 {/* Category Tags */}
-                {/* <div className="mb-4 mt-2">
+                <div className="mb-4 mt-2">
                   <div className="flex flex-wrap gap-2">
                     {itinerary.itineraryTags.map((category: string) => (
                       <span
@@ -369,73 +278,14 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                       </span>
                     ))}
                   </div>
-                </div> */}
+                </div>
               </div>
 
               {/* Creator Notes */}
-              {/* <div className="mt-8 hidden lg:block">
+              <div className="mt-8 hidden lg:block">
                 <h3 className="text-lg font-semibold mb-4">Creator Notes</h3>
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="preparation">
-                    <AccordionTrigger>Trip Preparation</AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-4 space-y-2">
-                        <li>Best time to visit: {itinerary.bestTimeToVisit || 'Spring and Fall'}</li>
-                        <li>Recommended duration: {itinerary.duration}</li>
-                        <li>Budget estimate: {itinerary.budgetEstimate || 'Mid-range'}</li>
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="tips">
-                    <AccordionTrigger>Travel Tips</AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-4 space-y-2">
-                        {itinerary.travelTips?.map((tip: string, index: number) => (
-                          <li key={index}>{tip}</li>
-                        )) || (
-                          <>
-                            <li>Book accommodations in advance</li>
-                            <li>Check local weather conditions</li>
-                            <li>Research local customs and etiquette</li>
-                          </>
-                        )}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="transportation">
-                    <AccordionTrigger>Transportation Guide</AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-4 space-y-2">
-                        {itinerary.transportationTips?.map((tip: string, index: number) => (
-                          <li key={index}>{tip}</li>
-                        )) || (
-                          <>
-                            <li>Consider getting a rail pass</li>
-                            <li>Download local transport apps</li>
-                            <li>Book airport transfers in advance</li>
-                          </>
-                        )}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="cultural">
-                    <AccordionTrigger>Cultural Insights</AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-4 space-y-2">
-                        {itinerary.culturalNotes?.map((note: string, index: number) => (
-                          <li key={index}>{note}</li>
-                        )) || (
-                          <>
-                            <li>Learn basic local phrases</li>
-                            <li>Respect local customs</li>
-                            <li>Try local specialties</li>
-                          </>
-                        )}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div> */}
+                <NoteSection notes={itinerary.notes} />
+              </div>
             </div>
           </div>
         </div>

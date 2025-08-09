@@ -35,7 +35,8 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
         .orderBy('created', 'desc')
 
     if (destination) {
-        query = query.where('countries', 'array-contains', destination)   
+        query = query.where('countries', 'array-contains', destination)
+        query = query.where('cities', 'array-contains', destination)
     }
     if (duration) {
         const [min, max] = duration.split('-').map(Number)
