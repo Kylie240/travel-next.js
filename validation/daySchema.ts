@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { activitySchema } from './activitySchema'
-import { accommodationSchema } from './accomodationSchema'
+import { accommodationSchema } from './accommodationSchema'
 
 export const daySchema = z.object({
     id: z.string(),
@@ -12,5 +12,5 @@ export const daySchema = z.object({
     notes: z.string().optional(),
     activities: z.array(activitySchema),
     showAccommodation: z.boolean(),
-    accommodation: accommodationSchema,
+    accommodation: accommodationSchema.optional(),
   })

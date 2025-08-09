@@ -1,6 +1,6 @@
 import { HotelIcon } from "lucide-react";
 
-export const accomodations = [
+export const accommodations = [
     {
         name: "Hotel",
         icon: HotelIcon

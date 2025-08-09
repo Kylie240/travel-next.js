@@ -1,4 +1,4 @@
-"use client"
+ "use client"
 
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -35,7 +35,7 @@ import { createSchema } from "@/validation/createSchema"
 import { toast } from "sonner"
 import { saveNewItinerary } from "./actions"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { accomodations } from "@/lib/constants/accomodations"
+import { accommodations } from "@/lib/constants/accommodations"
 type FormData = z.infer<typeof createSchema>
 
 
@@ -118,11 +118,11 @@ function SortableDay({ day, index, form, onRemoveDay }: {
   const getExistingAccommodations = () => {
     const days = form.getValues('days');
     return days
-      .filter(d => d.showAccommodation && d.accommodation.name)
+      .filter(d => d.showAccommodation && d.accommodation?.name)
       .map(d => ({
-        name: d.accommodation.name,
-        type: d.accommodation.type,
-        location: d.accommodation.location
+        name: d.accommodation?.name,
+        type: d.accommodation?.type,
+        location: d.accommodation?.location
       }))
       .filter((acc, index, self) => 
         index === self.findIndex(a => a.name === acc.name)
@@ -456,7 +456,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
               </div>
               {form.watch(`days.${index}.showAccommodation`) && (
                 <>
-                  {!showNewAccommodation && form.watch(`days.${index}.showAccommodation`) ? (
+                  {!showNewAccommodation && getExistingAccommodations().length > 0 ? (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <Select
@@ -519,7 +519,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                             <SelectValue placeholder="Select a type" />
                           </SelectTrigger>
                           <SelectContent>
-                            {accomodations.map((acc) => (
+                            {accommodations.map((acc) => (  
                               <SelectItem key={acc.name} value={acc.name}>
                                 {acc.name}
                               </SelectItem>
@@ -581,11 +581,11 @@ export default function CreatePage() {
     mode: 'onSubmit',
     defaultValues: {
       status: 'draft',
-      name: '',
+      title: '',
       shortDescription: '',
       mainImage: '',
       detailedOverview: '',
-      length: 1,
+      duration: 1,
       countries: [{ value: '' }],
       days: [INITIAL_DAY],
       itineraryTags: [],
@@ -617,8 +617,8 @@ export default function CreatePage() {
     removeDay(index)
     
     // Update the length field
-    const newLength = form.getValues('length') - 1
-    form.setValue('length', newLength)
+    const newLength = form.getValues('duration') - 1
+    form.setValue('duration', newLength)
     
     // Update remaining days' IDs and titles
     const updatedDays = form.getValues('days')
@@ -647,11 +647,11 @@ export default function CreatePage() {
       // Map the itinerary data to the form structure
       const mappedData: FormData = {
         status: 'draft',
-        name: sampleItinerary.title,
+        title: sampleItinerary.title,
         shortDescription: sampleItinerary.description,
         mainImage: sampleItinerary.image,
         detailedOverview: sampleItinerary.details,
-        length: sampleItinerary.schedule.length,
+        duration: sampleItinerary.schedule.length,
         countries: sampleItinerary.countries.map(country => ({ value: country })),
         days: sampleItinerary.schedule.map((day: any, index: number) => ({
           id: (index + 1).toString(),
@@ -702,11 +702,11 @@ export default function CreatePage() {
     const value = parseInt(e.target.value)
     if (value < 1) {
       e.target.value = '1'
-      form.setValue('length', 1)
+      form.setValue('duration', 1)
       return
     }
     
-    form.setValue('length', value)
+    form.setValue('duration', value)
     
     // Update days array when length changes
     const currentDays = form.getValues('days')
@@ -895,16 +895,16 @@ export default function CreatePage() {
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="name">Trip Name</Label>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="title">Trip Name</Label>
                     <Input
-                      id="name"
-                      {...form.register("name")}
+                      id="title"
+                      {...form.register("title")}
                       placeholder="Japanese Cultural Journey"
                       className="rounded-xl"
                       disabled={form.formState.isSubmitting}
                     />
-                    {form.formState.errors.name && (
-                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
+                    {form.formState.errors.title && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.title.message}</p>
                     )}
                   </div>
 
@@ -953,13 +953,13 @@ export default function CreatePage() {
                       id="length"
                       type="number"
                       min="1"
-                      {...form.register("length", { valueAsNumber: true })}
+                      {...form.register("duration", { valueAsNumber: true })}
                       className="rounded-xl"
                       onChange={handleLengthChange}
                       disabled={form.formState.isSubmitting}
                     />
-                    {form.formState.errors.length && (
-                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.length.message}</p>
+                    {form.formState.errors.duration && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.duration.message}</p>
                     )}
                   </div>
 
@@ -980,24 +980,28 @@ export default function CreatePage() {
                               }
                             }}  
                           />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              if (index === countryFields.length - 1) {
-                                appendCountry({ value: '' })
-                              } else {
-                                removeCountry(index)
-                              }
-                            }}
-                            disabled={form.formState.isSubmitting}
-                          >
-                            {index === countryFields.length - 1 ? (
-                              <Plus className="w-4 h-4" />
-                            ) : (
+                          <div className="flex gap-2">
+                            {(index > 0 || (index === 0 && countryFields.length > 1)) &&
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => removeCountry(index)}
+                              disabled={form.formState.isSubmitting}
+                            >
                               <Minus className="w-4 h-4" />
-                            )}
-                          </Button>
+                            </Button>
+                            }
+                            {index === countryFields.length - 1 &&
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => appendCountry({ value: '' })}
+                              disabled={form.formState.isSubmitting || form.watch(`countries.${countryFields.length - 1}.value`).trim() === ''}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                            }
+                          </div>
                         </div>
                       ))}
                       {form.formState.errors.countries && (
@@ -1073,7 +1077,7 @@ export default function CreatePage() {
                       onClick={() => {
                         const newDayId = (dayFields.length + 1).toString();
                         appendDay({ ...INITIAL_DAY, id: newDayId })
-                        form.setValue('length', dayFields.length + 1)
+                        form.setValue('duration', dayFields.length + 1)
                       }}
                     >
                       <Plus className="h-4 w-4 mr-1" />

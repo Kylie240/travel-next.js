@@ -3,7 +3,7 @@
 import { Circle, MapPin } from "lucide-react"
 import { motion } from "framer-motion"
 import { Activity } from "@/types/Activity"
-import { Accommodation } from "@/types/Accomodation"
+import { Accommodation } from "@/types/Accommodation"
 import { Note } from "@/types/Note"
 
 export interface DaySectionProps {

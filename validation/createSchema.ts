@@ -4,11 +4,11 @@ import { noteSchema } from './noteSchema'
 
 export const createSchema = z.object({
     status: z.enum(['draft', 'published']),
-    name: z.string().min(1, "Name is required"),
+    title: z.string().min(1, "Name is required"),
     shortDescription: z.string().min(1, "Short description is required"),
     mainImage: z.string().url("Must be a valid URL"),
     detailedOverview: z.string().optional(),
-    length: z.number().min(1, "Length must be at least 1 day"),
+    duration: z.number().min(1, "Length must be at least 1 day"),
     countries: z.array(z.object({
       value: z.string().min(1, "Country name is required")
     })).min(1, "At least one country is required"),

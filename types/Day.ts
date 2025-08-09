@@ -1,4 +1,4 @@
-import { Accommodation } from "./Accomodation";
+import { Accommodation } from "./Accommodation";
 import { Activity } from "./Activity";
 
 export type Day = {

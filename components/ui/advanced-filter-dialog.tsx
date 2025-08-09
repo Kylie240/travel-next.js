@@ -37,7 +37,7 @@ interface AdvancedFilterDialogProps {
 }
 
 const itineraryItems = [
-  "accomodations",
+  "accommodations",
   "activities",
   "transportation"
 ]

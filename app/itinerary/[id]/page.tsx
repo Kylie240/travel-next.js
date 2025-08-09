@@ -118,7 +118,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
                       <BedDouble />
                     </div>
-                    <p className="text-xs mt-2">Accomodations</p>
+                    <p className="text-xs mt-2">Accommodations</p>
                     <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
                       <p className="text-xs">5</p>
                     </div>
@@ -160,7 +160,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <span>|</span>
               <p>2 Restaurants</p>
               <span>|</span>
-              <p>4 Accomodations</p>
+              <p>4 Accommodations</p>
             </div>
           </div>
 
