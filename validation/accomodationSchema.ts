@@ -6,4 +6,5 @@ export const accommodationSchema = z.object({
     location: z.string(),
     price: z.number().optional(),
     photos: z.array(z.string()).optional(),
-  })
+    link: z.string().optional(),
+})

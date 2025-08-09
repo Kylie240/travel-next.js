@@ -4,4 +4,5 @@ export type Accommodation = {
     location: string,
     price?: number,
     photos?: string[],
+    link?: string,
 }

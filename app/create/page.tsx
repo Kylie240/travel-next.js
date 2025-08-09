@@ -34,6 +34,8 @@ import { sampleItinerary } from "@/lib/constants/sample-itinerary"
 import { createSchema } from "@/validation/createSchema"
 import { toast } from "sonner"
 import { saveNewItinerary } from "./actions"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { accomodations } from "@/lib/constants/accomodations"
 type FormData = z.infer<typeof createSchema>
 
 
@@ -64,6 +66,7 @@ interface TripDay {
     location: string;
     price?: number;
     photos?: string[];
+    link?: string;
   };
 }
 
@@ -103,10 +106,62 @@ function SortableDay({ day, index, form, onRemoveDay }: {
     name: `days.${index}.activities`
   });
 
+  // Get the list of unique countries from step 1
+  const existingCountries = form.getValues('countries').map(c => c.value).filter(Boolean);
+  const [showCustomCountry, setShowCustomCountry] = useState(false);
+  const [customCountry, setCustomCountry] = useState('');
+
+  // Add state for accommodation selection
+  const [showNewAccommodation, setShowNewAccommodation] = useState(false);
+  
+  // Get existing accommodations from all days
+  const getExistingAccommodations = () => {
+    const days = form.getValues('days');
+    return days
+      .filter(d => d.showAccommodation && d.accommodation.name)
+      .map(d => ({
+        name: d.accommodation.name,
+        type: d.accommodation.type,
+        location: d.accommodation.location
+      }))
+      .filter((acc, index, self) => 
+        index === self.findIndex(a => a.name === acc.name)
+      );
+  };
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handleCountryChange = (value: string) => {
+    if (value === 'custom') {
+      setShowCustomCountry(true);
+    } else {
+      form.setValue(`days.${index}.countryName`, value);
+    }
+  };
+
+  const handleCustomCountrySubmit = () => {
+    if (customCountry.trim()) {
+      // Update the day's country
+      form.setValue(`days.${index}.countryName`, customCountry, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
+
+      // Add to main countries list if not already there
+      const countriesField = form.getValues('countries');
+      if (!countriesField.some(c => c.value === customCountry)) {
+        form.setValue('countries', [...countriesField, { value: customCountry }], {
+          shouldValidate: true
+        });
+      }
+      setShowCustomCountry(false);
+      setCustomCountry('');
+    }
   };
 
   return (
@@ -118,7 +173,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
           </div>
           <div className="flex-1">
             <AccordionTrigger>
-              <div className="flex items-center gap-4">
+              <div className="flex w-full items-center justify-between gap-4">
                 <div className="flex-1 text-left">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Day {index + 1}</h3>
@@ -130,6 +185,11 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                     </p>
                   )}
                 </div>
+                {index > 0 && (
+                  <span className="cursor-pointer mr-2" onClick={() => onRemoveDay(index)}>
+                    <Trash2 size={18} className="text-red-500" />
+                  </span>
+                )}
               </div>
             </AccordionTrigger>
           </div>
@@ -150,11 +210,68 @@ function SortableDay({ day, index, form, onRemoveDay }: {
               </div>
               <div>
                 <Label className="text-[16px] font-medium mb-3 ml-1">Country</Label>
-                <Input
-                  {...form.register(`days.${index}.countryName`)}
-                  className="rounded-xl"
-                  placeholder="Japan"
-                />
+                {showCustomCountry ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={customCountry}
+                      onChange={(e) => setCustomCountry(e.target.value)}
+                      className="rounded-xl"
+                      placeholder="Enter new country"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleCustomCountrySubmit();
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button"
+                      onClick={handleCustomCountrySubmit}
+                      className="rounded-xl"
+                      disabled={!customCountry.trim()}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowCustomCountry(false);
+                        setCustomCountry('');
+                      }}
+                      className="rounded-xl"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    defaultValue={form.getValues(`days.${index}.countryName`) || ''}
+                    onValueChange={(value) => {
+                      if (value === 'custom') {
+                        setShowCustomCountry(true);
+                      } else {
+                        form.setValue(`days.${index}.countryName`, value, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                          shouldTouch: true
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {existingCountries.map((country) => (
+                        <SelectItem key={country} value={country}>
+                          {country}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="custom">+ Add New Country</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 {form.formState.errors.days?.[index]?.countryName && (
                   <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.countryName?.message}</p>
                 )}
@@ -311,38 +428,137 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <Label className="text-[16px] font-medium mb-3 ml-1">Accommodation<span className="text-gray-500 text-sm">(optional)</span></Label>
+                <Label className="text-[16px] font-medium mb-3 ml-1">Accommodation <span className="text-gray-500 text-sm">(optional)</span></Label>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={() => form.setValue(`days.${index}.showAccommodation`, !form.watch(`days.${index}.showAccommodation`))}
+                  onClick={() => {
+                    const newValue = !form.watch(`days.${index}.showAccommodation`);
+                    form.setValue(`days.${index}.showAccommodation`, newValue);
+                    if (newValue) {
+                      setShowNewAccommodation(false);
+                    }
+                  }}
                   className={`rounded-xl ${form.watch(`days.${index}.showAccommodation`) ? 'bg-gray-100' : ''}`}
                 >
-                  {form.watch(`days.${index}.showAccommodation`) ? 'Remove' : 'Add'}
+                  {form.watch(`days.${index}.showAccommodation`) ? 
+                    <div className="flex items-center gap-2">
+                      <Minus className="h-4 w-4" />
+                      Remove Accommodation
+                    </div> : 
+                    <div className="flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      Add Accommodation
+                    </div>
+                  }
                 </Button>
               </div>
               {form.watch(`days.${index}.showAccommodation`) && (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input
-                      {...form.register(`days.${index}.accommodation.name`)}
-                      placeholder="Accommodation name"
-                      className="rounded-xl"
-                    />
-                    <Input
-                      {...form.register(`days.${index}.accommodation.type`)}
-                      placeholder="Type (e.g., Hotel, Hostel)"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="mt-2">
-                    <Input
-                      {...form.register(`days.${index}.accommodation.location`)}
-                      placeholder="Location"
-                      className="rounded-xl"
-                    />
-                  </div>
+                  {!showNewAccommodation && form.watch(`days.${index}.showAccommodation`) ? (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <Select
+                          defaultValue={form.watch(`days.${index}.accommodation.name`)}
+                          value={form.watch(`days.${index}.accommodation.name`)}
+                          onValueChange={(value) => {
+                            if (value === 'new') {
+                              form.setValue(`days.${index}.accommodation`, {
+                                name: '',
+                                type: '',
+                                location: '',
+                                link: ''
+                              });
+                              setShowNewAccommodation(true);
+                            } else {
+                              const selectedAccommodation = getExistingAccommodations().find(a => a.name === value);
+                              if (selectedAccommodation) {
+                                form.setValue(`days.${index}.accommodation`, selectedAccommodation, {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                  shouldTouch: true
+                                });
+                                form.setValue(`days.${index}.showAccommodation`, true);
+                                setShowNewAccommodation(false);
+                              }
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="rounded-xl">
+                            <SelectValue placeholder="Select an accommodation">
+                              {form.watch(`days.${index}.accommodation.name`) || "Select an accommodation"}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getExistingAccommodations().map((acc) => (
+                              <SelectItem key={acc.name} value={acc.name}>
+                                {acc.name} in {acc.location}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="new">+ Add New Accommodation</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Input
+                          {...form.register(`days.${index}.accommodation.name`)}
+                          placeholder="Accommodation name"
+                          className="rounded-xl"
+                        />
+                        <Select
+                          value={form.watch(`days.${index}.accommodation.type`) || ''}
+                          onValueChange={(value) => {
+                            form.setValue(`days.${index}.accommodation.type`, value);
+                          }}
+                        >
+                          <SelectTrigger className="rounded-xl">
+                            <SelectValue placeholder="Select a type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {accomodations.map((acc) => (
+                              <SelectItem key={acc.name} value={acc.name}>
+                                {acc.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="mt-2">
+                        <Input
+                          {...form.register(`days.${index}.accommodation.location`)}
+                          placeholder="Location"
+                          className="rounded-xl"
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          {...form.register(`days.${index}.accommodation.link`)}
+                          placeholder="Add booking link, or a link to a website with more information"
+                          className="rounded-xl"
+                        />
+                        {form.formState.errors.days?.[index]?.accommodation?.link && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {form.formState.errors.days[index]?.accommodation?.link?.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowNewAccommodation(false)}
+                          className="rounded-xl"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -726,7 +942,7 @@ export default function CreatePage() {
                       id="detailedOverview"
                       {...form.register("detailedOverview")}
                       placeholder="This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours."
-                      className="w-full p-2 border rounded-xl min-h-[200px] md:min-h-[150px]"
+                      className="w-full p-2 border rounded-xl min-h-[210px] md:min-h-[150px]"
                       disabled={form.formState.isSubmitting}
                     />
                   </div>
@@ -757,6 +973,12 @@ export default function CreatePage() {
                             placeholder="Japan"
                             className="rounded-xl"
                             disabled={form.formState.isSubmitting}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                appendCountry({ value: '' });
+                              }
+                            }}  
                           />
                           <Button
                             type="button"
