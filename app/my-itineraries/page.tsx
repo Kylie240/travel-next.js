@@ -1,11 +1,13 @@
 import Image from "next/image"
-import { MoreVertical, Edit, Trash2, PenSquare, Link } from "lucide-react"
+import { MoreVertical, Edit, Trash2, PenSquare, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { getItineraryByUserId } from "@/data/itineraries"
 import { cookies } from "next/headers"
 import { auth } from "@/firebase/server"
 import { redirect } from "next/navigation"
+import Link from "next/link"
+import DeleteButton from "./delete-button"
 
 async function getUser() {
   const token = cookies().get("token")
@@ -48,7 +50,7 @@ export default async function MyItinerariesPage() {
                   <div className="relative aspect-[4/5]">
                     <Image
                       src={itinerary.mainImage || "/images/placeholder.jpg"}
-                      alt={itinerary.name}
+                      alt={itinerary.title}
                       fill
                       className="object-cover"
                     />
@@ -70,9 +72,7 @@ export default async function MyItinerariesPage() {
                       <DropdownMenu.Root>
                         <DropdownMenu.Trigger asChild>
                           <button 
-                            className="p-1 rounded-full bg-black/20 hover:bg-black/40 transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                            className="p-1 rounded-full bg-black/20 hover:bg-black/40 transition-colors">
                             <MoreVertical className="h-5 w-5 text-white" />
                           </button>
                         </DropdownMenu.Trigger>
@@ -84,38 +84,36 @@ export default async function MyItinerariesPage() {
                           >
                             <DropdownMenu.Item
                               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                window.location.href = `/create?itineraryId=${itinerary.id}`
-                              }}
                             >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Itinerary
+                              <Link href={`/create?itineraryId=${itinerary.id}`} className="flex items-center gap-1">
+                                <Edit className="mr-2 h-4 w-4" />
+                                  Edit Itinerary
+                              </Link>
                             </DropdownMenu.Item>
                             <DropdownMenu.Item
-                              className="flex items-center px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                // TODO: Add delete confirmation dialog
-                                if (confirm('Are you sure you want to delete this itinerary?')) {
-                                  // TODO: Implement delete functionality
-                                }
-                              }}
+                              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Itinerary
+                              <Link href={`/itinerary/${itinerary.id}`} className="flex items-center gap-1">
+                                <Eye className="mr-2 h-4 w-4" />
+                                  View Itinerary
+                              </Link>
                             </DropdownMenu.Item>
+                            <DeleteButton itineraryId={itinerary.id} />
                           </DropdownMenu.Content>
                         </DropdownMenu.Portal>
                       </DropdownMenu.Root>
                     </div>
                   </div>
                   <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                    <h4 className="font-bold text-2xl mb-1">{itinerary.name}</h4>
+                    <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
                     <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
-                      {itinerary.countries.join(" · ")}
+                      {itinerary?.cities?.length > 0 ? itinerary.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")}
                     </p>
-                    <p className="text-sm mt-2">Views: {itinerary.views || 0}</p>
+                    <div className="flex gap-2 items-end">
+                      <p className="text-sm mt-2">Views: {itinerary.views || 0}</p>
+                      <span> | </span>
+                      <p className="text-sm mt-2">Likes: {itinerary.likes || 0}</p>
+                    </div>
                   </div>
                 </div>
               </Link>
