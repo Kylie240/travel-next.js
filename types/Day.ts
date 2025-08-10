@@ -9,7 +9,7 @@ export type Day = {
     title: string,
     description?: string,
     notes?: string,
-    activities: Activity[],
+    activities?: Activity[],
     showAccommodation: boolean,
-    accommodation: Accommodation,
+    accommodation?: Accommodation,
 }

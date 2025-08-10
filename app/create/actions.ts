@@ -2,55 +2,23 @@
 
 import { firestore } from "@/firebase/server"
 import { auth } from "@/firebase/server"
+import { Day } from "@/types/Day";
+import { Note } from "@/types/Note";
 import { createSchema } from "@/validation/createSchema";
 
 export const saveNewItinerary = async (data: {
     status: "draft" | "published",
-    length: number,
-    name: string,
+    title: string,
     shortDescription: string,
     mainImage: string,
     detailedOverview?: string,
     duration: number,
-    days: {
-        id: string,
-        image?: string,
-        cityName: string,
-        countryName: string,
-        title: string,
-        description: string,
-        notes?: string,
-        activities: {
-            id: string,
-            time?: string,
-            duration?: string,
-            image?: string,
-            title: string,
-            description: string,
-            type: string,
-            link?: string,
-            photos?: string[],
-            price?: number,
-        }[],
-        showAccommodation: boolean,
-        accommodation: {
-            name: string,
-            type: string,
-            location: string,
-            price?: number,
-            photos?: string[],
-        },
-
-    }[],
+    days: Day[],
     countries: {
         value: string,
     }[],
     itineraryTags: string[],
-    notes: {
-        id: string,
-        title: string,
-        content: string,
-    }[],
+    notes: Note[],
     token: string,
     creatorId: string,
 }) => {

@@ -36,6 +36,7 @@ import { toast } from "sonner"
 import { saveNewItinerary } from "./actions"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { accommodations } from "@/lib/constants/accommodations"
+import { Accommodation } from "@/types/Accommodation"
 type FormData = z.infer<typeof createSchema>
 
 
@@ -47,20 +48,20 @@ interface TripDay {
   title: string;
   description: string;
   notes?: string;
-  activities: Array<{
+  activities?: Array<{
     id: string;
     time?: string;
     duration?: string;
     image?: string;
     title: string;
     description?: string;
-    type: 'food' | 'sightseeing' | 'culture' | 'transportation' | 'accommodation';
+    type?: string;
     link?: string; // Make link optional to match the schema
     photos?: string[];
     price?: number;
   }>;
   showAccommodation: boolean;
-  accommodation: {
+  accommodation?: {
     name: string;
     type: string;
     location: string;
@@ -76,7 +77,13 @@ const INITIAL_DAY: TripDay = {
   countryName: '',
   title: '',
   description: '',
-  activities: [],
+  activities: [{
+    id: '1',
+    title: '',
+    description: '',
+    type: 'sightseeing',
+    link: ''
+  }],
   showAccommodation: false,
   accommodation: {
     name: '',
@@ -474,7 +481,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                             } else {
                               const selectedAccommodation = getExistingAccommodations().find(a => a.name === value);
                               if (selectedAccommodation) {
-                                form.setValue(`days.${index}.accommodation`, selectedAccommodation, {
+                                form.setValue(`days.${index}.accommodation`, selectedAccommodation as Accommodation, {
                                   shouldValidate: true,
                                   shouldDirty: true,
                                   shouldTouch: true
@@ -492,7 +499,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                           </SelectTrigger>
                           <SelectContent>
                             {getExistingAccommodations().map((acc) => (
-                              <SelectItem key={acc.name} value={acc.name}>
+                              <SelectItem key={acc.name || ''} value={acc.name || ''}>
                                 {acc.name} in {acc.location}
                               </SelectItem>
                             ))}
@@ -698,7 +705,7 @@ export default function CreatePage() {
   }
 
   // Also update the length input handler to update days in real-time
-  const handleLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value)
     if (value < 1) {
       e.target.value = '1'
@@ -729,7 +736,7 @@ export default function CreatePage() {
 
   const handleFinalSubmit = async (data: z.infer<typeof createSchema>) => {
     try {
-      const nonEmptyDays = data.days.filter(day => day.activities.length > 0)
+      const nonEmptyDays = data.days.filter(day => day.activities?.length && day.activities.length > 0)
       if (nonEmptyDays.length > 0) {
         form.setValue('days', nonEmptyDays)
       }
@@ -763,7 +770,6 @@ export default function CreatePage() {
 
       const token = await auth.currentUser.getIdToken(true) // Force refresh the token
       const userId = auth.currentUser.uid;
-      const duration = form.getValues('days').length;
 
       const response = await saveNewItinerary({
         ...form.getValues(),
@@ -955,7 +961,7 @@ export default function CreatePage() {
                       min="1"
                       {...form.register("duration", { valueAsNumber: true })}
                       className="rounded-xl"
-                      onChange={handleLengthChange}
+                      onChange={handleDurationChange}
                       disabled={form.formState.isSubmitting}
                     />
                     {form.formState.errors.duration && (
