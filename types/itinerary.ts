@@ -7,6 +7,7 @@ type City = { city: string, country: string};
 export type Itinerary = {
     id: string;
     title: string;
+    duration: number;
     shortDescription: string;
     detailedOverview?: string;
     mainImage: string;
@@ -14,7 +15,6 @@ export type Itinerary = {
     cities: City[];
     continents: string[];
     days: Day[];
-    duration: number;
     status: ItineraryStatus;
     itineraryTags: string[];
     activityTags: string[];

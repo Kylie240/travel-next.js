@@ -5,8 +5,10 @@ export type Activity = {
     image?: string,
     title: string,
     description?: string,
+    location?: string,
     type?: string,
     link?: string,
     photos?: string[],
     price?: number,
+    expanded?: boolean,
 }

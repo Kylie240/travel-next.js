@@ -37,6 +37,7 @@ import { saveNewItinerary } from "./actions"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
+import { createItinerary } from "@/lib/actions/create.actions"
 type FormData = z.infer<typeof createSchema>
 
 
@@ -81,7 +82,7 @@ const INITIAL_DAY: TripDay = {
     id: '1',
     title: '',
     description: '',
-    type: 'sightseeing',
+    type: '',
     link: ''
   }],
   showAccommodation: false,
@@ -193,9 +194,21 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                   )}
                 </div>
                 {index > 0 && (
-                  <span className="cursor-pointer mr-2" onClick={() => onRemoveDay(index)}>
-                    <Trash2 size={18} className="text-red-500" />
-                  </span>
+                  <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    if (confirm('Are you sure you want to delete this note?')) {
+                      onRemoveDay(index)
+                    }
+                  }}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  disabled={form.formState.isSubmitting}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
                 )}
               </div>
             </AccordionTrigger>
@@ -254,7 +267,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                 ) : (
                   <Select
                     defaultValue={form.getValues(`days.${index}.countryName`) || ''}
-                    onValueChange={(value) => {
+                    onValueChange={(value: string) => {
                       if (value === 'custom') {
                         setShowCustomCountry(true);
                       } else {
@@ -321,7 +334,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <Label className="text-[16px] font-medium mb-3 ml-1">Activities <span className="text-gray-500 text-sm">(optional)</span></Label>
-                <Button 
+                {(activityFields.length === 0 || !activityFields) && <Button 
                   type="button" 
                   variant="outline" 
                   size="sm"
@@ -329,29 +342,35 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                     id: Math.random().toString(),
                     title: '',
                     description: '',
-                    type: 'sightseeing',
+                    type: '',
                     link: ''
                   })}
                   className="rounded-xl"
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Activity
-                </Button>
+                </Button>}
               </div>
 
               <div className="space-y-4">
                 {activityFields.map((activity, activityIndex) => (
                   <div key={activity.id} className="border rounded-lg p-4">
                     <div className="w-full flex justify-end">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeActivity(activityIndex)}
-                        className="rounded-xl"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        if (confirm('Are you sure you want to delete this activity?')) {
+                          removeActivity(activityIndex)
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      disabled={form.formState.isSubmitting}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                     </div>
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -373,16 +392,23 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                         </div>
                         <div>
                           <Label className="text-[16px] font-medium mb-3 ml-1">Type</Label>
-                          <select
+                          <Select
                             {...form.register(`days.${index}.activities.${activityIndex}.type`)}
-                            className="w-full p-2 border rounded-xl cursor-pointer"
+                            onValueChange={(value: string) => {
+                              form.setValue(`days.${index}.activities.${activityIndex}.type`, value);
+                            }}
                           >
-                            {activityTags.map(tag => (
-                              <option key={tag.name} value={tag.name}>
-                                {tag.name}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="rounded-xl">
+                              <SelectValue placeholder="Select a type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {activityTags.map(tag => (
+                                <SelectItem key={tag.name} value={tag.name}>
+                                {tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
@@ -431,6 +457,22 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                   </div>
                 ))}
               </div>
+              {activityFields.length > 0 && <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => appendActivity({
+                    id: Math.random().toString(),
+                    title: '',
+                    description: '',
+                    type: '',
+                    link: ''
+                  })}
+                  className="rounded-xl mt-2"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Activity
+                </Button>}
             </div>
 
             <div>
@@ -469,7 +511,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                         <Select
                           defaultValue={form.watch(`days.${index}.accommodation.name`)}
                           value={form.watch(`days.${index}.accommodation.name`)}
-                          onValueChange={(value) => {
+                          onValueChange={(value: string) => {
                             if (value === 'new') {
                               form.setValue(`days.${index}.accommodation`, {
                                 name: '',
@@ -518,7 +560,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                         />
                         <Select
                           value={form.watch(`days.${index}.accommodation.type`) || ''}
-                          onValueChange={(value) => {
+                          onValueChange={(value: string) => {
                             form.setValue(`days.${index}.accommodation.type`, value);
                           }}
                         >
@@ -768,13 +810,11 @@ export default function CreatePage() {
         return
       }
 
-      const token = await auth.currentUser.getIdToken(true) // Force refresh the token
-      const userId = auth.currentUser.uid;
-
-      const response = await saveNewItinerary({
-        ...form.getValues(),
-        token,
-        creatorId: userId,
+      // const token = await auth.currentUser.getIdToken(true) // Force refresh the token
+      // const userId = auth.currentUser.uid;
+      
+      const response = await createItinerary({
+        ...form.getValues()
       })
 
       if (response.itineraryId) {
@@ -1126,7 +1166,7 @@ export default function CreatePage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
-                    <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
+                    <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-3 w-full">
                       {itineraryTags.map((category) => {
                         const isSelected = form.watch('itineraryTags').includes(category.name)
                         const Icon = category.icon
@@ -1138,7 +1178,7 @@ export default function CreatePage() {
                                 e.preventDefault();
                                 toggleCategory(category.name);
                               }}
-                              className={`flex justify-center items-center gap-2 px-4 py-3 sm:py-4 md:gap-2 md:py-6 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
+                              className={`flex justify-center items-center gap-2 px-4 py-3 sm:py-4 md:gap-2 md:py-5 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
                               disabled={form.formState.isSubmitting}
                             >
                               <category.icon className="w-5 h-5 text-gray-700" />
@@ -1205,7 +1245,12 @@ export default function CreatePage() {
                                         type="button"
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => removeNote(index)}
+                                        onClick={(event) => {
+                                          event.stopPropagation()
+                                          if (confirm('Are you sure you want to delete this note?')) {
+                                            removeNote(index)
+                                          }
+                                        }}
                                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
                                         disabled={form.formState.isSubmitting}
                                       >
@@ -1215,7 +1260,7 @@ export default function CreatePage() {
                                 </div>
                               </div>
                               {form.watch(`notes.${index}.expanded`) && (
-                                <div>
+                                <div onClick={(e) => e.stopPropagation()}>
                                   <Input
                                     {...form.register(`notes.${index}.title`)}
                                     placeholder="Note title"
@@ -1291,10 +1336,6 @@ export default function CreatePage() {
                     <Button 
                       type="submit"
                       className="bg-black text-white hover:bg-gray-800"
-                      onClick={(e) => {
-                        // Don't prevent default here - let the form submit
-                        console.log('Submit button clicked')
-                      }}
                       disabled={form.formState.isSubmitting}
                     >
                       Create Itinerary
