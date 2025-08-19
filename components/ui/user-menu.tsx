@@ -1,24 +1,38 @@
 "use client"
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { ChevronDown, LogOut, Settings, PenSquare, Heart, User, ChevronUp, Info, Globe, Bookmark } from "lucide-react"
+import { ChevronDown, LogOut, Settings, PenSquare, User, ChevronUp, Info, Globe, Bookmark } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { auth } from "@/firebase/client"
-import { signOut } from "firebase/auth"
 import { useToast } from "./use-toast"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export function UserMenu() {
+  const supabase = createClientComponentClient()
   const router = useRouter()
   const { toast } = useToast()
-  const user = auth.currentUser
+  const [user, setUser] = useState<any>(null)
   const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth)
-      // Remove the session cookie
-      document.cookie = "firebase-session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+      await supabase.auth.signOut()
       toast({
         title: "Signed out successfully",
         description: "Come back soon!",
@@ -38,15 +52,15 @@ export function UserMenu() {
       <DropdownMenu.Trigger asChild>
         <button className="flex cursor-pointer items-center space-x-2 rounded-full bg-white/90 p-1.5 pr-3 hover:bg-white/100 transition-colors">
           <div className="relative h-8 w-8 rounded-full bg-travel-50 flex items-center justify-center overflow-hidden">
-            {user?.photoURL ? (
+            {user?.user_metadata.image ? (
               <img 
-                src={user.photoURL}
-                alt={user.displayName || "User avatar"} 
+                src={user.user_metadata.image}
+                alt={user.user_metadata.username || "User avatar"} 
                 className="h-full w-full object-cover"
               />
             ) : (
               <span className="text-travel-900 text-sm font-medium">
-                {user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+                {user?.user_metadata.username?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
               </span>
             )}
           </div>
@@ -65,7 +79,7 @@ export function UserMenu() {
           sideOffset={5}
         >
           <div className="px-2 py-1.5 text-sm font-medium text-gray-900 border-b border-gray-100">
-            {user?.displayName || user?.email}
+            {user?.user_metadata.username || user?.email}
           </div>
 
           <div className="py-2 border-b border-gray-100 flex flex-col md:hidden">

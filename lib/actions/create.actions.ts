@@ -1,9 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { auth } from "@/firebase/server";
-import { createSupabaseClient } from "../supabase";
-import { Activity } from "@/types/Activity";
+import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { CreateItinerary } from "@/types/createItinerary";
 
 type CreateActivity = {
@@ -26,16 +24,16 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
     }
 
     try {
-        const decodedToken = await auth.verifyIdToken(token.value);
-        const userId = decodedToken.uid;
+        const supabase = createServerActionClient({ cookies });
 
-        const supabase = createSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id;
 
         // First check if the user exists in our users table
         const { data: existingUser, error: userError } = await supabase
             .from('user_id')
             .select('id')
-            .eq('firebase_uid', userId)
+            .eq('user_id', userId)
             .single();
 
         let creatorId = userId;

@@ -8,7 +8,6 @@ import { FollowersDialog } from "@/components/ui/followers-dialog"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { UserData } from "@/lib/types"
-import { auth, db } from "@/firebase/client"
 
 interface ProfileHeaderProps {
   onEditProfile: () => void

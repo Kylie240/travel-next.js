@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp } from "lucide-react"
-import { auth } from "@/firebase/client"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
 import { useForm, useFieldArray, FormProvider } from "react-hook-form"
@@ -33,11 +32,11 @@ import { activityTags, itineraryTags } from "@/lib/constants/tags"
 import { sampleItinerary } from "@/lib/constants/sample-itinerary"
 import { createSchema } from "@/validation/createSchema"
 import { toast } from "sonner"
-import { saveNewItinerary } from "./actions"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
 import { createItinerary } from "@/lib/actions/create.actions"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 type FormData = z.infer<typeof createSchema>
 
 
@@ -622,7 +621,24 @@ export default function CreatePage() {
   const router = useRouter()
   const isNewItinerary = useSearchParams().get('itineraryId') === null
   const searchParams = useSearchParams()
-  const [user, setUser] = useState(auth.currentUser)
+  const supabase = createClientComponentClient()
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
   const [currentStep, setCurrentStep] = useState(1)
 
   const form = useForm<FormData>({
@@ -677,18 +693,6 @@ export default function CreatePage() {
     })
     form.setValue('days', updatedDays)
   }
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        router.push("/")
-        return
-      }
-      setUser(user)
-    })
-
-    return () => unsubscribe()
-  }, [router])
 
   useEffect(() => {
     const itineraryId = searchParams.get('itineraryId')    
@@ -804,7 +808,7 @@ export default function CreatePage() {
 
   const handleSaveItinerary = async () => {
     try {
-      if (!auth.currentUser) {
+      if (!supabase.auth.getUser().then(user => user.data.user)) {
         toast.error('Please sign in to save your itinerary')
         router.push('/') // Redirect to home/login page
         return

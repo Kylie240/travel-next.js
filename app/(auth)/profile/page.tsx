@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Globe, Camera, Users, Heart, MapPin, Bookmark } from "lucide-react"
 import { ProfileHeader } from "@/components/profile/profile-header"
-import { auth } from "@/firebase/client"
 import { UserData } from "@/lib/types"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
 import { SettingsSidebar } from "@/components/ui/settings-sidebar"
 import { motion } from "framer-motion"
+import { supabase } from "@/utils/supabase/superbase-client"
+import { User } from "@supabase/supabase-js"
 
 const dummyItineraries = [
   {
@@ -97,7 +98,7 @@ const followingUsers = [
 
 export default function ProfilePage({ searchParams }: { searchParams: { tab: string } }) {
   const router = useRouter()
-  const [user, setUser] = useState(auth.currentUser)
+  const [user, setUser] = useState<User | null>(null)
   const [activeSection, setActiveSection] = useState(searchParams?.tab || "Dashboard")
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false)
 
@@ -118,16 +119,16 @@ export default function ProfilePage({ searchParams }: { searchParams: { tab: str
   }
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        router.push("/")
-        return
+    const unsubscribe = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        setUser(session?.user ?? null)
+      } else if (event === "SIGNED_OUT") {
+        setUser(null)
       }
-      setUser(user)
     })
 
-    return () => unsubscribe()
-  }, [router])
+    return () => unsubscribe.data.subscription.unsubscribe()
+  }, [])
 
   if (!user) {
     return (
@@ -137,42 +138,30 @@ export default function ProfilePage({ searchParams }: { searchParams: { tab: str
     )
   }
 
-  const creationTime = user.metadata.creationTime ? new Date(user.metadata.creationTime) : new Date()
+  const creationTime = user.created_at ? new Date(user.created_at) : new Date()
 
   const userData: UserData = {
-    id: user?.uid || "default-id",
-    name: "Kylie",
-    username: "kyloww",
+    app_metadata: {
+      provider: "email"
+    },
+    user_metadata: {
+      username: "kyloww"
+    },
+    aud: "authenticated",
+    created_at: user.created_at ?? "",
+    id: user.id ?? "default-id",
+    username: user.user_metadata.username ?? "",
     title: "Budget Traveller",
-    image: "https://media.licdn.com/dms/image/D4E03AQH1o4Avl01RCA/profile-displayphoto-shrink_800_800/0/1698873322772?e=2147483647&v=beta&t=bU_iaAUxnhokAcSmCwTi-LFF1MTZ12S4OruFTeeneoQ",
-    // image: user.photoURL || "/images/avatar.jpg",
+    image: user.user_metadata.image ?? "",
     location: "Location not set",
     joined: creationTime.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
     bio: "My name is test and I want to be your virtual travel planner. I have over six years of experience travelling.",
-    website: "",
-    email: user.email || "",
+    email: user.email ?? "",
     social: {
       facebook: "",
       instagram: "",
       twitter: ""
     },
-    achievements: [
-      {
-        title: "Explorer",
-        description: "Just getting started",
-        icon: Globe
-      },
-      {
-        title: "Photographer",
-        description: "Share your first photo",
-        icon: Camera
-      },
-      {
-        title: "Influencer",
-        description: "Get your first follower",
-        icon: Users
-      }
-    ],
     stats: {
       trips: 0,
       followers: 0,
@@ -327,7 +316,7 @@ export default function ProfilePage({ searchParams }: { searchParams: { tab: str
             <label className="block text-sm font-medium mb-2">Full Name</label>
             <Input
               type="text"
-              defaultValue={userData.name}
+              defaultValue={userData.username}
               placeholder="Enter your full name"
             />
           </div>
@@ -335,7 +324,7 @@ export default function ProfilePage({ searchParams }: { searchParams: { tab: str
             <label className="block text-sm font-medium mb-2">Email</label>
             <Input
               type="email"
-              defaultValue={userData.email || ""}
+              defaultValue={userData.email ?? ""}
               disabled
             />
           </div>

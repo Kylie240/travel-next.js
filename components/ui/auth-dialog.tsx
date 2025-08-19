@@ -6,17 +6,11 @@ import { X } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  getIdToken
-} from "firebase/auth"
 import { Button } from "./button"
 import { Input } from "./input"
 import { useRouter } from "next/navigation"
-import { auth } from "@/firebase/client"
+import { createClientComponentClient, Session } from "@supabase/auth-helpers-nextjs"
+import { toast } from "sonner"
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -30,6 +24,7 @@ export function AuthDialog() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [authError, setAuthError] = useState("")
   const router = useRouter()
+  const supabase = createClientComponentClient()
   
   const {
     register,
@@ -40,41 +35,66 @@ export function AuthDialog() {
     resolver: zodResolver(authSchema)
   })
 
-  const setSessionCookie = async (user: any) => {
-    const token = await getIdToken(user)
-    // Set both cookies for compatibility
-    document.cookie = `__session=${token}; path=/; max-age=3600; SameSite=Strict`
-    document.cookie = `firebase-token=${token}; path=/; max-age=3600; SameSite=Strict`
+  const setSessionCookie = async (session: Session) => {
+    const token = await supabase.auth.getSession();
+    document.cookie = `sb-access-token=${session?.access_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
+    document.cookie = `sb-refresh-token=${session?.refresh_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
   }
 
-  const onSubmit = async (data: AuthFormData) => {
+  const onSubmit = async ({ email, password }: AuthFormData) => {
     setAuthError("") // Clear any previous errors
     try {
-      let userCredential;
       if (isSignUp) {
-        userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password)
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`
+          }
+        })
+        if (error) {
+          setAuthError(error.message)
+          return
+        }
+        setIsOpen(false)
+        reset()
+        toast.success("Confirm your email to continue")
       } else {
-        userCredential = await signInWithEmailAndPassword(auth, data.email, data.password)
+        const { error, data: userCredential } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (error) {
+          setAuthError(error.message)
+          return
+        }
+        setSessionCookie(userCredential.session)
+        setIsOpen(false)
+        reset()
+        router.refresh()
+        toast.success("Successfully signed in")
       }
-      await setSessionCookie(userCredential.user)
-      setIsOpen(false)
-      reset()
-      router.refresh()
     } catch (error: any) {
-      setAuthError(error.message.replace("Firebase: ", "").replace(/\(auth.*\)/, ""))
+      setAuthError(error.message)
     }
   }
 
   const handleGoogleSignIn = async () => {
     setAuthError("") // Clear any previous errors
     try {
-      const provider = new GoogleAuthProvider()
-      const result = await signInWithPopup(auth, provider)
-      await setSessionCookie(result.user)
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+      if (error) {
+        setAuthError(error.message)
+        return
+      }
       setIsOpen(false)
-      router.refresh()
     } catch (error: any) {
-      setAuthError(error.message.replace("Firebase: ", "").replace(/\(auth.*\)/, ""))
+      setAuthError(error.message)
     }
   }
 

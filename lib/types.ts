@@ -1,6 +1,6 @@
-import { User as FirebaseUser } from "firebase/auth"
+import { User } from "@supabase/supabase-js"
 
-export interface UserProfile extends Partial<FirebaseUser> {
+export interface UserProfile extends Partial<User> {
   username?: string
   website?: string
   title?: string
@@ -25,12 +25,15 @@ export interface UserProfile extends Partial<FirebaseUser> {
   }
 }
 
-export interface UserData extends FirebaseUser {
+export interface UserData extends User {
   username?: string
   title?: string
   location: string
   bio: string
   isFollowing?: boolean
+  image?: string
+  joined: string
+  email: string
   social: {
     facebook: string
     instagram: string

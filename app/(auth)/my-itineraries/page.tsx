@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { getItineraryByUserId } from "@/data/itineraries"
 import { cookies } from "next/headers"
-import { auth } from "@/firebase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import DeleteButton from "./delete-button"
+import { supabase } from "@/utils/supabase/superbase-client"
+import { Itinerary } from "@/types/itinerary"
 
 async function getUser() {
   const token = cookies().get("token")
@@ -16,8 +17,8 @@ async function getUser() {
   }
 
   try {
-    const decodedToken = await auth.verifyIdToken(token.value)
-    return decodedToken.uid
+    const { data: { user } } = await supabase.auth.getUser()
+    return user?.id
   } catch (error) {
     console.error("Error verifying token:", error)
     redirect("/")
@@ -42,7 +43,7 @@ export default async function MyItinerariesPage() {
 
         {itineraries && itineraries?.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
-            {itineraries.map((itinerary) => (
+            {itineraries.map((itinerary: Itinerary) => (
               <Link key={itinerary.id} href={itinerary.status === 'published' ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
                 <div
                   className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"

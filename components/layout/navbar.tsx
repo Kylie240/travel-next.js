@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { Menu, X, Search } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,8 @@ import { AuthDialog } from "@/components/ui/auth-dialog"
 import { UserMenu } from "@/components/ui/user-menu"
 import { NavbarSearch } from "@/components/ui/navbar-search"
 import { LocaleMenu } from "@/components/ui/locale-menu"
-import { auth } from "@/firebase/client"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { User } from "@supabase/supabase-js"
 
 const publicNavigation = [
   { name: "Explore", href: "/explore" },
@@ -21,16 +22,21 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
-  const [user, setUser] = useState(auth.currentUser)
+  const supabase = createClientComponentClient()
+  const [user, setUser] = useState<User | null>(null)
   const isExplorePage = pathname === "/explore"
   const isLandingPage = pathname === "/"
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user)
+    const unsubscribe = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        setUser(session?.user ?? null)
+      } else if (event === "SIGNED_OUT") {
+        setUser(null)
+      }
     })
 
-    return () => unsubscribe()
+    return () => unsubscribe.data.subscription.unsubscribe()
   }, [])
 
   useEffect(() => {

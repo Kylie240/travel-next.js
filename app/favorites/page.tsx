@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { Bookmark, Heart, Search } from "lucide-react"
-import { auth } from "@/firebase/client"
 import { Input } from "@/components/ui/input"
+import { supabase } from "@/utils/supabase/superbase-client"
+import { User } from "@supabase/supabase-js"
 
 const dummyFavorites = [
   {
@@ -33,20 +34,20 @@ const dummyFavorites = [
 
 export default function FavoritesPage() {
   const router = useRouter()
-  const [user, setUser] = useState(auth.currentUser)
+  const [user, setUser] = useState<User | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        router.push("/")
-        return
+    const unsubscribe = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        setUser(session?.user ?? null)
+      } else if (event === "SIGNED_OUT") {
+        setUser(null)
       }
-      setUser(user)
     })
 
-    return () => unsubscribe()
-  }, [router])
+    return () => unsubscribe.data.subscription.unsubscribe()
+  }, [])
 
   const filteredFavorites = dummyFavorites.filter(itinerary => 
     itinerary.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
