@@ -121,7 +121,7 @@ searchParams
 
                         <div className="flex flex-col gap-2">
                           <div className="flex justify-start gap-2">
-                            {itinerary.tags.slice(0, 2).map((tag) => (
+                            {itinerary.itineraryTags.slice(0, 2).map((tag) => (
                               <span 
                                 key={tag}
                                 className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize"

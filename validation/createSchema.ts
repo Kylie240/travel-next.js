@@ -9,10 +9,9 @@ export const createSchema = z.object({
     mainImage: z.string().url("Must be a valid URL"),
     detailedOverview: z.string().optional(),
     duration: z.number().min(1, "Length must be at least 1 day"),
-    countries: z.array(z.object({
-      value: z.string().min(1, "Country name is required")
-    })).min(1, "At least one country is required"),
+    countries: z.array(z.string()).min(1, "At least one country is required"),
     days: z.array(daySchema).min(1, "At least one day is required"),
     itineraryTags: z.array(z.string()).max(3, "Maximum 3 tags allowed"),
     notes: z.array(noteSchema),
+    budget: z.number().optional(),
   })

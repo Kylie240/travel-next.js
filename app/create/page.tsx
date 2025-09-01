@@ -46,6 +46,7 @@ interface TripDay {
   countryName: string;
   title: string;
   description: string;
+  budget?: number;
   notes?: string;
   activities?: Array<{
     id: string;
@@ -76,13 +77,7 @@ const INITIAL_DAY: TripDay = {
   countryName: '',
   title: '',
   description: '',
-  activities: [{
-    id: '1',
-    title: '',
-    description: '',
-    type: '',
-    link: ''
-  }],
+  activities: [],
   showAccommodation: false,
   accommodation: {
     name: '',
@@ -113,7 +108,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
   });
 
   // Get the list of unique countries from step 1
-  const existingCountries = form.getValues('countries').map(c => c.value).filter(Boolean);
+  const existingCountries = form.getValues('countries').filter(Boolean);
   const [showCustomCountry, setShowCustomCountry] = useState(false);
   const [customCountry, setCustomCountry] = useState('');
 
@@ -160,8 +155,8 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
       // Add to main countries list if not already there
       const countriesField = form.getValues('countries');
-      if (!countriesField.some(c => c.value === customCountry)) {
-        form.setValue('countries', [...countriesField, { value: customCountry }], {
+      if (!countriesField.includes(customCountry)) {
+        form.setValue('countries', [...countriesField, customCountry], {
           shouldValidate: true
         });
       }
@@ -445,7 +440,8 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                           placeholder="Add booking link, or a link to a website with more information"
                           className="rounded-xl"
                         />
-                        {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.link && (
+                        {(form.formState.errors.days?.[index]?.activities?.[activityIndex]?.link 
+                          && form.watch(`days.${index}.activities.${activityIndex}.link`) !== '') && (
                           <p className="text-red-500 text-sm mt-1">
                             {form.formState.errors.days[index]?.activities?.[activityIndex]?.link?.message}
                           </p>
@@ -648,6 +644,7 @@ export default function CreatePage() {
     }
   }, [supabase])
   const [currentStep, setCurrentStep] = useState(1)
+  const [initialCountry, setInitialCountry] = useState('')
 
   const form = useForm<FormData>({
     resolver: zodResolver(createSchema),
@@ -659,17 +656,20 @@ export default function CreatePage() {
       mainImage: '',
       detailedOverview: '',
       duration: 1,
-      countries: [{ value: '' }],
+      countries: [],
       days: [INITIAL_DAY],
       itineraryTags: [],
       notes: []
     }
   })
 
-  const { fields: countryFields, append: appendCountry, remove: removeCountry } = useFieldArray<FormData>({
+  // @ts-expect-error - TODO: Fix type issues with field array
+  const { fields: countryFields, append: appendCountry, remove: removeCountry } = useFieldArray({
     control: form.control,
-    name: "countries" as const
+    name: "countries"
   })
+
+
 
   const { fields: dayFields, append: appendDay, remove: removeDay, move: moveDay } = useFieldArray<FormData>({
     control: form.control,
@@ -713,7 +713,7 @@ export default function CreatePage() {
         mainImage: sampleItinerary.image,
         detailedOverview: sampleItinerary.details,
         duration: sampleItinerary.schedule.length,
-        countries: sampleItinerary.countries.map(country => ({ value: country })),
+        countries: sampleItinerary.countries.map(country => (country)),
         days: sampleItinerary.schedule.map((day: any, index: number) => ({
           id: (index + 1).toString(),
           image: day.image,
@@ -790,13 +790,13 @@ export default function CreatePage() {
 
   const handleFinalSubmit = async (data: z.infer<typeof createSchema>) => {
     try {
-      const nonEmptyDays = data.days.filter(day => day.activities?.length && day.activities.length > 0)
+      const nonEmptyDays = data.days.filter(day => day.title && day.cityName && day.countryName)
       if (nonEmptyDays.length > 0) {
         form.setValue('days', nonEmptyDays)
       }
 
       // Clean up empty country fields
-      const nonEmptyCountries = data.countries.filter(country => country.value.trim() !== '')
+      const nonEmptyCountries = data.countries.filter(country => country.trim() !== '')
       if (nonEmptyCountries.length > 0) {
         form.setValue('countries', nonEmptyCountries)
       }
@@ -1032,56 +1032,80 @@ export default function CreatePage() {
                   <div>
                     <Label className="text-md font-medium mb-3 ml-1">Countries</Label>
                     <div className="space-y-2">
-                      {countryFields.map((field, index) => (
-                        <div key={field.id} className="flex gap-2">
+                      {countryFields.length === 0 ? (
+                        <div className="flex gap-2">
                           <Input
-                            {...form.register(`countries.${index}.value`)}
                             placeholder="Japan"
                             className="rounded-xl"
-                            disabled={form.formState.isSubmitting}
+                            value={initialCountry}
+                            onChange={(e) => setInitialCountry(e.target.value)}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
+                              if (e.key === 'Enter' && initialCountry.trim()) {
                                 e.preventDefault();
-                                appendCountry({ value: '' });
+                                form.setValue('countries', [initialCountry, '']);
+                                setInitialCountry('');
                               }
-                            }}  
+                            }}
                           />
-                          <div className="flex gap-2">
-                            {(index > 0 || (index === 0 && countryFields.length > 1)) &&
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => removeCountry(index)}
-                              disabled={form.formState.isSubmitting}
-                            >
-                              <Minus className="w-4 h-4" />
-                            </Button>
-                            }
-                            {index === countryFields.length - 1 &&
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => appendCountry({ value: '' })}
-                              disabled={form.formState.isSubmitting || form.watch(`countries.${countryFields.length - 1}.value`).trim() === ''}
-                            >
-                              <Plus className="w-4 h-4" />
-                            </Button>
-                            }
-                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              if (initialCountry.trim() !== '') {
+                                form.setValue('countries', [initialCountry]);
+                                setInitialCountry('');
+                              }
+                            }}
+                            disabled={ initialCountry.trim() === ''}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
                         </div>
-                      ))}
+                      ) : (
+                        countryFields.map((field, index) => (
+                          <div key={field.id} className="flex gap-2">
+                            <Input
+                              {...form.register(`countries.${index}`)}
+                              placeholder="Japan"
+                              className="rounded-xl"
+                              disabled={form.formState.isSubmitting}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  appendCountry('');
+                                }
+                              }}  
+                            />
+                            <div className="flex gap-2">
+                              {(index > 0 || (index === 0 && countryFields.length > 1)) &&
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => removeCountry(index)}
+                                disabled={form.formState.isSubmitting}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              }
+                              {index === countryFields.length - 1 &&
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => appendCountry('')}
+                                disabled={form.formState.isSubmitting}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                              }
+                            </div>
+                          </div>
+                        ))
+                      )}
                       {form.formState.errors.countries && (
                         <p className="text-red-500 text-sm mt-1">
                           {form.formState.errors.countries.message}
                         </p>
                       )}
-                      {countryFields.map((field, index) => (
-                        form.formState.errors.countries?.[index]?.value && (
-                          <p key={field.id} className="text-red-500 text-sm mt-1">
-                            {form.formState.errors.countries[index]?.value?.message}
-                          </p>
-                        )
-                      ))}
                     </div>
                   </div>
 
@@ -1184,6 +1208,17 @@ export default function CreatePage() {
 
               {currentStep === 3 && (
                 <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-medium mb-3 ml-1">Estimated Expenses<span className="text-gray-500 text-sm">(help users budget their trip)</span></h2>
+                    <p>Not sure? Select a budget range instead</p>
+                    <Input
+                      {...form.register('budget')}
+                      placeholder="Estimated cost per person"
+                      type="number"
+                      className="rounded-xl"
+                    />
+                  </div>
+
                   <div>
                     <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
                     <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-3 w-full">

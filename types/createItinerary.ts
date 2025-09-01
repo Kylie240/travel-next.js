@@ -12,7 +12,7 @@ export type CreateItinerary = {
     mainImage: string;
     detailedOverview?: string;
     duration: number;
-    countries: Country[];
+    countries: string[];
     days: Day[];
     itineraryTags: string[];
     notes: Note[];

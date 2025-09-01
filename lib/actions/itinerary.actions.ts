@@ -137,6 +137,9 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             //return to homepage
         }
 
+        const activityTags = itinerary.days.flatMap(day => day.activities?.map(activity => activity.type));
+        const cities = itinerary.days.map(day => day.cityName);
+
         const {data: itineraryRow, error: itineraryError} = await supabase
         .from('itineraries')
         .insert([{
@@ -145,8 +148,11 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             short_description: itinerary.shortDescription,
             main_image: itinerary.mainImage,
             countries: itinerary.countries,
+            cities: cities,
             itinerary_tags: itinerary.itineraryTags,
+            activity_tags: activityTags,
             status: itinerary.status,
+            duration: itinerary.duration,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         }])
@@ -159,6 +165,7 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
         }
 
         const itineraryId = itineraryRow.id;
+        console.log(itinerary);
 
         // Insert Days
         if (itinerary?.days?.length > 0) {
