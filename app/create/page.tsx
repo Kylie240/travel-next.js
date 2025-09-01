@@ -35,7 +35,7 @@ import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
-import { createItinerary } from "@/lib/actions/create.actions"
+import { createItinerary } from "@/lib/actions/itinerary.actions"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 type FormData = z.infer<typeof createSchema>
 

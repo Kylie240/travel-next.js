@@ -1,33 +1,55 @@
+"use client"
+
 import Image from "next/image"
 import { MoreVertical, Edit, Trash2, PenSquare, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { getItineraryByUserId } from "@/data/itineraries"
-import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
+import { getItineraryByUserId } from "@/lib/actions/itinerary.actions"
 import Link from "next/link"
 import DeleteButton from "./delete-button"
-import { supabase } from "@/utils/supabase/superbase-client"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Itinerary } from "@/types/itinerary"
+import { useEffect, useState } from "react"
+import { User, Session } from "@supabase/supabase-js"
 
-async function getUser() {
-  const token = cookies().get("token")
-  if (!token) {
-    redirect("/")
-  }
+export default function MyItinerariesPage() {
+  const supabase = createClientComponentClient()
+  const [user, setUser] = useState<User | null>(null)
+  const [itineraries, setItineraries] = useState<Itinerary[]>([])
+  const [loading, setLoading] = useState(true)
 
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    return user?.id
-  } catch (error) {
-    console.error("Error verifying token:", error)
-    redirect("/")
-  }
-}
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        setUser(user)
+        if (user) {
+          const userItineraries = await getItineraryByUserId(user.id)
+          setItineraries(userItineraries)
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    getUser()
 
-export default async function MyItinerariesPage() {
-  const userId = await getUser()
-  const itineraries = await getItineraryByUserId(userId)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      if (currentUser) {
+        const userItineraries = await getItineraryByUserId(currentUser.id)
+        setItineraries(userItineraries)
+      } else {
+        setItineraries([])
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   return (
     <div className="min-h-screen bg-white py-8">

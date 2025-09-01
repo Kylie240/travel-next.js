@@ -139,3 +139,27 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
         throw new Error(`Failed to create itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
+
+export const getItineraryByUserId = async (userId?: string) => {
+    // const token = cookies().get("token");
+    // if (!token) {
+    //     throw new Error("Not authenticated");
+    // }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+
+        const { data: itineraries, error: itinerariesError } = await supabase
+        .from('itineraries')
+        .select('*')
+        .eq('creator_id', userId);
+
+        if (itinerariesError) throw itinerariesError;
+        console.log(itineraries);
+        return itineraries;
+    } catch (error) {
+        console.error('Error creating itinerary:', error);
+        throw new Error(`Failed to create itinerary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    
+}

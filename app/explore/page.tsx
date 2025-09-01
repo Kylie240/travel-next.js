@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import FiltersForm from "./filters-form";
-import { getItineraries } from "@/data/itineraries";
+import { getItineraries } from "@/actions/itineraries";
 import Link from "next/link";
 import Image from "next/image";
 import { BookmarkButton } from "@/components/ui/bookmark-button";
