@@ -42,7 +42,7 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
         //     query = query.in('duration', activityTags)
         //  }
          if (itineraryTags) {
-            query = query.contains('tags', itineraryTags)
+            query = query.contains('itineraryTags', itineraryTags)
          }
          if (countries) {
             query = query.contains('countries', countries)
@@ -109,7 +109,8 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
 }
 
 export const createItinerary = async (itinerary: CreateItinerary) => {
-    const token = cookies().get("token");
+    // Mey need to check if the user is authenticated
+    const token = cookies().get("sb-access-token");
     if (!token) {
         throw new Error("Not authenticated");
     }
@@ -120,18 +121,20 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
         const { data: { user } } = await supabase.auth.getUser();
         const userId = user?.id;
 
-        // First check if the user exists in our users table
-        const { data: existingUser, error: userError } = await supabase
-            .from('user_id')
-            .select('id')
-            .eq('user_id', userId)
-            .single();
+        if (!userId) {
+            throw new Error("User ID not found");
+        }
 
-        let creatorId = userId;
-        
-        // If we have a users table and the user exists, use their Supabase ID
-        if (existingUser?.id) {
-            creatorId = existingUser.id;
+        // First check if the user exists in our users table
+        const { data: existingUser, error: userError } = await supabase.auth.getUser();
+
+        if (userError) {
+            console.error('Error checking user:', userError);
+            throw new Error('Failed to verify user');
+        }
+
+        if (!existingUser) {
+            //return to homepage
         }
 
         const {data: itineraryRow, error: itineraryError} = await supabase
@@ -142,7 +145,7 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             short_description: itinerary.shortDescription,
             main_image: itinerary.mainImage,
             countries: itinerary.countries,
-            tags: itinerary.itineraryTags,
+            itinerary_tags: itinerary.itineraryTags,
             status: itinerary.status,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()

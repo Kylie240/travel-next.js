@@ -27,12 +27,11 @@ export function middleware(request: NextRequest) {
 
 // Configure matcher for routes that need to trigger this middleware
 export const config = {
-  // matcher: ['/dashboard/:path*', '/create/:path*']
+  matcher: ['/dashboard/:path*', '/create/:path*']
 }
 
-// Check for Firebase Auth session
+// Check for Supabase Auth session
 function checkAuthStatus(request: NextRequest): boolean {
-  // Get all cookies as a string
   const cookieHeader = request.headers.get('cookie') || ''
   
   // Parse cookies into an object
@@ -44,15 +43,8 @@ function checkAuthStatus(request: NextRequest): boolean {
     return acc
   }, {})
 
-  // Check for Firebase session cookie
-  const firebaseSession = cookies['__session']
+  // Check for Supabase session cookie
+  const supabaseSession = cookies['sb-access-token'] || cookies['supabase-auth-token']
   
-  // Check for Firebase ID token in cookie or Authorization header
-  const firebaseToken = cookies['firebase-token'] || request.headers.get('Authorization')?.split('Bearer ')[1]
-
-  // Return true if either session cookie or token exists and is not 'undefined' or empty
-  return !!(
-    (firebaseSession && firebaseSession !== 'undefined') || 
-    (firebaseToken && firebaseToken !== 'undefined')
-  )
+  return !!supabaseSession && supabaseSession !== 'undefined'
 } 

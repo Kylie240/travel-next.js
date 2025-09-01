@@ -40,6 +40,7 @@ export default function MyItinerariesPage() {
       setUser(currentUser)
       if (currentUser) {
         const userItineraries = await getItineraryByUserId(currentUser.id)
+        console.log(currentUser.id)
         setItineraries(userItineraries)
       } else {
         setItineraries([])

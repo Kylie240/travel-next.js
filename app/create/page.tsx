@@ -39,7 +39,6 @@ import { createItinerary } from "@/lib/actions/itinerary.actions"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 type FormData = z.infer<typeof createSchema>
 
-
 interface TripDay {
   id: string;
   image?: string;
@@ -623,16 +622,25 @@ export default function CreatePage() {
   const searchParams = useSearchParams()
   const supabase = createClientComponentClient()
   const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        setUser(user)
+      } catch (error) {
+        console.error('Error fetching user:', error)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
     }
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      setLoading(false)
     })
 
     return () => {
@@ -806,16 +814,13 @@ export default function CreatePage() {
     }
   }
 
-  const handleSaveItinerary = async () => {
+      const handleSaveItinerary = async () => {
     try {
-      if (!supabase.auth.getUser().then(user => user.data.user)) {
+      if (!user) {
         toast.error('Please sign in to save your itinerary')
         router.push('/') // Redirect to home/login page
         return
       }
-
-      // const token = await auth.currentUser.getIdToken(true) // Force refresh the token
-      // const userId = auth.currentUser.uid;
       
       const response = await createItinerary({
         ...form.getValues()
@@ -895,6 +900,17 @@ export default function CreatePage() {
       ? currentTags.filter(c => c !== categoryId)
       : currentTags.length < 3 ? [...currentTags, categoryId] : currentTags
     form.setValue('itineraryTags', newTags)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   if (!user) {
