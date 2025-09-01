@@ -3,6 +3,8 @@
 import { cookies } from "next/headers";
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { CreateItinerary } from "@/types/createItinerary";
+import { supabase } from "@/utils/supabase/superbase-client";
+import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
 
 type CreateActivity = {
     day_id: string,
@@ -15,6 +17,95 @@ type CreateActivity = {
     location: string,
     type: string,
     link: string,
+}
+
+export const getItineraries = async (options?: GetItineraryOptions) => {
+    const page = options?.pagination?.page || 1;
+    const pageSize = options?.pagination?.pageSize || 10;
+    const firstItemIndex = (page - 1) * pageSize;
+    const lastItemIndex = firstItemIndex + pageSize - 1;
+    const {destination, durationMin, durationMax, budgetMin, budgetMax, continents, activityTags, itineraryTags, countries, sort, quickFilter} = options?.filters ?? {};
+
+    let query = supabase.from('itineraries').select('*')
+
+         if (destination) {
+            query = query.contains('countries', [destination])
+         }
+         if (durationMin !== null && durationMin !== undefined) {
+            query = query.gte('duration', durationMin)
+         }
+         if (durationMax !== null && durationMax !== undefined) {
+            query = query.lte('duration', durationMax)
+         }
+         // find how to query actiivty tags
+        //  if (activityTags) {
+        //     query = query.in('duration', activityTags)
+        //  }
+         if (itineraryTags) {
+            query = query.contains('tags', itineraryTags)
+         }
+         if (countries) {
+            query = query.contains('countries', countries)
+         }
+        //  // Not Yet Using
+        //  if (budgetMin) {
+        //     query = query.gte('budget', durationMin)
+        //  }
+        //  if (budgetMax) {
+        //     query = query.lte('budget', durationMax)
+        //  }
+        //  if (continents) {
+        //     query = query.in('continents', continents)
+        //  }
+         query = query.eq('status', ItineraryStatusEnum.Published)
+
+        //  //Sort Handling
+        //  if (sort) {
+        //     switch(sort) {
+        //         case 'most-recent':
+        //             query = query.order('updated', { ascending: false });
+        //             break;
+        //         case 'most-viewed':
+        //             query = query.order('views', { ascending: false });
+        //             break;
+        //         case 'best-rated':
+        //             query = query.order('rating', { ascending: false });
+        //             break;
+        //         case 'price-low':
+        //             query = query.order('price', { ascending: true });
+        //             break;
+        //         case 'price-high':
+        //             query = query.order('price', { ascending: false });
+        //             break;
+        //         default:
+        //             query = query.order('updated', { ascending: false });
+        //     }
+        //  } else {
+        //     query = query.order('updated', { ascending: false })
+        //  }
+        //  // add logic
+        //  if (quickFilter) {
+        //     // logic
+        //  }
+
+    try {
+         const { data, error } = await query
+         .range(firstItemIndex, lastItemIndex)
+         if (error) throw error
+         console.log(data)
+
+         const total = data.length;
+
+         return {
+            data,
+            total,
+            totalPages: Math.ceil(total / pageSize),
+            currentPage: page
+        }
+    } catch (error) {
+        console.error('Error getting itineraries:', error);
+        throw new Error(`Failed to get itineraries: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }
 
 export const createItinerary = async (itinerary: CreateItinerary) => {

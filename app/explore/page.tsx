@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import FiltersForm from "./filters-form";
-import { getItineraries } from "@/actions/itineraries";
 import Link from "next/link";
 import Image from "next/image";
 import { BookmarkButton } from "@/components/ui/bookmark-button";
+import { getItineraries } from "@/lib/actions/itinerary.actions";
 
 export default async function ExplorePage({
 searchParams
@@ -24,9 +24,9 @@ searchParams
     const activityTags = searchParamsValues.activityTags;
     const continents = searchParamsValues.continents;
 
-    const itineraries = await getItineraries({
+    const searchFilters: GetItineraryOptions = {
         pagination: {
-            page: parseInt(searchParamsValues.page || "1"),
+            page: parseInt(page || "1"),
             pageSize: 10
         },
         filters: {
@@ -41,9 +41,10 @@ searchParams
             itineraryTags,
             activityTags,
             continents,
-            status: ['published'],
         },
-    })
+    }
+
+    const itineraries = await getItineraries(searchFilters)
     
     return (
         <div className="min-h-screen bg-white py-8">
@@ -120,7 +121,7 @@ searchParams
 
                         <div className="flex flex-col gap-2">
                           <div className="flex justify-start gap-2">
-                            {itinerary.itineraryTags.slice(0, 2).map((tag) => (
+                            {itinerary.tags.slice(0, 2).map((tag) => (
                               <span 
                                 key={tag}
                                 className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize"
