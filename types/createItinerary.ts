@@ -2,7 +2,6 @@ import { Day } from "./Day";
 import { ItineraryStatus } from "./itineraryStatus";
 import { Note } from "./Note";
 
-type Country = { value: string};
 type City = { city: string, country: string};
 
 export type CreateItinerary = {
@@ -13,7 +12,9 @@ export type CreateItinerary = {
     detailedOverview?: string;
     duration: number;
     countries: string[];
+    cities: City[];
     days: Day[];
     itineraryTags: string[];
     notes: Note[];
+    budget?: number;
 }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp } from "lucide-react"
+import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check } from "lucide-react"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
 import { useForm, useFieldArray, FormProvider } from "react-hook-form"
@@ -37,7 +37,25 @@ import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
 import { createItinerary } from "@/lib/actions/itinerary.actions"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-type FormData = z.infer<typeof createSchema>
+import { CreateItinerary } from "@/types/createItinerary"
+import { Day } from "@/types/Day"
+import { Note } from "@/types/Note"
+import { Activity } from "@/types/Activity"
+type City = { city: string; country: string };
+type FormData = {
+  status: 'draft' | 'published';
+  title: string;
+  shortDescription: string;
+  mainImage: string;
+  detailedOverview?: string;
+  duration: number;
+  countries: string[];
+  cities: City[];
+  days: Day[];
+  itineraryTags: string[];
+  notes: Note[];
+  budget?: number;
+};
 
 interface TripDay {
   id: string;
@@ -71,7 +89,7 @@ interface TripDay {
   };
 }
 
-const INITIAL_DAY: TripDay = {
+const INITIAL_DAY: Day = {
   id: '1',
   cityName: '',
   countryName: '',
@@ -109,9 +127,11 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
   // Get the list of unique countries from step 1
   const existingCountries = form.getValues('countries').filter(Boolean);
+  const existingCities = form.getValues('cities').filter(Boolean);
   const [showCustomCountry, setShowCustomCountry] = useState(false);
   const [customCountry, setCustomCountry] = useState('');
-
+  const [showCustomCity, setShowCustomCity] = useState(false);
+  const [customCity, setCustomCity] = useState({ city: '', country: '' });
   // Add state for accommodation selection
   const [showNewAccommodation, setShowNewAccommodation] = useState(false);
   
@@ -147,7 +167,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
   const handleCustomCountrySubmit = () => {
     if (customCountry.trim()) {
       // Update the day's country
-      form.setValue(`days.${index}.countryName`, customCountry, {
+      form.setValue(`days.${index}.countryName`, customCountry.trim(), {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
@@ -155,13 +175,58 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
       // Add to main countries list if not already there
       const countriesField = form.getValues('countries');
-      if (!countriesField.includes(customCountry)) {
+      if (!countriesField.includes(customCountry.trim())) {
         form.setValue('countries', [...countriesField, customCountry], {
           shouldValidate: true
         });
       }
       setShowCustomCountry(false);
       setCustomCountry('');
+    }
+  };
+
+  const handleCustomCitySubmit = () => {
+    const cityName = customCity.city;
+    if (cityName && cityName.length > 0) {
+      // Get the current country or use the existing one
+      const countryToUse = customCity.country || form.getValues(`days.${index}.countryName`);
+      
+      // Update the day's city and country
+      form.setValue(`days.${index}.cityName`, cityName, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
+      
+      if (countryToUse) {
+        form.setValue(`days.${index}.countryName`, countryToUse, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+
+        // Add to main countries list if not already there
+        const countriesField = form.getValues('countries');
+        if (!countriesField.includes(countryToUse)) {
+          form.setValue('countries', [...countriesField, countryToUse], {
+            shouldValidate: true
+          });
+        }
+      }
+
+      // Add to main cities list if not already there
+      const citiesField = form.getValues('cities');
+      if (!citiesField.some(x => x.city === cityName)) {
+        form.setValue('cities', [...citiesField, {
+          city: cityName,
+          country: countryToUse
+        }], {
+          shouldValidate: true
+        });
+      }
+
+      setShowCustomCity(false);
+      setCustomCity({ city: '', country: '' });
     }
   };
 
@@ -211,25 +276,94 @@ function SortableDay({ day, index, form, onRemoveDay }: {
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label className="text-[16px] font-medium mb-3 ml-1">City</Label>
-                <Input
-                  {...form.register(`days.${index}.cityName`)}
-                  className="rounded-xl"
-                  placeholder="Tokyo"
-                />
+                <Label className="text-[16px] font-medium mb-3 ml-1">City *</Label>
+                {showCustomCity || existingCities.length === 0 ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={customCity.city}
+                      onChange={(e) => setCustomCity({ ...customCity, city: e.target.value })}
+                      className="rounded-xl"
+                      placeholder="Tokyo"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleCustomCitySubmit();
+                        }
+                      }}
+                    />
+                    {customCity.city.trim() && (
+                    <div className="flex gap-2">
+                      <Button 
+                        type="button"
+                        variant="ghost"
+                        onClick={handleCustomCitySubmit}
+                        className="rounded-xl"
+                        disabled={!customCity.city.trim()}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowCustomCity(false);
+                          setCustomCity({ city: '', country: '' });
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    )}
+                  </div>
+                ) : (
+                  <Select
+                    defaultValue={form.getValues(`days.${index}.cityName`) || ''}
+                    onValueChange={(value: string) => {
+                      if (value === 'custom') {
+                        setShowCustomCity(true);
+                      } else {
+                        const selectedCity = existingCities.find(c => c.city === value);
+                        if (selectedCity) {
+                          form.setValue(`days.${index}.cityName`, value, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                            shouldTouch: true
+                          });
+                          form.setValue(`days.${index}.countryName`, selectedCity.country, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                            shouldTouch: true
+                          });
+                        }
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select a city" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {existingCities.map((city) => (
+                        <SelectItem key={city.city} value={city.city}>
+                          {city.city}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="custom">+ Add New City</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 {form.formState.errors.days?.[index]?.cityName && (
                   <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.cityName?.message}</p>
                 )}
               </div>
               <div>
-                <Label className="text-[16px] font-medium mb-3 ml-1">Country</Label>
-                {showCustomCountry ? (
+                <Label className="text-[16px] font-medium mb-3 ml-1">Country *</Label>
+                {showCustomCountry || existingCountries.length === 0 ? (
                   <div className="flex gap-2">
                     <Input
                       value={customCountry}
                       onChange={(e) => setCustomCountry(e.target.value)}
                       className="rounded-xl"
-                      placeholder="Enter new country"
+                      placeholder="Japan"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -237,25 +371,29 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                         }
                       }}
                     />
-                    <Button 
-                      type="button"
-                      onClick={handleCustomCountrySubmit}
-                      className="rounded-xl"
-                      disabled={!customCountry.trim()}
-                    >
-                      Add
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => {
-                        setShowCustomCountry(false);
-                        setCustomCountry('');
-                      }}
-                      className="rounded-xl"
-                    >
-                      Cancel
-                    </Button>
+                    {customCountry.trim() && (
+                      <div className="flex gap-2">
+                      <Button 
+                        type="button"
+                        variant="ghost"
+                        onClick={handleCustomCountrySubmit}
+                        className="rounded-xl"
+                        disabled={!customCountry.trim()}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowCustomCountry(false);
+                          setCustomCountry('');
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    )}
                   </div>
                 ) : (
                   <Select
@@ -292,7 +430,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
             </div>
             
             <div>
-              <Label className="text-[16px] font-medium mb-3 ml-1">Title</Label>
+              <Label className="text-[16px] font-medium mb-3 ml-1">Title *</Label>
               <Input
                 {...form.register(`days.${index}.title`)}
                 className="rounded-xl"
@@ -304,7 +442,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
             </div>
             
             <div>
-              <Label className="text-[16px] font-medium mb-3 ml-1">Image <span className="text-gray-500 text-sm">(optional)</span></Label>
+              <Label className="text-[16px] font-medium mb-3 ml-1">Cover Image</Label>
               <Input
                 {...form.register(`days.${index}.image`)}
                 className="rounded-xl"
@@ -326,7 +464,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <Label className="text-[16px] font-medium mb-3 ml-1">Activities <span className="text-gray-500 text-sm">(optional)</span></Label>
+                <Label className="text-[16px] font-medium mb-3 ml-1">Activities</Label>
                 {(activityFields.length === 0 || !activityFields) && <Button 
                   type="button" 
                   variant="outline" 
@@ -368,7 +506,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
-                          <Label className="text-[16px] font-medium mb-3 ml-1">Time <span className="text-gray-500 text-sm">(optional)</span></Label>
+                          <Label className="text-[16px] font-medium mb-3 ml-1">Start Time</Label>
                           <Input
                             type="time"
                             {...form.register(`days.${index}.activities.${activityIndex}.time`)}
@@ -376,33 +514,44 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                           />
                         </div>
                         <div>
-                          <Label className="text-[16px] font-medium mb-3 ml-1">Duration <span className="text-gray-500 text-sm">(optional)</span></Label>
+                          <Label className="text-[16px] font-medium mb-3 ml-1">Duration<span className="text-gray-500 text-sm">(minutes)</span></Label>
                           <Input
                             type="number"
                             {...form.register(`days.${index}.activities.${activityIndex}.duration`)}
                             className="rounded-xl"
                           />
                         </div>
-                        <div>
-                          <Label className="text-[16px] font-medium mb-3 ml-1">Type</Label>
-                          <Select
-                            {...form.register(`days.${index}.activities.${activityIndex}.type`)}
-                            onValueChange={(value: string) => {
-                              form.setValue(`days.${index}.activities.${activityIndex}.type`, value);
-                            }}
-                          >
-                            <SelectTrigger className="rounded-xl">
-                              <SelectValue placeholder="Select a type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {activityTags.map(tag => (
-                                <SelectItem key={tag.name} value={tag.name}>
-                                {tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                          <div>
+                            <Label className="text-[16px] font-medium mb-3 ml-1">Type</Label>
+                            <Select
+                              value={form.watch(`days.${index}.activities.${activityIndex}.type`) || ''}
+                              onValueChange={(value: string) => {
+                                form.setValue(`days.${index}.activities.${activityIndex}.type`, value === 'clear' ? '' : value, {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                  shouldTouch: true
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="rounded-xl">
+                                <SelectValue placeholder="Select a type">
+                                  {form.watch(`days.${index}.activities.${activityIndex}.type`) || "Select a type"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent position="popper" side="bottom" align="start" className="max-h-[200px] overflow-y-auto">
+                                {form.watch(`days.${index}.activities.${activityIndex}.type`) && (
+                                  <SelectItem value="clear" className="text-red-500 cursor-pointer">
+                                    Clear selection
+                                  </SelectItem>
+                                )}
+                                {activityTags.map(tag => (
+                                  <SelectItem key={tag.name} value={tag.name} className="cursor-pointer">
+                                    {tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                       </div>
                     </div>
 
@@ -471,7 +620,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <Label className="text-[16px] font-medium mb-3 ml-1">Accommodation <span className="text-gray-500 text-sm">(optional)</span></Label>
+                <Label className="text-[16px] font-medium mb-3 ml-1">Accommodation</Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -487,8 +636,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                 >
                   {form.watch(`days.${index}.showAccommodation`) ? 
                     <div className="flex items-center gap-2">
-                      <Minus className="h-4 w-4" />
-                      Remove Accommodation
+                      Cancel
                     </div> : 
                     <div className="flex items-center gap-2">
                       <Plus className="h-4 w-4" />
@@ -650,25 +798,37 @@ export default function CreatePage() {
     resolver: zodResolver(createSchema),
     mode: 'onSubmit',
     defaultValues: {
-      status: 'draft',
+      status: 'draft' as const,
       title: '',
       shortDescription: '',
       mainImage: '',
       detailedOverview: '',
       duration: 1,
       countries: [],
-      days: [INITIAL_DAY],
+      cities: [],
+      days: [{
+        ...INITIAL_DAY,
+        id: '1',
+        cityName: '',
+        countryName: '',
+        title: '',
+        showAccommodation: false
+      }],
       itineraryTags: [],
-      notes: []
+      notes: [],
+      // budget: null
     }
   })
 
-  // @ts-expect-error - TODO: Fix type issues with field array
   const { fields: countryFields, append: appendCountry, remove: removeCountry } = useFieldArray({
     control: form.control,
-    name: "countries"
-  })
+    name: "countries" as const
+  } as any) // Type assertion needed due to form field array limitations
 
+  const { fields: cityFields, append: appendCity, remove: removeCity } = useFieldArray({
+    control: form.control,
+    name: "cities"
+  })
 
 
   const { fields: dayFields, append: appendDay, remove: removeDay, move: moveDay } = useFieldArray<FormData>({
@@ -713,26 +873,34 @@ export default function CreatePage() {
         mainImage: sampleItinerary.image,
         detailedOverview: sampleItinerary.details,
         duration: sampleItinerary.schedule.length,
-        countries: sampleItinerary.countries.map(country => (country)),
+        countries: sampleItinerary.countries,
+        cities: (sampleItinerary.cities as Array<string | City>).map(city => ({
+          city: typeof city === 'string' ? city : city.city,
+          country: typeof city === 'string' ? sampleItinerary.countries[0] : city.country
+        })),
         days: sampleItinerary.schedule.map((day: any, index: number) => ({
           id: (index + 1).toString(),
-          image: day.image,
-          cityName: day.activities[0]?.location?.split(', ')[0] || '',
-          countryName: day.activities[0]?.location?.split(', ')[1] || '',
-          title: day.title,
-          description: day.description,
-          notes: day.notes,
-          activities: day.activities.map((activity: any, actIndex: number) => ({
-            id: `${index + 1}-${actIndex + 1}`,
-            time: activity.time,
-            duration: '',
-            image: activity.image,
-            title: activity.title,
-            description: activity.details,
-            type: activity.type as any,
-            link: '',
-            price: 0,
-          })),
+          image: day.image || '',
+          cityName: day.activities?.[0]?.location?.split(', ')?.[0] || '',
+          countryName: day.activities?.[0]?.location?.split(', ')?.[1] || '',
+          title: day.title || '',
+          description: day.description || '',
+          notes: day.notes || '',
+          activities: (day.activities || []).map((activity: any, actIndex: number) => {
+            const activityData: Activity = {
+              id: `${index + 1}-${actIndex + 1}`,
+              time: activity.time || '',
+              duration: activity.duration || '',
+              image: activity.image || '',
+              title: activity.title || '',
+              description: activity.details || '',
+              type: activity.type || '',
+              link: activity.link || '',
+              photos: activity.photos || [],
+              price: activity.price || 0,
+            };
+            return activityData;
+          }),
           showAccommodation: !!day.accommodation,
           accommodation: {
             name: day.accommodation?.name || '',
@@ -741,14 +909,17 @@ export default function CreatePage() {
             price: 0,
             photos: day.accommodation?.image ? [day.accommodation.image] : [],
           }
-        })),
+        })) as Day[],
         itineraryTags: sampleItinerary.itineraryTags,
-        notes: sampleItinerary.creator.notes.map((note: any, index: number) => ({
-          id: (index + 1).toString(),
-          title: note.title,
-          content: note.content,
-          expanded: false,
-        }))
+        notes: (sampleItinerary.creator.notes || []).map((note: any, index: number) => {
+          const noteData: Note = {
+            id: (index + 1).toString(),
+            title: note.title || '',
+            content: note.content || '',
+            expanded: true
+          };
+          return noteData;
+        })
       }
       form.reset(mappedData)
     }
@@ -790,19 +961,60 @@ export default function CreatePage() {
 
   const handleFinalSubmit = async (data: z.infer<typeof createSchema>) => {
     try {
-      const nonEmptyDays = data.days.filter(day => day.title && day.cityName && day.countryName)
+      // Clean up and validate days
+      const nonEmptyDays = data.days.map(day => {
+        const activities = (day.activities || []).map(activity => ({
+          id: activity.id || Math.random().toString(),
+          time: activity.time || '',
+          duration: activity.duration || '',
+          image: activity.image || '',
+          title: activity.title || '',
+          description: activity.description || '',
+          type: activity.type || '',
+          link: activity.link || '',
+          photos: activity.photos || [],
+          price: activity.price || 0
+        } as Activity));
+
+        return {
+          ...day,
+          id: day.id || Math.random().toString(),
+          cityName: day.cityName || '',
+          countryName: day.countryName || '',
+          title: day.title || '',
+          showAccommodation: day.showAccommodation || false,
+          activities
+        } as Day;
+      }).filter(day => day.title && day.cityName && day.countryName);
+      
       if (nonEmptyDays.length > 0) {
         form.setValue('days', nonEmptyDays)
       }
 
       // Clean up empty country fields
-      const nonEmptyCountries = data.countries.filter(country => country.trim() !== '')
+      const nonEmptyCountries = data.countries.filter(country => country && country.length > 0)
       if (nonEmptyCountries.length > 0) {
         form.setValue('countries', nonEmptyCountries)
       }
 
+      // Clean up empty city fields
+      const nonEmptyCities = data.cities.map(city => ({
+        city: city.city || '',
+        country: city.country || ''
+      })).filter(city => city.city.length > 0 && city.country.length > 0)
+      
+      if (nonEmptyCities.length > 0) {
+        form.setValue('cities', nonEmptyCities)
+      }
+
       // Clean up empty notes
-      const nonEmptyNotes = data.notes.filter(note => note.title.trim() !== '' || note.content.trim() !== '')
+      const nonEmptyNotes = data.notes.map(note => ({
+        id: note.id || Math.random().toString(),
+        title: note.title || '',
+        content: note.content || '',
+        expanded: note.expanded ?? true
+      } as Note)).filter(note => note.title.length > 0 || note.content.length > 0)
+      
       form.setValue('notes', nonEmptyNotes)
 
       // Set status to published
@@ -822,9 +1034,54 @@ export default function CreatePage() {
         return
       }
       
-      const response = await createItinerary({
-        ...form.getValues()
-      })
+      const formData = form.getValues();
+      const itineraryData = {
+        status: formData.status as 'draft' | 'published',
+        title: formData.title,
+        shortDescription: formData.shortDescription,
+        mainImage: formData.mainImage,
+        detailedOverview: formData.detailedOverview,
+        duration: formData.duration,
+        countries: formData.countries,
+        cities: formData.cities.map(city => ({
+          city: city.city,
+          country: city.country
+        })),
+        days: formData.days.map(day => {
+          const activities = (day.activities || []).map(activity => ({
+            id: activity.id || Math.random().toString(),
+            time: activity.time || '',
+            duration: activity.duration || '',
+            image: activity.image || '',
+            title: activity.title || '',
+            description: activity.description || '',
+            type: activity.type || '',
+            link: activity.link || '',
+            photos: activity.photos || [],
+            price: activity.price || 0
+          } as Activity));
+
+          return {
+            ...day,
+            id: day.id || Math.random().toString(),
+            cityName: day.cityName || '',
+            countryName: day.countryName || '',
+            title: day.title || '',
+            showAccommodation: day.showAccommodation || false,
+            activities
+          } as Day;
+        }),
+        itineraryTags: formData.itineraryTags,
+        notes: formData.notes.map(note => ({
+          id: note.id || Math.random().toString(),
+          title: note.title || '',
+          content: note.content || '',
+          expanded: note.expanded ?? true
+        } as Note)),
+        budget: formData.budget
+      };
+      
+      const response = await createItinerary(itineraryData);
 
       if (response.itineraryId) {
         toast.success('Form submitted successfully')
@@ -961,7 +1218,7 @@ export default function CreatePage() {
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="title">Trip Name</Label>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="title">Trip Name *</Label>
                     <Input
                       id="title"
                       {...form.register("title")}
@@ -975,7 +1232,7 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="shortDescription">Short Description</Label>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="shortDescription">Short Description *</Label>
                     <textarea
                       id="shortDescription"
                       {...form.register("shortDescription")}
@@ -989,7 +1246,7 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="mainImage">Main Image URL</Label>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="mainImage">Main Image URL *</Label>
                     <Input
                       id="mainImage"
                       {...form.register("mainImage")}
@@ -1003,7 +1260,7 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="detailedOverview">Detailed Overview <span className="text-gray-500 text-sm">(optional)</span></Label>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="detailedOverview">Detailed Overview</Label>
                     <textarea
                       id="detailedOverview"
                       {...form.register("detailedOverview")}
@@ -1014,7 +1271,7 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="length">Number of Days</Label>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="length">Number of Days * <span className="text-gray-500 text-sm">(can be changed later)</span></Label>
                     <Input
                       id="length"
                       type="number"
@@ -1027,86 +1284,6 @@ export default function CreatePage() {
                     {form.formState.errors.duration && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.duration.message}</p>
                     )}
-                  </div>
-
-                  <div>
-                    <Label className="text-md font-medium mb-3 ml-1">Countries</Label>
-                    <div className="space-y-2">
-                      {countryFields.length === 0 ? (
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Japan"
-                            className="rounded-xl"
-                            value={initialCountry}
-                            onChange={(e) => setInitialCountry(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && initialCountry.trim()) {
-                                e.preventDefault();
-                                form.setValue('countries', [initialCountry, '']);
-                                setInitialCountry('');
-                              }
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              if (initialCountry.trim() !== '') {
-                                form.setValue('countries', [initialCountry]);
-                                setInitialCountry('');
-                              }
-                            }}
-                            disabled={ initialCountry.trim() === ''}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        countryFields.map((field, index) => (
-                          <div key={field.id} className="flex gap-2">
-                            <Input
-                              {...form.register(`countries.${index}`)}
-                              placeholder="Japan"
-                              className="rounded-xl"
-                              disabled={form.formState.isSubmitting}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  appendCountry('');
-                                }
-                              }}  
-                            />
-                            <div className="flex gap-2">
-                              {(index > 0 || (index === 0 && countryFields.length > 1)) &&
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => removeCountry(index)}
-                                disabled={form.formState.isSubmitting}
-                              >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              }
-                              {index === countryFields.length - 1 &&
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => appendCountry('')}
-                                disabled={form.formState.isSubmitting}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                              }
-                            </div>
-                          </div>
-                        ))
-                      )}
-                      {form.formState.errors.countries && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {form.formState.errors.countries.message}
-                        </p>
-                      )}
-                    </div>
                   </div>
 
                   <div className="flex justify-end gap-4">
@@ -1209,14 +1386,16 @@ export default function CreatePage() {
               {currentStep === 3 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-lg font-medium mb-3 ml-1">Estimated Expenses<span className="text-gray-500 text-sm">(help users budget their trip)</span></h2>
-                    <p>Not sure? Select a budget range instead</p>
-                    <Input
-                      {...form.register('budget')}
-                      placeholder="Estimated cost per person"
-                      type="number"
-                      className="rounded-xl"
-                    />
+                    <h2 className="text-lg font-medium mb-3 ml-1">Estimated Expense</h2>
+                    <p>Help other travelers budget their trip. Not sure? Select a budget range instead</p>
+                      <Input
+                        {...form.register('budget', {
+                          setValueAs: (value) => value === "" ? undefined : parseInt(value, 10)
+                        })}
+                        placeholder="Estimated cost per person"
+                        type="number"
+                        className="rounded-xl"
+                      />
                   </div>
 
                   <div>
@@ -1251,7 +1430,7 @@ export default function CreatePage() {
                   <div>
                     <div className="flex justify-between items-center mb-4">
                       <div>
-                        <h2 className="text-lg font-semibold">Notes <span className="text-gray-500 text-sm">(optional)</span></h2>
+                        <h2 className="text-lg font-semibold">Notes</h2>
                         <p className="text-sm text-gray-600">Add important notes about your trip</p>
                       </div>
                       {noteFields.length === 0 && (
@@ -1286,7 +1465,7 @@ export default function CreatePage() {
                                       <Label className="text-[16px] font-medium ml-1">{form.watch(`notes.${index}.title`)}</Label>
                                     )}
                                   </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 pb-2">
                                       <Button
                                         type="button"
                                         variant="ghost"

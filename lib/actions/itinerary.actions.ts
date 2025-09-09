@@ -26,7 +26,9 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
     const lastItemIndex = firstItemIndex + pageSize - 1;
     const {destination, durationMin, durationMax, budgetMin, budgetMax, continents, activityTags, itineraryTags, countries, sort, quickFilter} = options?.filters ?? {};
 
-    let query = supabase.from('itineraries').select('*')
+    let query = supabase.from('itineraries').select(
+        'id, title, duration, short_description, main_image, countries, cities, itinerary_tags, activity_tags, featured_categories, creator_id, creator_name, creator_image'
+    )
 
          if (destination) {
             query = query.contains('countries', [destination])
@@ -57,7 +59,6 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
         //  if (continents) {
         //     query = query.in('continents', continents)
         //  }
-         query = query.eq('status', ItineraryStatusEnum.Published)
 
         //  //Sort Handling
         //  if (sort) {
@@ -91,8 +92,8 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
     try {
          const { data, error } = await query
          .range(firstItemIndex, lastItemIndex)
+         .eq('status', ItineraryStatusEnum.Published);
          if (error) throw error
-         console.log(data)
 
          const total = data.length;
 
@@ -143,18 +144,15 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
         const {data: itineraryRow, error: itineraryError} = await supabase
         .from('itineraries')
         .insert([{
-            creator_id: userId,
             title: itinerary.title,
             short_description: itinerary.shortDescription,
             main_image: itinerary.mainImage,
-            countries: itinerary.countries,
-            cities: cities,
-            itinerary_tags: itinerary.itineraryTags,
-            activity_tags: activityTags,
             status: itinerary.status,
-            duration: itinerary.duration,
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            duration: itinerary.duration,
+            budget: itinerary.budget,
+            creator_id: userId,
         }])
         .select()
         .single();
@@ -165,10 +163,9 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
         }
 
         const itineraryId = itineraryRow.id;
-        console.log(itinerary);
 
         // Insert Days
-        if (itinerary?.days?.length > 0) {
+        if (itinerary.days?.length > 0) {
             const dayRows = itinerary.days.map((day, index) => ({
                 itinerary_id: itineraryId,
                 day_number: index + 1,
@@ -176,8 +173,48 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
                 description: day.description,
                 notes: day.notes,
                 city: day.cityName,
-                country: day.countryName
+                country: day.countryName,
             }))
+
+            // assign/insert country id
+            dayRows.forEach(async day => {
+                const { data: countryData, error: countryError } = await supabase
+                .from('countries')
+                .select('id')
+                .eq('name', day.country)
+
+                if (countryError) throw countryError;
+
+                if (countryData.length > 0) {
+                    day.country = countryData[0].id;
+                } else {
+                    const { data: newCountryData, error: newCountryError } = await supabase
+                    .from('countries')
+                    .insert({ name: day.country })
+                    .select('id')
+                    .single();
+
+                    if (newCountryError) throw newCountryError;
+                    day.country = newCountryData.id;
+                }    
+
+                const { data: cityData, error: cityError } = await supabase
+                .from('cities')
+                .select('id')
+                .eq('name', day.city)
+
+                if (cityError) throw cityError;
+                
+                if (cityData.length > 0) {
+                    day.city = cityData[0].id;
+                } else {
+                    const { data: newCityData, error: newCityError } = await supabase
+                    .from('cities')
+                    .insert({ name: day.city })
+                    .select('id')
+                    .single();
+                }
+            })
 
             const {data: insertedDays, error: dayError} = await supabase
             .from('itinerary_days')
@@ -263,4 +300,22 @@ export const getItineraryByUserId = async (userId?: string) => {
         throw new Error(`Failed to create itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
     
+}
+
+export const getItineraryById = async (itineraryId: string) => {
+    try {
+        const supabase = createServerActionClient({ cookies });
+
+        const { data: itinerary, error: itineraryError } = await supabase
+        .from('itineraries')
+        .select('*')
+        .eq('id', itineraryId);
+
+        if (itineraryError) throw itineraryError;
+        console.log(itinerary);
+        return itinerary;
+    } catch (error) {
+        console.error('Error retrieving itinerary:', error);
+        throw new Error(`Failed to retrieve itinerary: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }

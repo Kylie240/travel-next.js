@@ -1,7 +1,6 @@
 import { Suspense } from "react"
 import Loading from "@/app/loading"
 import { similarItineraries } from "./data"
-import { getItineraryById } from "@/data/itineraries"
 import { Calendar, MapPin, Users, Utensils, Bike, BedDouble, Train, Bookmark, ChevronUp, ChevronDown, ChevronRight, Share, Edit } from "lucide-react"
 import Image from "next/image"
 import { Itinerary } from "@/types/itinerary"
@@ -12,10 +11,11 @@ import BookmarkElement from "./bookmark-element"
 import ScheduleSection from "./schedule-section"
 import NoteSection from "./note-section"
 import ShareElement from "./share-element"
+import { getItineraryById } from "@/lib/actions/itinerary.actions"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const paramsValue = await params;
-  const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
+  const itinerary = await getItineraryById(paramsValue.id);
   // const currentUser = await getCurrentUser();
   const currentUser = {
     uid: "123",
@@ -46,7 +46,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
           <div className="flex-1 h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
-              src={itinerary.mainImage}
+              src={itinerary.}
               alt={itinerary.name}
               fill
               className="object-cover"
