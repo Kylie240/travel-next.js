@@ -1,6 +1,6 @@
 export const ItineraryStatusEnum = {
-    Draft: "draft",
-    Published: "published",
-    Archived: "archived",
-    Deleted: "deleted",
-}
+    draft: 1,
+    published: 2,
+    archived: 3,
+    deleted: 4,
+}   

@@ -147,7 +147,7 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             title: itinerary.title,
             short_description: itinerary.shortDescription,
             main_image: itinerary.mainImage,
-            status: itinerary.status,
+            status: ItineraryStatusEnum[itinerary.status],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             duration: itinerary.duration,
@@ -176,46 +176,6 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
                 country: day.countryName,
             }))
 
-            // assign/insert country id
-            dayRows.forEach(async day => {
-                const { data: countryData, error: countryError } = await supabase
-                .from('countries')
-                .select('id')
-                .eq('name', day.country)
-
-                if (countryError) throw countryError;
-
-                if (countryData.length > 0) {
-                    day.country = countryData[0].id;
-                } else {
-                    const { data: newCountryData, error: newCountryError } = await supabase
-                    .from('countries')
-                    .insert({ name: day.country })
-                    .select('id')
-                    .single();
-
-                    if (newCountryError) throw newCountryError;
-                    day.country = newCountryData.id;
-                }    
-
-                const { data: cityData, error: cityError } = await supabase
-                .from('cities')
-                .select('id')
-                .eq('name', day.city)
-
-                if (cityError) throw cityError;
-                
-                if (cityData.length > 0) {
-                    day.city = cityData[0].id;
-                } else {
-                    const { data: newCityData, error: newCityError } = await supabase
-                    .from('cities')
-                    .insert({ name: day.city })
-                    .select('id')
-                    .single();
-                }
-            })
-
             const {data: insertedDays, error: dayError} = await supabase
             .from('itinerary_days')
             .insert(dayRows)
@@ -233,18 +193,19 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
                     const activityRow: CreateActivity[] = activities.map((activity, index) => ({
                         day_id: dayId,
                         activity_number: index + 1,
-                        time: activity.time || '',
-                        duration: activity.duration || '',
-                        image: activity.image || '',
+                        time: activity.time || undefined,
+                        duration: activity.duration || undefined,
+                        image: activity.image || undefined,
                         title: activity.title,
-                        description: activity.description || '',
-                        location: activity.location || '',
-                        type: activity.type || '',
-                        link: activity.link || '',
+                        description: activity.description || undefined,
+                        location: activity.location || undefined,
+                        type: activity.type || undefined,
+                        link: activity.link || undefined,
                     }))
                     activityRows.push(...activityRow);
                 }
 
+                console.log(activityRows);
                 const {error: activityError} = await supabase
                 .from('itinerary_activities')
                 .insert(activityRows);
@@ -261,6 +222,8 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
                 title: note.title,
                 content: note.content,
             }))
+
+            console.log(noteRows);
 
             const {error: noteError} = await supabase
             .from('itinerary_notes')

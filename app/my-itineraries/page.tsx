@@ -57,11 +57,13 @@ export default function MyItinerariesPage() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl md:text-4xl font-semibold mb-6">My Itineraries</h1>
-          <Button>
-            <Link href="/create">
-              Create New Itinerary
-            </Link>
-          </Button>
+          {itineraries && itineraries?.length > 0 && (
+            <Button>
+              <Link href="/create">
+                Create New Itinerary
+              </Link>
+            </Button>
+          )}
         </div>
 
         {itineraries && itineraries?.length > 0 ? (
@@ -131,7 +133,7 @@ export default function MyItinerariesPage() {
                   <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
                     <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
                     <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
-                      {itinerary?.cities?.length > 0 ? itinerary.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")}
+                      {/* {itinerary?.cities?.length > 0 ? itinerary?.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")} */}
                     </p>
                     <div className="flex gap-2 items-end">
                       <p className="text-sm mt-2">Views: {itinerary.views || 0}</p>

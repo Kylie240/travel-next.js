@@ -474,7 +474,8 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                     title: '',
                     description: '',
                     type: '',
-                    link: ''
+                    link: '',
+                    time: undefined
                   })}
                   className="rounded-xl"
                 >
@@ -509,12 +510,19 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                           <Label className="text-[16px] font-medium mb-3 ml-1">Start Time</Label>
                           <Input
                             type="time"
-                            {...form.register(`days.${index}.activities.${activityIndex}.time`)}
+                            {...form.register(`days.${index}.activities.${activityIndex}.time`, {
+                              setValueAs: (value) => {
+                                if (!value) return undefined;
+                                // Ensure the time is in HH:MM:SS format for PostgreSQL
+                                const [hours, minutes] = value.split(':');
+                                return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
+                              }
+                            })}
                             className="rounded-xl"
                           />
                         </div>
                         <div>
-                          <Label className="text-[16px] font-medium mb-3 ml-1">Duration<span className="text-gray-500 text-sm">(minutes)</span></Label>
+                          <Label className="text-[16px] font-medium mb-3 ml-1">Duration <span className="text-gray-500 text-sm">(minutes)</span></Label>
                           <Input
                             type="number"
                             {...form.register(`days.${index}.activities.${activityIndex}.duration`)}
@@ -557,7 +565,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
                     <div className="space-y-4">
                       <div>
-                        <Label className="text-[16px] font-medium mb-3 ml-1">Title</Label>
+                        <Label className="text-[16px] font-medium mb-3 ml-1">Title *</Label>
                         <Input
                           {...form.register(`days.${index}.activities.${activityIndex}.title`)}
                           placeholder="Activity title"
@@ -609,7 +617,8 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                     title: '',
                     description: '',
                     type: '',
-                    link: ''
+                    link: '',
+                    time: undefined
                   })}
                   className="rounded-xl mt-2"
                 >
@@ -889,8 +898,8 @@ export default function CreatePage() {
           activities: (day.activities || []).map((activity: any, actIndex: number) => {
             const activityData: Activity = {
               id: `${index + 1}-${actIndex + 1}`,
-              time: activity.time || '',
-              duration: activity.duration || '',
+              time: activity.time || undefined,
+              duration: activity.duration || undefined,
               image: activity.image || '',
               title: activity.title || '',
               description: activity.details || '',
@@ -1050,8 +1059,8 @@ export default function CreatePage() {
         days: formData.days.map(day => {
           const activities = (day.activities || []).map(activity => ({
             id: activity.id || Math.random().toString(),
-            time: activity.time || '',
-            duration: activity.duration || '',
+            time: activity.time || undefined,
+            duration: activity.duration || undefined,
             image: activity.image || '',
             title: activity.title || '',
             description: activity.description || '',
