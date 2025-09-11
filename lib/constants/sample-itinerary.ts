@@ -10,8 +10,8 @@ export const sampleItinerary = {
   price: "$3,499",
   rating: 4.8,
   reviews: 24,
-  itineraryTags: ["cultural", "urban", "adventure"],
-  activityTags: ["sightseeing", "food & dining", "history", "urban exploration", "nature", "photography"],
+  itineraryTags: [2, 3, 4],
+  activityTags: [2, 10],
   details: "This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours.",
   creator: {
     id: "1",
@@ -49,7 +49,7 @@ export const sampleItinerary = {
         {
           time: "15:00",
           title: "Hotel Check-in",
-          type: "accommodation",
+          type: [7],
           details: "Check in at the Tokyu Stay Hotel in Shinjuku",
           location: "Shinjuku, Tokyo",
           image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=1374&auto=format&fit=crop"
@@ -57,7 +57,7 @@ export const sampleItinerary = {
         {
           time: "18:00",
           title: "Welcome Dinner",
-          type: "food",
+          type: [4],
           details: "Traditional Japanese dinner at a local izakaya",
           location: "Shinjuku, Tokyo",
           image: "https://images.unsplash.com/photo-1554502078-ef0fc409efce?q=80&w=1384&auto=format&fit=crop"
@@ -84,7 +84,7 @@ export const sampleItinerary = {
         {
           time: "09:00",
           title: "Tsukiji Outer Market",
-          type: "sightseeing",
+          type: [2],
           details: "Explore the famous fish market and try fresh sushi",
           location: "Tsukiji, Tokyo",
           image: "https://images.unsplash.com/photo-1595456982104-14cc660c4d22?q=80&w=1470&auto=format&fit=crop"
@@ -92,7 +92,7 @@ export const sampleItinerary = {
         {
           time: "13:00",
           title: "Senso-ji Temple",
-          type: "culture",
+          type: [3],
           details: "Visit Tokyo's oldest Buddhist temple",
           location: "Asakusa, Tokyo",
           image: "https://images.unsplash.com/photo-1583084647979-b53fbbc15e79?q=80&w=1374&auto=format&fit=crop"
@@ -100,7 +100,7 @@ export const sampleItinerary = {
         {
           time: "16:00",
           title: "Harajuku & Meiji Shrine",
-          type: "sightseeing",
+          type: [2],
           details: "Experience modern and traditional Japan side by side",
           location: "Harajuku, Tokyo",
           image: "https://images.unsplash.com/photo-1542931287-023b922fa89b?q=80&w=1374&auto=format&fit=crop"

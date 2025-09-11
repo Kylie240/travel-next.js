@@ -14,7 +14,7 @@ export type CreateItinerary = {
     countries: string[];
     cities: City[];
     days: Day[];
-    itineraryTags: string[];
+    itineraryTags: number[];
     notes: Note[];
     budget?: number;
 }

@@ -28,7 +28,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { activityTags, itineraryTags } from "@/lib/constants/tags"
+import { activityTagsMap, itineraryTagsMap } from "@/lib/constants/tags"
 import { sampleItinerary } from "@/lib/constants/sample-itinerary"
 import { createSchema } from "@/validation/createSchema"
 import { toast } from "sonner"
@@ -41,6 +41,7 @@ import { CreateItinerary } from "@/types/createItinerary"
 import { Day } from "@/types/Day"
 import { Note } from "@/types/Note"
 import { Activity } from "@/types/Activity"
+import { supabase } from "@/utils/supabase/superbase-client"
 type City = { city: string; country: string };
 type FormData = {
   status: 'draft' | 'published';
@@ -52,42 +53,10 @@ type FormData = {
   countries: string[];
   cities: City[];
   days: Day[];
-  itineraryTags: string[];
+  itineraryTags: number[];
   notes: Note[];
   budget?: number;
 };
-
-interface TripDay {
-  id: string;
-  image?: string;
-  cityName: string;
-  countryName: string;
-  title: string;
-  description: string;
-  budget?: number;
-  notes?: string;
-  activities?: Array<{
-    id: string;
-    time?: string;
-    duration?: string;
-    image?: string;
-    title: string;
-    description?: string;
-    type?: string;
-    link?: string; // Make link optional to match the schema
-    photos?: string[];
-    price?: number;
-  }>;
-  showAccommodation: boolean;
-  accommodation?: {
-    name: string;
-    type: string;
-    location: string;
-    price?: number;
-    photos?: string[];
-    link?: string;
-  };
-}
 
 const INITIAL_DAY: Day = {
   id: '1',
@@ -134,6 +103,35 @@ function SortableDay({ day, index, form, onRemoveDay }: {
   const [customCity, setCustomCity] = useState({ city: '', country: '' });
   // Add state for accommodation selection
   const [showNewAccommodation, setShowNewAccommodation] = useState(false);
+  const [activityTags, setActivityTags] = useState<Array<{id: number; name: string; icon: any}>>([])
+
+  useEffect(() => {
+    const fetchActivityTags = async () => {
+      try {
+        const { data, error } = await supabase
+        .from('tags_activity')
+        .select('*')
+        .order('name')
+        
+        if (error) {
+          throw error
+        }
+
+        const transformedTags = data.map(tag => ({
+          id: tag.id,
+          name: tag.name,
+          icon: tag.icon || PenSquare // Using PenSquare as default icon if none provided
+        }))
+
+        setActivityTags(transformedTags)
+      } catch (error) {
+        console.error('Error fetching activity tags:', error)
+        toast.error('Failed to load activity tags')
+      }
+    }
+
+    fetchActivityTags()
+  }, [supabase])
   
   // Get existing accommodations from all days
   const getExistingAccommodations = () => {
@@ -473,7 +471,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                     id: Math.random().toString(),
                     title: '',
                     description: '',
-                    type: '',
+                    type: undefined as unknown as number | undefined,
                     link: '',
                     time: undefined
                   })}
@@ -532,9 +530,10 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                           <div>
                             <Label className="text-[16px] font-medium mb-3 ml-1">Type</Label>
                             <Select
-                              value={form.watch(`days.${index}.activities.${activityIndex}.type`) || ''}
+                              value={form.watch(`days.${index}.activities.${activityIndex}.type`)?.toString()}
                               onValueChange={(value: string) => {
-                                form.setValue(`days.${index}.activities.${activityIndex}.type`, value === 'clear' ? '' : value, {
+                                const numValue = parseInt(value);
+                                form.setValue(`days.${index}.activities.${activityIndex}.type`, numValue === 0 ? undefined : numValue, {
                                   shouldValidate: true,
                                   shouldDirty: true,
                                   shouldTouch: true
@@ -543,18 +542,22 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                             >
                               <SelectTrigger className="rounded-xl">
                                 <SelectValue placeholder="Select a type">
-                                  {form.watch(`days.${index}.activities.${activityIndex}.type`) || "Select a type"}
+                                  {form.watch(`days.${index}.activities.${activityIndex}.type`) 
+                                    ? activityTags.find(t => t.id === form.watch(`days.${index}.activities.${activityIndex}.type`))?.name 
+                                    : "Select a type"}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent position="popper" side="bottom" align="start" className="max-h-[200px] overflow-y-auto">
-                                {form.watch(`days.${index}.activities.${activityIndex}.type`) && (
-                                  <SelectItem value="clear" className="text-red-500 cursor-pointer">
+                                {form.watch(`days.${index}.activities.${activityIndex}.type`) !== undefined && (
+                                  <SelectItem value={undefined} className="text-red-500 cursor-pointer">
                                     Clear selection
                                   </SelectItem>
                                 )}
                                 {activityTags.map(tag => (
-                                  <SelectItem key={tag.name} value={tag.name} className="cursor-pointer">
-                                    {tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}
+                                  <SelectItem key={tag.id} value={tag.id.toString()} className="cursor-pointer">
+                                    <div className="flex items-center gap-2">
+                                      {tag.icon && <tag.icon className="w-3 h-3" />} {tag.name}
+                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -616,7 +619,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                     id: Math.random().toString(),
                     title: '',
                     description: '',
-                    type: '',
+                    type: undefined,
                     link: '',
                     time: undefined
                   })}
@@ -776,6 +779,37 @@ export default function CreatePage() {
   const supabase = createClientComponentClient()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [itineraryTags, setItineraryTags] = useState<Array<{id: number; name: string; icon: any}>>([])
+
+  // Fetch itinerary tags from Supabase
+  useEffect(() => {
+    const fetchItineraryTags = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tags_itinerary')
+          .select('*')
+          .order('name')
+        
+        if (error) {
+          throw error
+        }
+
+        // Transform the data to match the expected format
+        const transformedTags = data.map(tag => ({
+          id: tag.id,
+          name: tag.name,
+          icon: itineraryTagsMap.find(t => t.id === tag.id)?.icon || PenSquare // Using PenSquare as default icon if none provided
+        }))
+
+        setItineraryTags(transformedTags)
+      } catch (error) {
+        console.error('Error fetching itinerary tags:', error)
+        toast.error('Failed to load itinerary tags')
+      }
+    }
+
+    fetchItineraryTags()
+  }, [supabase])
 
   useEffect(() => {
     const getUser = async () => {
@@ -800,6 +834,7 @@ export default function CreatePage() {
       subscription.unsubscribe()
     }
   }, [supabase])
+  
   const [currentStep, setCurrentStep] = useState(1)
   const [initialCountry, setInitialCountry] = useState('')
 
@@ -823,7 +858,7 @@ export default function CreatePage() {
         title: '',
         showAccommodation: false
       }],
-      itineraryTags: [],
+      itineraryTags: [] as number[],
       notes: [],
       // budget: null
     }
@@ -903,7 +938,7 @@ export default function CreatePage() {
               image: activity.image || '',
               title: activity.title || '',
               description: activity.details || '',
-              type: activity.type || '',
+              type: activity.type || undefined,
               link: activity.link || '',
               photos: activity.photos || [],
               price: activity.price || 0,
@@ -979,7 +1014,7 @@ export default function CreatePage() {
           image: activity.image || '',
           title: activity.title || '',
           description: activity.description || '',
-          type: activity.type || '',
+          type: activity.type || undefined,
           link: activity.link || '',
           photos: activity.photos || [],
           price: activity.price || 0
@@ -1160,7 +1195,7 @@ export default function CreatePage() {
     }
   }
 
-  const toggleCategory = (categoryId: string) => {
+  const toggleCategory = (categoryId: number) => {
     const currentTags = form.getValues('itineraryTags')
     const newTags = currentTags.includes(categoryId)
       ? currentTags.filter(c => c !== categoryId)
@@ -1411,7 +1446,7 @@ export default function CreatePage() {
                     <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
                     <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-3 w-full">
                       {itineraryTags.map((category) => {
-                        const isSelected = form.watch('itineraryTags').includes(category.name)
+                        const isSelected = form.watch('itineraryTags').includes(category.id)
                         const Icon = category.icon
                         return (
                           <label key={category.name} className="flex items-center gap-2">
@@ -1419,7 +1454,7 @@ export default function CreatePage() {
                               type="button"
                               onClick={(e) => {
                                 e.preventDefault();
-                                toggleCategory(category.name);
+                                toggleCategory(category.id);
                               }}
                               className={`flex justify-center items-center gap-2 px-4 py-3 sm:py-4 md:gap-2 md:py-5 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
                               disabled={form.formState.isSubmitting}

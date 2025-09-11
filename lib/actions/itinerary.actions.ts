@@ -7,7 +7,8 @@ import { supabase } from "@/utils/supabase/superbase-client";
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
 
 type CreateActivity = {
-    day_id: string,
+    itinerary_id: string,
+    day_number: number,
     activity_number: number,
     time: string,
     duration: string,
@@ -15,8 +16,17 @@ type CreateActivity = {
     title: string,
     description: string,
     location: string,
-    type: string,
+    type: number,
     link: string,
+}
+
+type CreateAccommodation = {
+    itinerary_id: string,
+    name: string,
+    type: string,
+    location: string,
+    link: string,
+    day_number: number,
 }
 
 export const getItineraries = async (options?: GetItineraryOptions) => {
@@ -92,7 +102,7 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
     try {
          const { data, error } = await query
          .range(firstItemIndex, lastItemIndex)
-         .eq('status', ItineraryStatusEnum.Published);
+         .eq('status', ItineraryStatusEnum.published);
          if (error) throw error
 
          const total = data.length;
@@ -138,9 +148,6 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             //return to homepage
         }
 
-        const activityTags = itinerary.days.flatMap(day => day.activities?.map(activity => activity.type));
-        const cities = itinerary.days.map(day => day.cityName);
-
         const {data: itineraryRow, error: itineraryError} = await supabase
         .from('itineraries')
         .insert([{
@@ -163,6 +170,7 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
         }
 
         const itineraryId = itineraryRow.id;
+        const accommodationRows: CreateAccommodation[] = [];
 
         // Insert Days
         if (itinerary.days?.length > 0) {
@@ -183,15 +191,42 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             
             if (dayError) throw dayError;
 
+            // Insert itinerary tags
+            if (itinerary.itineraryTags.length > 0) {
+                const itineraryRows = itinerary.itineraryTags.map((tag, index) => ({
+                    itinerary_id: itineraryId,
+                    tag_number: index + 1,
+                    tag_id: tag,
+                }));
+                const { error: itineraryTagError } = await supabase
+                .from('itinerary_tags')
+                .insert(itineraryRows)
+                .select()
+                
+                if (itineraryTagError) throw itineraryTagError;
+            }
+
             // Map days for activities
             const activityRows: CreateActivity[] = [];
             for (let i = 0; i < itinerary.days.length; i++) {
-                const dayId = insertedDays[i].id;
+                const dayNumber = i + 1;
                 const activities = itinerary.days[i].activities || [];
+
+                if (itinerary.days[i].accommodation.name) {
+                    accommodationRows.push({
+                        itinerary_id: itineraryId,
+                        day_number: dayNumber,
+                        name: itinerary.days[i].accommodation.name,
+                        type: itinerary.days[i].accommodation.type || undefined,
+                        location: itinerary.days[i].accommodation.location || undefined,
+                        link: itinerary.days[i].accommodation.link || undefined,
+                    })
+                }
 
                 if (activities.length > 0) {
                     const activityRow: CreateActivity[] = activities.map((activity, index) => ({
-                        day_id: dayId,
+                        itinerary_id: itineraryId,
+                        day_number: dayNumber,
                         activity_number: index + 1,
                         time: activity.time || undefined,
                         duration: activity.duration || undefined,
@@ -205,13 +240,20 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
                     activityRows.push(...activityRow);
                 }
 
-                console.log(activityRows);
                 const {error: activityError} = await supabase
                 .from('itinerary_activities')
                 .insert(activityRows);
 
                 if (activityError) throw activityError;
             }
+        }
+
+        if (accommodationRows.length > 0) {
+            const {error: accommodationError} = await supabase
+            .from('itinerary_accommodations')
+            .insert(accommodationRows);
+            
+            if (accommodationError) throw accommodationError;
         }
 
         // Insert notes
@@ -222,8 +264,6 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
                 title: note.title,
                 content: note.content,
             }))
-
-            console.log(noteRows);
 
             const {error: noteError} = await supabase
             .from('itinerary_notes')
@@ -256,7 +296,6 @@ export const getItineraryByUserId = async (userId?: string) => {
         .eq('creator_id', userId);
 
         if (itinerariesError) throw itinerariesError;
-        console.log(itineraries);
         return itineraries;
     } catch (error) {
         console.error('Error creating itinerary:', error);
@@ -275,7 +314,6 @@ export const getItineraryById = async (itineraryId: string) => {
         .eq('id', itineraryId);
 
         if (itineraryError) throw itineraryError;
-        console.log(itinerary);
         return itinerary;
     } catch (error) {
         console.error('Error retrieving itinerary:', error);

@@ -6,7 +6,7 @@ export type Activity = {
     title: string,
     description?: string,
     location?: string,
-    type?: string,
+    type?: number,
     link?: string,
     photos?: string[],
     price?: number,
