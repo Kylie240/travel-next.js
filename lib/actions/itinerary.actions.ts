@@ -5,6 +5,9 @@ import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { CreateItinerary } from "@/types/createItinerary";
 import { supabase } from "@/utils/supabase/superbase-client";
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
+import { Itinerary } from "@/types/itinerary";
+import { itineraryTagsMap } from "../constants/tags";
+import { ItinerarySummary } from "@/types/ItinerarySummary";
 
 type CreateActivity = {
     itinerary_id: string,
@@ -154,7 +157,7 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             title: itinerary.title,
             short_description: itinerary.shortDescription,
             main_image: itinerary.mainImage,
-            status: ItineraryStatusEnum[itinerary.status],
+            status: itinerary.status,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             duration: itinerary.duration,
@@ -212,7 +215,7 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
                 const dayNumber = i + 1;
                 const activities = itinerary.days[i].activities || [];
 
-                if (itinerary.days[i].accommodation.name) {
+                if (itinerary.days[i].accommodation?.name) {
                     accommodationRows.push({
                         itinerary_id: itineraryId,
                         day_number: dayNumber,
@@ -256,6 +259,17 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             if (accommodationError) throw accommodationError;
         }
 
+        const {error: interactionError} = await supabase
+        .from('itinerary_interactions')
+        .insert({
+            itinerary_id: itineraryId,
+            views: null,
+            rating: null,
+            likes: null,
+        });
+
+        if (interactionError) throw interactionError;
+
         // Insert notes
         if (itinerary?.notes?.length > 0) {
             const noteRows = itinerary.notes.map((note, index) => ({
@@ -281,6 +295,14 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
     }
 }
 
+export const updateItinerary = async (itinerary: Itinerary) => {
+    const supabase = createServerActionClient({ cookies });
+    const { error: itineraryError } = await supabase
+    .from('itineraries')
+    .update(itinerary)
+    .eq('id', itinerary.id);
+}
+
 export const getItineraryByUserId = async (userId?: string) => {
     // const token = cookies().get("token");
     // if (!token) {
@@ -296,13 +318,60 @@ export const getItineraryByUserId = async (userId?: string) => {
         .eq('creator_id', userId);
 
         if (itinerariesError) throw itinerariesError;
-        return itineraries;
+
+        const { data: itineraryInteractions, error: itineraryInteractionsError } = await supabase
+        .from('itinerary_interactions')
+        .select('views, rating, likes')
+        .eq('itinerary_id', itineraries.id);
+
+        const mappedItineraries = itineraries.map((itinerary: Itinerary) => ({
+            id: itinerary.id,
+            title: itinerary.title,
+            duration: itinerary.duration,
+            shortDescription: itinerary.shortDescription,
+            detailedOverview: itinerary.detailedOverview,
+            mainImage: itinerary.mainImage,
+            countries: itinerary.countries,
+            cities: itinerary.cities,
+            days: itinerary.days,
+            status: itinerary.status,
+            itineraryTags: itinerary.itineraryTags,
+            activityTags: itinerary.activityTags,
+            notes: itinerary.notes,
+            created: itinerary.created,
+            updated: itinerary.updated,
+            views: itineraryInteractions[0].views,
+            rating: itineraryInteractions[0].rating,
+            budget: itinerary.budget,
+            likes: itineraryInteractions[0].likes,
+            quickFilter: itinerary.quickFilter,
+            creator_id: itinerary.creator_id,
+
+        }));
+
+        return mappedItineraries;
     } catch (error) {
-        console.error('Error creating itinerary:', error);
-        throw new Error(`Failed to create itinerary: ${error instanceof Error ? error.message : String(error)}`);
+        console.error('Error fetching itineraries:', error);
+        throw new Error(`Failed to fetch itineraries: ${error instanceof Error ? error.message : String(error)}`);
     }
     
 }
+
+export const getItinerarySummaries = async (userId?: string) => {
+    const { data, error } = await supabase
+    .rpc("get_itinerary_summary", { p_creator_id: userId }) as { 
+        data: ItinerarySummary[] | null, 
+        error: Error | null };
+
+    if (error) {
+    console.error("Error fetching itineraries:", error);
+    } else {
+    console.log("User itineraries:", data);
+    }
+
+    return data;
+}
+
 
 export const getItineraryById = async (itineraryId: string) => {
     try {
@@ -310,13 +379,128 @@ export const getItineraryById = async (itineraryId: string) => {
 
         const { data: itinerary, error: itineraryError } = await supabase
         .from('itineraries')
-        .select('*')
-        .eq('id', itineraryId);
+        .select('id, title, duration, short_description, detailed_overview, main_image, created_at, updated_at, duration, budget, creator_id, status')
+        .eq('id', itineraryId)
+        .single();
 
+        console.log(itinerary);
+        
         if (itineraryError) throw itineraryError;
-        return itinerary;
+        
+        const { data: itineraryDays, error: itineraryDaysError } = await supabase
+        .from('itinerary_days')
+        .select('*')
+        .eq('itinerary_id', itineraryId);
+        // .order('day_number', { ascending: true });
+        //sort by day number
+        console.log(itineraryDays);
+
+        if (itineraryDaysError) throw itineraryDaysError;
+
+        const { data: itineraryAccommodations, error: itineraryAccommodationsError } = await supabase
+        .from('itinerary_accommodations')
+        .select('*')
+        .eq('itinerary_id', itineraryId);
+
+        if (itineraryAccommodationsError) throw itineraryAccommodationsError;
+
+        const { data: itineraryActivities, error: itineraryActivitiesError } = await supabase
+        .from('itinerary_activities')
+        .select('*')
+        .eq('itinerary_id', itineraryId);
+
+        if (itineraryActivitiesError) throw itineraryActivitiesError;
+        
+        const { data: itineraryNotes, error: itineraryNotesError } = await supabase
+        .from('itinerary_notes')
+        .select('*')
+        .eq('itinerary_id', itineraryId);
+
+        if (itineraryNotesError) throw itineraryNotesError;
+
+        const { data: itineraryTags, error: itineraryTagsError } = await supabase
+        .from('itinerary_tags')
+        .select('*')
+        .eq('itinerary_id', itineraryId);
+
+        if (itineraryTagsError) throw itineraryTagsError;
+
+        const {data: itinerary_interactions, error: itinerary_interactionsError} = await supabase
+        .from('itinerary_interactions')
+        .select('views, rating, likes')
+        .eq('itinerary_id', itineraryId);
+
+        if (itinerary_interactionsError) throw itinerary_interactionsError;
+
+        const countries = itineraryDays.map((day: any) => day.country);
+        const cities = itineraryDays.map((day: any) => day.city);
+        const itineraryTagList = itineraryTags.map((tag: any) => itineraryTagsMap[tag.tag_id].name);
+        const activityTagList = itineraryActivities.map((activity: any) => activity.tag_id);
+        // const continents = itineraryDays.map((day: any) => day.continent);
+
+        // Sanitize the data
+        const returnItinerary: Itinerary = {
+            id: itinerary.id,
+            title: itinerary.title,
+            duration: itinerary.duration,
+            shortDescription: itinerary.short_description,
+            detailedOverview: itinerary.detailed_overview,
+            mainImage: itinerary.main_image,
+            countries: countries,
+            cities: cities,
+            days: itineraryDays,
+            status: itinerary.status,
+            itineraryTags: itineraryTagList,
+            activityTags: activityTagList,
+            notes: itineraryNotes,
+            budget: itinerary.budget,
+            created: itinerary.created_at,
+            updated: itinerary.updated_at,
+            views: itinerary_interactions[0].views,
+            rating: itinerary_interactions[0].rating,
+            likes: itinerary_interactions[0].likes,
+            creator_id: itinerary.creator_id,
+        }
+
+        returnItinerary.days.forEach((day: any) => {
+            day.activities = itineraryActivities.filter((activity: any) => activity.day_number === day.day_number);
+        });
+        
+        return returnItinerary;
     } catch (error) {
         console.error('Error retrieving itinerary:', error);
         throw new Error(`Failed to retrieve itinerary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+export const deleteItinerary = async (itineraryId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        // Verify user is authenticated
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            throw new Error("Not authenticated");
+        }
+
+        // Delete the itinerary
+        const { error: itineraryError } = await supabase
+        .from('itineraries')
+        .delete()
+        .eq('id', itineraryId);
+
+        if (itineraryError) {
+            throw itineraryError;
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting itinerary:', error);
+        throw new Error(`Failed to delete itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
 }

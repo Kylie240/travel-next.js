@@ -35,16 +35,18 @@ import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
-import { createItinerary } from "@/lib/actions/itinerary.actions"
+import { createItinerary, getItineraryById, updateItinerary } from "@/lib/actions/itinerary.actions"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { CreateItinerary } from "@/types/createItinerary"
 import { Day } from "@/types/Day"
 import { Note } from "@/types/Note"
 import { Activity } from "@/types/Activity"
 import { supabase } from "@/utils/supabase/superbase-client"
+import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
+import { Itinerary } from "@/types/itinerary"
 type City = { city: string; country: string };
 type FormData = {
-  status: 'draft' | 'published';
+  status: number;
   title: string;
   shortDescription: string;
   mainImage: string;
@@ -842,7 +844,7 @@ export default function CreatePage() {
     resolver: zodResolver(createSchema),
     mode: 'onSubmit',
     defaultValues: {
-      status: 'draft' as const,
+      status: ItineraryStatusEnum.draft,
       title: '',
       shortDescription: '',
       mainImage: '',
@@ -907,66 +909,14 @@ export default function CreatePage() {
   }
 
   useEffect(() => {
-    const itineraryId = searchParams.get('itineraryId')    
-    if (itineraryId) {
-      // Map the itinerary data to the form structure
-      const mappedData: FormData = {
-        status: 'draft',
-        title: sampleItinerary.title,
-        shortDescription: sampleItinerary.description,
-        mainImage: sampleItinerary.image,
-        detailedOverview: sampleItinerary.details,
-        duration: sampleItinerary.schedule.length,
-        countries: sampleItinerary.countries,
-        cities: (sampleItinerary.cities as Array<string | City>).map(city => ({
-          city: typeof city === 'string' ? city : city.city,
-          country: typeof city === 'string' ? sampleItinerary.countries[0] : city.country
-        })),
-        days: sampleItinerary.schedule.map((day: any, index: number) => ({
-          id: (index + 1).toString(),
-          image: day.image || '',
-          cityName: day.activities?.[0]?.location?.split(', ')?.[0] || '',
-          countryName: day.activities?.[0]?.location?.split(', ')?.[1] || '',
-          title: day.title || '',
-          description: day.description || '',
-          notes: day.notes || '',
-          activities: (day.activities || []).map((activity: any, actIndex: number) => {
-            const activityData: Activity = {
-              id: `${index + 1}-${actIndex + 1}`,
-              time: activity.time || undefined,
-              duration: activity.duration || undefined,
-              image: activity.image || '',
-              title: activity.title || '',
-              description: activity.details || '',
-              type: activity.type || undefined,
-              link: activity.link || '',
-              photos: activity.photos || [],
-              price: activity.price || 0,
-            };
-            return activityData;
-          }),
-          showAccommodation: !!day.accommodation,
-          accommodation: {
-            name: day.accommodation?.name || '',
-            type: day.accommodation?.type || '',
-            location: day.accommodation?.location || '',
-            price: 0,
-            photos: day.accommodation?.image ? [day.accommodation.image] : [],
-          }
-        })) as Day[],
-        itineraryTags: sampleItinerary.itineraryTags,
-        notes: (sampleItinerary.creator.notes || []).map((note: any, index: number) => {
-          const noteData: Note = {
-            id: (index + 1).toString(),
-            title: note.title || '',
-            content: note.content || '',
-            expanded: true
-          };
-          return noteData;
-        })
+    const init = async () => {
+      const itineraryId = searchParams.get('itineraryId')
+      if (itineraryId) {
+        const itinerary = await getItineraryById(itineraryId) as Itinerary;
+        form.reset(itinerary)
       }
-      form.reset(mappedData)
     }
+    init()
   }, [searchParams, form])
 
   const scrollToTop = () => {
@@ -1062,7 +1012,7 @@ export default function CreatePage() {
       form.setValue('notes', nonEmptyNotes)
 
       // Set status to published
-      form.setValue('status', 'published')
+      form.setValue('status', ItineraryStatusEnum.published)
 
       await handleSaveItinerary()
     } catch (error) {
@@ -1080,7 +1030,7 @@ export default function CreatePage() {
       
       const formData = form.getValues();
       const itineraryData = {
-        status: formData.status as 'draft' | 'published',
+        status: formData.status as number,
         title: formData.title,
         shortDescription: formData.shortDescription,
         mainImage: formData.mainImage,
@@ -1154,18 +1104,41 @@ export default function CreatePage() {
         toast.error('Please fill in all required fields')
       }
     } catch (error) {
-      console.error('Submit error:', error)
       toast.error('Error submitting form')
     }
   }, (errors) => {
-    console.error('Validation errors:', errors)
     toast.error('Please fill in all required fields')
   })
 
   const saveDraft = async () => {
-    const data = form.getValues()
-    // TODO: Save draft to backend
-    console.log('Saving draft:', data)
+    try {
+      if (!user) {
+        toast.error('Please sign in to save your itinerary')
+        router.push('/')
+        return
+      }
+
+      const formData = form.getValues()
+      const itineraryData: CreateItinerary = {
+        ...formData,
+        status: ItineraryStatusEnum.draft
+      }
+      
+      if (itineraryData.id) {
+        const response = await updateItinerary(itineraryData)
+      } else {
+        const response = await createItinerary(itineraryData)
+      }
+      
+      if (response.itineraryId) {
+        toast.success('Draft saved successfully')
+        router.push('/my-itineraries')
+      } else {
+        throw new Error('Failed to save draft')
+      }
+    } catch (error) {
+      toast.error('Error saving draft')
+    }
   }
 
   const sensors = useSensors(
@@ -1331,11 +1304,9 @@ export default function CreatePage() {
                   </div>
 
                   <div className="flex justify-end gap-4">
-                    {form.getValues("status") === 'draft' && (
-                      <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
-                        Save as Draft
-                      </Button>
-                    )}
+                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
+                      Save Draft
+                    </Button>
                     <Button 
                       type="button" 
                       onClick={(e) => {
@@ -1410,7 +1381,7 @@ export default function CreatePage() {
                       Previous
                     </Button>
                     <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
-                      Save as Draft
+                      Save Draft
                     </Button>
                     <Button 
                       type="button"
@@ -1609,7 +1580,7 @@ export default function CreatePage() {
                       onClick={saveDraft}
                       disabled={form.formState.isSubmitting}
                     >
-                      Save as Draft
+                      Save Draft
                     </Button>
                     <Button 
                       type="submit"

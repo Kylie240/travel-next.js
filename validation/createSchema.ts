@@ -3,7 +3,7 @@ import { daySchema } from './daySchema'
 import { noteSchema } from './noteSchema'
 
 export const createSchema = z.object({
-    status: z.enum(['draft', 'published']),
+    status: z.number(),
     title: z.string().min(1, "Name is required"),
     shortDescription: z.string().min(1, "Short description is required"),
     mainImage: z.string().url("Must be a valid URL"),

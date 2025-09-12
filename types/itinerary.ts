@@ -13,20 +13,17 @@ export type Itinerary = {
     mainImage: string;
     countries: string[];
     cities: City[];
-    continents: string[];
     days: Day[];
-    status: ItineraryStatus;
+    status: number;
     itineraryTags: string[];
     activityTags: string[];
     notes: Note[];
     created: string;  // ISO date string
     updated: string;  // ISO date string
-    createdBy: string;
     views?: number;
     rating?: number;
-    price?: number;
+    budget?: number;
     likes?: number;
     quickFilter?: string;
-    details?: string;
-    creatorId?: string;
+    creator_id?: string;
 }

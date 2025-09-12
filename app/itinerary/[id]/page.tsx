@@ -15,7 +15,7 @@ import { getItineraryById } from "@/lib/actions/itinerary.actions"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const paramsValue = await params;
-  const itinerary = await getItineraryById(paramsValue.id);
+  const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
   // const currentUser = await getCurrentUser();
   const currentUser = {
     uid: "123",
@@ -46,8 +46,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
           <div className="flex-1 h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
-              src={itinerary.}
-              alt={itinerary.name}
+              src={itinerary.mainImage}
+              alt={itinerary.title}
               fill
               className="object-cover"
               priority
@@ -56,16 +56,16 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             <div className="absolute inset-0 flex items-end md:items-center">
               <div className="container px-0 mx-0 lg:mx-auto">
                 <div className="text-white lg:max-w-2xl m-0 p-6">
-                  <h1 className="text-3xl max-w-[80%] md:max-w-none leading-[40px] md:leading-none md:text-3xl lg:text-5xl font-bold mb-4">{itinerary.name}</h1>
+                  <h1 className="text-3xl max-w-[80%] md:max-w-none leading-[40px] md:leading-none md:text-3xl lg:text-5xl font-bold mb-4">{itinerary.title}</h1>
                   <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.shortDescription}</p>
                   <div className="flex items-center gap-6 text-sm">
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 mr-2" />
-                      {itinerary.shortDescription}
+                      {itinerary.duration}
                     </div>
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 mr-2" />
-                      {itinerary.countries.map((country: any) => country.value).join(' · ')}
+                      {itinerary.countries.length > 0 ? itinerary.countries.map((country: any) => country).join(' · ') : ''}
                     </div>
                     <div className="flex items-center">
                       <Users className="h-5 w-5 mr-2" />
@@ -144,7 +144,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 </div>
               </div>
               <div className="flex gap-2">
-                {currentUser?.uid !== itinerary.creatorId ? (
+                {currentUser?.uid !== itinerary.creator_id ? (
                   <Link href={`/itinerary/${itinerary.id}/edit`}>
                     <Edit size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2"/>
                   </Link>
@@ -204,7 +204,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   )} />
                 </button>
               )} */}
-              <p>{itinerary.details}</p>
+              <p>{itinerary.detailedOverview}</p>
             </div>
           </div>
         </div>
@@ -264,7 +264,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   </p>
                 </div>
               </div>
-              <p className="text-gray-600 mb-6">{itinerary.details}</p>
+              <p className="text-gray-600 mb-6">{itinerary.detailedOverview}</p>
               <div className="space-y-4">
                 {/* Category Tags */}
                 <div className="mb-4 mt-2">

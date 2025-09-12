@@ -5,7 +5,7 @@ import { Note } from "./Note";
 type City = { city: string, country: string};
 
 export type CreateItinerary = {
-    status: ItineraryStatus;
+    status: number;
     title: string;
     shortDescription: string;
     mainImage: string;
