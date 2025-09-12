@@ -38,9 +38,7 @@ export default function MyItinerariesPage() {
       setUser(currentUser)
       if (currentUser) {
         const userItineraries = await getItinerarySummaries(currentUser.id)
-        console.log(currentUser.id)
-        setItinerarySummaries(userItineraries as ItinerarySummary[])  
-        console.log(userItineraries)
+        setItinerarySummaries(userItineraries as ItinerarySummary[])
         setLoading(false)
       } else {
         setItinerarySummaries(null)
@@ -58,7 +56,7 @@ export default function MyItinerariesPage() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl md:text-4xl font-semibold mb-6">My Itineraries</h1>
-          {itineraries && itineraries?.length > 0 && (
+          {itinerarySummaries && itinerarySummaries?.length > 0 && (
             <Button disabled={loading}>
               <Link href="/create">
                 Create New Itinerary
@@ -72,9 +70,9 @@ export default function MyItinerariesPage() {
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>
         ) : (
-          (itineraries && itineraries?.length > 0) ? (
+          (itinerarySummaries && itinerarySummaries?.length > 0) ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
-              {itineraries.map((itinerary: Itinerary) => (
+              {itinerarySummaries.map((itinerary: ItinerarySummary) => (
                 <Link key={itinerary.id} href={itinerary.status === ItineraryStatusEnum.published ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
                   <div
                     className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
