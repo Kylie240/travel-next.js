@@ -5,4 +5,5 @@ export type ItinerarySummary = {
     mainImage: string | null; // allow null if some itineraries don't have an image
     views: number;
     likes: number;
+    saves: number;
   };

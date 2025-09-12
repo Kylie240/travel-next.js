@@ -1,10 +1,10 @@
 "use client"
 
 import Image from "next/image"
-import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2 } from "lucide-react"
+import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, ThumbsUp, Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { getItineraryByUserId, getItinerarySummaries } from "@/lib/actions/itinerary.actions"
+import { deleteItinerary, getItineraryByUserId, getItinerarySummaries, updateItineraryStatus } from "@/lib/actions/itinerary.actions"
 import Link from "next/link"
 import DeleteButton from "./delete-button"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -13,6 +13,7 @@ import { useEffect, useState } from "react"
 import { User, Session } from "@supabase/supabase-js"
 import { ItineraryStatusEnum, ItineraryStatusEnumString } from "@/enums/itineraryStatusEnum"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
+import { toast } from "sonner"
 
 export default function MyItinerariesPage() {
   const supabase = createClientComponentClient()
@@ -73,7 +74,7 @@ export default function MyItinerariesPage() {
           (itinerarySummaries && itinerarySummaries?.length > 0) ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
               {itinerarySummaries.map((itinerary: ItinerarySummary) => (
-                <Link key={itinerary.id} href={itinerary.status === ItineraryStatusEnum.published ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
+                <Link key={itinerary.id} href={itinerary.status !== ItineraryStatusEnum.draft ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
                   <div
                     className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
                   >
@@ -115,26 +116,71 @@ export default function MyItinerariesPage() {
                               >
                                 <Link href={`/create?itineraryId=${itinerary.id}`} className="flex items-center gap-1">
                                   <Edit className="mr-2 h-4 w-4" />
-                                    Edit Itinerary
+                                    Edit
                                 </Link>
                               </DropdownMenu.Item>
-                              <DropdownMenu.Item
+                              {itinerary.status == ItineraryStatusEnum.archived && (
+                                <DropdownMenu.Item
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                 onClick={async (event) => {
+                                      event.stopPropagation()
+                                      if (confirm('Are you sure you want to publish this itinerary?')) {
+                                          try {
+                                              await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.published)
+                                              toast.success('Itinerary published successfully')
+                                              window.location.reload()
+                                          } catch (error) {
+                                              toast.error('Failed to publish itinerary')
+                                          }
+                                      }
+                                  }}
                               >
-                                <Link href={`/itinerary/${itinerary.id}`} className="flex items-center gap-1">
-                                  <Eye className="mr-2 h-4 w-4" />
-                                    View Itinerary
-                                </Link>
-                              </DropdownMenu.Item>
-                              <DropdownMenu.Item
-                                className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                              >
-                                <Link href={`/itinerary/${itinerary.id}`} className="flex items-center gap-1">
+                                <div className="flex">
                                   <Archive className="mr-2 h-4 w-4" />
-                                    Archive Itinerary
-                                </Link>
+                                    Publish
+                                </div>
                               </DropdownMenu.Item>
-                              <DeleteButton itineraryId={itinerary.id} />
+                              )}
+                              {itinerary.status == ItineraryStatusEnum.published && (
+                                <DropdownMenu.Item
+                                className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                 onClick={async (event) => {
+                                      event.stopPropagation()
+                                      if (confirm('Are you sure you want to archiv this itinerary?')) {
+                                          try {
+                                              await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.archived)
+                                              toast.success('Itinerary archived successfully')
+                                              window.location.reload()
+                                          } catch (error) {
+                                              toast.error('Failed to archive itinerary')
+                                          }
+                                      }
+                                  }}
+                              >
+                                <div className="flex">
+                                  <Archive className="mr-2 h-4 w-4" />
+                                    Archive
+                                </div>
+                              </DropdownMenu.Item>
+                              )}
+                              <DropdownMenu.Item
+                                  className="flex items-center px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
+                                  onClick={async (event) => {
+                                      event.stopPropagation()
+                                      if (confirm('Are you sure you want to delete this itinerary?')) {
+                                          try {
+                                              await deleteItinerary(itinerary.id)
+                                              toast.success('Itinerary deleted successfully')
+                                              window.location.reload()
+                                          } catch (error) {
+                                              toast.error('Failed to delete itinerary')
+                                          }
+                                      }
+                                  }}
+                              >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                              </DropdownMenu.Item>
                             </DropdownMenu.Content>
                           </DropdownMenu.Portal>
                         </DropdownMenu.Root>
@@ -145,11 +191,20 @@ export default function MyItinerariesPage() {
                         <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
                           {/* {itinerary?.cities?.length > 0 ? itinerary?.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")} */}
                         </p>
-                        {itinerary.views || itinerary.likes && (
-                          <div className="flex gap-2 items-end">
-                            <p className="text-sm mt-2">Views: {itinerary.views || 0}</p>
-                            <span> | </span>
-                            <p className="text-sm mt-2">Likes: {itinerary.likes || 0}</p>
+                        {itinerary.status == ItineraryStatusEnum.published && (
+                          <div className="flex gap-3">
+                            <div className="flex gap-1 items-center">
+                              <Eye className="h-4 w-4"/>
+                              <p className="text-sm">{itinerary.views}</p>
+                            </div>
+                            <div className="flex relative items-center">
+                              <ThumbsUp className="h-5 w-5 pb-1 pr-1"/>
+                              <p className="text-sm">{itinerary.likes}</p>
+                            </div>
+                            <div className="flex relative items-center">
+                              <Bookmark className="h-5 w-5 pb-1"/>
+                              <p className="text-sm">{itinerary.saves}</p>
+                            </div>
                           </div>
                         )}
                       </div>

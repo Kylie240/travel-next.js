@@ -372,6 +372,19 @@ export const getItinerarySummaries = async (userId?: string) => {
     return data;
 }
 
+export const updateItineraryStatus = async (itineraryId: string, status: number) => {
+    const { error } = await supabase
+    .from('itineraries')
+    .update({ status: status })
+    .eq('id', itineraryId);
+
+    if (error) {
+        console.error("Error updating itinerary status:", error);
+    } else {
+        console.log("Itinerary status updated successfully");
+    }
+    return { success: true };
+}
 
 export const getItineraryById = async (itineraryId: string) => {
     try {
