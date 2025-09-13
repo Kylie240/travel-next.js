@@ -11,6 +11,6 @@ export const daySchema = z.object({
     description: z.string().optional(),
     notes: z.string().optional(),
     activities: z.array(activitySchema).optional(),
-    showAccommodation: z.boolean(),
+    showAccommodation: z.boolean().optional(),
     accommodation: accommodationSchema.optional(),
   })

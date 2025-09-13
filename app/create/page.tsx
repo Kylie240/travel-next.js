@@ -470,7 +470,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                   variant="outline" 
                   size="sm"
                   onClick={() => appendActivity({
-                    id: Math.random().toString(),
+                    id: activityFields.length + 1,
                     title: '',
                     description: '',
                     type: undefined as unknown as number | undefined,
@@ -618,7 +618,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                   variant="outline" 
                   size="sm"
                   onClick={() => appendActivity({
-                    id: Math.random().toString(),
+                    id: activityFields.length + 1,
                     title: '',
                     description: '',
                     type: undefined,
@@ -819,11 +819,8 @@ export default function CreatePage() {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
       } catch (error) {
-        console.error('Error fetching user:', error)
         setUser(null)
-      } finally {
-        setLoading(false)
-      }
+      } 
     }
     getUser()
 
@@ -860,7 +857,7 @@ export default function CreatePage() {
         title: '',
         showAccommodation: false
       }],
-      itineraryTags: [] as number[],
+      itineraryTags: [],
       notes: [],
       // budget: null
     }
@@ -958,7 +955,7 @@ export default function CreatePage() {
       // Clean up and validate days
       const nonEmptyDays = data.days.map(day => {
         const activities = (day.activities || []).map(activity => ({
-          id: activity.id || Math.random().toString(),
+          id: activity.id,
           time: activity.time || '',
           duration: activity.duration || '',
           image: activity.image || '',
@@ -972,7 +969,7 @@ export default function CreatePage() {
 
         return {
           ...day,
-          id: day.id || Math.random().toString(),
+          id: day.id,
           cityName: day.cityName || '',
           countryName: day.countryName || '',
           title: day.title || '',
@@ -1003,7 +1000,7 @@ export default function CreatePage() {
 
       // Clean up empty notes
       const nonEmptyNotes = data.notes.map(note => ({
-        id: note.id || Math.random().toString(),
+        id: note.id,
         title: note.title || '',
         content: note.content || '',
         expanded: note.expanded ?? true
@@ -1043,7 +1040,7 @@ export default function CreatePage() {
         })),
         days: formData.days.map(day => {
           const activities = (day.activities || []).map(activity => ({
-            id: activity.id || Math.random().toString(),
+            id: activity.id,
             time: activity.time || undefined,
             duration: activity.duration || undefined,
             image: activity.image || '',
@@ -1057,7 +1054,7 @@ export default function CreatePage() {
 
           return {
             ...day,
-            id: day.id || Math.random().toString(),
+            id: day.id,
             cityName: day.cityName || '',
             countryName: day.countryName || '',
             title: day.title || '',
@@ -1067,7 +1064,7 @@ export default function CreatePage() {
         }),
         itineraryTags: formData.itineraryTags,
         notes: formData.notes.map(note => ({
-          id: note.id || Math.random().toString(),
+          id: note.id,
           title: note.title || '',
           content: note.content || '',
           expanded: note.expanded ?? true
@@ -1077,7 +1074,7 @@ export default function CreatePage() {
       
       const response = await createItinerary(itineraryData);
 
-      if (response.itineraryId) {
+      if (response) {
         toast.success('Form submitted successfully')
         router.push('/my-itineraries')
       } else {
@@ -1124,13 +1121,15 @@ export default function CreatePage() {
         status: ItineraryStatusEnum.draft
       }
       
-      if (itineraryData.id) {
-        const response = await updateItinerary(itineraryData)
+      let response = null;
+      if (isNewItinerary) {
+        const itineraryId = useSearchParams().get('itineraryId')
+        response = await updateItinerary(itineraryId, itineraryData)
       } else {
-        const response = await createItinerary(itineraryData)
+        response = await createItinerary(itineraryData)
       }
       
-      if (response.itineraryId) {
+      if (response) {
         toast.success('Draft saved successfully')
         router.push('/my-itineraries')
       } else {
@@ -1318,6 +1317,17 @@ export default function CreatePage() {
                     >
                       Next: Plan Days
                     </Button>
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      className="text-red hover:bg-red-200"
+                      disabled={form.formState.isSubmitting}
+                      onClick={(e) => {
+                        router.push('/my-itineraries')
+                      }}
+                    >
+                      Cancel
+                    </Button>
                   </div>
                 </div>
               )}
@@ -1394,6 +1404,17 @@ export default function CreatePage() {
                     >
                       Next: Final Details
                     </Button>
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      className="text-red hover:bg-red-200"
+                      disabled={form.formState.isSubmitting}
+                      onClick={(e) => {
+                        router.push('/my-itineraries')
+                      }}
+                    >
+                      Cancel
+                    </Button>
                   </div>
                 </div>
               )}
@@ -1453,7 +1474,7 @@ export default function CreatePage() {
                           type="button"
                           variant="outline"
                           onClick={() => {
-                            const newNoteId = (noteFields.length + 1).toString();
+                            const newNoteId = (noteFields.length + 1);
                             appendNote({ id: newNoteId, title: '', content: '', expanded: true })
                           }}
                           className="flex items-center gap-2"
@@ -1550,7 +1571,7 @@ export default function CreatePage() {
                         type="button"
                         variant="outline"
                         onClick={() => {
-                          const newNoteId = (noteFields.length + 1).toString();
+                          const newNoteId = (noteFields.length + 1);
                           appendNote({ id: newNoteId, title: '', content: '', expanded: true });
                         }}
                         disabled={form.formState.isSubmitting}
@@ -1587,7 +1608,18 @@ export default function CreatePage() {
                       className="bg-black text-white hover:bg-gray-800"
                       disabled={form.formState.isSubmitting}
                     >
-                      Create Itinerary
+                      Create
+                    </Button>
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      className="text-red hover:bg-red-200"
+                      disabled={form.formState.isSubmitting}
+                      onClick={(e) => {
+                        router.push('/my-itineraries')
+                      }}
+                    >
+                      Cancel
                     </Button>
                   </div>
                 </div>

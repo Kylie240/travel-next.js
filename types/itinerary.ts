@@ -15,8 +15,8 @@ export type Itinerary = {
     cities: City[];
     days: Day[];
     status: number;
-    itineraryTags: string[];
-    activityTags: string[];
+    itineraryTags: number[];
+    activityTags: number[];
     notes: Note[];
     created: string;  // ISO date string
     updated: string;  // ISO date string
