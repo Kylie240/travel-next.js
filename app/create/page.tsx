@@ -97,8 +97,12 @@ function SortableDay({ day, index, form, onRemoveDay }: {
   });
 
   // Get the list of unique countries from step 1
-  const existingCountries = form.getValues('countries').filter(Boolean);
-  const existingCities = form.getValues('cities').filter(Boolean);
+  const existingCountries = form.getValues('countries') || [];
+  const existingCities = form.getValues('cities') || [];
+  
+  // Filter out empty/null values
+  const filteredCountries = existingCountries.filter(Boolean);
+  const filteredCities = existingCities.filter(Boolean);
   const [showCustomCountry, setShowCustomCountry] = useState(false);
   const [customCountry, setCustomCountry] = useState('');
   const [showCustomCity, setShowCustomCity] = useState(false);
@@ -156,14 +160,6 @@ function SortableDay({ day, index, form, onRemoveDay }: {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleCountryChange = (value: string) => {
-    if (value === 'custom') {
-      setShowCustomCountry(true);
-    } else {
-      form.setValue(`days.${index}.countryName`, value);
-    }
-  };
-
   const handleCustomCountrySubmit = () => {
     if (customCountry.trim()) {
       // Update the day's country
@@ -186,47 +182,33 @@ function SortableDay({ day, index, form, onRemoveDay }: {
   };
 
   const handleCustomCitySubmit = () => {
-    const cityName = customCity.city;
-    if (cityName && cityName.length > 0) {
-      // Get the current country or use the existing one
-      const countryToUse = customCity.country || form.getValues(`days.${index}.countryName`);
-      
+    const cityName = customCity.city.trim();
+    const countryName = customCity.country.trim() || form.getValues(`days.${index}.countryName`);
+    
+    if (cityName && countryName) {
       // Update the day's city and country
-      form.setValue(`days.${index}.cityName`, cityName, {
-        shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true
-      });
+      form.setValue(`days.${index}.cityName`, cityName);
+      form.setValue(`days.${index}.countryName`, countryName);
       
-      if (countryToUse) {
-        form.setValue(`days.${index}.countryName`, countryToUse, {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true
-        });
-
-        // Add to main countries list if not already there
-        const countriesField = form.getValues('countries');
-        if (!countriesField.includes(countryToUse)) {
-          form.setValue('countries', [...countriesField, countryToUse], {
-            shouldValidate: true
-          });
-        }
+      // Update the global countries list
+      const currentCountries = form.getValues('countries') || [];
+      if (!currentCountries.includes(countryName)) {
+        form.setValue('countries', [...currentCountries, countryName]);
       }
-
-      // Add to main cities list if not already there
-      const citiesField = form.getValues('cities');
-      if (!citiesField.some(x => x.city === cityName)) {
-        form.setValue('cities', [...citiesField, {
+      
+      // Update the global cities list
+      const currentCities = form.getValues('cities') || [];
+      if (!currentCities.some(x => x.city === cityName)) {
+        form.setValue('cities', [...currentCities, {
           city: cityName,
-          country: countryToUse
-        }], {
-          shouldValidate: true
-        });
+          country: countryName
+        }]);
       }
-
+      
       setShowCustomCity(false);
       setCustomCity({ city: '', country: '' });
+    } else {
+      toast.error('Both city and country are required');
     }
   };
 
@@ -277,7 +259,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-[16px] font-medium mb-3 ml-1">City *</Label>
-                {showCustomCity || existingCities.length === 0 ? (
+                {showCustomCity || filteredCities.length === 0 ? (
                   <div className="flex gap-2">
                     <Input
                       value={customCity.city}
@@ -322,18 +304,17 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                       if (value === 'custom') {
                         setShowCustomCity(true);
                       } else {
-                        const selectedCity = existingCities.find(c => c.city === value);
+                        const selectedCity = filteredCities.find(c => c.city === value);
                         if (selectedCity) {
-                          form.setValue(`days.${index}.cityName`, value, {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                            shouldTouch: true
-                          });
-                          form.setValue(`days.${index}.countryName`, selectedCity.country, {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                            shouldTouch: true
-                          });
+                          // Update both city and country
+                          form.setValue(`days.${index}.cityName`, selectedCity.city);
+                          form.setValue(`days.${index}.countryName`, selectedCity.country);
+                          
+                          // Add to countries list if not already there
+                          const currentCountries = form.getValues('countries') || [];
+                          if (!currentCountries.includes(selectedCity.country)) {
+                            form.setValue('countries', [...currentCountries, selectedCity.country]);
+                          }
                         }
                       }
                     }}
@@ -342,7 +323,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                       <SelectValue placeholder="Select a city" />
                     </SelectTrigger>
                     <SelectContent>
-                      {existingCities.map((city) => (
+                      {filteredCities.map((city) => (
                         <SelectItem key={city.city} value={city.city}>
                           {city.city}
                         </SelectItem>
@@ -357,7 +338,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
               </div>
               <div>
                 <Label className="text-[16px] font-medium mb-3 ml-1">Country *</Label>
-                {showCustomCountry || existingCountries.length === 0 ? (
+                {showCustomCountry || filteredCountries.length === 0 ? (
                   <div className="flex gap-2">
                     <Input
                       value={customCountry}
@@ -414,7 +395,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                       <SelectValue placeholder="Select a country" />
                     </SelectTrigger>
                     <SelectContent>
-                      {existingCountries.map((country) => (
+                      {filteredCountries.map((country) => (
                         <SelectItem key={country} value={country}>
                           {country}
                         </SelectItem>
@@ -776,11 +757,12 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
 export default function CreatePage() {
   const router = useRouter()
-  const isNewItinerary = useSearchParams().get('itineraryId') === null
+  const ItineraryId = useSearchParams().get('itineraryId')
   const searchParams = useSearchParams()
   const supabase = createClientComponentClient()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [itineraryLoading, setItineraryLoading] = useState(false)
   const [itineraryTags, setItineraryTags] = useState<Array<{id: number; name: string; icon: any}>>([])
 
   // Fetch itinerary tags from Supabase
@@ -909,8 +891,16 @@ export default function CreatePage() {
     const init = async () => {
       const itineraryId = searchParams.get('itineraryId')
       if (itineraryId) {
-        const itinerary = await getItineraryById(itineraryId) as Itinerary;
-        form.reset(itinerary)
+        try {
+          setItineraryLoading(true)
+          const itinerary = await getItineraryById(itineraryId) as Itinerary;
+          form.reset(itinerary)
+        } catch (error) {
+          console.error('Error loading itinerary:', error)
+          toast.error('Failed to load itinerary')
+        } finally {
+          setItineraryLoading(false)
+        }
       }
     }
     init()
@@ -1106,7 +1096,7 @@ export default function CreatePage() {
   }, (errors) => {
     toast.error('Please fill in all required fields')
   })
-
+  
   const saveDraft = async () => {
     try {
       if (!user) {
@@ -1122,9 +1112,8 @@ export default function CreatePage() {
       }
       
       let response = null;
-      if (isNewItinerary) {
-        const itineraryId = useSearchParams().get('itineraryId')
-        response = await updateItinerary(itineraryId, itineraryData)
+      if (ItineraryId) {
+        response = await updateItinerary(ItineraryId, itineraryData)
       } else {
         response = await createItinerary(itineraryData)
       }
@@ -1168,14 +1157,14 @@ export default function CreatePage() {
   }
 
   const toggleCategory = (categoryId: number) => {
-    const currentTags = form.getValues('itineraryTags')
+    const currentTags = form.getValues('itineraryTags') || []
     const newTags = currentTags.includes(categoryId)
       ? currentTags.filter(c => c !== categoryId)
       : currentTags.length < 3 ? [...currentTags, categoryId] : currentTags
     form.setValue('itineraryTags', newTags)
   }
 
-  if (loading) {
+  if (loading || itineraryLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -1210,7 +1199,7 @@ export default function CreatePage() {
         <div className="md:container mx-auto md:px-4 md:max-w-4xl">
           <div className="bg-white md:rounded-2xl p-4 md:p-12 md:shadow">
             <div className="flex justify-between items-center py-4 mb-8">
-              <h1 className="text-2xl ms:text-3xl font-semibold">{isNewItinerary ? "Create New" : "Edit"} Itinerary</h1>
+              <h1 className="text-2xl ms:text-3xl font-semibold">{ItineraryId ? "Create New" : "Edit"} Itinerary</h1>
               <div className="flex gap-2">
                 {[1, 2, 3].map(step => (
                   <div onClick={() => setCurrentStep(step)}
@@ -1320,7 +1309,7 @@ export default function CreatePage() {
                     <Button 
                       type="button"
                       variant="outline"
-                      className="text-red hover:bg-red-200"
+                      className="text-red hover:bg-red-500 hover:text-white"
                       disabled={form.formState.isSubmitting}
                       onClick={(e) => {
                         router.push('/my-itineraries')
@@ -1407,7 +1396,7 @@ export default function CreatePage() {
                     <Button 
                       type="button"
                       variant="outline"
-                      className="text-red hover:bg-red-200"
+                      className="text-red hover:bg-red-500 hover:text-white"
                       disabled={form.formState.isSubmitting}
                       onClick={(e) => {
                         router.push('/my-itineraries')
@@ -1438,7 +1427,8 @@ export default function CreatePage() {
                     <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
                     <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-3 w-full">
                       {itineraryTags.map((category) => {
-                        const isSelected = form.watch('itineraryTags').includes(category.id)
+                        const currentTags = form.watch('itineraryTags') || []
+                        const isSelected = currentTags.includes(category.id)
                         const Icon = category.icon
                         return (
                           <label key={category.name} className="flex items-center gap-2">
@@ -1613,7 +1603,7 @@ export default function CreatePage() {
                     <Button 
                       type="button"
                       variant="outline"
-                      className="text-red hover:bg-red-200"
+                      className="text-red hover:bg-red-500 hover:text-white"
                       disabled={form.formState.isSubmitting}
                       onClick={(e) => {
                         router.push('/my-itineraries')

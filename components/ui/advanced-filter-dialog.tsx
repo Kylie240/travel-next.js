@@ -5,6 +5,7 @@ import { X, SlidersHorizontal, Check } from "lucide-react"
 import { Button } from "./button"
 
 interface FilterOption {
+  id: number
   name: string
   icon?: any
 }

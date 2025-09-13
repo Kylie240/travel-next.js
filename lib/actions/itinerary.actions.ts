@@ -149,11 +149,10 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
         if (!existingUser) {
             //return to homepage
         }
-        console.log(itinerary)
 
         const { data, error } = await supabase.rpc("create_itinerary", {
-        p_itinerary: itinerary,
-        p_creator_id: userId,
+            p_itinerary: itinerary,
+            p_creator_id: userId,
         });
 
         if (error) throw new Error(error.message);
@@ -165,15 +164,44 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
 }
 
 export const updateItinerary = async (id: string, itinerary: CreateItinerary) => {
-    const supabase = createServerActionClient({ cookies });
-    const { data, error: itineraryError } = await supabase
-    .from('itineraries')
-    .update(itinerary)
-    .eq('id', id);
+     // Mey need to check if the user is authenticated
+     const token = cookies().get("sb-access-token");
+     if (!token) {
+         throw new Error("Not authenticated");
+        }
+        
+        try {
+            const supabase = createServerActionClient({ cookies });
+            
+            const { data: { user } } = await supabase.auth.getUser();
+            const userId = user?.id;
+            
+            if (!userId) {
+                throw new Error("User ID not found");
+            }
+            
+        const { data: existingUser, error: userError } = await supabase.auth.getUser();
 
-    if (itineraryError) throw new Error(itineraryError.message);
+        if (userError) {
+            throw new Error('Failed to verify user');
+        }
+        
+        if (!existingUser) {
+            throw new Error('Please login and try again');
+        }
 
-    return data;
+        const { data, error } = await supabase.rpc("update_itinerary", {
+            p_itinerary: itinerary,
+            p_creator_id: userId,
+            p_itinerary_id: id,
+        });
+
+        if (error) throw new Error(error.message);
+
+        return data;
+    } catch (error) {
+        throw new Error(`Failed to create itinerary: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }
 
 export const getItineraryByUserId = async (userId?: string) => {
@@ -232,7 +260,7 @@ export const getItineraryByUserId = async (userId?: string) => {
 
 export const getItinerarySummaries = async (userId?: string) => {
     const { data, error } = await supabase
-    .rpc("get_itinerary_summary", { p_creator_id: userId }) as { 
+    .rpc("get_my_itinieraries", { p_creator_id: userId }) as { 
         data: ItinerarySummary[] | null, 
         error: Error | null };
 
@@ -246,16 +274,13 @@ export const getItinerarySummaries = async (userId?: string) => {
 }
 
 export const updateItineraryStatus = async (itineraryId: string, status: number) => {
-    const { error } = await supabase
-    .from('itineraries')
-    .update({ status: status })
-    .eq('id', itineraryId);
+    const { data, error } = await supabase.rpc("update_itinerary_status", {
+        p_itinerary_id: itineraryId,
+        p_status: status,
+    });
 
-    if (error) {
-        console.error("Error updating itinerary status:", error);
-    } else {
-        console.log("Itinerary status updated successfully");
-    }
+    if (error) throw new Error(error.message);
+
     return { success: true };
 }
 

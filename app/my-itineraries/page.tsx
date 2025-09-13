@@ -24,6 +24,21 @@ export default function MyItinerariesPage() {
   const [itinerarySummaries, setItinerarySummaries] = useState<ItinerarySummary[] | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const refreshItineraries = async () => {
+    if (user) {
+      try {
+        setLoading(true)
+        const userItineraries = await getItinerarySummaries(user.id)
+        setItinerarySummaries(userItineraries as ItinerarySummary[])
+      } catch (error) {
+        console.error('Error refreshing itineraries:', error)
+        toast.error('Failed to refresh itineraries')
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
   useEffect(() => {
     const getUser = async () => {
       try {
@@ -52,7 +67,7 @@ export default function MyItinerariesPage() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [])
 
   return (
     <div className="min-h-screen bg-white py-8">
@@ -85,21 +100,21 @@ export default function MyItinerariesPage() {
               {itinerarySummaries.map((itinerary: ItinerarySummary) => (
                 <Link key={itinerary.id} href={itinerary.status !== ItineraryStatusEnum.draft ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
                   <div
-                    className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
+                    className="group relative rounded-2xl overflow-hidden cursor-pointer bg-gray-300 shadow-md/30"
                   >
-                    <div className="relative aspect-[4/5]">
+                    <div className="relative aspect-[3/4]">
                       <Image
                         src={itinerary.mainImage || "/images/placeholder.jpg"}
                         alt={itinerary.title}
                         fill
-                        className="object-cover"
+                        className={`object-cover ${itinerary.status !== ItineraryStatusEnum.published ? "opacity-50" : ""}`}
                       />
                       <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                       
                       {/* Status Badge */}
                       {itinerary.status !== ItineraryStatusEnum.published && (
                         <div className="absolute top-5 left-5">
-                          <span className={`px-3 py-2 rounded-full text-md capitalize bg-gray-500/80 text-white`}>
+                          <span className={`px-3 py-2 rounded-full text-md font-semibold capitalize bg-gray-700/80 text-white`}>
                             {ItineraryStatusEnumString[itinerary.status]}
                           </span>
                         </div>
@@ -141,7 +156,7 @@ export default function MyItinerariesPage() {
                                           try {
                                               await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.published)
                                               toast.success('Itinerary published successfully')
-                                              window.location.reload()
+                                              refreshItineraries()
                                           } catch (error) {
                                               toast.error('Failed to publish itinerary')
                                           }
@@ -163,7 +178,7 @@ export default function MyItinerariesPage() {
                                           try {
                                               await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.archived)
                                               toast.success('Itinerary archived successfully')
-                                              window.location.reload()
+                                              refreshItineraries()
                                           } catch (error) {
                                               toast.error('Failed to archive itinerary')
                                           }
@@ -184,7 +199,7 @@ export default function MyItinerariesPage() {
                                           try {
                                               await deleteItinerary(itinerary.id)
                                               toast.success('Itinerary deleted successfully')
-                                              window.location.reload()
+                                              refreshItineraries()
                                           } catch (error) {
                                               toast.error('Failed to delete itinerary')
                                           }
@@ -199,13 +214,13 @@ export default function MyItinerariesPage() {
                         </DropdownMenu.Root>
                       </div>
                     </div>
-                      <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                      <div className="px-4 pb-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
                         <h4 className="font-bold text-2xl">{itinerary.title}</h4>
                         <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
                           {/* {itinerary?.cities?.length > 0 ? itinerary?.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")} */}
                         </p>
                         {itinerary.status == ItineraryStatusEnum.published && (
-                          <div className="flex gap-3">
+                          <div className="flex gap-3 mt-2">
                             <div className="flex gap-1 items-center">
                               <Eye className="h-4 w-4"/>
                               <p className="text-sm">{itinerary.views}</p>

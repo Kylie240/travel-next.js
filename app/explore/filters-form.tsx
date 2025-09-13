@@ -5,7 +5,7 @@ import { FormProvider, useForm } from "react-hook-form"
 import { z } from "zod"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AdvancedFilterDialog } from "@/components/ui/advanced-filter-dialog"
-import { activityTags, itineraryTags, quickFilters, sortOptions } from "@/lib/constants/tags"
+import { activityTagsMap, itineraryTagsMap, quickFilters, sortOptions } from "@/lib/constants/tags"
 import { Button } from "@/components/ui/button"
 import { useRouter, useSearchParams } from "next/navigation"
 import { QuickFilterList } from "@/components/ui/quick-filter-list"
@@ -31,8 +31,8 @@ export default function FiltersForm() {
     const searchParams = useSearchParams();
     
     const [advancedFilters, setAdvancedFilters] = useState({
-        itineraryTags: searchParams.get("itineraryTags")?.split(",") || [],
-        activityTags: searchParams.get("activityTags")?.split(",") || [],
+        itineraryTags: searchParams.get("itineraryTagsMap")?.split(",") || [],
+        activityTags: searchParams.get("activityTagsMap")?.split(",") || [],
         regions: searchParams.get("regions")?.split(",") || [],
         continents: searchParams.get("continents")?.split(",") || [],
         accommodation: searchParams.get("accommodation")?.split(",") || [],
@@ -109,8 +109,8 @@ export default function FiltersForm() {
         budget: ["Budget Friendly", "Standard", "Mid-Range", "Upscale", "Luxury"],
         quickFilters,
         sortOptions,
-        itineraryTags,
-        activityTags,
+        itineraryTagsMap,
+        activityTagsMap,
     }
 
     return <FormProvider {...form}> 
@@ -179,8 +179,8 @@ export default function FiltersForm() {
                     <div className="flex justify-between">
                         <div className="flex justify-end rounded-xl">
                             <AdvancedFilterDialog
-                                itineraryTags={filters.itineraryTags}
-                                activityTags={filters.activityTags}
+                                itineraryTags={filters.itineraryTagsMap}
+                                activityTags={filters.activityTagsMap}
                                 selectedFilters={advancedFilters}
                                 onFilterChange={handleAdvancedFilterChange}
                             />
