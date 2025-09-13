@@ -12,6 +12,7 @@ import ScheduleSection from "./schedule-section"
 import NoteSection from "./note-section"
 import ShareElement from "./share-element"
 import { getItineraryById } from "@/lib/actions/itinerary.actions"
+import { itineraryTagsMap } from "@/lib/constants/tags"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const paramsValue = await params;
@@ -34,10 +35,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     avatar: "https://via.placeholder.com/150",
     image: "https://via.placeholder.com/150",
   };
-
-  const getCountryValue = (country: string | { value: string }) => {
-    return typeof country === 'string' ? country : country.value;
-  };
+  const countries = itinerary.days.map(x => x.countryName)
 
   return (
     <div className="min-h-screen bg-white">
@@ -65,7 +63,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     </div>
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 mr-2" />
-                      {itinerary.countries.length > 0 ? itinerary.countries.map((country: any) => country).join(' · ') : ''}
+                      {countries.length > 0 ? countries.map((country: any) => country).join(' · ') : ''}
                     </div>
                     <div className="flex items-center">
                       <Users className="h-5 w-5 mr-2" />
@@ -86,18 +84,18 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 <h2 className="font-semibold text-xl mb-2">Trip Overview</h2>
                 <span className="text-sm text-black truncate">
                   {/* {itinerary.cities.map((city: any) => city.city).join(' · ')} */}
-                  {itinerary.countries.map((country: any) => country.value).join(' · ')}
+                  {countries.map((country: any) => country.value).join(' · ')}
                 </span>
                 
                 {/* Category Tags */}
                 <div className="mb-4 mt-2">
                   <div className="flex flex-wrap gap-2">
-                    {itinerary.itineraryTags.map((category: string) => (
+                    {itinerary?.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
                       <span
-                        key={category}
+                        key={tag}
                         className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
                       >
-                        {category}
+                        {itineraryTagsMap[tag].name}
                       </span>
                     ))}
                   </div>
@@ -269,12 +267,12 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 {/* Category Tags */}
                 <div className="mb-4 mt-2">
                   <div className="flex flex-wrap gap-2">
-                    {itinerary.itineraryTags.map((category: string) => (
+                    {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
                       <span
-                        key={category}
+                        key={tag}
                         className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
                       >
-                        {category}
+                        {itineraryTagsMap[tag].name}
                       </span>
                     ))}
                   </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, ThumbsUp, Bookmark } from "lucide-react"
+import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, ThumbsUp, Bookmark, Router } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { deleteItinerary, getItineraryByUserId, getItinerarySummaries, updateItineraryStatus } from "@/lib/actions/itinerary.actions"
@@ -14,8 +14,10 @@ import { User, Session } from "@supabase/supabase-js"
 import { ItineraryStatusEnum, ItineraryStatusEnumString } from "@/enums/itineraryStatusEnum"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 export default function MyItinerariesPage() {
+  const router = useRouter()
   const supabase = createClientComponentClient()
   const [user, setUser] = useState<User | null>(null)
   const [itineraries, setItineraries] = useState<Itinerary[]>(null)
@@ -55,8 +57,15 @@ export default function MyItinerariesPage() {
   return (
     <div className="min-h-screen bg-white py-8">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl md:text-4xl font-semibold mb-6">My Itineraries</h1>
+        <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl md:text-4xl font-semibold">My Itineraries</h1>
+            {itinerarySummaries && itinerarySummaries?.length > 0 && (
+              <p className="text-xl text-gray-500 md:text-2xl">
+                ({itinerarySummaries?.length})
+              </p>
+            )}
+          </div>
           {itinerarySummaries && itinerarySummaries?.length > 0 && (
             <Button disabled={loading}>
               <Link href="/create">
@@ -113,6 +122,10 @@ export default function MyItinerariesPage() {
                             >
                               <DropdownMenu.Item
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={(event) => {
+                                      event.stopPropagation()
+                                      router.push(`/create?itineraryId=${itinerary.id}`)
+                                  }}
                               >
                                 <Link href={`/create?itineraryId=${itinerary.id}`} className="flex items-center gap-1">
                                   <Edit className="mr-2 h-4 w-4" />

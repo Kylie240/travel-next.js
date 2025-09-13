@@ -263,94 +263,15 @@ export const getItineraryById = async (itineraryId: string) => {
     try {
         const supabase = createServerActionClient({ cookies });
 
-        const { data: itinerary, error: itineraryError } = await supabase
-        .from('itineraries')
-        .select('id, title, duration, short_description, detailed_overview, main_image, created_at, updated_at, duration, budget, creator_id, status')
-        .eq('id', itineraryId)
-        .single();
-
-        console.log(itinerary);
-        
-        if (itineraryError) throw itineraryError;
-        
-        const { data: itineraryDays, error: itineraryDaysError } = await supabase
-        .from('itinerary_days')
-        .select('*')
-        .eq('itinerary_id', itineraryId);
-        // .order('day_number', { ascending: true });
-        //sort by day number
-        console.log(itineraryDays);
-
-        if (itineraryDaysError) throw itineraryDaysError;
-
-        const { data: itineraryAccommodations, error: itineraryAccommodationsError } = await supabase
-        .from('itinerary_accommodations')
-        .select('*')
-        .eq('itinerary_id', itineraryId);
-
-        if (itineraryAccommodationsError) throw itineraryAccommodationsError;
-
-        const { data: itineraryActivities, error: itineraryActivitiesError } = await supabase
-        .from('itinerary_activities')
-        .select('*')
-        .eq('itinerary_id', itineraryId);
-
-        if (itineraryActivitiesError) throw itineraryActivitiesError;
-        
-        const { data: itineraryNotes, error: itineraryNotesError } = await supabase
-        .from('itinerary_notes')
-        .select('*')
-        .eq('itinerary_id', itineraryId);
-
-        if (itineraryNotesError) throw itineraryNotesError;
-
-        const { data: itineraryTags, error: itineraryTagsError } = await supabase
-        .from('itinerary_tags')
-        .select('id')
-        .eq('itinerary_id', itineraryId);
-
-        if (itineraryTagsError) throw itineraryTagsError;
-
-        const {data: itinerary_interactions, error: itinerary_interactionsError} = await supabase
-        .from('itinerary_interactions')
-        .select('views, rating, likes')
-        .eq('itinerary_id', itineraryId);
-
-        if (itinerary_interactionsError) throw itinerary_interactionsError;
-
-        const countries = itineraryDays.map((day: any) => day.country);
-        const cities = itineraryDays.map((day: any) => day.city);
-        // const continents = itineraryDays.map((day: any) => day.continent);
-
-        // Sanitize the data
-        const returnItinerary: Itinerary = {
-            id: itinerary.id,
-            title: itinerary.title,
-            duration: itinerary.duration,
-            shortDescription: itinerary.short_description,
-            detailedOverview: itinerary.detailed_overview,
-            mainImage: itinerary.main_image,
-            countries: countries,
-            cities: cities,
-            days: itineraryDays,
-            status: itinerary.status,
-            itineraryTags: itineraryTags.id,
-            activityTags: activityTagList,
-            notes: itineraryNotes,
-            budget: itinerary.budget,
-            created: itinerary.created_at,
-            updated: itinerary.updated_at,
-            views: itinerary_interactions[0].views,
-            rating: itinerary_interactions[0].rating,
-            likes: itinerary_interactions[0].likes,
-            creator_id: itinerary.creator_id,
-        }
-
-        returnItinerary.days.forEach((day: any) => {
-            day.activities = itineraryActivities.filter((activity: any) => activity.day_number === day.day_number);
+        const { data, error } = await supabase.rpc("get_itinerary", {
+        p_itinerary_id: itineraryId,
         });
+
+        if (error) throw new Error(error.message);
+
+        console.log(data)
         
-        return returnItinerary;
+        return data;
     } catch (error) {
         console.error('Error retrieving itinerary:', error);
         throw new Error(`Failed to retrieve itinerary: ${error instanceof Error ? error.message : String(error)}`);
@@ -369,6 +290,7 @@ export const deleteItinerary = async (itineraryId: string) => {
         // Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
+            console.log('1')
             throw new Error("Not authenticated");
         }
 
@@ -379,6 +301,7 @@ export const deleteItinerary = async (itineraryId: string) => {
         .eq('id', itineraryId);
 
         if (itineraryError) {
+            console.log('2')
             throw itineraryError;
         }
 
