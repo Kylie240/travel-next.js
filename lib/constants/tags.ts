@@ -1,5 +1,5 @@
 import { Mountain, Utensils, Building, Palmtree, Camera, Ship, Wine, Heart, Music, TentTree, Palette, ShoppingBag, Dumbbell, Drama, Trees, BaggageClaim, Car, Presentation, HandPlatter, Caravan, Coins, HeartHandshake, RollerCoaster, Handshake, HandHeart, ChefHat, Briefcase, Backpack, BookMarked, Church, Skull, Sprout, Sailboat, CalendarFold, Syringe, Sparkles } from "lucide-react"
-import { FaCity, FaHandSparkles, FaPersonWalkingLuggage } from "react-icons/fa6";
+import { FaCity, FaHandSparkles, FaPeopleGroup, FaPersonWalkingLuggage } from "react-icons/fa6";
 import { PiFarm } from "react-icons/pi";
 import { BiSpa } from "react-icons/bi";
 import { LuAmphora, LuBinoculars, LuBriefcaseMedical, LuCookingPot, LuTicketsPlane } from "react-icons/lu";
@@ -40,6 +40,7 @@ export const itineraryTagsMap = [
     { id:19, name :"Dark Tourism", icon: Skull }, 
     { id:9, name :"Digital Nomad", icon: Camera }, 
     { id:15, name :"Educational", icon: BookMarked }, 
+    { id:27, name :"Family Friendly", icon: FaPeopleGroup },
     { id:20, name :"Luxury", icon: HandPlatter }, 
     { id:14, name :"Medical", icon: Syringe }, 
     { id:25, name :"Multi-Country", icon: LuTicketsPlane }, 

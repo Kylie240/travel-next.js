@@ -28,8 +28,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { activityTagsMap, itineraryTagsMap } from "@/lib/constants/tags"
-import { sampleItinerary } from "@/lib/constants/sample-itinerary"
+import { itineraryTagsMap } from "@/lib/constants/tags"
 import { createSchema } from "@/validation/createSchema"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -43,7 +42,7 @@ import { Note } from "@/types/Note"
 import { Activity } from "@/types/Activity"
 import { supabase } from "@/utils/supabase/superbase-client"
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
-import { Itinerary } from "@/types/itinerary"
+
 type City = { city: string; country: string };
 type FormData = {
   status: number;
@@ -52,26 +51,29 @@ type FormData = {
   mainImage: string;
   detailedOverview?: string;
   duration: number;
-  countries: string[];
-  cities: City[];
+  countries?: string[];
+  cities?: City[];
   days: Day[];
-  itineraryTags: number[];
-  notes: Note[];
+  itineraryTags?: number[];
+  notes?: Note[];
   budget?: number;
 };
 
 const INITIAL_DAY: Day = {
-  id: '1',
+  id: 1,
   cityName: '',
   countryName: '',
   title: '',
   description: '',
   activities: [],
+  image: '',
+  notes: '',
   showAccommodation: false,
   accommodation: {
     name: '',
     type: '',
     location: '',
+    link: '',
   }
 };
 
@@ -224,8 +226,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
               <div className="flex w-full items-center justify-between gap-4">
                 <div className="flex-1 text-left">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Day {index + 1}</h3>
-                    
+                    <h3 className="text-lg font-semibold">Day {index + 1} {day.title && `: ${form.watch(`days.${index}.title`)}`}</h3>
                   </div>
                   {form.watch(`days.${index}.cityName`) && (
                     <p className="text-sm text-gray-600">
@@ -443,7 +444,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
               )}
             </div>
 
-            <div>
+            <div className="py-4">
               <div className="flex justify-between items-center mb-2">
                 <Label className="text-[16px] font-medium mb-3 ml-1">Activities</Label>
                 {(activityFields.length === 0 || !activityFields) && <Button 
@@ -456,7 +457,8 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                     description: '',
                     type: undefined as unknown as number | undefined,
                     link: '',
-                    time: undefined
+                    time: undefined,
+                    duration: null
                   })}
                   className="rounded-xl"
                 >
@@ -467,130 +469,142 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
               <div className="space-y-4">
                 {activityFields.map((activity, activityIndex) => (
-                  <div key={activity.id} className="border rounded-lg p-4">
-                    <div className="w-full flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        if (confirm('Are you sure you want to delete this activity?')) {
-                          removeActivity(activityIndex)
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      disabled={form.formState.isSubmitting}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    </div>
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        <div>
-                          <Label className="text-[16px] font-medium mb-3 ml-1">Start Time</Label>
-                          <Input
-                            type="time"
-                            {...form.register(`days.${index}.activities.${activityIndex}.time`, {
-                              setValueAs: (value) => {
-                                if (!value) return undefined;
-                                // Ensure the time is in HH:MM:SS format for PostgreSQL
-                                const [hours, minutes] = value.split(':');
-                                return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
-                              }
-                            })}
-                            className="rounded-xl"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[16px] font-medium mb-3 ml-1">Duration <span className="text-gray-500 text-sm">(minutes)</span></Label>
-                          <Input
-                            type="number"
-                            {...form.register(`days.${index}.activities.${activityIndex}.duration`)}
-                            className="rounded-xl"
-                          />
-                        </div>
-                          <div>
-                            <Label className="text-[16px] font-medium mb-3 ml-1">Type</Label>
-                            <Select
-                              value={form.watch(`days.${index}.activities.${activityIndex}.type`)?.toString()}
-                              onValueChange={(value: string) => {
-                                const numValue = parseInt(value);
-                                form.setValue(`days.${index}.activities.${activityIndex}.type`, numValue === 0 ? undefined : numValue, {
-                                  shouldValidate: true,
-                                  shouldDirty: true,
-                                  shouldTouch: true
-                                });
-                              }}
-                            >
-                              <SelectTrigger className="rounded-xl">
-                                <SelectValue placeholder="Select a type">
-                                  {form.watch(`days.${index}.activities.${activityIndex}.type`) 
-                                    ? activityTags.find(t => t.id === form.watch(`days.${index}.activities.${activityIndex}.type`))?.name 
-                                    : "Select a type"}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent position="popper" side="bottom" align="start" className="max-h-[200px] overflow-y-auto">
-                                {form.watch(`days.${index}.activities.${activityIndex}.type`) !== undefined && (
-                                  <SelectItem value={undefined} className="text-red-500 cursor-pointer">
-                                    Clear selection
-                                  </SelectItem>
-                                )}
-                                {activityTags.map(tag => (
-                                  <SelectItem key={tag.id} value={tag.id.toString()} className="cursor-pointer">
-                                    <div className="flex items-center gap-2">
-                                      {tag.icon && <tag.icon className="w-3 h-3" />} {tag.name}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                  <div className="border rounded-lg px-4">
+                    <AccordionItem value={activity.id}>
+                      <div className="flex-1">
+                        <AccordionTrigger>
+                          <div className="flex w-full justify-between ml-2">
+                            <p className="text-lg font-light">{`${form.watch(`days.${index}.activities.${activityIndex}.title`)}` ? `${form.watch(`days.${index}.activities.${activityIndex}.title`)}` : `Activity ${activityIndex + 1}`}</p>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  if (confirm('Are you sure you want to delete this activity?')) {
+                                    removeActivity(activityIndex)
+                                  }
+                                }}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                disabled={form.formState.isSubmitting}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                           </div>
+                        </AccordionTrigger>
                       </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-[16px] font-medium mb-3 ml-1">Title *</Label>
-                        <Input
-                          {...form.register(`days.${index}.activities.${activityIndex}.title`)}
-                          placeholder="Activity title"
-                          className="rounded-xl"
-                        />
-                        {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.title && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {form.formState.errors.days[index]?.activities?.[activityIndex]?.title?.message}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <Label className="text-[16px] font-medium mb-3 ml-1">Description</Label>
-                        <textarea
-                          {...form.register(`days.${index}.activities.${activityIndex}.description`)}
-                          placeholder="Activity description"
-                          className="w-full p-2 border rounded-xl min-h-[100px]"
-                        />
-                        {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.description && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {form.formState.errors.days[index]?.activities?.[activityIndex]?.description?.message}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <Label className="text-[16px] font-medium mb-3 ml-1">Link</Label>
-                        <Input
-                          {...form.register(`days.${index}.activities.${activityIndex}.link`)}
-                          placeholder="Add booking link, or a link to a website with more information"
-                          className="rounded-xl"
-                        />
-                        {(form.formState.errors.days?.[index]?.activities?.[activityIndex]?.link 
-                          && form.watch(`days.${index}.activities.${activityIndex}.link`) !== '') && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {form.formState.errors.days[index]?.activities?.[activityIndex]?.link?.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                      <AccordionContent>
+                        <div key={activity.id} className="p-4">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                              <div>
+                                <Label className="text-[16px] font-medium mb-3 ml-1">Start Time</Label>
+                                <Input
+                                  type="time"
+                                  {...form.register(`days.${index}.activities.${activityIndex}.time`, {
+                                    setValueAs: (value) => {
+                                      if (!value) return undefined;
+                                      // Ensure the time is in HH:MM:SS format for PostgreSQL
+                                      const [hours, minutes] = value.split(':');
+                                      return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
+                                    }
+                                  })}
+                                  className="rounded-xl"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[16px] font-medium mb-3 ml-1">Duration <span className="text-gray-500 text-sm">(minutes)</span></Label>
+                                <Input
+                                  type="number"
+                                  {...form.register(`days.${index}.activities.${activityIndex}.duration`, {
+                                    setValueAs: (value) => value === "" ? null : Number.isNaN(parseInt(value, 10)) ? null : parseInt(value, 10)
+                                  })}
+                                  className="rounded-xl"
+                                />
+                              </div>
+                                <div>
+                                  <Label className="text-[16px] font-medium mb-3 ml-1">Type</Label>
+                                  <Select key={activity.id}
+                                    value={form.watch(`days.${index}.activities.${activityIndex}.type`)?.toString()}
+                                    onValueChange={(value: string) => {
+                                      const numValue = parseInt(value);
+                                      form.setValue(`days.${index}.activities.${activityIndex}.type`, numValue === 0 ? undefined : numValue, {
+                                        shouldValidate: true,
+                                        shouldDirty: true,
+                                        shouldTouch: true
+                                      });
+                                    }}
+                                  >
+                                    <SelectTrigger className="rounded-xl">
+                                      <SelectValue placeholder="Select a type">
+                                        {form.watch(`days.${index}.activities.${activityIndex}.type`) 
+                                          ? activityTags.find(t => t.id === form.watch(`days.${index}.activities.${activityIndex}.type`))?.name 
+                                          : "Select a type"}
+                                      </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent position="popper" side="bottom" align="start" className="max-h-[200px] overflow-y-auto">
+                                      {form.watch(`days.${index}.activities.${activityIndex}.type`) !== undefined && (
+                                        <SelectItem value={undefined} key={0} className="text-red-500 cursor-pointer">
+                                          Clear selection
+                                        </SelectItem>
+                                      )}
+                                      {activityTags.map(tag => (
+                                        <SelectItem key={tag.id} value={tag.id.toString()} className="cursor-pointer">
+                                          <div className="flex items-center gap-2">
+                                            {tag.icon && <tag.icon className="w-3 h-3" />} {tag.name}
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                            </div>
+                          </div>
+                          <div className="space-y-4">
+                            <div>
+                              <Label className="text-[16px] font-medium mb-3 ml-1">Title *</Label>
+                              <Input
+                                {...form.register(`days.${index}.activities.${activityIndex}.title`)}
+                                placeholder="Activity title"
+                                className="rounded-xl"
+                              />
+                              {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.title && (
+                                <p className="text-red-500 text-sm mt-1">
+                                  {form.formState.errors.days[index]?.activities?.[activityIndex]?.title?.message}
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <Label className="text-[16px] font-medium mb-3 ml-1">Description</Label>
+                              <textarea
+                                {...form.register(`days.${index}.activities.${activityIndex}.description`)}
+                                placeholder="Activity description"
+                                className="w-full p-2 border rounded-xl min-h-[100px]"
+                              />
+                              {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.description && (
+                                <p className="text-red-500 text-sm mt-1">
+                                  {form.formState.errors.days[index]?.activities?.[activityIndex]?.description?.message}
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <Label className="text-[16px] font-medium mb-3 ml-1">Link</Label>
+                              <Input
+                                {...form.register(`days.${index}.activities.${activityIndex}.link`)}
+                                placeholder="Add booking link, or a link to a website with more information"
+                                className="rounded-xl"
+                              />
+                              {(form.formState.errors.days?.[index]?.activities?.[activityIndex]?.link 
+                                && form.watch(`days.${index}.activities.${activityIndex}.link`) !== '') && (
+                                <p className="text-red-500 text-sm mt-1">
+                                  {form.formState.errors.days[index]?.activities?.[activityIndex]?.link?.message}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
                   </div>
                 ))}
               </div>
@@ -604,7 +618,8 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                     description: '',
                     type: undefined,
                     link: '',
-                    time: undefined
+                    time: undefined,
+                    duration: null
                   })}
                   className="rounded-xl mt-2"
                 >
@@ -763,37 +778,7 @@ export default function CreatePage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [itineraryLoading, setItineraryLoading] = useState(false)
-  const [itineraryTags, setItineraryTags] = useState<Array<{id: number; name: string; icon: any}>>([])
-
-  // Fetch itinerary tags from Supabase
-  useEffect(() => {
-    const fetchItineraryTags = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('tags_itinerary')
-          .select('*')
-          .order('name')
-        
-        if (error) {
-          throw error
-        }
-
-        // Transform the data to match the expected format
-        const transformedTags = data.map(tag => ({
-          id: tag.id,
-          name: tag.name,
-          icon: itineraryTagsMap.find(t => t.id === tag.id)?.icon || PenSquare // Using PenSquare as default icon if none provided
-        }))
-
-        setItineraryTags(transformedTags)
-      } catch (error) {
-        console.error('Error fetching itinerary tags:', error)
-        toast.error('Failed to load itinerary tags')
-      }
-    }
-
-    fetchItineraryTags()
-  }, [supabase])
+  const [itineraryTags, _] = useState<Array<{id: number; name: string; icon: any}>>(itineraryTagsMap)
 
   useEffect(() => {
     const getUser = async () => {
@@ -817,7 +802,6 @@ export default function CreatePage() {
   }, [supabase])
   
   const [currentStep, setCurrentStep] = useState(1)
-  const [initialCountry, setInitialCountry] = useState('')
 
   const form = useForm<FormData>({
     resolver: zodResolver(createSchema),
@@ -832,12 +816,7 @@ export default function CreatePage() {
       countries: [],
       cities: [],
       days: [{
-        ...INITIAL_DAY,
-        id: '1',
-        cityName: '',
-        countryName: '',
-        title: '',
-        showAccommodation: false
+        ...INITIAL_DAY
       }],
       itineraryTags: [],
       notes: [],
@@ -881,7 +860,7 @@ export default function CreatePage() {
     // Update remaining days' IDs and titles
     const updatedDays = form.getValues('days')
     updatedDays.forEach((day, idx) => {
-      day.id = (idx + 1).toString()
+      day.id = (idx + 1)
       day.title = `Day ${idx + 1}`
     })
     form.setValue('days', updatedDays)
@@ -893,10 +872,30 @@ export default function CreatePage() {
       if (itineraryId) {
         try {
           setItineraryLoading(true)
-          const itinerary = await getItineraryById(itineraryId) as Itinerary;
-          form.reset(itinerary)
+          const itinerary = await getItineraryById(itineraryId) as CreateItinerary;
+          
+          // Extract unique countries and cities from days
+          const countries = new Set<string>();
+          const cities = new Set<{ city: string; country: string }>();
+          
+          itinerary.days.forEach(day => {
+            if (day.countryName) {
+              countries.add(day.countryName);
+            }
+            if (day.cityName && day.countryName) {
+              cities.add({
+                city: day.cityName,
+                country: day.countryName
+              });
+            }
+          });
+
+          // Update the itinerary object with extracted countries and cities
+          itinerary.countries = Array.from(countries);
+          itinerary.cities = Array.from(cities);
+
+          form.reset(itinerary);
         } catch (error) {
-          console.error('Error loading itinerary:', error)
           toast.error('Failed to load itinerary')
         } finally {
           setItineraryLoading(false)
@@ -929,7 +928,7 @@ export default function CreatePage() {
       for (let i = currentDays.length; i < value; i++) {
         newDays.push({
           ...INITIAL_DAY,
-          id: (i + 1).toString(),
+          id: (i + 1),
           title: `Day ${i + 1}`
         })
       }
@@ -943,23 +942,23 @@ export default function CreatePage() {
   const handleFinalSubmit = async (data: z.infer<typeof createSchema>) => {
     try {
       // Clean up and validate days
-      const nonEmptyDays = data.days.map(day => {
+      const nonEmptyDays = data.days.map((day, index) => {
         const activities = (day.activities || []).map(activity => ({
           id: activity.id,
           time: activity.time || '',
-          duration: activity.duration || '',
+          duration: activity.duration || null,
           image: activity.image || '',
           title: activity.title || '',
           description: activity.description || '',
-          type: activity.type || undefined,
+          type: activity.type || null,
           link: activity.link || '',
           photos: activity.photos || [],
           price: activity.price || 0
         } as Activity));
 
-        return {
-          ...day,
-          id: day.id,
+          return {
+            ...day,
+            id: index + 1,
           cityName: day.cityName || '',
           countryName: day.countryName || '',
           title: day.title || '',
@@ -1031,8 +1030,8 @@ export default function CreatePage() {
         days: formData.days.map(day => {
           const activities = (day.activities || []).map(activity => ({
             id: activity.id,
-            time: activity.time || undefined,
-            duration: activity.duration || undefined,
+            time: activity.time || null,
+            duration: activity.duration || null,
             image: activity.image || '',
             title: activity.title || '',
             description: activity.description || '',
@@ -1062,16 +1061,24 @@ export default function CreatePage() {
         budget: formData.budget
       };
       
-      const response = await createItinerary(itineraryData);
-
-      if (response) {
-        toast.success('Form submitted successfully')
+      try {
+        let response = null;
+        if (ItineraryId) {
+          response = await updateItinerary(ItineraryId, itineraryData)
+          toast.success('Itinerary updated successfully')
+        } else {
+          response = await createItinerary(itineraryData)
+          toast.success('Itinerary created successfully')
+        }
         router.push('/my-itineraries')
-      } else {
-        throw new Error('Failed to save itinerary')
+      } catch (error) {
+        if (error instanceof Error && error.message === 'Unauthorized') {
+          throw error;
+        }
+        console.error('Save error:', error);
+        throw new Error('Failed to save itinerary');
       }
     } catch (error) {
-      console.error('Save error:', error)
       if (error instanceof Error && error.message === 'Unauthorized') {
         toast.error('Session expired. Please sign in again.')
         router.push('/')
@@ -1082,20 +1089,24 @@ export default function CreatePage() {
     }
   }
 
-  const onSubmit = form.handleSubmit(async (data) => {
-    try {
-      const isValid = await form.trigger()
-      if (isValid) {
-        await handleFinalSubmit(data)
-      } else {
-        toast.error('Please fill in all required fields')
+    const onSubmit = form.handleSubmit(async (data) => {
+      try {
+        const isValid = await form.trigger()
+        if (isValid) {
+          await handleFinalSubmit(data)
+        } else {
+          console.error('Validation errors:', form.formState.errors)
+          toast.error('Please fill in all required fields')
+        }
+      } catch (error) {
+        console.error('Submit error:', error)
+        toast.error('Error submitting form')
       }
-    } catch (error) {
-      toast.error('Error submitting form')
-    }
-  }, (errors) => {
-    toast.error('Please fill in all required fields')
-  })
+    }, (errors) => {
+      console.error('Form errors:', errors)
+      console.error('Current form values:', form.getValues())
+      toast.error('Please fill in all required fields')
+    })
   
   const saveDraft = async () => {
     try {
@@ -1149,7 +1160,7 @@ export default function CreatePage() {
       // Update all day IDs and titles to maintain order
       const updatedDays = form.getValues('days')
       updatedDays.forEach((day, index) => {
-        day.id = (index + 1).toString()
+        day.id = (index + 1)
         day.title = day.title.replace(/Day \d+/, `Day ${index + 1}`)
       })
       form.setValue('days', updatedDays)
@@ -1356,7 +1367,7 @@ export default function CreatePage() {
                       type="button"
                       variant="outline"
                       onClick={() => {
-                        const newDayId = (dayFields.length + 1).toString();
+                        const newDayId = (dayFields.length + 1);
                         appendDay({ ...INITIAL_DAY, id: newDayId })
                         form.setValue('duration', dayFields.length + 1)
                       }}
@@ -1415,7 +1426,7 @@ export default function CreatePage() {
                     <p>Help other travelers budget their trip. Not sure? Select a budget range instead</p>
                       <Input
                         {...form.register('budget', {
-                          setValueAs: (value) => value === "" ? undefined : parseInt(value, 10)
+                          setValueAs: (value) => value === "" ? null : Number.isNaN(parseInt(value, 10)) ? null : parseInt(value, 10)
                         })}
                         placeholder="Estimated cost per person"
                         type="number"

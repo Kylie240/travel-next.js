@@ -1,7 +1,7 @@
 export type Activity = {
     id: number,
     time?: string,
-    duration?: string,
+    duration?: number,
     image?: string,
     title: string,
     description?: string,
@@ -11,4 +11,5 @@ export type Activity = {
     photos?: string[],
     price?: number,
     expanded?: boolean,
+    showActivity?:boolean,
 }

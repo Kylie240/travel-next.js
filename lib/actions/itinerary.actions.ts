@@ -123,6 +123,7 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
 }
 
 export const createItinerary = async (itinerary: CreateItinerary) => {
+    itinerary.days.forEach((x, i) => x.id = i + 1)
     // Mey need to check if the user is authenticated
     const token = cookies().get("sb-access-token");
     if (!token) {
@@ -142,7 +143,6 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
         const { data: existingUser, error: userError } = await supabase.auth.getUser();
 
         if (userError) {
-            console.error('Error checking user:', userError);
             throw new Error('Failed to verify user');
         }
 
@@ -157,7 +157,7 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
 
         if (error) throw new Error(error.message);
 
-        return data;
+        return { success: true };
     } catch (error) {
         throw new Error(`Failed to create itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -198,9 +198,9 @@ export const updateItinerary = async (id: string, itinerary: CreateItinerary) =>
 
         if (error) throw new Error(error.message);
 
-        return data;
+        return { success: true };
     } catch (error) {
-        throw new Error(`Failed to create itinerary: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`Failed to update itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 

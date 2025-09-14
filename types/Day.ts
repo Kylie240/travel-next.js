@@ -2,7 +2,7 @@ import { Accommodation } from "./Accommodation";
 import { Activity } from "./Activity";
 
 export type Day = {
-    id: string,
+    id: number,
     image?: string,
     cityName: string,
     countryName: string,

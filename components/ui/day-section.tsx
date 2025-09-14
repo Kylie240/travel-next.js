@@ -1,6 +1,6 @@
 "use client"
 
-import { Circle, MapPin } from "lucide-react"
+import { Circle, MapPin, ChevronDown } from "lucide-react"
 import { motion } from "framer-motion"
 import { Activity } from "@/types/Activity"
 import { Accommodation } from "@/types/Accommodation"
@@ -70,7 +70,73 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
           }}
           className="overflow-hidden"
         >
-          {/* Rest of your component */}
+          <div className="mt-8 space-y-6">
+            {day.activities.map((activity, index) => (
+              <motion.div
+                key={activity.id || index}
+                initial={false}
+                className="bg-white rounded-xl p-4 shadow-sm"
+              >
+                <div 
+                  className="flex items-start justify-between cursor-pointer"
+                  onClick={() => {
+                    // Toggle activity visibility
+                    const element = document.getElementById(`activity-${day.day}-${index}`);
+                    if (element) {
+                      element.style.display = element.style.display === 'none' ? 'block' : 'none';
+                    }
+                  }}
+                >
+                  <div className="flex-1">
+                    <h3 className="text-lg font-medium">{activity.title}</h3>
+                    <p className="text-sm text-gray-500">{activity.time}</p>
+                  </div>
+                  <motion.button 
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    animate={{ rotate: document.getElementById(`activity-${day.day}-${index}`)?.style.display === 'none' ? 0 : 180 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="w-5 h-5 text-gray-500" />
+                  </motion.button>
+                </div>
+                
+                <div id={`activity-${day.day}-${index}`} className="mt-4" style={{ display: 'none' }}>
+                  {activity.description && (
+                    <p className="text-gray-600 mb-3">{activity.description}</p>
+                  )}
+                  {activity.location && (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      <span>{activity.location}</span>
+                    </div>
+                  )}
+                  {activity.duration && (
+                    <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration}</p>
+                  )}
+                  {activity.cost && (
+                    <p className="text-sm text-gray-500 mt-1">Cost: {activity.cost}</p>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+            
+            {day.accommodation.map((accommodation, index) => (
+              <motion.div
+                key={accommodation.id || index}
+                initial={false}
+                className="bg-white rounded-xl p-4 shadow-sm"
+              >
+                <h3 className="text-lg font-medium">Accommodation</h3>
+                <p className="text-gray-600">{accommodation.name}</p>
+                {accommodation.location && (
+                  <div className="flex items-center text-sm text-gray-500 mt-2">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    <span>{accommodation.location}</span>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
       </div>
     </div>

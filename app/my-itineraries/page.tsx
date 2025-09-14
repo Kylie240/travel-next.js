@@ -96,7 +96,7 @@ export default function MyItinerariesPage() {
           </div>
         ) : (
           (itinerarySummaries && itinerarySummaries?.length > 0) ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
               {itinerarySummaries.map((itinerary: ItinerarySummary) => (
                 <Link key={itinerary.id} href={itinerary.status !== ItineraryStatusEnum.draft ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
                   <div
@@ -215,7 +215,7 @@ export default function MyItinerariesPage() {
                       </div>
                     </div>
                       <div className="px-4 pb-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                        <h4 className="font-bold text-2xl">{itinerary.title}</h4>
+                        <p className="font-medium text-2xl">{itinerary.title}</p>
                         <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
                           {/* {itinerary?.cities?.length > 0 ? itinerary?.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")} */}
                         </p>

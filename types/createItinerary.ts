@@ -11,10 +11,10 @@ export type CreateItinerary = {
     mainImage: string;
     detailedOverview?: string;
     duration: number;
-    countries: string[];
-    cities: City[];
+    countries?: string[];
+    cities?: City[];
     days: Day[];
-    itineraryTags: number[];
-    notes: Note[];
+    itineraryTags?: number[];
+    notes?: Note[];
     budget?: number;
 }
