@@ -204,60 +204,6 @@ export const updateItinerary = async (id: string, itinerary: CreateItinerary) =>
     }
 }
 
-export const getItineraryByUserId = async (userId?: string) => {
-    // const token = cookies().get("token");
-    // if (!token) {
-    //     throw new Error("Not authenticated");
-    // }
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-
-        const { data: itineraries, error: itinerariesError } = await supabase
-        .from('itineraries')
-        .select('*')
-        .eq('creator_id', userId);
-
-        if (itinerariesError) throw itinerariesError;
-
-        const { data: itineraryInteractions, error: itineraryInteractionsError } = await supabase
-        .from('itinerary_interactions')
-        .select('views, rating, likes')
-        .eq('itinerary_id', itineraries.id);
-
-        const mappedItineraries = itineraries.map((itinerary: Itinerary) => ({
-            id: itinerary.id,
-            title: itinerary.title,
-            duration: itinerary.duration,
-            shortDescription: itinerary.shortDescription,
-            detailedOverview: itinerary.detailedOverview,
-            mainImage: itinerary.mainImage,
-            countries: itinerary.countries,
-            cities: itinerary.cities,
-            days: itinerary.days,
-            status: itinerary.status,
-            itineraryTags: itinerary.itineraryTags,
-            activityTags: itinerary.activityTags,
-            notes: itinerary.notes,
-            created: itinerary.created,
-            updated: itinerary.updated,
-            views: itineraryInteractions[0].views,
-            rating: itineraryInteractions[0].rating,
-            budget: itinerary.budget,
-            likes: itineraryInteractions[0].likes,
-            quickFilter: itinerary.quickFilter,
-            creator_id: itinerary.creator_id,
-
-        }));
-
-        return mappedItineraries;
-    } catch (error) {
-        console.error('Error fetching itineraries:', error);
-        throw new Error(`Failed to fetch itineraries: ${error instanceof Error ? error.message : String(error)}`);
-    }
-    
-}
-
 export const getItinerarySummaries = async (userId?: string) => {
     const { data, error } = await supabase
     .rpc("get_my_itinieraries", { p_creator_id: userId }) as { 

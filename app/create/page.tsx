@@ -992,7 +992,7 @@ export default function CreatePage() {
         id: note.id,
         title: note.title || '',
         content: note.content || '',
-        expanded: note.expanded ?? true
+        expanded: note.expanded ?? false
       } as Note)).filter(note => note.title.length > 0 || note.content.length > 0)
       
       form.setValue('notes', nonEmptyNotes)

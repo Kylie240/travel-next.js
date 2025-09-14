@@ -1,10 +1,11 @@
 "use client"
 
-import { Circle, MapPin, ChevronDown } from "lucide-react"
+import { Circle, MapPin, ChevronDown, Eye } from "lucide-react"
 import { motion } from "framer-motion"
 import { Activity } from "@/types/Activity"
 import { Accommodation } from "@/types/Accommodation"
 import { Note } from "@/types/Note"
+import { activityTagsMap } from "@/lib/constants/tags"
 
 export interface DaySectionProps {
   day: {
@@ -32,9 +33,9 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
             ) : day.day === 1 && isActive ? (
               <MapPin fill="currentColor" size={30} className="-left-[.2rem] relative"/>
             ) : isActive ? (
-              <Circle fill="currentColor" size={25} />
+              <Circle fill="currentColor" size={20} />
             ) : (
-              <Circle strokeWidth={4} size={25} />
+              <Circle strokeWidth={4} size={20} />
             )}
           </button>
         </div>  
@@ -72,70 +73,76 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
         >
           <div className="mt-8 space-y-6">
             {day.activities.map((activity, index) => (
-              <motion.div
-                key={activity.id || index}
-                initial={false}
-                className="bg-white rounded-xl p-4 shadow-sm"
-              >
-                <div 
-                  className="flex items-start justify-between cursor-pointer"
-                  onClick={() => {
-                    // Toggle activity visibility
-                    const element = document.getElementById(`activity-${day.day}-${index}`);
-                    if (element) {
-                      element.style.display = element.style.display === 'none' ? 'block' : 'none';
-                    }
-                  }}
+              <div className="relative">
+                <div className="absolute">
+                  {/* <{activityTagsMap[activity.type].icon} /> */}
+                  <Eye />
+                </div>
+                <motion.div
+                  key={activity.id || index}
+                  initial={false}
+                  className="bg-white rounded-xl p-4 shadow-sm"
                 >
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium">{activity.title}</h3>
-                    <p className="text-sm text-gray-500">{activity.time}</p>
-                  </div>
-                  <motion.button 
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    animate={{ rotate: document.getElementById(`activity-${day.day}-${index}`)?.style.display === 'none' ? 0 : 180 }}
-                    transition={{ duration: 0.2 }}
+                  <div 
+                    className="flex items-start justify-between cursor-pointer"
+                    onClick={() => {
+                      // Toggle activity visibility
+                      const element = document.getElementById(`activity-${day.day}-${index}`);
+                      if (element) {
+                        element.style.display = element.style.display === 'none' ? 'block' : 'none';
+                      }
+                    }}
                   >
-                    <ChevronDown className="w-5 h-5 text-gray-500" />
-                  </motion.button>
-                </div>
-                
-                <div id={`activity-${day.day}-${index}`} className="mt-4" style={{ display: 'none' }}>
-                  {activity.description && (
-                    <p className="text-gray-600 mb-3">{activity.description}</p>
-                  )}
-                  {activity.location && (
-                    <div className="flex items-center text-sm text-gray-500">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      <span>{activity.location}</span>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-medium">{activity.title}</h3>
+                      <p className="text-sm text-gray-500">{activity.time}</p>
                     </div>
-                  )}
-                  {activity.duration && (
-                    <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration}</p>
-                  )}
-                  {activity.cost && (
-                    <p className="text-sm text-gray-500 mt-1">Cost: {activity.cost}</p>
-                  )}
-                </div>
-              </motion.div>
+                    <motion.button 
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      animate={{ rotate: document.getElementById(`activity-${day.day}-${index}`)?.style.display === 'none' ? 0 : 180 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="w-5 h-5 text-gray-500" />
+                    </motion.button>
+                  </div>
+                  
+                  <div id={`activity-${day.day}-${index}`} className="mt-4" style={{ display: 'none' }}>
+                    {activity.description && (
+                      <p className="text-gray-600 mb-3">{activity.description}</p>
+                    )}
+                    {activity.location && (
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        <span>{activity.location}</span>
+                      </div>
+                    )}
+                    {activity.duration && (
+                      <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration}</p>
+                    )}
+                    {/* {activity.cost && (
+                      <p className="text-sm text-gray-500 mt-1">Cost: {activity.cost}</p>
+                    )} */}
+                  </div>
+                </motion.div>
+              </div>
             ))}
             
-            {day.accommodation.map((accommodation, index) => (
+            {/* {day.accommodation && (
               <motion.div
-                key={accommodation.id || index}
+                key={day.id}
                 initial={false}
                 className="bg-white rounded-xl p-4 shadow-sm"
               >
                 <h3 className="text-lg font-medium">Accommodation</h3>
-                <p className="text-gray-600">{accommodation.name}</p>
-                {accommodation.location && (
+                <p className="text-gray-600">{day.accommodation.name}</p>
+                {day.accommodation.location && (
                   <div className="flex items-center text-sm text-gray-500 mt-2">
                     <MapPin className="w-4 h-4 mr-1" />
-                    <span>{accommodation.location}</span>
+                    <span>{day.accommodation.location}</span>
                   </div>
                 )}
               </motion.div>
-            ))}
+            )} */}
           </div>
         </motion.div>
       </div>

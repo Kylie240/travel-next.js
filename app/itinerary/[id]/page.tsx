@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import Loading from "@/app/loading"
 import { similarItineraries } from "./data"
-import { Calendar, MapPin, Users, Utensils, Bike, BedDouble, Train, Bookmark, ChevronUp, ChevronDown, ChevronRight, Share, Edit } from "lucide-react"
+import { Calendar, MapPin, Users, Utensils, Bike, BedDouble, Train, Bookmark, ChevronUp, ChevronDown, ChevronRight, Share, Edit, DollarSign } from "lucide-react"
 import Image from "next/image"
 import { Itinerary } from "@/types/itinerary"
 import { DaySection } from "@/components/ui/day-section"
@@ -12,11 +12,13 @@ import ScheduleSection from "./schedule-section"
 import NoteSection from "./note-section"
 import ShareElement from "./share-element"
 import { getItineraryById } from "@/lib/actions/itinerary.actions"
-import { itineraryTagsMap } from "@/lib/constants/tags"
+import { activityTagsMap, itineraryTagsMap } from "@/lib/constants/tags"
+import { BiMoney } from "react-icons/bi"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const paramsValue = await params;
   const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
+  const creator = itinerary.creator;
   // const currentUser = await getCurrentUser();
   const currentUser = {
     uid: "123",
@@ -26,21 +28,16 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     avatar: "https://via.placeholder.com/150",
     image: "https://via.placeholder.com/150",
   };
-  // const creator = await getUserById(itinerary.creatorId) as User;
-  const creator = {
-    id: "123",
-    name: "John Doe",
-    title: "Traveler",
-    trips: 10,
-    avatar: "https://via.placeholder.com/150",
-    image: "https://via.placeholder.com/150",
-  };
-  const countries = itinerary.days.map(x => x.countryName)
+  const countries = itinerary.days.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index);
+  const cities = itinerary.days.map(day => day.cityName).filter((value, index, self) => self.indexOf(value) === index);
+  const activityTags = itinerary.days.flatMap(day =>
+    day.activities.map(activity => activity.type).filter(Boolean)
+  );
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
       {/* Hero Section */}
-      <div className="flex flex-col sticky h-[calc(100vh-70px)] min-h-[800px] lg:min-h-fit md:minn-h-screen md:h-screen px-2 md:px-8 gap-6 lg:flex-row lg:h-[520px]">
+      <div className="flex flex-col justify-between sticky h-[calc(100vh-70px)] min-h-[800px] lg:min-h-fit px-2 md:px-8 lg:px-[6rem] gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
           <div className="flex-1 h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
@@ -50,24 +47,24 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-black/40" />
-            <div className="absolute inset-0 flex items-end md:items-center">
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+            <div className="absolute inset-0 flex items-end md:items-end">
               <div className="container px-0 mx-0 lg:mx-auto">
-                <div className="text-white lg:max-w-2xl m-0 p-6">
-                  <h1 className="text-3xl max-w-[80%] md:max-w-none leading-[40px] md:leading-none md:text-3xl lg:text-5xl font-bold mb-4">{itinerary.title}</h1>
-                  <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.shortDescription}</p>
+                <div className="text-white m-0 p-6 md:p-8 md:mb-8 md:ml-4">
+                  <h1 className="text-3xl max-w-[80%] leading-[40px] md:leading-[40px] md:text-4xl lg:text-5xl font-bold mb-4">{itinerary.title}</h1>
+                  {/* <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.shortDescription}</p> */}
                   <div className="flex items-center gap-6 text-sm">
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 mr-2" />
-                      {itinerary.duration}
+                      {itinerary.duration} days
                     </div>
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 mr-2" />
                       {countries.length > 0 ? countries.map((country: any) => country).join(' · ') : ''}
                     </div>
                     <div className="flex items-center">
-                      <Users className="h-5 w-5 mr-2" />
-                      2-4 people
+                      <DollarSign className="h-5 w-5 mr-2" />
+                      {itinerary?.budget}/person
                     </div>
                   </div>
                 </div>
@@ -77,132 +74,48 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         </div>
 
         {/* Mobile Items List */}
-        <div className="flex flex-col justify-between h-full lg:hidden">
-          <div className="block px-4">
-            <div className="flex justify-between">
-              <div>
-                <h2 className="font-semibold text-xl mb-2">Trip Overview</h2>
-                <span className="text-sm text-black truncate">
-                  {/* {itinerary.cities.map((city: any) => city.city).join(' · ')} */}
-                  {countries.map((country: any) => country.value).join(' · ')}
-                </span>
-                
-                {/* Category Tags */}
-                <div className="mb-4 mt-2">
-                  <div className="flex flex-wrap gap-2">
-                    {itinerary?.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
-                      <span
-                        key={tag}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
-                      >
-                        {itineraryTagsMap[tag].name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <p className="text-gray-600 mt-2">{itinerary.shortDescription}</p>
-                <div className="flex gap-4 hidden">
-                  <div className="flex flex-col items-center my-4 relative w-[90px]">
-                    <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
-                      <Train />
-                    </div>
-                    <p className="text-xs mt-2">Transportation</p>
-                    <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
-                      <p className="text-xs">5</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-center my-4 relative w-[90px]">
-                    <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
-                      <BedDouble />
-                    </div>
-                    <p className="text-xs mt-2">Accommodations</p>
-                    <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
-                      <p className="text-xs">5</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-center my-4 relative w-[90px]">
-                    <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
-                      <Bike />
-                    </div>
-                    <p className="text-xs mt-2">Activities</p>
-                    <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
-                      <p className="text-xs">5</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-center my-4 relative w-[90px]">
-                    <div className="flex items-center justify-center text-white/80 w-[60px] h-[60px] bg-gray-900/10 rounded-xl">
-                      <Utensils />
-                    </div>
-                    <p className="text-xs mt-2">Food</p>
-                    <div className="absolute rounded-full right-1 -top-1 flex items-center justify-center w-[20px] h-[20px] text-white bg-black">
-                      <p className="text-xs">2</p>
-                    </div>
-                  </div>
-                </div>
+        <div className="flex flex-col h-full lg:hidden block justify-between p-4">
+          <div className="">
+              <h2 className="text-xl font-semibold mb-2">Trip Overview</h2>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
+                    >
+                      {itineraryTagsMap[tag - 1].name}
+                    </span>
+                  ))}
               </div>
-              <div className="flex gap-2">
-                {currentUser?.uid !== itinerary.creator_id ? (
-                  <Link href={`/itinerary/${itinerary.id}/edit`}>
-                    <Edit size={30} className="cursor-pointer hover:bg-gray-200 h-10 w-10 rounded-full p-2"/>
-                  </Link>
-                ) : (
-                  <BookmarkElement itineraryId={itinerary.id} />
-                )}
-                <ShareElement />
-              </div>
-            </div>
-            
-            <div className="w-full flex justify-around my-3 justify-between">
-              <p>2 Transports</p>
-              <span>|</span>
-              <p>2 Restaurants</p>
-              <span>|</span>
-              <p>4 Accommodations</p>
-            </div>
+              {itinerary.shortDescription}
           </div>
-
-          <div className="bg-gray-100 flex flex-col gap-2 w-full rounded-xl p-4">
-            <div className="flex justify-between w-full">
-              <div className="flex items-center gap-4">
-                <Image
-                  src={creator.image}
-                  alt={creator.name}
-                  width={50}
-                  height={56}
-                  className="rounded-full"
-                />
+          <div className=" px-4 pt-6 pb-4 border rounded-2xl">
+            <div className="flex justify-between">
+              <div className="flex items-center gap-4 px-1">
+                <div className="relative h-12 w-12 rounded-full overflow-hidden">
+                  <Image
+                    src={creator.avatar}
+                    alt={creator.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <div>
-                  <p className="font-medium">Created by {creator.name}</p>
+                  <div className="flex gap-2">
+                    <p className="font-medium">{creator.name}</p>
+                    <p className="font-medium text-gray-600">@{creator.username}</p>
+                  </div>
                   <p className="text-sm text-gray-600">
-                    {creator.title} · {creator.trips} trips created
+                    {creator.title} {creator.trips && ` · ${creator.trips} trips created`}
                   </p>
                 </div>
               </div>
-              <button className="hover:bg-gray-200 rounded-lg px-8 text-sm transition-colors bg-[#000000] text-[#ffffff]">
+              <div className="cursor-pointer border rounded-xl flex justify-center items-center w-[150px] h-[30px] bg-gray-900 hover:bg-gray-800 text-white p-2">
                 Follow
-              </button>
+              </div>
             </div>
-            <div>
-              {/* <p className={cn(
-                "text-md text-gray-700",
-                !showFullDetails && "line-clamp-2"
-              )}>
-                {itinerary.details}
-              </p>
-              {itinerary.details && itinerary.details.length > 100 && (
-                <button 
-                  onClick={() => setShowFullDetails(!showFullDetails)}
-                  className="text-sm text-gray-500 hover:text-gray-700 mt-1 flex items-center gap-1"
-                >
-                  {showFullDetails ? 'Show less' : 'Read more'}
-                  <ChevronRight className={cn(
-                    "h-4 w-4 transition-transform",
-                    showFullDetails && "rotate-90"
-                  )} />
-                </button>
-              )} */}
-              <p>{itinerary.detailedOverview}</p>
+            <div className="mt-4 space-y-2">
+              <p className=" px-2">{creator.bio}</p>
             </div>
           </div>
         </div>
@@ -219,69 +132,84 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <div className="absolute inset-0 bg-black/20" />
             </div>
 
-            <div className="lg:bg-gray-800 w-full lg:h-[40%] rounded-3xl p-4 text-black lg:text-white flex flex-col justify-end gap-2">
+            <div className="lg:bg-gray-800 w-full lg:h-[40%] rounded-3xl p-6 text-black lg:text-white flex flex-col justify-end gap-2">
               {itinerary.shortDescription}
             </div>
-            <div className="bg-gray-800 relative w-full h-[20%] rounded-3xl p-4 text-white flex flex-col justify-end"
+            <div className="bg-gray-800 relative w-full h-[20%] overflow-hidden rounded-3xl text-white flex justify-center items-center curstor-pointer"
             style={{
               backgroundImage: `url(${itinerary.mainImage})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}>
-              <div className="absolute bottom-1 right-1">
-                View all photos
+              <div className="w-full h-full inset-0 bg-black/20 z-1 cursor-pointer hover:bg-black/10 font-medium text-lg flex justify-center items-center">
+                View All 20 Photos
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-6 lg:px-[4rem] py-8">
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-2 md:px-8">
           {/* Left Column - Schedule */}
-          <ScheduleSection schedule={itinerary.days} notes={itinerary.notes} />
+          <div className="lg:col-span-2 flex flex-col gap-8">
+            <div className="flex flex-col mb-4 lg:mb-0">
+              <h2 className="text-2xl md:text-2xl font-semibold mb-2 hidden lg:block">Trip Overview</h2>
+              <div className="hidden flex-wrap gap-2 mb-2 lg:flex">
+                {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
+                    >
+                      {itineraryTagsMap[tag - 1].name}
+                    </span>
+                  ))}
+              </div>
+              {itinerary.detailedOverview}
+            </div>
+            <ScheduleSection schedule={itinerary.days} notes={itinerary.notes} />
+          </div>
 
           {/* Right Column - Details & Notes */}
           <div className="hidden lg:block">
             <div className="sticky top-24">
-              <h2 className="text-2xl font-semibold mb-6">Trip Details</h2>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="relative h-12 w-12 rounded-full overflow-hidden">
-                  <Image
-                    src={creator.image}
-                    alt={creator.name}
-                    fill
-                    className="object-cover"
-                  />
+              <div className=" px-4 pt-6 pb-4 border rounded-2xl">
+                <div className="flex items-center gap-4 px-1">
+                  <div className="relative h-12 w-12 rounded-full overflow-hidden">
+                    <Image
+                      src={creator.avatar}
+                      alt={creator.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex gap-2">
+                      <p className="font-medium">{creator.name}</p>
+                      <p className="font-medium text-gray-600">@{creator.username}</p>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      {creator.title} {creator.trips && ` · ${creator.trips} trips created`}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{creator.name}</p>
-                  <p className="text-sm text-gray-600">
-                    {creator.trips} trips created
-                  </p>
-                </div>
-              </div>
-              <p className="text-gray-600 mb-6">{itinerary.detailedOverview}</p>
-              <div className="space-y-4">
-                {/* Category Tags */}
-                <div className="mb-4 mt-2">
-                  <div className="flex flex-wrap gap-2">
-                    {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
-                      <span
-                        key={tag}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
-                      >
-                        {itineraryTagsMap[tag].name}
-                      </span>
-                    ))}
+                <div className="mt-4 hidden lg:block space-y-2">
+                  <p className="text-lg font-semibold px-2">About the Creator</p>
+                  <p className=" px-2">{creator.bio}</p>
+                  <div className="flex gap-2 w-full mt-2">
+                    <div className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-100">
+                      View Profile
+                    </div>
+                    <div className="cursor-pointer border rounded-xl flex justify-center items-center w-full bg-gray-900 hover:bg-gray-800 text-white p-2">
+                      Follow
+                    </div>
                   </div>
                 </div>
               </div>
-
               {/* Creator Notes */}
-              <div className="mt-8 hidden lg:block">
-                <h3 className="text-lg font-semibold mb-4">Creator Notes</h3>
+              <p className="text-lg text-center font-medium mt-8">Useful Trip Notes</p>
+              <div className="px-1">
                 <NoteSection notes={itinerary.notes} />
               </div>
             </div>
