@@ -6,6 +6,7 @@ import { SearchArea } from "@/components/ui/search-area"
 import { ItinerarySection } from "@/components/ui/itinerary-section"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { useRouter } from "next/navigation"
+import LandingPage from "./landing/page"
 
 // Sample data for featured itineraries
 const multiCountryItineraries = [
@@ -497,146 +498,147 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="relative max-w-screen md:max-w-none min-h-[700px] md:min-h-[600px] flex items-center mb-32 md:mb-16 justify-center px-4 sm:px-6 lg:px-8">
-        {/* Background Image */}
-        <div className="absolute inset-x-4 sm:inset-x-6 lg:inset-x-8 inset-y-0 rounded-3xl overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: `url('https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0')`,
-            }}>
-            <div className="absolute inset-0 bg-black/20"></div>
-          </div>
-        </div>
+    // <div className="flex flex-col">
+    //   {/* Hero Section */}
+    //   <section className="relative max-w-screen md:max-w-none min-h-[700px] md:min-h-[600px] flex items-center mb-32 md:mb-16 justify-center px-4 sm:px-6 lg:px-8">
+    //     {/* Background Image */}
+    //     <div className="absolute inset-x-4 sm:inset-x-6 lg:inset-x-8 inset-y-0 rounded-3xl overflow-hidden">
+    //       <div
+    //         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+    //         style={{
+    //           backgroundImage: `url('https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0https://th.bing.com/th/id/R.666511722b8a59564f5c16637d138956?rik=VQ39yQHssfwsNA&pid=ImgRaw&r=0')`,
+    //         }}>
+    //         <div className="absolute inset-0 bg-black/20"></div>
+    //       </div>
+    //     </div>
 
-        {/* Content */}
-        <div className="relative z-[10] max-w-6xl w-full px-12 md:px-[4rem] lg:px-[4.4rem] xl:px-0 pb-48 md:pb-0">
-          <h1 className="md:text-6xl lg:text-7xl xl:text-8xl font-semibold text-white mb-6 text-4xl">
-            DISCOVER YOUR NEXT ADVENTURE
-          </h1>
-          <p className="text-xl text-white mb-12 leading-relaxed text-left mx-auto">
-            Find travel experiences crafted by fellow explorers.
-          </p>
-          <div className="flex gap-4">
-            <Link href="/explore">
-              <button className="hover:bg-gray-700 rounded-lg p-4 text-md transition-colors bg-[#000000] text-[#ffffff]">
-                Explore All Itineraries
-              </button>
-            </Link>
-          </div>
-        </div>
-        <div className="absolute bottom-[-140px] sm:px-12 lg:px-8 md:bottom-[-60px] z-64 left-0 w-full md:px-16 lg:px-8">
-          <SearchArea />
-        </div>
-      </section>
+    //     {/* Content */}
+    //     <div className="relative z-[10] max-w-6xl w-full px-12 md:px-[4rem] lg:px-[4.4rem] xl:px-0 pb-48 md:pb-0">
+    //       <h1 className="md:text-6xl lg:text-7xl xl:text-8xl font-semibold text-white mb-6 text-4xl">
+    //         DISCOVER YOUR NEXT ADVENTURE
+    //       </h1>
+    //       <p className="text-xl text-white mb-12 leading-relaxed text-left mx-auto">
+    //         Find travel experiences crafted by fellow explorers.
+    //       </p>
+    //       <div className="flex gap-4">
+    //         <Link href="/explore">
+    //           <button className="hover:bg-gray-700 rounded-lg p-4 text-md transition-colors bg-[#000000] text-[#ffffff]">
+    //             Explore All Itineraries
+    //           </button>
+    //         </Link>
+    //       </div>
+    //     </div>
+    //     <div className="absolute bottom-[-140px] sm:px-12 lg:px-8 md:bottom-[-60px] z-64 left-0 w-full md:px-16 lg:px-8">
+    //       <SearchArea />
+    //     </div>
+    //   </section>
 
-      {/* Popular Listings */}
-      <section className="py-16 bg-white">
-        <ItinerarySection
-          type="popular"
-          title="Popular Listings"
-          description="Discover our most booked destinations and experiences."
-          itineraries={popularListings}
-        />
-      </section>
+    //   {/* Popular Listings */}
+    //   <section className="py-16 bg-white">
+    //     <ItinerarySection
+    //       type="popular"
+    //       title="Popular Listings"
+    //       description="Discover our most booked destinations and experiences."
+    //       itineraries={popularListings}
+    //     />
+    //   </section>
 
-      {/* Travel Categories */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-left mb-8">
-            <p className="text-gray-600 text-2xl">
-              Find the perfect trip that matches your interests
-            </p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {travelCategories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                name={category.name}
-                icon={category.icon}
-                imageUrl={category.imageUrl}
-                onClick={() => console.log(`Clicked ${category.name}`)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+    //   {/* Travel Categories */}
+    //   <section className="py-16 bg-gray-50">
+    //     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    //       <div className="text-left mb-8">
+    //         <p className="text-gray-600 text-2xl">
+    //           Find the perfect trip that matches your interests
+    //         </p>
+    //       </div>
+    //       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    //         {travelCategories.map((category) => (
+    //           <CategoryCard
+    //             key={category.id}
+    //             name={category.name}
+    //             icon={category.icon}
+    //             imageUrl={category.imageUrl}
+    //             onClick={() => console.log(`Clicked ${category.name}`)}
+    //           />
+    //         ))}
+    //       </div>
+    //     </div>
+    //   </section>
 
-      {/* Black Banner */}
-      <BlackBanner 
-        subtitle="Create and save your own itineraries"
-        title="In-house tech that guarantees unbeatable prices"
-        description="SmartFare secures the lowest fares on flights & local services, guaranteeing you the best price."
-      />
+    //   {/* Black Banner */}
+    //   <BlackBanner 
+    //     subtitle="Create and save your own itineraries"
+    //     title="In-house tech that guarantees unbeatable prices"
+    //     description="SmartFare secures the lowest fares on flights & local services, guaranteeing you the best price."
+    //   />
 
-      {/* Most Viewed */}
-      <section className="py-16 bg-gray-50">
-        <ItinerarySection
-          type="most-viewed"
-          title="Most Viewed"
-          description="See what other travelers are exploring right now."
-          itineraries={mostViewed}
-        />
-      </section>
+    //   {/* Most Viewed */}
+    //   <section className="py-16 bg-gray-50">
+    //     <ItinerarySection
+    //       type="most-viewed"
+    //       title="Most Viewed"
+    //       description="See what other travelers are exploring right now."
+    //       itineraries={mostViewed}
+    //     />
+    //   </section>
 
-      {/* Popular Countries */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-left mb-12">
-            <h2 className="text-3xl font-semibold mb-4">Choose your next adventure's destination</h2>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularCountries.map((country) => (
-              <CountryCard
-                key={country.id}
-                name={country.name}
-                imageUrl={country.imageUrl}
-                tripCount={country.tripCount}
-                onClick={() => console.log(`Clicked ${country.name}`)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+    //   {/* Popular Countries */}
+    //   <section className="py-16 bg-white">
+    //     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    //       <div className="text-left mb-12">
+    //         <h2 className="text-3xl font-semibold mb-4">Choose your next adventure's destination</h2>
+    //       </div>
+    //       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+    //         {popularCountries.map((country) => (
+    //           <CountryCard
+    //             key={country.id}
+    //             name={country.name}
+    //             imageUrl={country.imageUrl}
+    //             tripCount={country.tripCount}
+    //             onClick={() => console.log(`Clicked ${country.name}`)}
+    //           />
+    //         ))}
+    //       </div>
+    //     </div>
+    //   </section>
 
-      {/* Multi-country Itineraries */}
-      <section className="py-16 bg-gray-50">
-        <ItinerarySection
-          type="multi-country"
-          title="Multi-country itineraries"
-          description="Explore our multi-country tours! Let yourself be surprised by our extended version top sellers."
-          itineraries={multiCountryItineraries}
-        />
-      </section>
+    //   {/* Multi-country Itineraries */}
+    //   <section className="py-16 bg-gray-50">
+    //     <ItinerarySection
+    //       type="multi-country"
+    //       title="Multi-country itineraries"
+    //       description="Explore our multi-country tours! Let yourself be surprised by our extended version top sellers."
+    //       itineraries={multiCountryItineraries}
+    //     />
+    //   </section>
 
-      {/* Solo Trips */}
-      <section className="py-16 bg-white">
-        <ItinerarySection
-          type="solo"
-          title="Solo Trips"
-          description="Perfect itineraries for independent travelers seeking adventure and self-discovery."
-          itineraries={soloTrips}
-        />
-      </section>
+    //   {/* Solo Trips */}
+    //   <section className="py-16 bg-white">
+    //     <ItinerarySection
+    //       type="solo"
+    //       title="Solo Trips"
+    //       description="Perfect itineraries for independent travelers seeking adventure and self-discovery."
+    //       itineraries={soloTrips}
+    //     />
+    //   </section>
 
-      {/* Black Banner */}
-      <BlackBanner 
-        subtitle="Start earning today"
-        title="Join our community of travelers"
-        description="Sign up to earn money by sharing your travel experiences."
-      />
+    //   {/* Black Banner */}
+    //   <BlackBanner 
+    //     subtitle="Start earning today"
+    //     title="Join our community of travelers"
+    //     description="Sign up to earn money by sharing your travel experiences."
+    //   />
 
-      {/* Tropical Vacations */}
-      <section className="py-16 bg-gray-50">
-        <ItinerarySection
-          type="tropical"
-          title="Tropical Vacations"
-          description="Escape to paradise with our handpicked selection of tropical getaways."
-          itineraries={tropicalVacations}
-        />
-      </section>
-    </div>
+    //   {/* Tropical Vacations */}
+    //   <section className="py-16 bg-gray-50">
+    //     <ItinerarySection
+    //       type="tropical"
+    //       title="Tropical Vacations"
+    //       description="Escape to paradise with our handpicked selection of tropical getaways."
+    //       itineraries={tropicalVacations}
+    //     />
+    //   </section>
+    // </div>
+    <LandingPage />
   );
 }
