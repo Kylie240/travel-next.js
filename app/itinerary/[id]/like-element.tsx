@@ -1,22 +1,22 @@
 "use client"
 
+import { LikeItinerary } from '@/lib/actions/itinerary.actions'
 import React from 'react'
-import { Bookmark } from "lucide-react"
-import { SaveItinerary } from '@/lib/actions/itinerary.actions'
+import { FaRegStar } from "react-icons/fa6"
 
-const BookmarkElement = ({ itineraryId }: { itineraryId: string }) => {
+const LikeElement = ({ itineraryId }: { itineraryId: string }) => {
   return (
-    <Bookmark size={35}
+    <FaRegStar size={35}
         className={`transition-colors cursor-pointer h-10 w-10 ${
         itineraryId.includes('48')
             ? "fill-red-500 text-red-500"
             : "text-black hover:bg-gray-100 rounded-lg p-2"
         }`}
         onClick={() => {
-            SaveItinerary(itineraryId);
+            LikeItinerary(itineraryId);
         }}
     />
   )
 }
 
-export default BookmarkElement
+export default LikeElement

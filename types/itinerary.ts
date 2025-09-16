@@ -25,6 +25,6 @@ export type Itinerary = {
     budget?: number;
     likes?: number;
     quickFilter?: string;
-    creator_id?: string;
+    creatorId?: string;
     creator?: any; //create new type
 }

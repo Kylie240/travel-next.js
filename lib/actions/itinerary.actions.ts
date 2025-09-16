@@ -282,3 +282,76 @@ export const deleteItinerary = async (itineraryId: string) => {
         throw new Error(`Failed to delete itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
+
+//Interactions
+export const LikeItinerary = async (itineraryId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        // Verify user is authenticated
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            console.log('1')
+            throw new Error("Not authenticated");
+        }
+
+        // Delete the itinerary
+        const { error: itineraryError } = await supabase
+        .from('interactions_likes')
+        .insert({
+            itinerary_id: itineraryId,
+            user_id: user.id,
+        });
+
+        if (itineraryError) {
+            console.log('2')
+            throw itineraryError;
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error bookmarking itinerary:', error);
+        throw new Error(`Failed to bookmark itinerary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+export const SaveItinerary = async (itineraryId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        // Verify user is authenticated
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            console.log('1')
+            throw new Error("Not authenticated");
+        }
+
+        // Delete the itinerary
+        const { error: itineraryError } = await supabase
+        .from('interactions_saves')
+        .insert({
+            itinerary_id: itineraryId,
+            user_id: user.id,
+        });
+
+        if (itineraryError) {
+            console.log('2')
+            throw itineraryError;
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error saving itinerary:', error);
+        throw new Error(`Failed to save itinerary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}

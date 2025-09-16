@@ -95,7 +95,7 @@ export default function MyItinerariesPage() {
           </div>
         ) : (
           (itinerarySummaries && itinerarySummaries?.length > 0) ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 px-0 md:px-4 xl:px-0 gap-4 md-gap-6 xl:gap-8">
               {itinerarySummaries.map((itinerary: ItinerarySummary) => (
                 <Link key={itinerary.id} href={itinerary.status !== ItineraryStatusEnum.draft ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
                   <div

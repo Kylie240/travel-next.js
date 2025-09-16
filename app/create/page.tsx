@@ -1171,7 +1171,7 @@ export default function CreatePage() {
     const currentTags = form.getValues('itineraryTags') || []
     const newTags = currentTags.includes(categoryId)
       ? currentTags.filter(c => c !== categoryId)
-      : currentTags.length < 3 ? [...currentTags, categoryId] : currentTags
+      : currentTags.length < 5 ? [...currentTags, categoryId] : currentTags
     form.setValue('itineraryTags', newTags)
   }
 
@@ -1435,7 +1435,7 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 3)</span></h2>
+                    <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 5)</span></h2>
                     <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-3 w-full">
                       {itineraryTags.map((category) => {
                         const currentTags = form.watch('itineraryTags') || []

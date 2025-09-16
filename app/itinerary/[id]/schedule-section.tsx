@@ -1,20 +1,40 @@
 "use client"
 
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { DaySection } from '@/components/ui/day-section'
-import { ChevronDown, ChevronUp } from 'lucide-react'
-import React, { useState } from 'react'
+import { ChevronUp, Minus, Plus } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Day } from '@/types/Day'
 import { Note } from '@/types/Note'
 import NoteSection from './note-section'
 
 const ScheduleSection = ({ schedule, notes }: { schedule: Day[], notes: Note[] }) => {
-const [activeDays, setActiveDays] = useState<number[]>([])
-const toggleDay = (dayNumber: number) => {
+  const [activeDays, setActiveDays] = useState<number[]>([])
+  const [showScrollTop, setShowScrollTop] = useState(false)
+  const headerRef = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (headerRef.current) {
+        const headerPosition = headerRef.current.getBoundingClientRect().top
+        setShowScrollTop(headerPosition < 0 && activeDays.length > 0)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [activeDays.length])
+
+  const scrollToTop = () => {
+    if (headerRef.current) {
+      const headerPosition = headerRef.current.getBoundingClientRect().top + window.scrollY - 100
+      window.scrollTo({ top: headerPosition, behavior: 'smooth' })
+    }
+  }
+
+  const toggleDay = (dayNumber: number) => {
     setActiveDays(prev => 
       prev.includes(dayNumber) 
-        ? prev.filter(d => 
-          d !== dayNumber)
+        ? prev.filter(d => d !== dayNumber)
         : [...prev, dayNumber]
     )
   }
@@ -24,43 +44,60 @@ const toggleDay = (dayNumber: number) => {
   }
 
   const openAllDays = () => {
-    const days = schedule.map((day: any) => day.day)
-    setActiveDays(days)
+    const allDayIds = schedule.map(day => day.id)
+    console.log('Opening all days:', allDayIds)
+    setActiveDays(allDayIds)
   }
 
   return (
-    <div className="lg:col-span-2">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold">Itinerary Schedule</h2>
-              {schedule.length > 0 ? (
-                <div className="flex cursor-pointer items-center gap-2">
-                Close All
-                <ChevronUp size={16} />
+    <div className="lg:col-span-2 relative">
+      <div className="flex flex-col justify-between items-center mb-6">
+        <h2 ref={headerRef} className="text-2xl w-full text-left font-medium">Itinerary Schedule</h2>
+        <div className="sticky top-20 z-50 w-full flex flex-col items-end gap-2">
+          <button 
+            onClick={activeDays.length > 0 ? closeAllDays : openAllDays} 
+            className="flex cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
+          >
+            {activeDays.length > 0 ? (
+              <div className='flex items-center gap-1' onClick={closeAllDays}>
+                Close
+                <Minus strokeWidth={4} size={18} />
               </div>
-              ) : (
-                <div onClick={openAllDays} className="flex cursor-pointer items-center gap-2">
-                  Open All
-                  <ChevronDown size={16} />
-                </div>
-              )
-              }
+            ) : (
+              <div className='flex items-center gap-1' onClick={openAllDays}>
+                Open
+                <Plus strokeWidth={4} size={18} />
+              </div>
+            )}
+          </button>
+          {showScrollTop && (
+            <button
+              onClick={scrollToTop}
+              className="flex cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
+            >
+              <ChevronUp strokeWidth={4} size={18} />
+            </button>
+          )}
+        </div>
+        <div className="flex flex-col">
+          {schedule.map((day: Day, index) => (
+            <div key={day.id}>
+              <DaySection
+                key={day.id}
+                day={day}
+                isActive={activeDays.includes(day.id)}
+                onToggle={() => toggleDay(day.id)}
+                onClose={() => toggleDay(day.id)}
+              />
             </div>
-            <div className="flex flex-col">
-              {schedule.map((day: any) => (
-                <DaySection
-                  key={day.day}
-                  day={day}
-                  isActive={activeDays.includes(day.day)}
-                  onToggle={() => toggleDay(day.day)}
-                  onClose={() => toggleDay(day.day)}
-                />
-              ))}
-            </div>
-            <div className="block lg:hidden mt-8">
-              <p className="text-xl text-center font-medium mt-8">Useful Trip Notes</p>
-              <NoteSection notes={notes} />
-            </div>
-          </div>
+          ))}
+        </div>
+        <div className="block lg:hidden mt-8">
+          <p className="text-xl text-center w-full font-medium mt-8">Useful Trip Notes</p>
+          <NoteSection notes={notes} />
+        </div>
+      </div>
+    </div>
   )
 }
 

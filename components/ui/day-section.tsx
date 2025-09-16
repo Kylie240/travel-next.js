@@ -1,22 +1,26 @@
 "use client"
 
-import { Circle, MapPin, ChevronDown, Eye } from "lucide-react"
+import React from 'react'
+import { Circle, MapPin, ChevronDown, Link, Hotel, Caravan } from "lucide-react"
 import { motion } from "framer-motion"
-import { Activity } from "@/types/Activity"
-import { Accommodation } from "@/types/Accommodation"
-import { Note } from "@/types/Note"
 import { activityTagsMap } from "@/lib/constants/tags"
+import { FiArrowUpRight } from "react-icons/fi";
+import { FaCampground } from "react-icons/fa6";
+import { MdOutlineDirectionsBoat } from "react-icons/md";
+import { MdOutlineHotel } from "react-icons/md";
+
+
+const formatTime = (time: string | null | undefined) => {
+  if (!time) return '';
+  const [hours, minutes] = time.split(':').map(Number)
+  const period = hours >= 12 ? 'PM' : 'AM'
+  const formattedHours = hours % 12 || 12
+  return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period}`
+}
+import { Day } from "@/types/Day"
 
 export interface DaySectionProps {
-  day: {
-    day: number;
-    title: string;
-    description: string;
-    image: string;
-    activities: Activity[];
-    accommodation: Accommodation[];
-    notes: Note[];
-  };
+  day: Day;
   isActive: boolean;
   onToggle: () => void;
   onClose?: () => void;
@@ -25,22 +29,22 @@ export interface DaySectionProps {
 export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps) => {
   return (
    <div>
-      <div className="relative border-black border-l-[.2rem] pb-4 pl-4 ml-4 mr-2">
+      <div className="relative border-black border-l-[.18rem] pb-4 pl-4 ml-2 mr-2">
         <div className="absolute -left-[.83rem] bg-white py-4">
           <button onClick={onToggle} className="bg-transparent border-none p-0">
-            {day.day === 1 && !isActive ? (
-              <MapPin strokeWidth={3} size={30} className="-left-[.2rem] relative"/>
-            ) : day.day === 1 && isActive ? (
-              <MapPin fill="currentColor" size={30} className="-left-[.2rem] relative"/>
+            {day.id === 1 && !isActive ? (
+              <MapPin strokeWidth={3} size={25} className="-left-[.2rem] relative"/>
+            ) : day.id === 1 && isActive ? (
+              <MapPin fill="currentColor" size={25} className="-left-[.2rem] relative"/>
             ) : isActive ? (
-              <Circle fill="currentColor" size={20} />
+              <Circle fill="currentColor" size={18} />
             ) : (
-              <Circle strokeWidth={4} size={20} />
+              <Circle strokeWidth={4} size={18} />
             )}
           </button>
         </div>  
         <button 
-          className={`w-full relative inset-x-3 overflow-hidden h-[120px] md:h-[150px] top-4 p-8 flex items-center rounded-2xl cursor-pointer ${day.image !== '' ? 'shadow-lg' : ''}`} 
+          className={`w-full relative inset-x-3 overflow-hidden h-[120px] md:h-[150px] top-4 p-8 flex items-center rounded-2xl cursor-pointer ${(day.image !== null && day.image !== '') ? 'shadow-lg' : ''}`} 
           onClick={onToggle}
           style={{
             backgroundImage: `url(${day.image})`,
@@ -57,8 +61,8 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
           className={`absolute top-[50px] md:top-[70px] cursor-pointer left-[60px] z-[4] text-left bg-transparent border-none ${day.image ? 'text-white' : 'text-gray-700'}`} 
           onClick={onToggle}
         >
-          <h2 className={`text-xl md:text-2xl ${day.image ? 'font-bold' : 'font-semibold'}`}>Day {day.day} : {day.title}</h2>
-          <p className={`text-sm md:text-lg ${day.image ? 'font-medium' : 'font-normal'}`}>{day.description}</p>
+          <h2 className={`text-xl md:text-2xl ${day.image ? 'font-bold' : 'font-semibold'}`}>{day.title}</h2>
+          <p className={`text-xs md:text-sm lg:text-md text-whte/80 ${day.image ? 'font-normal' : 'font-thin'}`}>{day.cityName}, {day.countryName}</p>
         </button>
         <motion.div
           initial={false}
@@ -69,14 +73,17 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
           transition={{
             duration: 0.3,
           }}
-          className="overflow-hidden"
+          className="overflow-hidden relative left-4"
         >
           <div className="mt-8 space-y-6">
+            <p className={`text-sm md:text-lg pl-2 ${day.image ? 'font-medium' : 'font-normal'}`}>{day.description}</p>
             {day.activities.map((activity, index) => (
               <div className="relative">
-                <div className="absolute">
-                  {/* <{activityTagsMap[activity.type].icon} /> */}
-                  <Eye />
+                <div className="absolute z-[5] flex flex-col justify-center items-center gap-2" style={{ left: '-60px' }}>
+                  {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
+                    React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)
+                  )}
+                  <p className="text-sm text-gray-500">{formatTime(activity.time)}</p>
                 </div>
                 <motion.div
                   key={activity.id || index}
@@ -87,7 +94,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
                     className="flex items-start justify-between cursor-pointer"
                     onClick={() => {
                       // Toggle activity visibility
-                      const element = document.getElementById(`activity-${day.day}-${index}`);
+                      const element = document.getElementById(`activity-${day.id}-${index}`);
                       if (element) {
                         element.style.display = element.style.display === 'none' ? 'block' : 'none';
                       }
@@ -95,18 +102,17 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
                   >
                     <div className="flex-1">
                       <h3 className="text-lg font-medium">{activity.title}</h3>
-                      <p className="text-sm text-gray-500">{activity.time}</p>
                     </div>
                     <motion.button 
                       className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                      animate={{ rotate: document.getElementById(`activity-${day.day}-${index}`)?.style.display === 'none' ? 0 : 180 }}
+                      animate={{ rotate: document.getElementById(`activity-${day.id}-${index}`)?.style.display === 'none' ? 0 : 180 }}
                       transition={{ duration: 0.2 }}
                     >
                       <ChevronDown className="w-5 h-5 text-gray-500" />
                     </motion.button>
                   </div>
                   
-                  <div id={`activity-${day.day}-${index}`} className="mt-4" style={{ display: 'none' }}>
+                  <div id={`activity-${day.id}-${index}`} className="mt-4" style={{ display: 'none' }}>
                     {activity.description && (
                       <p className="text-gray-600 mb-3">{activity.description}</p>
                     )}
@@ -117,32 +123,56 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
                       </div>
                     )}
                     {activity.duration && (
-                      <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration}</p>
+                      <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration} minutes</p>
                     )}
-                    {/* {activity.cost && (
-                      <p className="text-sm text-gray-500 mt-1">Cost: {activity.cost}</p>
-                    )} */}
+                    {activity.link && (
+                      <div className="flex mt-4 w-full items-center text-sm cursor-pointer text-gray-500 border p-3 rounded-xl shadow-sm hover:shadow-md"
+                      onClick={() => {
+                        window.open(activity.link, '_blank');
+                      }}>
+                        <div className="rounded-lg bg-gray-800 p-2">
+                          <FiArrowUpRight size={20} strokeWidth={4} className="text-white" />
+                        </div>
+                        <span className="ml-2">Activity Link</span>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               </div>
             ))}
             
-            {/* {day.accommodation && (
-              <motion.div
-                key={day.id}
-                initial={false}
-                className="bg-white rounded-xl p-4 shadow-sm"
+            {day.accommodation?.name && (
+              <div
+              key={day.id}
+              className="bg-white rounded-xl flex items-start p-4 shadow-sm gap-4 cursor-pointer"
+              onClick={() => {
+                window.open(day.accommodation.link, '_blank');
+              }}
               >
-                <h3 className="text-lg font-medium">Accommodation</h3>
-                <p className="text-gray-600">{day.accommodation.name}</p>
-                {day.accommodation.location && (
-                  <div className="flex items-center text-sm text-gray-500 mt-2">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    <span>{day.accommodation.location}</span>
-                  </div>
-                )}
-              </motion.div>
-            )} */}
+                <div className="rounded-lg border border-gray-200 p-3">
+                  {day.accommodation.type === 'Boat' ? (
+                    <MdOutlineDirectionsBoat size={25} strokeWidth={2} className="text-gray-800" />
+                  ) : day.accommodation.type === 'Hostel' ? (
+                    <MdOutlineHotel size={25} strokeWidth={2} className="text-gray-800" />
+                  ) : day.accommodation.type === 'Camper/RV' ? (
+                    <Caravan size={25} strokeWidth={2} className="text-gray-800" />
+                  ) : day.accommodation.type === 'Camping' ? (
+                    <FaCampground size={25} strokeWidth={2} className="text-gray-800" />
+                  ) : <Hotel size={25} strokeWidth={2} className="text-gray-800" />
+                  }
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium">Accommodation</h3>
+                  <p className="text-gray-600">{day.accommodation.name}</p>
+                  {day.accommodation.location && (
+                    <div className="flex items-center text-sm text-gray-500 mt-2">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      <span>{day.accommodation.location}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

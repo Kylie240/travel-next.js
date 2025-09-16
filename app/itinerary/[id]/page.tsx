@@ -1,39 +1,32 @@
-import { Suspense } from "react"
-import Loading from "@/app/loading"
-import { similarItineraries } from "./data"
-import { Calendar, MapPin, Users, Utensils, Bike, BedDouble, Train, Bookmark, ChevronUp, ChevronDown, ChevronRight, Share, Edit, DollarSign } from "lucide-react"
+import { Calendar, MapPin, DollarSign, Link } from "lucide-react"
 import Image from "next/image"
 import { Itinerary } from "@/types/itinerary"
-import { DaySection } from "@/components/ui/day-section"
-import Link from "next/link"
-import { toast } from "sonner"
 import BookmarkElement from "./bookmark-element"
 import ScheduleSection from "./schedule-section"
 import NoteSection from "./note-section"
 import ShareElement from "./share-element"
 import { getItineraryById } from "@/lib/actions/itinerary.actions"
-import { activityTagsMap, itineraryTagsMap } from "@/lib/constants/tags"
-import { BiMoney } from "react-icons/bi"
+import { itineraryTagsMap } from "@/lib/constants/tags"
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import EditElement from "../edit-element"
+import LikeElement from "./like-element"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
+  const supabase = createServerComponentClient({ cookies })
+  const { data: { user } } = await supabase.auth.getUser()
+  const currentUserId = user?.id
+
   const paramsValue = await params;
   const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
   const creator = itinerary.creator;
-  // const currentUser = await getCurrentUser();
-  const currentUser = {
-    uid: "123",
-    name: "John Doe",
-    title: "Traveler",
-    trips: 10,
-    avatar: "https://via.placeholder.com/150",
-    image: "https://via.placeholder.com/150",
-  };
   const countries = itinerary.days.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index);
   const cities = itinerary.days.map(day => day.cityName).filter((value, index, self) => self.indexOf(value) === index);
   const activityTags = itinerary.days.flatMap(day =>
     day.activities.map(activity => activity.type).filter(Boolean)
   );
 
+  const canEdit = currentUserId === itinerary.creatorId;
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
       {/* Hero Section */}
@@ -46,7 +39,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               fill
               className="object-cover"
               priority
-            />
+              />
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
             <div className="absolute inset-0 flex items-end md:items-end">
               <div className="container px-0 mx-0 lg:mx-auto">
@@ -74,9 +67,23 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         </div>
 
         {/* Mobile Items List */}
-        <div className="flex flex-col h-full lg:hidden block justify-between p-4">
-          <div className="">
+        <div className="flex flex-col h-full lg:hidden justify-between p-4">
+          <div className="mb-2">
+            <div className="flex w-full justify-between">
               <h2 className="text-xl font-semibold mb-2">Trip Overview</h2>
+              <div className="flex gap-2">
+                {!canEdit ?
+                (
+                  <EditElement itineraryId={itinerary.id} />
+                ) : (
+                  <div className="flex gap-2">
+                    <LikeElement itineraryId={itinerary.id} />  
+                    <BookmarkElement itineraryId={itinerary.id} />
+                  </div>
+                )}
+                <ShareElement />
+              </div>
+            </div>
               <div className="flex flex-wrap gap-2 mb-2">
                 {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
                     <span
@@ -110,7 +117,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   </p>
                 </div>
               </div>
-              <div className="cursor-pointer border rounded-xl flex justify-center items-center w-[150px] h-[30px] bg-gray-900 hover:bg-gray-800 text-white p-2">
+              <div className="cursor-pointer border rounded-xl flex justify-center items-center w-[130px] h-[30px] bg-gray-900 hover:bg-gray-800 text-white p-4">
                 Follow
               </div>
             </div>
@@ -120,7 +127,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
           </div>
         </div>
         
-        <div className="flex h-full w-full lg:w-[40%] hidden lg:block ">
+        <div className="h-full w-full lg:w-[40%] hidden lg:flex ">
           <div className="flex flex-col h-full gap-4">
             <div className="w-full relative rounded-3xl h-[40%] overflow-hidden">
               <Image
@@ -155,7 +162,21 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
           {/* Left Column - Schedule */}
           <div className="lg:col-span-2 flex flex-col gap-8">
             <div className="flex flex-col mb-4 lg:mb-0">
-              <h2 className="text-2xl md:text-2xl font-semibold mb-2 hidden lg:block">Trip Overview</h2>
+              <div className="flex w-full justify-between">
+                <h2 className="text-2xl md:text-2xl font-semibold mb-2 hidden lg:block">Trip Overview</h2>
+                <div className="flex gap-2">
+                  {!canEdit ?
+                  (
+                    <EditElement itineraryId={itinerary.id} />
+                  ) : (
+                    <div className="flex gap-2">
+                    <LikeElement itineraryId={itinerary.id} />  
+                    <BookmarkElement itineraryId={itinerary.id} />
+                  </div>
+                  )}
+                  <ShareElement />
+                </div>
+              </div>
               <div className="hidden flex-wrap gap-2 mb-2 lg:flex">
                 {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
                     <span
@@ -168,7 +189,10 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               </div>
               {itinerary.detailedOverview}
             </div>
-            <ScheduleSection schedule={itinerary.days} notes={itinerary.notes} />
+            <ScheduleSection 
+              schedule={itinerary.days} 
+              notes={itinerary.notes}
+            />
           </div>
 
           {/* Right Column - Details & Notes */}
@@ -215,41 +239,6 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             </div>
           </div>
         </div>
-
-        {/* Similar Itineraries */}
-        {/* <div className="mt-24">
-          <h2 className="text-2xl font-semibold mb-6">Similar Itineraries</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {similarItineraries.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => {
-                  router.push(`/itinerary/${item.id}`)
-                }}
-              >
-                <div className="relative h-48">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold mb-2">{item.title}</h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {item.countries}, {item.countries[0]}
-                  </p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">{item.duration} days</span>
-                    <span className="font-medium">${item.price}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div> */}
       </div>
     </div>
   )
