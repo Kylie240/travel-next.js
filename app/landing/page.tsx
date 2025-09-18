@@ -1,144 +1,305 @@
-"use client"
-
-import { Globe, Map, Compass, Users, Heart, PlaneLanding, Send } from "lucide-react"
-import { NodeNextRequest } from "next/dist/server/base-http/node"
+import { Map, Send, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { FaMagnifyingGlass } from "react-icons/fa6"
 import { TbWriting } from "react-icons/tb"
+import ActionButtons from "./action-buttons"
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative h-screen shadow-lg overflow-hidden rounded-b-3xl">
+      <div className="relative h-[calc(100vh-64px)] max-h-screen max-w-[1800px] mx-auto lg:px-8 md:rounded-3xl overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/images/landing-hero.jpg"
+            src="/images/boat-photo2.jpg"
             alt="Travel background"
-            fill
-            className="object-cover"
-            priority
-          />
+            objectPosition="bottom"
+             fill
+             className="object-cover rotate-180"
+             priority
+           />
           <div className="absolute inset-0 bg-black/40" />
         </div>
         
-        <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4" style={{  
-            backgroundSize: 'cover',
-            backgroundPosition: 'center', 
-            backgroundImage: 'url(https://plus.unsplash.com/premium_photo-1719843013722-c2f4d69db940?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8dHJhdmVsfGVufDB8fDB8fHww)' }}>
-          <h1 className="text-4xl md:text-6xl font-bold text-center mb-6">
+        <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4">
+          <h1 className="text-5xl lg:text-6xl font-bold text-center mb-6">
           Welcome To Your New <br/> Travel Journal
           </h1>
           <p className="text-lg md:text-xl text-center mb-8 max-w-2xl">
-            Create and Share Itineraries with Ease
+            Travel planning made easy
           </p>
-          <div className="flex gap-4">
-            <Link 
-              href="/auth/login"
-              className="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-            >
-              Log In
-            </Link>
-            <Link 
-              href="/auth/signup"
-              className="bg-gray-900 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition"
-            >
-              Sign Up
-            </Link>
+            <div className="hidden md:flex gap-4 mt-8">
+                <ActionButtons />
+            </div>
+            
+        </div>
+
+        {/* Small device buttons */}
+        <div className="bg-white md:hidden absolute bottom-0 z-10 rounded-t-2xl w-full flex flex-col justify-center items-center pt-6 pb-8 px-16 gap-4">
+          <button className="bg-gray-900 text-white h-[50px] w-full px-12 justify-center py-3 flex items-center gap-2 shadow-[0_15px_15px_rgba(0,0,0,0.15)] rounded-lg font-medium hover:bg-gray-900 transition">
+              Sign Up For Free <ArrowRight className="w-4 h-4" />
+          </button>
+          <div className="flex gap-2 font-medium pb-6">
+              <span className="text-gray-900">Already have an account?</span>
+              <Link href="/auth/login" className="text-cyan-600 hover:text-cyan-300 transition">
+              Log in
+              </Link>
           </div>
         </div>
-        <div className="absolute z-0 inset-0 bg-black/30"></div>
       </div>
 
       {/* Features Section */}
-      <div className="py-20 px-4 md:px-8">
+      <div className="py-20 px-8">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
-            Journli Makes Creating and Sharing Travel Plans Easier
-          </h2>
-          
-          <div className="grid grid-cols-1 gap-12">
-            <div className="flex flex-col items-center text-center">
-              <div className="bg-gray-100 p-4 rounded-full mb-4">
-                <Map className="w-8 h-8 text-gray-900" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Plan It</h3>
-              <p className="text-gray-600">
-                Connect with travelers from around the world and share experiences
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="bg-gray-100 p-4 rounded-full mb-4">
-                <TbWriting className="w-8 h-8 text-gray-900" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Create It</h3>
-              <p className="text-gray-600">
-                Create and follow day-by-day travel plans with interactive maps
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="bg-gray-100 p-4 rounded-full mb-4">
-                <Send className="w-8 h-8 text-gray-900" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Share It</h3>
-              <p className="text-gray-600">
-                Discover trips that match your interests and travel style
-              </p>
-            </div>
+          <div className="flex flex-col items-center justify-center mb-16">
+            <h2 className="text-3xl lg:text-4xl px-6 font-bold text-center mb-2">
+              Plan smarter. Travel better. Share the journey.
+            </h2>
+            <p className="text-gray-600 text-lg px-4 text-center">Journli Makes Creating and Sharing Travel Plans a Breeze</p>
           </div>
-        </div>
-      </div>
+          
+          <div className="flex flex-col items-center justify-center space-y-16 md:space-y-32">
+            {/* Plan It Section */}
+            <div className="flex flex-col md:flex-row gap-8 w-full">
+              <div className="relative w-full md:w-1/2 aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
+                <Image 
+                  src="https://img.freepik.com/premium-psd/smartphone-screen-mockup-grey-background_413715-396.jpg"
+                  alt="Plan It"
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </div>
 
-      {/* Stats Section */}
-      <div className="bg-gray-900 text-white py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold mb-2">10K+</div>
-              <div className="text-gray-400">Travel Itineraries</div>
+              <div className="flex flex-col items-start justify-center w-full md:w-1/2 px-4 md:px-0">
+                <div className="flex md:flex-col gap-4 md:gap-0 items-end md:items-start">
+                  <div className="bg-cyan-700 p-4 rounded-lg mb-4 shadow-md">
+                    <Map className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-semibold mb-4">Plan It</h3>
+                </div>
+                <p className="text-gray-600 text-base md:text-lg">
+                  With our Day-by-day itinerary builder, you can easily plan your trip and add activities, notes, and travel details.
+                </p>
+              </div>
             </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">50K+</div>
-              <div className="text-gray-400">Active Users</div>
+
+            {/* Create It Section */}
+            <div className="flex flex-col md:flex-row-reverse gap-8 md:px-[8rem] w-full">
+              <div className="relative w-full md:w-1/2 aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
+                <Image 
+                  src="https://img.freepik.com/premium-psd/smartphone-screen-mockup-grey-background_413715-396.jpg"
+                  alt="Create It"
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </div>
+
+              <div className="flex flex-col items-start justify-center w-full md:w-1/2 px-4 md:px-0">
+              <div className="flex md:flex-col gap-4 md:gap-0 items-end md:items-start">
+
+                <div className="bg-cyan-700 p-4 rounded-lg mb-4 shadow-md">
+                  <TbWriting className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                </div>
+                <h3 className="text-2xl md:text-3xl font-semibold mb-4">Create It</h3>
+              </div>
+                <p className="text-gray-600 text-base md:text-lg">
+                  Turn your plans into a complete travel itinerary with our easy-to-use builder. Our Intuitive builder gives you everything you need to bring your trip to life.
+                </p>
+              </div>
             </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">100+</div>
-              <div className="text-gray-400">Countries Covered</div>
+
+            {/* Share It Section */}
+            <div className="flex flex-col md:flex-row gap-8 w-full">
+              <div className="relative w-full md:w-1/2 aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
+                <Image 
+                  src="https://img.freepik.com/premium-psd/smartphone-screen-mockup-grey-background_413715-396.jpg"
+                  alt="Share It"
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </div>
+
+              <div className="flex flex-col items-start justify-center w-full md:w-1/2 px-4 md:px-0">
+              <div className="flex md:flex-col gap-4 md:gap-0 items-end md:items-start">
+                <div className="bg-cyan-700 p-4 rounded-lg mb-4 shadow-md">
+                  <Send className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                </div>
+                <h3 className="text-2xl md:text-3xl font-semibold mb-4">Share It</h3>
+              </div>
+                <p className="text-gray-600 text-base md:text-lg">
+                  Travel is better together! Send your itinerary to friends or followers with a single link. No sign-up needed for viewing.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* CTA Section */}
-      <div className="py-20 px-4 bg-gray-50">
+      <div className="py-20 px-4 bg-gray-900">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Ready to Start Your Journey?
+          <h2 className="text-3xl text-white md:text-4xl font-bold mb-6">
+            Start Planning Your Journey
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-md md:text-lg text-white mb-8 px-8">
             Sign up to start creating and sharing your travel experiences with fellow adventurers.
           </p>
           <Link 
             href="/auth/signup"
-            className="bg-gray-900 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition inline-block"
+            className="bg-white text-grey-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition inline-block"
           >
-            Sign Up
+            Start Creating
           </Link>
         </div>
       </div>
 
-      <div className="flex flex-col items-center text-center">
-              <div className="bg-gray-100 p-4 rounded-full mb-4">
-                <FaMagnifyingGlass className="w-8 h-8 text-gray-900" />
+      {/* FAQ Section */}
+      <div className="py-20 px-4 md:px-8 bg-gray-50">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-gray-600 text-center mb-12">
+            Everything you need to know about creating and sharing travel itineraries
+          </p>
+
+          <div className="">
+            {/* Question 1 */}
+            <div className="border border-gray-200 bg-white">
+              <button
+                className="w-full flex justify-between items-center p-4 hover:bg-gray-50"
+                onClick={(e) => {
+                  const content = e.currentTarget.nextElementSibling as HTMLElement
+                  const isOpen = content.style.maxHeight
+                  content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
+                }}
+              >
+                <span className="font-medium text-left">Is Journli free to use?</span>
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="max-h-0 overflow-hidden transition-all duration-300">
+                <p className="p-4 text-gray-600 border-t">
+                  Yes! Journli is completely free to use. Create unlimited itineraries, share with friends, and view other travelers' journeys all without any cost.
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Coming Soon</h3>
-              <p className="text-gray-600">
-                Discover other creator's and itineraries with our Explore page
-              </p>
             </div>
+
+            <div className="border border-gray-200 bg-white">
+              <button
+                className="w-full flex justify-between items-center p-4 hover:bg-gray-50"
+                onClick={(e) => {
+                  const content = e.currentTarget.nextElementSibling as HTMLElement
+                  const isOpen = content.style.maxHeight
+                  content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
+                }}
+              >
+                <span className="font-medium text-left">Do I need to download an app?</span>
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="max-h-0 overflow-hidden transition-all duration-300">
+                <p className="p-4 text-gray-600 border-t">
+                  No download needed—you can use the platform right in your browser. Our site is mobile-friendly too.
+                </p>
+              </div>
+            </div>
+
+            {/* Question 2 */}
+            <div className="border border-gray-200 bg-white">
+              <button
+                className="w-full flex justify-between items-center p-4 hover:bg-gray-50"
+                onClick={(e) => {
+                  const content = e.currentTarget.nextElementSibling as HTMLElement
+                  const isOpen = content.style.maxHeight
+                  content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
+                }}
+              >
+                <span className="font-medium text-left">Do I need to create an account to view shared itineraries?</span>
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="max-h-0 overflow-hidden transition-all duration-300">
+                <p className="p-4 text-gray-600 border-t">
+                  No, you don't need an account to view shared itineraries. However, creating an account allows you to create, save, and manage your own travel plans.
+                </p>
+              </div>
+            </div>
+
+            {/* Question 3 */}
+            <div className="border border-gray-200 bg-white">
+              <button
+                className="w-full flex justify-between items-center p-4 hover:bg-gray-50"
+                onClick={(e) => {
+                  const content = e.currentTarget.nextElementSibling as HTMLElement
+                  const isOpen = content.style.maxHeight
+                  content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
+                }}
+              >
+                <span className="font-medium text-left">Can I collaborate with others on an itinerary?</span>
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="max-h-0 overflow-hidden transition-all duration-300">
+                <p className="p-4 text-gray-600 border-t">
+                  Currently, itineraries can be shared for viewing. We're working on collaborative editing features that will be available soon!
+                </p>
+              </div>
+            </div>
+
+            {/* Question 4 */}
+            <div className="border border-gray-200 bg-white">
+              <button
+                className="w-full flex justify-between items-center p-4 hover:bg-gray-50"
+                onClick={(e) => {
+                  const content = e.currentTarget.nextElementSibling as HTMLElement
+                  const isOpen = content.style.maxHeight
+                  content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
+                }}
+              >
+                <span className="font-medium text-left">How detailed can my itineraries be?</span>
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="max-h-0 overflow-hidden transition-all duration-300">
+                <p className="p-4 text-gray-600 border-t">
+                  Very detailed! Add day-by-day activities, accommodations, travel notes, photos, and more. You can include as much or as little detail as you'd like.
+                </p>
+              </div>
+            </div>
+
+            {/* Question 5 */}
+            <div className="border border-gray-200 bg-white">
+              <button
+                className="w-full flex justify-between items-center p-4 hover:bg-gray-50"
+                onClick={(e) => {
+                  const content = e.currentTarget.nextElementSibling as HTMLElement
+                  const isOpen = content.style.maxHeight
+                  content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
+                }}
+              >
+                <span className="font-medium text-left">Can I download my itineraries for offline use?</span>
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="max-h-0 overflow-hidden transition-all duration-300">
+                <p className="p-4 text-gray-600 border-t">
+                  Yes! You can export your itineraries to PDF format, making them easily accessible offline on any device.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
   )

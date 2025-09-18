@@ -58,19 +58,22 @@ export default function Navbar() {
 
   return (
     <nav 
+      className={`fixed top-0 left-0 right-0 w-full z-[50] transition-all duration-200 bg-white/80 backdrop-blur-md shadow-sm`}
+    >
+    {/* <nav 
       className={`fixed top-0 left-0 right-0 w-full z-[50] transition-all duration-200 ${
-        scrolled 
+        scrolled
           ? "bg-white/80 backdrop-blur-md shadow-sm" 
           : "bg-white"
       }`}
-    >
+    > */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and primary navigation */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <span className="text-2xl font-bold text-black">
-                Travel 3.0
+                Journli
               </span>
             </Link>
             {
@@ -93,11 +96,11 @@ export default function Navbar() {
           </div>
 
           {/* Centered Search Bar */}
-          <div className={`flex flex-1 justify-center px-8 transition-opacity duration-200 ${
+          {/* <div className={`flex flex-1 justify-center px-8 transition-opacity duration-200 ${
             isLandingPage && !scrolled ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}>
             <NavbarSearch isScrolled={scrolled || !isLandingPage} />
-          </div>
+          </div> */}
 
           <div className="flex items-center">
             
@@ -170,7 +173,7 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="hidden mt-4 flex flex-col space-y-2 px-3">
-                {isExplorePage || (!isExplorePage && window.scrollY > 10) ? (
+                {/* {isExplorePage || (!isExplorePage && window.scrollY > 10) ? (
                   <div className="py-2">
                     <NavbarSearch />
                   </div>
@@ -183,7 +186,7 @@ export default function Navbar() {
                 <div className="hidden flex items-center justify-between py-2">
                   <span className="text-sm font-medium text-gray-700">Language & Currency</span>
                   <LocaleMenu />
-                </div>
+                </div> */}
                 {!user && <AuthDialog />}
               </div>
             </div>
