@@ -70,6 +70,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         setIsOpen(false)
         reset()
         router.refresh()
+        router.push('/profile')
         toast.success("Successfully signed in")
       }
     } catch (error: any) {

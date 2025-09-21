@@ -20,6 +20,8 @@ const publicNavigation = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
   const supabase = createClientComponentClient()
@@ -28,6 +30,12 @@ export default function Navbar() {
   const isLandingPage = pathname === "/"
 
   useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+
     const unsubscribe = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN") {
         setUser(session?.user ?? null)
@@ -53,20 +61,10 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [scrolled])
 
-  // Just use publicNavigation directly since we moved private routes to the dropdown
   const navigation = publicNavigation
 
   return (
-    <nav 
-      className={`fixed top-0 left-0 right-0 w-full z-[50] transition-all duration-200 bg-white/80 backdrop-blur-md shadow-sm`}
-    >
-    {/* <nav 
-      className={`fixed top-0 left-0 right-0 w-full z-[50] transition-all duration-200 ${
-        scrolled
-          ? "bg-white/80 backdrop-blur-md shadow-sm" 
-          : "bg-white"
-      }`}
-    > */}
+    <nav className="fixed top-0 left-0 right-0 w-full z-[50] transition-all duration-200 bg-white/80 backdrop-blur-md shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and primary navigation */}
@@ -76,74 +74,74 @@ export default function Navbar() {
                 Journli
               </span>
             </Link>
-            {
-              <div className="hidden md:ml-6 md:flex md:space-x-8">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors ${
-                      pathname === item.href
-                        ? "text-black border-b-2 border-black"
-                        : "text-gray-700 hover:text-black hover:border-gray-300"
-                    }`}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            }
+            <div className="hidden md:ml-6 md:flex md:space-x-8">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors ${
+                    pathname === item.href
+                      ? "text-black border-b-2 border-black"
+                      : "text-gray-700 hover:text-black hover:border-gray-300"
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
           </div>
 
-          {/* Centered Search Bar */}
-          {/* <div className={`flex flex-1 justify-center px-8 transition-opacity duration-200 ${
-            isLandingPage && !scrolled ? "opacity-0 pointer-events-none" : "opacity-100"
-          }`}>
-            <NavbarSearch isScrolled={scrolled || !isLandingPage} />
-          </div> */}
-
-          <div className="flex items-center">
-            
+          <div className="flex items-center space-x-4">
             {!isExplorePage && !scrolled && (
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="text-gray-700 hover:text-black hover:bg-gray-100 flex items-center"
-                  onClick={() => window.location.href = '/explore'}
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-gray-700 hover:text-black hover:bg-gray-100 flex items-center"
+                onClick={() => window.location.href = '/explore'}
+              >
+                <Search className="h-5 w-5" />
+              </Button>
+            )}
+
+            {/* User menu or auth buttons */}
+            {user ? (
+              <UserMenu />
+            ) : (
+              <div className="hidden md:flex items-center gap-2">
+                <AuthDialog 
+                  isOpen={isAuthOpen} 
+                  setIsOpen={setIsAuthOpen} 
+                  isSignUp={isSignUp} 
+                  setIsSignUp={setIsSignUp}
                 >
-                  <Search className="h-5 w-5" />
-                </Button>
-              )}
+                  <Button 
+                    variant="ghost" 
+                    className="text-gray-700 hover:text-black"
+                    onClick={() => {
+                      setIsSignUp(false)
+                      setIsAuthOpen(true)
+                    }}
+                  >
+                    Sign In
+                  </Button>
+                </AuthDialog>
+              </div>
+            )}
 
             {/* Mobile menu button */}
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(!isOpen)}
-                aria-expanded="false"
-                className="text-gray-700 hover:text-black hover:bg-gray-100"
-              >
-                <span className="sr-only">Open main menu</span>
-                {isOpen ? (
-                  <X className="block h-6 w-6" aria-hidden="true" />
-                ) : (
-                  <Menu className="block h-6 w-6" aria-hidden="true" />
-                )}
-              </Button>
-            </div>
-
-            {/* User and Language */}
-            <div className="flex items-center space-x-2">
-              <div className="hidden">
-                <LocaleMenu />
-              </div>
-              {user ? (
-                <UserMenu />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(!isOpen)}
+              className="md:hidden text-gray-700 hover:text-black hover:bg-gray-100"
+            >
+              <span className="sr-only">Open main menu</span>
+              {isOpen ? (
+                <X className="h-6 w-6" />
               ) : (
-                <AuthDialog />
+                <Menu className="h-6 w-6" />
               )}
-            </div>
+            </Button>
           </div>
         </div>
       </div>
@@ -172,27 +170,32 @@ export default function Navbar() {
                   {item.name}
                 </Link>
               ))}
-              <div className="hidden mt-4 flex flex-col space-y-2 px-3">
-                {/* {isExplorePage || (!isExplorePage && window.scrollY > 10) ? (
-                  <div className="py-2">
-                    <NavbarSearch />
-                  </div>
-                ) : (
-                  <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/explore'}>
-                    <Search className="h-5 w-5 mr-2" />
-                    Search
-                  </Button>
-                )}
-                <div className="hidden flex items-center justify-between py-2">
-                  <span className="text-sm font-medium text-gray-700">Language & Currency</span>
-                  <LocaleMenu />
-                </div> */}
-                {!user && <AuthDialog />}
-              </div>
+              {!user && (
+                <div className="flex flex-col gap-2 p-3">
+                  <AuthDialog 
+                    isOpen={isAuthOpen} 
+                    setIsOpen={setIsAuthOpen} 
+                    isSignUp={isSignUp} 
+                    setIsSignUp={setIsSignUp}
+                  >
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-center text-gray-700 hover:text-black"
+                      onClick={() => {
+                        setIsSignUp(false)
+                        setIsAuthOpen(true)
+                        setIsOpen(false)
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  </AuthDialog>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </nav>
   )
-} 
+}

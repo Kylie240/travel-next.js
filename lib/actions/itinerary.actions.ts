@@ -5,9 +5,8 @@ import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { CreateItinerary } from "@/types/createItinerary";
 import { supabase } from "@/utils/supabase/superbase-client";
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
-import { Itinerary } from "@/types/itinerary";
-import { itineraryTagsMap } from "../constants/tags";
 import { ItinerarySummary } from "@/types/ItinerarySummary";
+import { SavedItinerary } from "@/types/savedItinerary";
 
 type CreateActivity = {
     itinerary_id: string,
@@ -211,9 +210,7 @@ export const getItinerarySummaries = async (userId?: string) => {
         error: Error | null };
 
     if (error) {
-    console.error("Error fetching itineraries:", error);
-    } else {
-    console.log("User itineraries:", data);
+        throw new Error(error.message);
     }
 
     return data;
@@ -280,6 +277,29 @@ export const deleteItinerary = async (itineraryId: string) => {
     } catch (error) {
         console.error('Error deleting itinerary:', error);
         throw new Error(`Failed to delete itinerary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+export const getSavesByUserId = async (userId: string) => {
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .rpc("get_saved_itineraries", { p_user_id: userId }) as { 
+            data: SavedItinerary[] | null, 
+            error: Error | null 
+        };
+
+        if (error) {
+            console.error('Error fetching saved itineraries:', error);
+            throw new Error(error.message);
+        } 
+
+        console.log('Saved itineraries data:', data);
+        return data;
+    } catch (error) {
+        console.error('Error in getSavesByUserId:', error);
+        throw new Error(`Failed to get saved itineraries: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 

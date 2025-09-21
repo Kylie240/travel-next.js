@@ -1,27 +1,28 @@
 "use client"
 
 import Image from "next/image"
-import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, ThumbsUp, Bookmark, Router } from "lucide-react"
+import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, ThumbsUp, Bookmark, Share, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { deleteItinerary, getItinerarySummaries, updateItineraryStatus } from "@/lib/actions/itinerary.actions"
 import Link from "next/link"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Itinerary } from "@/types/itinerary"
 import { useEffect, useState } from "react"
 import { User, Session } from "@supabase/supabase-js"
 import { ItineraryStatusEnum, ItineraryStatusEnumString } from "@/enums/itineraryStatusEnum"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { Input } from "@/components/ui/input"
 
 export default function MyItinerariesPage() {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [user, setUser] = useState<User | null>(null)
-  const [itineraries, setItineraries] = useState<Itinerary[]>(null)
   const [itinerarySummaries, setItinerarySummaries] = useState<ItinerarySummary[] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filteredItinerarySummaries, setFilteredItinerarySummaries] = useState<ItinerarySummary[] | null>(null)
 
   const refreshItineraries = async () => {
     if (user) {
@@ -43,6 +44,7 @@ export default function MyItinerariesPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
+        console.log('user', user)
       } catch (error) {
         console.error('Error fetching user:', error)
         setLoading(false)
@@ -56,9 +58,11 @@ export default function MyItinerariesPage() {
       if (currentUser) {
         const userItineraries = await getItinerarySummaries(currentUser.id)
         setItinerarySummaries(userItineraries as ItinerarySummary[])
+        setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
         setLoading(false)
       } else {
         setItinerarySummaries(null)
+        setFilteredItinerarySummaries(null)
         setLoading(false)
       }
     })
@@ -68,24 +72,45 @@ export default function MyItinerariesPage() {
     }
   }, [])
 
+  const handleSearch = (searchTerm: string) => {
+    setSearchTerm(searchTerm)
+    setFilteredItinerarySummaries(itinerarySummaries?.filter(itinerary => 
+      itinerary.title.toLowerCase().includes(searchTerm.toLowerCase())
+    ))
+  }
+
   return (
     <div className="min-h-screen bg-white py-8">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-12">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl md:text-4xl font-semibold">My Itineraries</h1>
+      <div className="container mx-auto px-6 md:px-8 xl:px-10">
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl xl:text-4xl font-semibold">My Itineraries</h1>
+              {itinerarySummaries && itinerarySummaries?.length > 0 && (
+                <p className="text-xl text-gray-500 md:text-2xl">
+                  ({itinerarySummaries?.length})
+                </p>
+              )}
+            </div>
             {itinerarySummaries && itinerarySummaries?.length > 0 && (
-              <p className="text-xl text-gray-500 md:text-2xl">
-                ({itinerarySummaries?.length})
-              </p>
+              <Button disabled={loading}>
+                <Link href="/create">
+                  Create New Itinerary
+                </Link>
+              </Button>
             )}
           </div>
           {itinerarySummaries && itinerarySummaries?.length > 0 && (
-            <Button disabled={loading}>
-              <Link href="/create">
-                Create New Itinerary
-              </Link>
-            </Button>
+            <div className="relative mb-8">
+            <Input
+              type="text"
+              placeholder="Search itineraries..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10 rounded-xl"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
           )}
         </div>
 
@@ -94,9 +119,9 @@ export default function MyItinerariesPage() {
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>
         ) : (
-          (itinerarySummaries && itinerarySummaries?.length > 0) ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 px-0 md:px-4 xl:px-0 gap-4 md-gap-6 xl:gap-8">
-              {itinerarySummaries.map((itinerary: ItinerarySummary) => (
+          (filteredItinerarySummaries && filteredItinerarySummaries?.length > 0) ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {filteredItinerarySummaries.map((itinerary: ItinerarySummary) => (
                 <Link key={itinerary.id} href={itinerary.status !== ItineraryStatusEnum.draft ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
                   <div
                     className="group relative rounded-2xl overflow-hidden cursor-pointer bg-gray-300 shadow-md/30"
@@ -124,7 +149,7 @@ export default function MyItinerariesPage() {
                         <DropdownMenu.Root>
                           <DropdownMenu.Trigger asChild>
                             <button 
-                              className="p-1 rounded-full bg-black/20 hover:bg-black/40 transition-colors">
+                              className="p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors">
                               <MoreVertical className="h-5 w-5 text-white" />
                             </button>
                           </DropdownMenu.Trigger>
@@ -212,9 +237,16 @@ export default function MyItinerariesPage() {
                           </DropdownMenu.Portal>
                         </DropdownMenu.Root>
                       </div>
+                      {itinerary.status == ItineraryStatusEnum.published && (
+                        <button 
+                          onClick={() => {navigator.clipboard.writeText(`${window.location.href}/itinerary/${itinerary.id}`); toast.success('Copied to clipboard')}}
+                          className="p-1.5 absolute top-8 mt-6 right-4 rounded-full bg-black/20 hover:bg-black/40 transition-colors">
+                          <Share className="h-5 w-5 text-white" />
+                        </button>
+                      )}
                     </div>
                       <div className="px-4 pb-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                        <p className="font-medium text-2xl">{itinerary.title}</p>
+                        <p className="font-medium text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                         <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
                           {/* {itinerary?.cities?.length > 0 ? itinerary?.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")} */}
                         </p>

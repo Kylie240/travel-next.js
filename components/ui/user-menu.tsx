@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useToast } from "./use-toast"
 import { useState, useEffect } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { CiPassport1 } from "react-icons/ci";
 
 export function UserMenu() {
   const supabase = createClientComponentClient()
@@ -131,16 +132,16 @@ export function UserMenu() {
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
               onClick={() => router.push('/my-itineraries')}
             >
-              <PenSquare className="mr-2 h-4 w-4" />
+              <CiPassport1 className="mr-2" size={18} strokeWidth={.75} />
               My Itineraries
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-              onClick={() => router.push('/favorites')}
+              onClick={() => router.push('/saves')}
             >
               <Bookmark className="mr-2 h-4 w-4" />
-              Favorites
+              Saves
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
