@@ -104,7 +104,7 @@ export function UserMenu() {
           <div className="py-2">
             <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-              onClick={() => router.push('/profile')}
+              onClick={() => router.push(`/profile/${user.id}`)}
             >
               <User className="mr-2 h-4 w-4" />
               Profile

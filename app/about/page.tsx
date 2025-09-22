@@ -16,8 +16,7 @@ const AboutPage = () => {
           <h2 className="text-3xl font-semibold text-gray-900 mb-6">Our Story</h2>
           <div className="prose prose-lg text-gray-600">
             <p className="mb-4">
-              Founded in 2023, Travel 3.0 emerged from a simple observation: planning meaningful travel experiences 
-              shouldn't be overwhelming. We recognized that while there's abundant travel information available online, 
+              Journli started as a passion project of our founder, a web developer with an appreciation for traveling. We recognized that while there's abundant travel information available online and accross different platforms, 
               there was no centralized platform for travelers to create, share, and discover detailed, personalized 
               itineraries.
             </p>
@@ -32,6 +31,7 @@ const AboutPage = () => {
         {/* Future Features Section */}
         <section className="mb-16">
           <h2 className="text-3xl font-semibold text-gray-900 mb-6">Coming Soon</h2>
+          <p className="text-gray-600 mb-6">While we are currently in beta, we are working on the following features to make your travel planning experience even better:</p>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-gray-50 p-6 rounded-lg">
               <h3 className="text-xl font-semibold mb-3">Collaborative Editing</h3>
@@ -73,19 +73,7 @@ const AboutPage = () => {
             <div className="flex items-center">
               <span className="font-medium text-gray-900 w-24">Email:</span>
               <a href="mailto:contact@journli.com" className="text-blue-600 hover:text-blue-800">
-                contact@journli.com
-              </a>
-            </div>
-            <div className="flex items-center">
-              <span className="font-medium text-gray-900 w-24">Twitter:</span>
-              <a href="https://twitter.com/journli" className="text-blue-600 hover:text-blue-800">
-                @journli
-              </a>
-            </div>
-            <div className="flex items-center">
-              <span className="font-medium text-gray-900 w-24">Instagram:</span>
-              <a href="https://instagram.com/journli" className="text-blue-600 hover:text-blue-800">
-                @journli
+                info@journli.com
               </a>
             </div>
           </div>

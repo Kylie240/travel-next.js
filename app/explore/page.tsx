@@ -6,6 +6,7 @@ import { BookmarkButton } from "@/components/ui/bookmark-button";
 import { getItineraries } from "@/lib/actions/itinerary.actions";
 import { Itinerary } from "@/types/itinerary";
 import { ExplorePageDto } from "@/dtos/ExplorePageDto";
+import { Button } from "@/components/ui/button";
 
 export default async function ExplorePage({
 searchParams
@@ -238,96 +239,112 @@ searchParams
     //     } = await getItineraries(searchFilters)
     
     return (
-        <div className="min-h-screen bg-white py-8">
-            <div className="container mx-auto px-4">
-                <h2 className="text-2xl font-semibold mb-4">Search Results</h2>
-                {/* Filters Bar */}
-                <div className="flex flex-col mb-8">
-                    <Suspense fallback={<div>Loading...</div>}>
-                        <FiltersForm />
-                    </Suspense>
-                </div>
-                {/* Itineraries Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
-                {itineraryData.data.map((itinerary: ExplorePageDto) => (
-                  <Link href={`/itinerary/${itinerary.id}`} className="block relative" key={itinerary.id}>
-                    <div>
-                      {/* Image Container */}
-                      <div className="relative aspect-[3/2] md:aspect-[4/5] rounded-2xl overflow-hidden">
-                          <Image
-                            src={itinerary.mainImage}
-                            alt={itinerary.title}
-                            fill
-                            className="object-cover"
-                          />
-                        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                        {/* Badges */}
-                        {itinerary.featuredCategories.length && (
-                          <div className="absolute top-4 left-4 z-20">
-                            <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-xl capitalize">
-                              {/* {itinerary.rating === "highly rated" ? "Top Rated" :
-                              itinerary.status === "most viewed" ? "Trending" :
-                              "Popular"} */}
-                              {itinerary.featuredCategories[0]}
-                            </span>
-                          </div>
-                        )}
-                        <div className="absolute top-4 right-4">
-                          <BookmarkButton />
-                        </div>
-                        <div className="p-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                          <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
-                          <span className="text-sm text-white/80 truncate">
-                            {itinerary.countries.map(country => country).join(' · ')}
-                            {/* change to citiies */}
-                          </span>
-                        </div>
-                      </div>
+        // <div className="min-h-screen bg-white py-8">
+        //     <div className="container mx-auto px-4">
+        //         <h2 className="text-2xl font-semibold mb-4">Search Results</h2>
+        //         {/* Filters Bar */}
+        //         <div className="flex flex-col mb-8">
+        //             <Suspense fallback={<div>Loading...</div>}>
+        //                 <FiltersForm />
+        //             </Suspense>
+        //         </div>
+        //         {/* Itineraries Grid */}
+        //       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
+        //         {itineraryData.data.map((itinerary: ExplorePageDto) => (
+        //           <Link href={`/itinerary/${itinerary.id}`} className="block relative" key={itinerary.id}>
+        //             <div>
+        //               {/* Image Container */}
+        //               <div className="relative aspect-[3/2] md:aspect-[4/5] rounded-2xl overflow-hidden">
+        //                   <Image
+        //                     src={itinerary.mainImage}
+        //                     alt={itinerary.title}
+        //                     fill
+        //                     className="object-cover"
+        //                   />
+        //                 <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+        //                 {/* Badges */}
+        //                 {itinerary.featuredCategories.length && (
+        //                   <div className="absolute top-4 left-4 z-20">
+        //                     <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-xl capitalize">
+        //                       {/* {itinerary.rating === "highly rated" ? "Top Rated" :
+        //                       itinerary.status === "most viewed" ? "Trending" :
+        //                       "Popular"} */}
+        //                       {itinerary.featuredCategories[0]}
+        //                     </span>
+        //                   </div>
+        //                 )}
+        //                 <div className="absolute top-4 right-4">
+        //                   <BookmarkButton />
+        //                 </div>
+        //                 <div className="p-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+        //                   <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
+        //                   <span className="text-sm text-white/80 truncate">
+        //                     {itinerary.countries.map(country => country).join(' · ')}
+        //                     {/* change to citiies */}
+        //                   </span>
+        //                 </div>
+        //               </div>
 
-                      {/* Content Container */}
-                      <div className="py-2 px-4">
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="flex items-center flex-1">
-                          </div>
-                        </div>
+        //               {/* Content Container */}
+        //               <div className="py-2 px-4">
+        //                 <div className="flex items-center gap-4 text-sm">
+        //                   <div className="flex items-center flex-1">
+        //                   </div>
+        //                 </div>
                         
-                        <div className="flex text-[20px] font-medium my-1">
-                          {/* change field to duration */}
-                          <div className="mx-1 flex gap-2">
-                            {itinerary.duration}
-                            {itinerary.countries.length <= 2 ? itinerary.duration > 1 ? ' Days In ' : ' Day In ' : ' Day '}
-                            {itinerary.countries.length > 2 
-                              ? "Multi-Country Trip"
-                              : itinerary.countries.map(country => country).join(' & ')}
-                          </div>
-                        </div>
-                        <p className="text-gray-600 line-clamp-4 leading-5 text-md mb-2">{itinerary.shortDescription}</p>
+        //                 <div className="flex text-[20px] font-medium my-1">
+        //                   {/* change field to duration */}
+        //                   <div className="mx-1 flex gap-2">
+        //                     {itinerary.duration}
+        //                     {itinerary.countries.length <= 2 ? itinerary.duration > 1 ? ' Days In ' : ' Day In ' : ' Day '}
+        //                     {itinerary.countries.length > 2 
+        //                       ? "Multi-Country Trip"
+        //                       : itinerary.countries.map(country => country).join(' & ')}
+        //                   </div>
+        //                 </div>
+        //                 <p className="text-gray-600 line-clamp-4 leading-5 text-md mb-2">{itinerary.shortDescription}</p>
 
-                        <div className="flex flex-col gap-2">
-                          <div className="flex justify-start gap-2">
-                            {itinerary.itineraryTags && itinerary.itineraryTags.map((tag) => (
-                              <span 
-                                key={tag}
-                                className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                          <div className="flex mt-1 justify-end">
-                            {itinerary.price && (
-                              <span className="px-2 py-1 max-h-[32px] gap-2 bg-black text-white text-md rounded-xl">
-                                Est. ${itinerary.price}/pp
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
+        //                 <div className="flex flex-col gap-2">
+        //                   <div className="flex justify-start gap-2">
+        //                     {itinerary.itineraryTags && itinerary.itineraryTags.map((tag) => (
+        //                       <span 
+        //                         key={tag}
+        //                         className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize"
+        //                       >
+        //                         {tag}
+        //                       </span>
+        //                     ))}
+        //                   </div>
+        //                   <div className="flex mt-1 justify-end">
+        //                     {itinerary.price && (
+        //                       <span className="px-2 py-1 max-h-[32px] gap-2 bg-black text-white text-md rounded-xl">
+        //                         Est. ${itinerary.price}/pp
+        //                       </span>
+        //                     )}
+        //                   </div>
+        //                 </div>
+        //               </div>
+        //             </div>
+        //           </Link>
+        //         ))}
+        //       </div>
+        //     </div>
+        // </div>
+        <div className="flex flex-col items-center justify-center h-screen">
+          <h1 className="text-2xl font-bold">Coming Soon</h1>
+          <p className="text-gray-600">We are working on the Explore page and it will be available soon. Please check back soon.</p>
+          <div className="flex gap-4 mt-4">
+          <Link href="/">
+            <Button>
+              Go Home
+            </Button>
+          </Link>
+          <Link href="/about">
+            <Button>
+              More Info
+            </Button>
+          </Link>
+          </div>
         </div>
     )
 }

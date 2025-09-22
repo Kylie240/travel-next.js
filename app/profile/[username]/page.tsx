@@ -10,6 +10,7 @@ import { Bookmark, MapPin, Search, Share, Star } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
+import { Button } from "@/components/ui/button"
 
 // This would come from your database in a real app
 const dummyUserData: UserData = {
@@ -215,16 +216,45 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen max-w-[1340px] mx-auto bg-white py-8 mb-4">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center px-2">
-          <ProfileHeader user={userData} onEditProfile={() => {}} disableEdit={true} />
-            <span className="flex items-center justify-center cursor-pointer hover:bg-gray-100 rounded-full p-2"
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href)
-              toast.success('Link copied to clipboard')
-            }}>
-              <Share className="h-6 w-6" />
-            </span>
+      <div className="container mx-auto px-6">
+        <div className="w-full flex flex-col items-center justify-center">
+          <div className="w-full flex items-center justify-center gap-6 mb-4">
+            <div className="flex flex-col items-center justify-center w-24">
+              <p className="text-gray-900 text-xl font-bold">{userData.stats.trips}</p>
+              <p className="text-gray-600 text-sm">Trips</p>
+            </div>
+            <div className="w-[100px] h-[100px] relative rounded-full">
+                <Image
+                  src={"https://tse3.mm.bing.net/th/id/OIP.GbXrupVNmGPefq-s5IGitwHaKo?rs=1&pid=ImgDetMain&o=7&rm=3"}
+                  alt={userData.name}
+                  fill
+                  className="object-cover rounded-full cursor-pointer"
+                  style={{ width: '100%', height: '100%' }}
+                />
+                {/* <div className="absolute block md:hidden -top-1 -right-3">
+                  {userData.isFollowing ? (
+                    <div onClick={() => onFollowToggle?.(user.id)}><Minus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-black bg-white hover:bg-gray-500 text-black" /></div>
+                  ) : (
+                    <div onClick={() => onFollowToggle?.(user.id)}><Plus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-white bg-black hover:bg-gray-500 text-white" /></div>
+                  )}
+                </div> */}
+              </div>
+            <div className="flex flex-col items-center justify-center w-24">
+              <p className="text-gray-900 text-xl font-bold">{userData.stats.trips}</p>
+              <p className="text-gray-600 text-sm">Conects</p>
+            </div>
+          </div>
+          <div className="w-full flex flex-col items-center justify-center">
+            <h1 className="text-2xl font-bold">{userData.name}</h1>
+            <p className="text-gray-600 mb-2">@{userData.username}</p>
+          </div>
+          <div className="flex gap-4 mt-2 mb-6">
+            <Button>Follow</Button>
+            <Button variant="outline" onClick={() => {
+                navigator.clipboard.writeText(window.location.href)
+                toast.success('Link copied to clipboard')
+              }}>Share Profile</Button>
+          </div>
         </div>
         
         <Tabs defaultValue="itineraries" className="w-full">
@@ -266,18 +296,16 @@ export default function UserProfilePage() {
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredItineraries.map((itinerary) => ( 
-                <motion.div 
+                <div 
                   key={itinerary.id}
-                  whileHover={{ y: -5 }}
-                  transition={{ duration: 0.2 }}
                   className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
                   onClick={() => {
                     router.push(`/itinerary/${itinerary.id}`)
                   }}
                 >
-                  <div className="relative aspect-[2/3] relative">
+                  <div className="relative aspect-[2/3]">
                     <Image
                       src={itinerary.image}
                       alt={itinerary.title}
@@ -298,7 +326,7 @@ export default function UserProfilePage() {
                       </button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
                 ))}
               </div>
           </TabsContent>
@@ -316,16 +344,14 @@ export default function UserProfilePage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredHotels.map((hotel) => (
-                <motion.div 
+                <div 
                 key={hotel.id}
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.2 }}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
                 onClick={() => {
                   router.push(`/itinerary/${hotel.id}`)
                 }}
               >
-                <div className="relative aspect-[2/3] relative">
+                <div className="relative aspect-[2/3]">
                   <Image
                     src={hotel.image}
                     alt={hotel.name}
@@ -347,7 +373,7 @@ export default function UserProfilePage() {
                   </div>
                   <p className="text-sm mt-1.5">{hotel.review}</p>
                 </div>
-              </motion.div>
+              </div>
               ))}
             </div>
           </TabsContent>
@@ -365,10 +391,8 @@ export default function UserProfilePage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredRestaurants.map((restaurant) => (
-                <motion.div 
+                <div 
                 key={restaurant.id}
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.2 }}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
                 onClick={() => {
                   router.push(`/itinerary/${restaurant.id}`)
@@ -396,7 +420,7 @@ export default function UserProfilePage() {
                   </div>
                   <p className="text-sm mt-1.5">{restaurant.review}</p>
                 </div>
-              </motion.div>
+              </div>
               ))}
             </div>
           </TabsContent>
@@ -414,10 +438,8 @@ export default function UserProfilePage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredActivities.map((activity) => (
-                <motion.div 
+                <div 
                 key={activity.id}
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.2 }}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
                 onClick={() => {
                   router.push(`/itinerary/${activity.id}`)
@@ -445,7 +467,7 @@ export default function UserProfilePage() {
                   </div>
                   <p className="text-sm mt-1.5">{activity.review}</p>
                 </div>
-              </motion.div>
+              </div>
               ))}
             </div>
           </TabsContent>

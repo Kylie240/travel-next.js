@@ -17,7 +17,7 @@ interface ProfileHeaderProps {
   onEditProfile: () => void
   disableEdit?: boolean
   onFollowToggle?: (userId: string) => void
-  user: UserData | null
+  user?: UserData | null
   userStats: UserStats
 }
 
