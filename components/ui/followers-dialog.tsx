@@ -5,6 +5,7 @@ import { X } from "lucide-react"
 import Image from "next/image"
 import { Button } from "./button"
 import { useRouter } from "next/navigation"
+import { Followers } from "@/types/followers"
 
 interface User {
   id: string
@@ -17,7 +18,7 @@ interface User {
 interface FollowersDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  users: User[]
+  users: Followers[]
   title: string
   onFollowToggle?: (userId: string) => void
 }
@@ -35,21 +36,21 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
 
           <div className="space-y-4">
             {users.map((user) => (
-              <div key={user.id} className="flex items-center justify-between cursor-pointer"
-              onClick={() => router.push(`/profile/${user.id}`)}>
+              <div key={user.followerId} className="flex items-center justify-between cursor-pointer"
+              onClick={() => router.push(`/profile/${user.followerId}`)}>
                 <div className="flex items-center gap-3">
                   <div className="relative w-10 h-10">
                     <Image
-                      src={user.image}
-                      alt={user.name}
+                      src={user.followerAvatar}
+                      alt={user.followerName}
                       fill
                       className="object-cover rounded-full"
                       sizes="40px"
                     />
                   </div>
                   <div>
-                    <p className="font-semibold">{user.name}</p>
-                    <p className="text-sm text-gray-600">{user.username}</p>
+                    <p className="font-semibold">{user.followerName}</p>
+                    <p className="text-sm text-gray-600">{user.followerUsername}</p>
                   </div>
                 </div>
                 
@@ -57,7 +58,7 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
                     variant={user.isFollowing ? "outline" : "default"}
                     onClick={(e) => {
                       e.stopPropagation()
-                      onFollowToggle?.(user.id)
+                      onFollowToggle?.(user.followerId)
                     }}
                     className={`h-9 rounded-xl ${user.isFollowing ? "" : "bg-gray-700"}`}
                   >

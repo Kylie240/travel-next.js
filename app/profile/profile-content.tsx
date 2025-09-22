@@ -7,17 +7,18 @@ import { Input } from "@/components/ui/input"
 import { SettingsSidebar } from "@/components/ui/settings-sidebar"
 import { User } from "@supabase/supabase-js"
 import { UserData } from "@/lib/types"
+import { UserStats } from "@/types/userStats"
 
 interface ProfileContentProps {
   initialUser: User | null;
   userData: UserData;
+  userStats: UserStats;
   searchParams: { tab: string };
 }
 
-export function ProfileContent({ initialUser, userData, searchParams }: ProfileContentProps) {
+export function ProfileContent({ initialUser, userData, userStats, searchParams }: ProfileContentProps) {
   const [activeSection, setActiveSection] = useState(searchParams?.tab || "Dashboard")
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false)
-  const [user, setUser] = useState<User | null>(initialUser)
 
   const handleEditProfile = () => {
     if (window.innerWidth < 768) {
@@ -264,26 +265,6 @@ export function ProfileContent({ initialUser, userData, searchParams }: ProfileC
 
   return (
     <div className="min-h-screen bg-white md:bg-gray-50">
-      {/* Background Image Section */}
-      {/* <div className="hidden lg:block relative h-64 mb-6 md:rounded-2xl overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop')`,
-          }}
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-30" />
-        <div className="absolute bottom-0 left-0 p-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome back {userData.name}</h1>
-          {userData.location && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-white" />
-              <p className="text-white text-opacity-90">{userData.location}</p>
-            </div>
-          )}
-        </div>
-      </div> */}
-
       <div className="md:container md:mx-auto md:px-4 md:py-8">
         <div className="grid md:grid-cols-1 lg:grid-cols-3 space-y-6 lg:space-y-0 lg:gap-6 relative">
           {/* Left Column: Profile Header*/}
@@ -298,6 +279,7 @@ export function ProfileContent({ initialUser, userData, searchParams }: ProfileC
             <ProfileHeader 
               onEditProfile={handleEditProfile}
               user={userData}
+              userStats={userStats}
             />
           </div>
 

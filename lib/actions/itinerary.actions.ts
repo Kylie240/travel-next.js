@@ -258,7 +258,6 @@ export const deleteItinerary = async (itineraryId: string) => {
         // Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-            console.log('1')
             throw new Error("Not authenticated");
         }
 
@@ -269,7 +268,6 @@ export const deleteItinerary = async (itineraryId: string) => {
         .eq('id', itineraryId);
 
         if (itineraryError) {
-            console.log('2')
             throw itineraryError;
         }
 
@@ -295,7 +293,6 @@ export const getSavesByUserId = async (userId: string) => {
             throw new Error(error.message);
         } 
 
-        console.log('Saved itineraries data:', data);
         return data;
     } catch (error) {
         console.error('Error in getSavesByUserId:', error);
@@ -316,7 +313,6 @@ export const LikeItinerary = async (itineraryId: string) => {
         // Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-            console.log('1')
             throw new Error("Not authenticated");
         }
 
@@ -329,7 +325,6 @@ export const LikeItinerary = async (itineraryId: string) => {
         });
 
         if (itineraryError) {
-            console.log('2')
             throw itineraryError;
         }
 
@@ -352,7 +347,6 @@ export const SaveItinerary = async (itineraryId: string) => {
         // Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-            console.log('1')
             throw new Error("Not authenticated");
         }
 
@@ -365,7 +359,6 @@ export const SaveItinerary = async (itineraryId: string) => {
         });
 
         if (itineraryError) {
-            console.log('2')
             throw itineraryError;
         }
 
@@ -373,5 +366,37 @@ export const SaveItinerary = async (itineraryId: string) => {
     } catch (error) {
         console.error('Error saving itinerary:', error);
         throw new Error(`Failed to save itinerary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+export const UnsaveItinerary = async (itineraryId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        // Verify user is authenticated
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            throw new Error("Not authenticated");
+        }
+
+        // Delete the itinerary
+        const { error: itineraryError } = await supabase
+        .from('interactions_saves')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('itinerary_id', itineraryId);
+
+        if (itineraryError) {
+            throw itineraryError;
+        }
+
+        return { success: true };
+    } catch (error) {
+        throw new Error(`Failed to unsave itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
 }

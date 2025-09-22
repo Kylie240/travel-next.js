@@ -8,38 +8,37 @@ import { FollowersDialog } from "@/components/ui/followers-dialog"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { UserData } from "@/lib/types"
-import { User } from "@supabase/supabase-js"
+import { UserStats } from "@/types/userStats"
+import { getFollowersById } from "@/lib/actions/user.actions"
+import { getFollowingById } from "@/lib/actions/user.actions"
+import { Followers } from "@/types/followers"
 
 interface ProfileHeaderProps {
   onEditProfile: () => void
   disableEdit?: boolean
   onFollowToggle?: (userId: string) => void
   user: UserData | null
+  userStats: UserStats
 }
 
-export function ProfileHeader({onEditProfile, disableEdit = false, onFollowToggle, user }: ProfileHeaderProps) {
+export function ProfileHeader({onEditProfile, disableEdit = false, onFollowToggle, user, userStats }: ProfileHeaderProps) {
   const [showFollowers, setShowFollowers] = useState(false)
   const [showFollowing, setShowFollowing] = useState(false)
+  const [followers, setFollowers] = useState<Followers[]>([])
+  const [following, setFollowing] = useState<Followers[]>([])
   const router = useRouter()
-  const userStats = user?.stats
 
-  // Placeholder data - replace with actual data from your backend
-  const mockUsers = [
-    {
-      id: "1",
-      name: "John Doe",
-      username: "johndoe",
-      image: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-      isFollowing: true,
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      username: "janesmith",
-      image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-      isFollowing: false,
-    },
-  ]
+  const handleFollowers = async ( open: boolean ) => {
+    const followers = await getFollowersById(user?.id)
+    setFollowers(followers)
+    setShowFollowers(open)
+  }
+
+  const handleFollowing = async ( open: boolean ) => {
+    const following = await getFollowingById(user?.id)
+    setFollowing(following)
+    setShowFollowing(open)
+  }
 
   return (
     <div className={`bg-white ${ !disableEdit ? 'rounded-2xl md:shadow-sm mb-8' : ''} p-6`}>
@@ -48,8 +47,8 @@ export function ProfileHeader({onEditProfile, disableEdit = false, onFollowToggl
           <div className="absolute top-6 right-4 block md:hidden">
             <Button variant="outline" onClick={() => {navigator.clipboard.writeText(window.location.href); toast.success('Copied to clipboard')}}><Share /></Button>
           </div>
-          <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-32 lg:h-32">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-32 lg:h-32 relative rounded-full overflow-hidden">
+          <div className="relative w-32 h-32">
+            <div className="w-32 h-32 relative rounded-full overflow-hidden">
               <Image
                 src={user?.avatar || ""}  
                 alt={user?.name || ""}
@@ -65,26 +64,24 @@ export function ProfileHeader({onEditProfile, disableEdit = false, onFollowToggl
           <div className="flex-1 text-center md:text-left px-8">
             <div className="text-center flex flex-col items-center">
               <h1 className="text-2xl font-bold">{user?.name}</h1>
-              <p className="text-gray-600 mb-2">@{user?.email}</p>
+              <p className="text-gray-600 mb-2">@{user?.username}</p>
             </div>
-            <p className="font-semibold mb-4 max-w-2xl">{user?.title}</p>
-            <p className="text-gray-700 mb-4 max-w-2xl">{user?.bio}</p>
             <div className="grid grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-2 xl:gap-6 mb-4">
-              <div className="cursor-pointer" onClick={() => router.push("/my-itineraries")}>
-                <div className="font-semibold">{userStats.trips}</div>
-                <div className="text-sm text-gray-600">Trips</div>
+              <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push("/my-itineraries")}>
+                <div className="font-semibold">{userStats[0].totalitineraries}</div>
+                <div className="text-sm">Trips</div>
               </div>
-              <div className="cursor-pointer" onClick={() => setShowFollowers(true)}>
-                <div className="font-semibold">{userStats.followers}</div>
-                <div className="text-sm text-gray-600">Followers</div>
+              <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => handleFollowers(true)}>
+                <div className="font-semibold">{userStats[0].followerscount}</div>
+                <div className="text-sm">Followers</div>
               </div>
-              <div className="cursor-pointer" onClick={() => setShowFollowing(true)}>
-                <div className="font-semibold">{userStats.following}</div>
-                <div className="text-sm text-gray-600">Following</div>
+              <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => handleFollowing(true)}>
+                <div className="font-semibold">{userStats[0].followingcount}</div>
+                <div className="text-sm">Following</div>
               </div>
-              <div className="cursor-pointer" onClick={() => router.push("/favorites")}>
-                <div className="font-semibold">{userStats.likes}</div>
-                <div className="text-sm text-gray-600">Likes</div>
+              <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push("/favorites")}>
+                <div className="font-semibold">{userStats[0].totallikes}</div>
+                <div className="text-sm">Likes</div>
               </div>
             </div>
             <div className="hidden sm:flex flex-wrap justify-center mt-8 md:justify-start gap-4">
@@ -138,7 +135,7 @@ export function ProfileHeader({onEditProfile, disableEdit = false, onFollowToggl
       <FollowersDialog
         isOpen={showFollowers}
         onOpenChange={setShowFollowers}
-        users={mockUsers}
+        users={followers}
         title="Followers"
         onFollowToggle={onFollowToggle}
       />
@@ -146,7 +143,7 @@ export function ProfileHeader({onEditProfile, disableEdit = false, onFollowToggl
       <FollowersDialog
         isOpen={showFollowing}
         onOpenChange={setShowFollowing}
-        users={mockUsers}
+        users={following}
         title="Following"
         onFollowToggle={onFollowToggle}
       />

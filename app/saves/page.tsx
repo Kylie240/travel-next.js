@@ -7,9 +7,10 @@ import { motion } from "framer-motion"
 import { Bookmark, Heart, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Session, User } from "@supabase/supabase-js"
-import { getSavesByUserId } from "@/lib/actions/itinerary.actions"
+import { getSavesByUserId, UnsaveItinerary } from "@/lib/actions/itinerary.actions"
 import { SavedItinerary } from "@/types/savedItinerary"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { toast } from "sonner"
 
 export default function SavesPage() { 
   const router = useRouter()
@@ -32,7 +33,6 @@ export default function SavesPage() {
       }
     }
     getUser()
-    console.log('user', user)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
       const currentUser = session?.user ?? null
@@ -40,7 +40,7 @@ export default function SavesPage() {
       if (currentUser) {
         const userItineraries = await getSavesByUserId(currentUser.id)
         setSaves(userItineraries as SavedItinerary[])
-        handleSearch(searchTerm)
+        setFilteredSaves(userItineraries as SavedItinerary[])
         setLoading(false)
       } else {
         setSaves(null)
@@ -53,6 +53,14 @@ export default function SavesPage() {
       subscription.unsubscribe()
     }
   }, [])
+
+  const refreshItineraries = async () => {
+    if (user) {
+      const userItineraries = await getSavesByUserId(user.id)
+      setSaves(userItineraries as SavedItinerary[])
+      setFilteredSaves(userItineraries as SavedItinerary[])
+    }
+  }
 
   const handleSearch = (searchTerm: string) => {
     if (searchTerm === "") {
@@ -69,6 +77,10 @@ export default function SavesPage() {
         country.toLowerCase().includes(searchTerm.toLowerCase())
       )
     ))
+  }
+
+  const handleUnsave = (itineraryId: string) => {
+    UnsaveItinerary(itineraryId)
   }
 
   if (loading) {
@@ -117,19 +129,25 @@ export default function SavesPage() {
                   <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                 </div>
                 <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                  <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
-                  <p className="text-sm text-gray-200">by @{itinerary.creatorName}</p>
                   <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
                     {itinerary.countries.map((country) => country).join(" · ")}
                   </p>
+                  <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
+                  <p className="text-sm text-gray-200">created by {itinerary.creatorName}</p>
                   <p className="text-sm mt-2">{itinerary.likes} likes</p>
                   <div className="absolute bottom-0 right-0">
                     <button 
                       className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        // Handle unfavorite logic here
-                      }}
+                      onClick={async (event) => {
+                      event.stopPropagation()
+                          try {
+                              await handleUnsave(itinerary.id)
+                              toast.success('Itinerary unsaved successfully')
+                              refreshItineraries()
+                          } catch (error) {
+                              toast.error('Failed to save itinerary')
+                          }
+                    }}
                     >
                       <Bookmark className="h-5 w-5 fill-current" />
                     </button>

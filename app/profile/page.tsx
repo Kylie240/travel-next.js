@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { ProfileContent } from "./profile-content"
 import { getUserDataById } from "@/lib/actions/user.actions"
+import { getUserStatsById } from "@/lib/actions/user.actions"
 
 export default async function ProfilePage({ searchParams }: { searchParams: { tab: string } }) {
   const supabase = createServerComponentClient({ cookies })
@@ -11,13 +12,14 @@ export default async function ProfilePage({ searchParams }: { searchParams: { ta
   if (!user) {
     redirect('/')
   }
-
   const userData = await getUserDataById(user.id)
+  const userStats = await getUserStatsById(user.id)
 
   return (
     <ProfileContent 
       initialUser={user}
       userData={userData}
+      userStats={userStats}
       searchParams={searchParams}
     />
   )
