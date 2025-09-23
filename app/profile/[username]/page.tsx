@@ -1,105 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { ProfileHeader } from "@/components/profile/profile-header"
-import { UserData } from "@/lib/types"
 import Image from "next/image"
-import { Bookmark, MapPin, Search, Share, Star } from "lucide-react"
+import { Bookmark, MapPin, Search, Star } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-
-// This would come from your database in a real app
-const dummyUserData: UserData = {
-  id: "1",
-  name: "Sarah Thompson",
-  username: "wanderlust_sarah",
-  title: "Adventure Seeker",
-  image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=2787&auto=format&fit=crop",
-  location: "London, UK",
-  joined: "January 2024",
-  bio: "Passionate traveler exploring the world one city at a time. Love photography and local cuisine.",
-  website: "https://sarahexplores.com",
-  email: "sarah@example.com",
-  social: {
-    facebook: "",
-    instagram: "",
-    twitter: ""
-  },
-  achievements: [],
-  stats: {
-    trips: 15,
-    followers: 1200,
-    following: 450,
-    likes: 3200
-  },
-  travelPreferences: {
-    interests: [],
-    travelStyle: [],
-    languages: [],
-    visitedCountries: []
-  }
-}
-
-const dummyItineraries = [
-  {
-    id: 1,
-    title: "Weekend in Paris",
-    description: "Experience the best of Paris and the French Riviera",
-    countries: ["Paris", "French Riviera"],
-    image: "https://images.unsplash.com/photo-1551918120-9739cb430c6d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bHV4dXJ5JTIwdHJhdmVsfGVufDB8fDB8fHww",
-    likes: 24,
-    days: 3
-  },
-  {
-    id: 2,
-    title: "Tokyo Adventure",
-    description: "Experience the best of Tokyo",
-    countries: ["Tokyo"],
-    image: "https://plus.unsplash.com/premium_photo-1699566448055-671c8dbcc7ee?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Njd8fHRyYXZlbHxlbnwwfHwwfHx8MA%3D%3D",
-    likes: 18,
-    days: 7
-  },
-  {
-    id: 3,
-    title: "Getaway to the carribean islands",
-    description: "Experience the best of the Caribbean islands",
-    countries: ["Caribbean Islands"],
-    image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fHRyYXZlbHxlbnwwfHwwfHx8MA%3D%3D",
-    likes: 24,
-    days: 3
-  },
-  {
-    id: 4,
-    title: "Weekend in Paris",
-    description: "Experience the best of Paris",
-    countries: ["Paris"],
-    image: "https://images.unsplash.com/photo-1590602391458-7aaa83454938?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NzZ8fGx1eHVyeSUyMHRyYXZlbHxlbnwwfHwwfHx8MA%3D%3D",
-    likes: 18,
-    days: 7
-  },
-  {
-    id: 5,
-    title: "Island hopping in the medditeranean and aegean seas",
-    description: "Experience the best of the Mediterranean and Aegean seas",
-    countries: ["Mediterranean", "Aegean Seas"],
-    image: "https://plus.unsplash.com/premium_photo-1668703335982-a2d335b5cf82?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTExfHx0cmF2ZWx8ZW58MHx8MHx8fDA%3D",
-    likes: 24,
-    days: 3
-  },
-  {
-    id: 6,
-    title: "Romantic baecation in rome",
-    description: "Experience the best of Rome",
-    countries: ["Rome", "Spain", "Portugal"],
-    image: "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTIyfHx0cmF2ZWx8ZW58MHx8MHx8fDA%3D",
-    likes: 18,
-    days: 7
-  }
-]
+import { Session, User } from "@supabase/supabase-js"
+import { addFollower, getProfileDataByUsername, removeFollower } from "@/lib/actions/user.actions"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { ProfileData } from "@/types/profileData"
+import { getItineraryDataByUserId } from "@/lib/actions/itinerary.actions"
+import { ItinerarySummary } from "@/types/ItinerarySummary"
 
 const dummyHotels = [
   {
@@ -168,25 +82,93 @@ const dummyActivities = [
   }
 ]
 
-export default function UserProfilePage() {
-  const params = useParams()
-  const username = params.username as string
-  const [userData, setUserData] = useState<UserData | null>(null)
+export default function UserProfilePage({ params }: { params: { username: string } }) {
+  const { username } = params;
+  const supabase = createClientComponentClient()
+  const [userData, setUserData] = useState<ProfileData | null>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [itineraryData, setItineraryData] = useState<ItinerarySummary[] | null>(null)
+  const [filteredItineraryData, setFilteredItineraryData] = useState<ItinerarySummary[] | null>(null)
   const [itinerarySearch, setItinerarySearch] = useState("")
   const [hotelSearch, setHotelSearch] = useState("")
   const [restaurantSearch, setRestaurantSearch] = useState("")
   const [activitySearch, setActivitySearch] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // In a real app, fetch user data from your database
-    // For now, we'll use dummy data
-    setUserData(dummyUserData)
-  }, [username])
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        // Get current logged in user
+        const { data: { user } } = await supabase.auth.getUser()
+        setCurrentUser(user)
 
-  // Filter functions
-  const filteredItineraries = dummyItineraries.filter(item =>
-    item.title.toLowerCase().includes(itinerarySearch.toLowerCase())
-  )
+        // Get profile data using username
+        if (username) {
+          const profileData = await getProfileDataByUsername(username, user?.id || '')
+          if (profileData && profileData.totalItineraries > 0) {
+            setUserData(profileData)
+            const userId = profileData[0].userId
+            if (userId) {
+              const itineraryData = await getItineraryDataByUserId(userId)
+              if (itineraryData) {
+                console.log('itineraryData', itineraryData)
+                setItineraryData(itineraryData)
+                setFilteredItineraryData(itineraryData)
+              }
+            }
+          } else {
+            toast.error('User not found')
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching profile data:', error)
+        toast.error('Failed to load profile data')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchData()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
+      const currentUser = session?.user ?? null
+      setCurrentUser(currentUser)
+      
+      // Refetch profile data when user auth state changes
+      if (username && currentUser) {
+        try {
+          const profileData = await getProfileDataByUsername(username, currentUser.id)
+          if (profileData) {
+            setUserData(profileData)
+          }
+        } catch (error) {
+          console.error('Error refetching profile data:', error)
+        }
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [username, supabase])
+
+  const toggleFollow = async (isFollow: boolean, userId: string) => {
+    if (!isFollow) {
+      await addFollower (userId, currentUser?.id || '')
+    } else {
+      await removeFollower(userId, currentUser?.id || '')
+    }
+  }
+
+  // Filter itineraries when search changes
+  useEffect(() => {
+    if (itineraryData) {
+      const filtered = itineraryData.filter(item =>
+        item.title.toLowerCase().includes(itinerarySearch.toLowerCase())
+      )
+      setFilteredItineraryData(filtered)
+    }
+  }, [itinerarySearch, itineraryData])
 
   const filteredHotels = dummyHotels.filter(item =>
     item.name.toLowerCase().includes(hotelSearch.toLowerCase()) ||
@@ -205,10 +187,11 @@ export default function UserProfilePage() {
     item.type.toLowerCase().includes(activitySearch.toLowerCase())
   )
 
-  if (!userData) {
+  if (isLoading || !userData || !userData[0]) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <p className="text-gray-600">Loading profile...</p>
       </div>
     )
   }
@@ -220,19 +203,19 @@ export default function UserProfilePage() {
         <div className="w-full flex flex-col items-center justify-center">
           <div className="w-full flex items-center justify-center gap-6 mb-4">
             <div className="flex flex-col items-center justify-center w-24">
-              <p className="text-gray-900 text-xl font-bold">{userData.stats.trips}</p>
-              <p className="text-gray-600 text-sm">Trips</p>
+              <p className="text-gray-900 text-xl font-bold">{userData[0].totalItineraries}</p>
+              <p className="text-gray-600 text-sm">Trip{userData[0].totalItineraries > 1 ? 's' : ''}</p>
             </div>
             <div className="w-[100px] h-[100px] relative rounded-full">
                 <Image
-                  src={"https://tse3.mm.bing.net/th/id/OIP.GbXrupVNmGPefq-s5IGitwHaKo?rs=1&pid=ImgDetMain&o=7&rm=3"}
-                  alt={userData.name}
+                  src={userData[0].avatar}
+                  alt={userData[0].name}
                   fill
                   className="object-cover rounded-full cursor-pointer"
                   style={{ width: '100%', height: '100%' }}
                 />
                 {/* <div className="absolute block md:hidden -top-1 -right-3">
-                  {userData.isFollowing ? (
+                  {userData[0].isFollowing ? (
                     <div onClick={() => onFollowToggle?.(user.id)}><Minus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-black bg-white hover:bg-gray-500 text-black" /></div>
                   ) : (
                     <div onClick={() => onFollowToggle?.(user.id)}><Plus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-white bg-black hover:bg-gray-500 text-white" /></div>
@@ -240,16 +223,20 @@ export default function UserProfilePage() {
                 </div> */}
               </div>
             <div className="flex flex-col items-center justify-center w-24">
-              <p className="text-gray-900 text-xl font-bold">{userData.stats.trips}</p>
-              <p className="text-gray-600 text-sm">Conects</p>
+              <p className="text-gray-900 text-xl font-bold">{userData[0].followersCount + userData[0].followingCount}</p>
+              <p className="text-gray-600 text-sm">Connect{userData[0].followersCount + userData[0].followingCount > 1 ? 's' : ''}</p>
             </div>
           </div>
           <div className="w-full flex flex-col items-center justify-center">
-            <h1 className="text-2xl font-bold">{userData.name}</h1>
-            <p className="text-gray-600 mb-2">@{userData.username}</p>
+            <h1 className="text-2xl font-bold">{userData[0].name}</h1>
+            <p className="text-gray-600 mb-2">@{userData[0].username}</p>
           </div>
           <div className="flex gap-4 mt-2 mb-6">
-            <Button>Follow</Button>
+            {userData[0].isFollowing ? (
+              <Button onClick={() => toggleFollow(false, userData[0].userId)}>Unfollow</Button>
+            ) : (
+              <Button onClick={() => toggleFollow(true,userData[0].userId)}>Follow</Button>
+            )}
             <Button variant="outline" onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
                 toast.success('Link copied to clipboard')
@@ -289,7 +276,7 @@ export default function UserProfilePage() {
             <div className="mb-6 relative">
               <Input
                 type="text"
-                placeholder={`Search all ${dummyItineraries.length} itineraries`}
+                placeholder={`Search all ${filteredItineraryData?.length} itineraries`}
                 value={itinerarySearch}
                 onChange={(e) => setItinerarySearch(e.target.value)}
                 className="pl-10 rounded-xl bg-gray-100"
@@ -297,7 +284,7 @@ export default function UserProfilePage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredItineraries.map((itinerary) => ( 
+              {filteredItineraryData?.map((itinerary) => ( 
                 <div 
                   key={itinerary.id}
                   className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
@@ -307,7 +294,7 @@ export default function UserProfilePage() {
                 >
                   <div className="relative aspect-[2/3]">
                     <Image
-                      src={itinerary.image}
+                      src={itinerary.mainImage}
                       alt={itinerary.title}
                       fill
                       className="object-cover"

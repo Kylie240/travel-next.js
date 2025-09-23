@@ -8,29 +8,6 @@ import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
 import { ItinerarySummary } from "@/types/ItinerarySummary";
 import { SavedItinerary } from "@/types/savedItinerary";
 
-type CreateActivity = {
-    itinerary_id: string,
-    day_number: number,
-    activity_number: number,
-    time: string,
-    duration: string,
-    image: string,
-    title: string,
-    description: string,
-    location: string,
-    type: number,
-    link: string,
-}
-
-type CreateAccommodation = {
-    itinerary_id: string,
-    name: string,
-    type: string,
-    location: string,
-    link: string,
-    day_number: number,
-}
-
 export const getItineraries = async (options?: GetItineraryOptions) => {
     const page = options?.pagination?.page || 1;
     const pageSize = options?.pagination?.pageSize || 10;
@@ -119,6 +96,19 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
         console.error('Error getting itineraries:', error);
         throw new Error(`Failed to get itineraries: ${error instanceof Error ? error.message : String(error)}`);
     }
+}
+
+export const getItineraryDataByUserId = async (userId: string) => {
+    const { data, error } = await supabase
+    .rpc("get_profile_itineraries", { p_creator_id: userId }) as { 
+        data: ItinerarySummary[] | null, 
+        error: Error | null };
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return data;
 }
 
 export const createItinerary = async (itinerary: CreateItinerary) => {

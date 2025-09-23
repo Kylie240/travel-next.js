@@ -37,7 +37,7 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
           <div className="space-y-4">
             {users.map((user) => (
               <div key={user.followerId} className="flex items-center justify-between cursor-pointer"
-              onClick={() => router.push(`/profile/${user.followerId}`)}>
+              onClick={() => router.push(`/profile/${user.followerUsername}`)}>
                 <div className="flex items-center gap-3">
                   <div className="relative w-10 h-10">
                     <Image

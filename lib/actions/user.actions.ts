@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { UserStats } from "@/types/userStats";
 import { Followers } from "@/types/followers";
+import { UserData } from "../types";
+import { ProfileData } from "@/types/profileData";
 
 export const getUserDataById = async (userId: string) => {
     const token = cookies().get("sb-access-token");
@@ -199,5 +201,94 @@ export const getBlockedUsersById = async (userId: string) => {
     } catch (error) {
         console.error('Error in getBlockedUsersById:', error);
         throw new Error(`Failed to get blocked users: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+//profile methods
+export const getUserByUsername = async (username: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', username)
+        .single();
+
+        if (error) {
+            console.error('Error fetching user by username:', error);
+            throw new Error(error.message);
+        } 
+
+        return data;
+    } catch (error) {
+        console.error('Error in getUserByUsername:', error);
+        throw new Error(`Failed to get user by username: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+export const getProfileDataByUsername = async (username: string, userId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .rpc("get_user_profile_by_username", { 
+            p_profile_username: username,
+            p_viewer_user_id: userId
+        }) as { 
+        data: ProfileData | null, 
+        error: Error | null 
+        };
+
+        if (error) {
+            console.error('Error fetching profile data:', error);
+            throw new Error(error.message);
+        } 
+        console.log(data);
+
+        return data;
+    } catch (error) {
+            console.error('Error in getProfileDataById:', error);
+        throw new Error(`Failed to get user profile data: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+export const getProfileDataById = async (profileId: string, userId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .rpc("get_user_profile", { 
+            p_profile_user_id: profileId,
+            p_viewer_user_id: userId 
+        }) as { 
+        data: UserData | null, 
+        error: Error | null 
+        };
+
+        if (error) {
+            console.error('Error fetching profile data:', error);
+            throw new Error(error.message);
+        } 
+        console.log(data);
+
+        return data;
+    } catch (error) {
+            console.error('Error in getProfileDataById:', error);
+        throw new Error(`Failed to get user profile data: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
