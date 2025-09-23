@@ -7,6 +7,7 @@ import { useToast } from "./use-toast"
 import { useState, useEffect } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { CiPassport1 } from "react-icons/ci";
+import { getUserProfileById } from "@/lib/actions/user.actions"
 
 export function UserMenu() {
   const supabase = createClientComponentClient()
@@ -14,11 +15,17 @@ export function UserMenu() {
   const { toast } = useToast()
   const [user, setUser] = useState<any>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [userProfile, setUserProfile] = useState<any>(null)
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+      if (user?.id) {
+        const userProfile = await getUserProfileById(user.id)
+        setUserProfile(userProfile)
+        console.log(userProfile)
+      }
     }
     getUser()
 
@@ -53,15 +60,15 @@ export function UserMenu() {
       <DropdownMenu.Trigger asChild>
         <button className="flex cursor-pointer items-center space-x-2 rounded-full bg-white/90 p-1.5 pr-3 hover:bg-white/100 transition-colors">
           <div className="relative h-8 w-8 rounded-full bg-travel-50 flex items-center justify-center overflow-hidden">
-            {user?.user_metadata.image ? (
+            {userProfile?.avatar ? (
               <img 
-                src={user.user_metadata.image}
+                src={userProfile.avatar}
                 alt={user.user_metadata.username || "User avatar"} 
                 className="h-full w-full object-cover"
               />
             ) : (
               <span className="text-travel-900 text-sm font-medium">
-                {user?.user_metadata.username?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+                {userProfile?.username?.[0]?.toUpperCase() || " "}
               </span>
             )}
           </div>
@@ -79,36 +86,20 @@ export function UserMenu() {
           align="end"
           sideOffset={5}
         >
-          <div className="px-2 py-1.5 text-sm font-medium text-gray-900 border-b border-gray-100">
-            {user?.user_metadata.username || user?.email}
-          </div>
-
-          <div className="py-2 border-b border-gray-100 flex flex-col md:hidden">
-            <DropdownMenu.Item
-              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-              onClick={() => router.push('/explore')}
-            >
-              <Globe className="mr-2 h-4 w-4" />
-              Explore
-            </DropdownMenu.Item>
-
-            <DropdownMenu.Item
-              className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-              onClick={() => router.push('/about')}
-            >
-              <Info className="mr-2 h-4 w-4" />
-              About
-            </DropdownMenu.Item>
+          <div className="px-4 py-2 text-sm font-medium text-gray-900 border-b border-gray-100">
+            {userProfile?.name}
           </div>
 
           <div className="py-2">
+            {userProfile?.username && (
             <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-              onClick={() => router.push(`/profile/${user.id}`)}
+              onClick={() => router.push(`/profile/${userProfile.username}`)}
             >
               <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenu.Item>
+                Profile
+              </DropdownMenu.Item>
+            )}
 
             <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"

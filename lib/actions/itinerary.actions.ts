@@ -268,12 +268,12 @@ export const deleteItinerary = async (itineraryId: string) => {
     }
 }
 
-export const getSavesByUserId = async (userId: string) => {
+export const getSavesByUserId = async (userId: string, creatorId: string = null) => {
     try {
         const supabase = createServerActionClient({ cookies });
         
         const { data, error } = await supabase
-        .rpc("get_saved_itineraries", { p_user_id: userId }) as { 
+        .rpc("get_saved_itineraries", { p_user_id: userId, p_creator_id: creatorId }) as { 
             data: SavedItinerary[] | null, 
             error: Error | null 
         };

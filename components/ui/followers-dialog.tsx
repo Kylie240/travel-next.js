@@ -36,21 +36,21 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
 
           <div className="space-y-4">
             {users.map((user) => (
-              <div key={user.followerId} className="flex items-center justify-between cursor-pointer"
-              onClick={() => router.push(`/profile/${user.followerUsername}`)}>
+              <div key={user.userId} className="flex items-center justify-between cursor-pointer"
+              onClick={() => router.push(`/profile/${user.userUsername}`)}>
                 <div className="flex items-center gap-3">
                   <div className="relative w-10 h-10">
                     <Image
-                      src={user.followerAvatar}
-                      alt={user.followerName}
+                      src={user.userAvatar}
+                      alt={user.userName}
                       fill
                       className="object-cover rounded-full"
                       sizes="40px"
                     />
                   </div>
                   <div>
-                    <p className="font-semibold">{user.followerName}</p>
-                    <p className="text-sm text-gray-600">{user.followerUsername}</p>
+                    <p className="font-semibold">{user.userName}</p>
+                    <p className="text-sm text-gray-600">{user.userUsername}</p>
                   </div>
                 </div>
                 
@@ -58,7 +58,7 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
                     variant={user.isFollowing ? "outline" : "default"}
                     onClick={(e) => {
                       e.stopPropagation()
-                      onFollowToggle?.(user.followerId)
+                      onFollowToggle?.(user.userId)
                     }}
                     className={`h-9 rounded-xl ${user.isFollowing ? "" : "bg-gray-700"}`}
                   >

@@ -1,7 +1,7 @@
 export interface Followers {
-    followerId: string
-    followerName: string
-    followerUsername: string
-    followerAvatar: string
+    userId: string
+    userName: string
+    userUsername: string
+    userAvatar: string
     isFollowing: boolean
 }

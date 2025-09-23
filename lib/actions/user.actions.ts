@@ -40,6 +40,34 @@ export const getUserDataById = async (userId: string) => {
     }
 }
 
+export const getUserProfileById = async (userId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users')
+        .select('name, username, avatar')
+        .eq('id', userId)
+        .single();
+
+        if (error) {
+            console.error('Error fetching user profile:', error);
+            throw new Error(error.message);
+        } 
+        console.log(data);
+
+        return data;
+    } catch (error) {
+        console.error('Error in getUserProfileById:', error);
+        throw new Error(`Failed to get user profile: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
 export const getUserStatsById = async (userId: string) => {
     const token = cookies().get("sb-access-token");
     if (!token) {
@@ -65,6 +93,60 @@ export const getUserStatsById = async (userId: string) => {
     } catch (error) {
         console.error('Error in getUserStatsById:', error);
         throw new Error(`Failed to get user stats: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+// following methods
+export const addFollow = async (userId: string, followingId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data: userData, error: userError } = await supabase
+        .from('users_following')
+        .insert({
+            user_id: userId,
+            following_id: followingId
+        });
+
+        if (userError) {
+            throw userError;
+        }
+
+        return userData;
+    } catch (error) {
+        console.error('Error in addFollower:', error);
+        throw new Error(`Failed to follow user: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+export const removeFollow = async (userId: string, followingId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data: userData, error: userError } = await supabase
+        .from('users_following')
+        .delete()
+        .eq('user_id', userId)
+        .eq('following_id', followingId);
+
+        if (userError) {
+            throw userError;
+        }
+
+        return userData;
+    } catch (error) {
+        console.error('Error in removeFollower:', error);
+        throw new Error(`Failed to remove follow: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
@@ -177,6 +259,7 @@ export const getFollowingById = async (userId: string) => {
     }
 }
 
+// blocking mathods
 export const getBlockedUsersById = async (userId: string) => {
     const token = cookies().get("sb-access-token");
     if (!token) {
@@ -262,6 +345,7 @@ export const getProfileDataByUsername = async (username: string, userId: string)
         throw new Error(`Failed to get user profile data: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
+
 export const getProfileDataById = async (profileId: string, userId: string) => {
     const token = cookies().get("sb-access-token");
     if (!token) {

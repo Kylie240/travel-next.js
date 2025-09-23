@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Session, User } from "@supabase/supabase-js"
-import { addFollower, getProfileDataByUsername, removeFollower } from "@/lib/actions/user.actions"
+import { addFollow, getProfileDataByUsername, removeFollow } from "@/lib/actions/user.actions"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { ProfileData } from "@/types/profileData"
 import { getItineraryDataByUserId } from "@/lib/actions/itinerary.actions"
@@ -94,70 +94,83 @@ export default function UserProfilePage({ params }: { params: { username: string
   const [restaurantSearch, setRestaurantSearch] = useState("")
   const [activitySearch, setActivitySearch] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [isFollowing, setIsFollowing] = useState<boolean>(null)
+  const [isCurrentUser, setIsCurrentUser] = useState<boolean>(false)
 
+  // Handle auth state
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true)
-      try {
-        // Get current logged in user
-        const { data: { user } } = await supabase.auth.getUser()
-        setCurrentUser(user)
-
-        // Get profile data using username
-        if (username) {
-          const profileData = await getProfileDataByUsername(username, user?.id || '')
-          if (profileData && profileData.totalItineraries > 0) {
-            setUserData(profileData)
-            const userId = profileData[0].userId
-            if (userId) {
-              const itineraryData = await getItineraryDataByUserId(userId)
-              if (itineraryData) {
-                console.log('itineraryData', itineraryData)
-                setItineraryData(itineraryData)
-                setFilteredItineraryData(itineraryData)
-              }
-            }
-          } else {
-            toast.error('User not found')
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching profile data:', error)
-        toast.error('Failed to load profile data')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchData()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
-      const currentUser = session?.user ?? null
-      setCurrentUser(currentUser)
-      
-      // Refetch profile data when user auth state changes
-      if (username && currentUser) {
-        try {
-          const profileData = await getProfileDataByUsername(username, currentUser.id)
-          if (profileData) {
-            setUserData(profileData)
-          }
-        } catch (error) {
-          console.error('Error refetching profile data:', error)
-        }
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+      const newUser = session?.user ?? null
+      setCurrentUser(newUser)
     })
 
     return () => {
       subscription.unsubscribe()
     }
+  }, [supabase])
+
+  // Fetch initial user data
+  useEffect(() => {
+    const initUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUser(user)
+    }
+    initUser()
+  }, [supabase])
+
+  // Fetch profile data
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!username) return
+
+      setIsLoading(true)
+      setUserData(null)
+      setItineraryData(null)
+      setFilteredItineraryData(null)
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        const profileData = await getProfileDataByUsername(username, user?.id || '')
+        
+        if (profileData) {
+          setUserData(profileData)
+          const userId = profileData[0].userId
+          if (userId) {
+            console.log(userId, currentUser?.id)
+            setIsCurrentUser(userId == currentUser?.id)
+            setIsFollowing(profileData[0].isFollowing)
+            const itineraryData = await getItineraryDataByUserId(userId)
+            if (itineraryData) {
+              setItineraryData(itineraryData)
+              setFilteredItineraryData(itineraryData)
+            }
+          }
+        } else {
+          setNotFound(true)
+          toast.error('User not found')
+        }
+      } catch (error) {
+        toast.error('Failed to load profile data')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
   }, [username, supabase])
 
-  const toggleFollow = async (isFollow: boolean, userId: string) => {
-    if (!isFollow) {
-      await addFollower (userId, currentUser?.id || '')
+  const toggleFollow = async (isFollow: boolean, followingId: string) => {
+    if(!currentUser.id) { return }
+
+    if (isFollow) {
+      await addFollow(currentUser?.id, followingId)
+      setIsFollowing(true)
     } else {
-      await removeFollower(userId, currentUser?.id || '')
-    }
+      await removeFollow(currentUser?.id, followingId)
+      setIsFollowing(false)
+    } 
+    
+    toast.success(`User succesfully ${isFollow ? '' : 'un'}followed`)
   }
 
   // Filter itineraries when search changes
@@ -187,6 +200,18 @@ export default function UserProfilePage({ params }: { params: { username: string
     item.type.toLowerCase().includes(activitySearch.toLowerCase())
   )
 
+  const [notFound, setNotFound] = useState(false)
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+        <h2 className="text-2xl font-bold text-gray-900">User not found</h2>
+        <p className="text-gray-600">The user you're looking for doesn't exist</p>
+        <Button onClick={() => router.push('/')}>Go Home</Button>
+      </div>
+    )
+  }
+
   if (isLoading || !userData || !userData[0]) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
@@ -200,59 +225,59 @@ export default function UserProfilePage({ params }: { params: { username: string
   return (
     <div className="min-h-screen max-w-[1340px] mx-auto bg-white py-8 mb-4">
       <div className="container mx-auto px-6">
-        <div className="w-full flex flex-col items-center justify-center">
-          <div className="w-full flex items-center justify-center gap-6 mb-4">
-            <div className="flex flex-col items-center justify-center w-24">
-              <p className="text-gray-900 text-xl font-bold">{userData[0].totalItineraries}</p>
-              <p className="text-gray-600 text-sm">Trip{userData[0].totalItineraries > 1 ? 's' : ''}</p>
+        <div className="w-full flex flex-col justify-center">
+          <div className="w-full flex items-center justify-start gap-6 mb-4">
+            <div className="flex gap-4">
+              <div className="w-[100px] h-[100px] relative rounded-full">
+                  <Image
+                    src={userData[0].avatar}
+                    alt={userData[0].name}
+                    fill
+                    className="object-cover rounded-full cursor-pointer"
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                  {/* <div className="absolute block md:hidden -top-1 -right-3">
+                    {userData[0].isFollowing ? (
+                      <div onClick={() => onFollowToggle?.(user.id)}><Minus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-black bg-white hover:bg-gray-500 text-black" /></div>
+                    ) : (
+                      <div onClick={() => onFollowToggle?.(user.id)}><Plus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-white bg-black hover:bg-gray-500 text-white" /></div>
+                    )}
+                  </div> */}
+                </div>
+                <div className="flex flex-col items-start justify-center">
+                  <h1 className="text-2xl font-bold">{userData[0].name}</h1>
+                  <p className="text-gray-600">@{userData[0].username}</p>
+                  <div className="flex gap-4 mt-2 mb-6">
+                    {isCurrentUser ? (
+                      <Button onClick={() => toggleFollow(false, userData[0].userId)}>Unfollow</Button>
+                    ) : (
+                      isFollowing ? (
+                        <Button onClick={() => toggleFollow(false, userData[0].userId)}>Unfollow</Button>
+                      ) : (
+                        <Button onClick={() => toggleFollow(true,userData[0].userId)}>Follow</Button>
+                      )
+                    )}
+                    <Button variant="outline" onClick={() => {
+                        navigator.clipboard.writeText(window.location.href)
+                        toast.success('Link copied to clipboard')
+                      }}>Share Profile</Button>
+                  </div>
+                </div>
             </div>
-            <div className="w-[100px] h-[100px] relative rounded-full">
-                <Image
-                  src={userData[0].avatar}
-                  alt={userData[0].name}
-                  fill
-                  className="object-cover rounded-full cursor-pointer"
-                  style={{ width: '100%', height: '100%' }}
-                />
-                {/* <div className="absolute block md:hidden -top-1 -right-3">
-                  {userData[0].isFollowing ? (
-                    <div onClick={() => onFollowToggle?.(user.id)}><Minus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-black bg-white hover:bg-gray-500 text-black" /></div>
-                  ) : (
-                    <div onClick={() => onFollowToggle?.(user.id)}><Plus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-white bg-black hover:bg-gray-500 text-white" /></div>
-                  )}
-                </div> */}
-              </div>
-            <div className="flex flex-col items-center justify-center w-24">
-              <p className="text-gray-900 text-xl font-bold">{userData[0].followersCount + userData[0].followingCount}</p>
-              <p className="text-gray-600 text-sm">Connect{userData[0].followersCount + userData[0].followingCount > 1 ? 's' : ''}</p>
-            </div>
+            {userData[0]?.userId == currentUser?.id}
           </div>
-          <div className="w-full flex flex-col items-center justify-center">
-            <h1 className="text-2xl font-bold">{userData[0].name}</h1>
-            <p className="text-gray-600 mb-2">@{userData[0].username}</p>
-          </div>
-          <div className="flex gap-4 mt-2 mb-6">
-            {userData[0].isFollowing ? (
-              <Button onClick={() => toggleFollow(false, userData[0].userId)}>Unfollow</Button>
-            ) : (
-              <Button onClick={() => toggleFollow(true,userData[0].userId)}>Follow</Button>
-            )}
-            <Button variant="outline" onClick={() => {
-                navigator.clipboard.writeText(window.location.href)
-                toast.success('Link copied to clipboard')
-              }}>Share Profile</Button>
-          </div>
+          <p className="text-gray-700">{userData[0].bio}</p>
         </div>
         
         <Tabs defaultValue="itineraries" className="w-full">
           <TabsList className="w-full justify-start bg-white rounded-none p-0 h-12">
             <TabsTrigger 
               value="itineraries"
-              className="flex-1 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-4 data-[state=active]:border-black rounded-none"
+              className="flex-1 hidden data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-4 data-[state=active]:border-black rounded-none"
             >
               Itineraries
             </TabsTrigger>
-            <TabsTrigger 
+            {/* <TabsTrigger 
               value="hotels"
               className="flex-1 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-4 data-[state=active]:border-black rounded-none"
             >
@@ -269,21 +294,24 @@ export default function UserProfilePage({ params }: { params: { username: string
               className="flex-1 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-4 data-[state=active]:border-black rounded-none"
             >
               Activities
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="itineraries" className="mt-6">
-            <div className="mb-6 relative">
-              <Input
-                type="text"
-                placeholder={`Search all ${filteredItineraryData?.length} itineraries`}
-                value={itinerarySearch}
-                onChange={(e) => setItinerarySearch(e.target.value)}
-                className="pl-10 rounded-xl bg-gray-100"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+            <h2></h2>
+            {itineraryData?.length && (
+              <div className="mb-8 relative max-w-[550px]">
+                <Input
+                  type="text"
+                  placeholder={`Search all ${filteredItineraryData?.length} itineraries`}
+                  value={itinerarySearch}
+                  onChange={(e) => setItinerarySearch(e.target.value)}
+                  className="pl-10 font-medium rounded-xl bg-gray-100 border-none"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredItineraryData?.map((itinerary) => ( 
                 <div 
                   key={itinerary.id}
@@ -318,7 +346,7 @@ export default function UserProfilePage({ params }: { params: { username: string
               </div>
           </TabsContent>
 
-          <TabsContent value="hotels" className="mt-6">
+          {/* <TabsContent value="hotels" className="mt-6">
             <div className="mb-6 relative">
               <Input
                 type="text"
@@ -457,7 +485,7 @@ export default function UserProfilePage({ params }: { params: { username: string
               </div>
               ))}
             </div>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
     </div>
