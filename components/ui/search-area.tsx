@@ -40,7 +40,6 @@ export function SearchArea() {
       router.push(`/explore?${searchParams.toString()}`);
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
-      console.error("Search error:", error);
     } finally {
       setIsSearching(false);
     }

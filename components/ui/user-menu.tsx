@@ -24,7 +24,6 @@ export function UserMenu() {
       if (user?.id) {
         const userProfile = await getUserProfileById(user.id)
         setUserProfile(userProfile)
-        console.log(userProfile)
       }
     }
     getUser()

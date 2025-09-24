@@ -133,7 +133,6 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
         setActivityTags(transformedTags)
       } catch (error) {
-        console.error('Error fetching activity tags:', error)
         toast.error('Failed to load activity tags')
       }
     }
@@ -1075,7 +1074,6 @@ export default function CreatePage() {
         if (error instanceof Error && error.message === 'Unauthorized') {
           throw error;
         }
-        console.error('Save error:', error);
         throw new Error('Failed to save itinerary');
       }
     } catch (error) {
@@ -1095,16 +1093,12 @@ export default function CreatePage() {
         if (isValid) {
           await handleFinalSubmit(data)
         } else {
-          console.error('Validation errors:', form.formState.errors)
           toast.error('Please fill in all required fields')
         }
       } catch (error) {
-        console.error('Submit error:', error)
         toast.error('Error submitting form')
       }
     }, (errors) => {
-      console.error('Form errors:', errors)
-      console.error('Current form values:', form.getValues())
       toast.error('Please fill in all required fields')
     })
   

@@ -93,7 +93,6 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
             currentPage: page
         }
     } catch (error) {
-        console.error('Error getting itineraries:', error);
         throw new Error(`Failed to get itineraries: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -226,12 +225,9 @@ export const getItineraryById = async (itineraryId: string) => {
         });
 
         if (error) throw new Error(error.message);
-
-        console.log(data)
         
         return data;
     } catch (error) {
-        console.error('Error retrieving itinerary:', error);
         throw new Error(`Failed to retrieve itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -263,7 +259,6 @@ export const deleteItinerary = async (itineraryId: string) => {
 
         return { success: true };
     } catch (error) {
-        console.error('Error deleting itinerary:', error);
         throw new Error(`Failed to delete itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -279,19 +274,16 @@ export const getSavesByUserId = async (userId: string, creatorId: string = null)
         };
 
         if (error) {
-            console.error('Error fetching saved itineraries:', error);
             throw new Error(error.message);
         } 
 
         return data;
     } catch (error) {
-        console.error('Error in getSavesByUserId:', error);
         throw new Error(`Failed to get saved itineraries: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
 export const getSavesByCreatorId = async (userId: string, creatorId: string = null) => {
-    console.log('begin')
     try {
         const supabase = createServerActionClient({ cookies });
         
@@ -302,14 +294,11 @@ export const getSavesByCreatorId = async (userId: string, creatorId: string = nu
         };
 
         if (error) {
-            console.error('Error fetching saved itineraries:', error);
             throw new Error(error.message);
         } 
 
-        console.log(data)
         return data;
     } catch (error) {
-        console.error('Error in getSavesByCreatorId:', error);
         throw new Error(`Failed to get saved itineraries: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -344,7 +333,6 @@ export const LikeItinerary = async (itineraryId: string) => {
 
         return { success: true };
     } catch (error) {
-        console.error('Error bookmarking itinerary:', error);
         throw new Error(`Failed to bookmark itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -378,7 +366,6 @@ export const SaveItinerary = async (itineraryId: string) => {
 
         return { success: true };
     } catch (error) {
-        console.error('Error saving itinerary:', error);
         throw new Error(`Failed to save itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
 }

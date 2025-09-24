@@ -31,7 +31,6 @@ export default function MyItinerariesPage() {
         const userItineraries = await getItinerarySummaries(user.id)
         setItinerarySummaries(userItineraries as ItinerarySummary[])
       } catch (error) {
-        console.error('Error refreshing itineraries:', error)
         toast.error('Failed to refresh itineraries')
       } finally {
         setLoading(false)
@@ -44,9 +43,7 @@ export default function MyItinerariesPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
-        console.log('user', user)
       } catch (error) {
-        console.error('Error fetching user:', error)
         setLoading(false)
       }
     }

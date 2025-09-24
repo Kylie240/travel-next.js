@@ -146,8 +146,7 @@ export default function UserProfilePage({ params }: { params: { username: string
             setItineraryData(itineraryData)
             setFilteredItineraryData(itineraryData)
           }
-
-          console.log(currentUser.id, userId)
+          
           const userSaves = await getSavesByCreatorId(currentUser.id, userId)
           setCurrentUserSaves(userSaves ?? [])
         }
@@ -247,7 +246,7 @@ export default function UserProfilePage({ params }: { params: { username: string
                 </div>
                 <div className="flex flex-col items-start justify-center">
                   <h1 className="text-2xl font-bold">{userData[0].name}</h1>
-                  <p className="text-gray-600">@{userData[0].username}{userData[0].name}</p>
+                  <p className="text-gray-600">@{userData[0].name}</p>
                   <div className="flex gap-2 mt-2">
                     {isCurrentUser ? (
                       <Button variant="outline" onClick={() => router.push(`/profile?tab=${encodeURIComponent('Edit Profile')}`)}>Edit Profile</Button>
@@ -269,7 +268,7 @@ export default function UserProfilePage({ params }: { params: { username: string
           <p className="text-gray-700">{userData[0].bio}</p>
         </div>
         <div className="mt-4">
-          <h2 className="mb-6 font-bold p-4 border-b-2 border-blue-200 mt-6 text-xl">Itineraries</h2>
+          <h2 className="mb-6 font-bold p-4 border-b-2 border-gray-200 mt-6 text-xl">Itineraries</h2>
             {itineraryData?.length > 6 && (
               <div className="mb-8 relative max-w-[550px]">
                 <Input

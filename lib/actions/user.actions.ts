@@ -35,7 +35,6 @@ export const getUserDataById = async (userId: string) => {
 
         return userData;
     } catch (error) {
-        console.error('Error saving user:', error);
         throw new Error(`Failed to save user: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -56,14 +55,11 @@ export const getUserProfileById = async (userId: string) => {
         .single();
 
         if (error) {
-            console.error('Error fetching user profile:', error);
             throw new Error(error.message);
         } 
-        console.log(data);
 
         return data;
     } catch (error) {
-        console.error('Error in getUserProfileById:', error);
         throw new Error(`Failed to get user profile: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -84,14 +80,11 @@ export const getUserStatsById = async (userId: string) => {
         };
 
         if (error) {
-            console.error('Error fetching user stats:', error);
             throw new Error(error.message);
         } 
-        console.log(data);
 
         return data;
     } catch (error) {
-        console.error('Error in getUserStatsById:', error);
         throw new Error(`Failed to get user stats: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -119,7 +112,6 @@ export const addFollow = async (userId: string, followingId: string) => {
 
         return userData;
     } catch (error) {
-        console.error('Error in addFollower:', error);
         throw new Error(`Failed to follow user: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -145,7 +137,6 @@ export const removeFollow = async (userId: string, followingId: string) => {
 
         return userData;
     } catch (error) {
-        console.error('Error in removeFollower:', error);
         throw new Error(`Failed to remove follow: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -172,7 +163,6 @@ export const addFollower = async (userId: string, followerId: string) => {
 
         return userData;
     } catch (error) {
-        console.error('Error in addFollower:', error);
         throw new Error(`Failed to add follower: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -198,7 +188,6 @@ export const removeFollower = async (userId: string, followerId: string) => {
 
         return userData;
     } catch (error) {
-        console.error('Error in removeFollower:', error);
         throw new Error(`Failed to remove follower: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -219,14 +208,11 @@ export const getFollowersById = async (userId: string) => {
         };
 
         if (error) {
-            console.error('Error fetching followers:', error);
             throw new Error(error.message);
         } 
-        console.log(data);
 
         return data;
     } catch (error) {
-        console.error('Error in getFollowersById:', error);
         throw new Error(`Failed to get user stats: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -247,14 +233,11 @@ export const getFollowingById = async (userId: string) => {
         };
 
         if (error) {
-            console.error('Error fetching following:', error);
             throw new Error(error.message);
-        } 
-        console.log(data);
+        }
 
         return data;
     } catch (error) {
-            console.error('Error in getFollowingById:', error);
         throw new Error(`Failed to get user following: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -275,14 +258,11 @@ export const getBlockedUsersById = async (userId: string) => {
         .eq('user_id', userId)
 
         if (error) {
-            console.error('Error fetching blocked users:', error);
             throw new Error(error.message);
-        } 
-        console.log(data);
+        }
 
         return data;
     } catch (error) {
-        console.error('Error in getBlockedUsersById:', error);
         throw new Error(`Failed to get blocked users: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -304,13 +284,11 @@ export const getUserByUsername = async (username: string) => {
         .single();
 
         if (error) {
-            console.error('Error fetching user by username:', error);
             throw new Error(error.message);
         } 
 
         return data;
     } catch (error) {
-        console.error('Error in getUserByUsername:', error);
         throw new Error(`Failed to get user by username: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -334,14 +312,11 @@ export const getProfileDataByUsername = async (username: string, userId: string)
         };
 
         if (error) {
-            console.error('Error fetching profile data:', error);
             throw new Error(error.message);
-        } 
-        console.log(data);
+        }
 
         return data;
     } catch (error) {
-            console.error('Error in getProfileDataById:', error);
         throw new Error(`Failed to get user profile data: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -365,14 +340,11 @@ export const getProfileDataById = async (profileId: string, userId: string) => {
         };
 
         if (error) {
-            console.error('Error fetching profile data:', error);
             throw new Error(error.message);
-        } 
-        console.log(data);
+        }
 
         return data;
     } catch (error) {
-            console.error('Error in getProfileDataById:', error);
         throw new Error(`Failed to get user profile data: ${error instanceof Error ? error.message : String(error)}`);
     }
 }

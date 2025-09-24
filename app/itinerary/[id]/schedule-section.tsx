@@ -45,7 +45,6 @@ const ScheduleSection = ({ schedule, notes }: { schedule: Day[], notes: Note[] }
 
   const openAllDays = () => {
     const allDayIds = schedule.map(day => day.id)
-    console.log('Opening all days:', allDayIds)
     setActiveDays(allDayIds)
   }
 

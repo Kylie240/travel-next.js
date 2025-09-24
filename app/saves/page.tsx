@@ -27,7 +27,6 @@ export default function SavesPage() {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
       } catch (error) {
-        console.error('Error fetching user:', error)
         setUser(null)
         setLoading(false)
       }
