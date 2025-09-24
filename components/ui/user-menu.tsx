@@ -102,10 +102,10 @@ export function UserMenu() {
 
             <DropdownMenu.Item
               className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-              onClick={() => router.push(`/profile?tab=${encodeURIComponent('Login & Security')}`)}
+              onClick={() => router.push(`/account-settings?tab=${encodeURIComponent('Login & Security')}`)}
             >
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              Account Settings
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />

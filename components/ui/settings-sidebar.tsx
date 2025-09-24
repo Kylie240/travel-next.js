@@ -15,10 +15,10 @@ export function SettingsSidebar({ isOpen, onClose, title, children }: SettingsSi
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay 
-          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] md:hidden"
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] lg:hidden md:px-8"
         />
         <Dialog.Content 
-          className="fixed inset-y-0 right-0 h-[100dvh] w-full max-w-screen bg-white shadow-lg z-[10000] md:hidden animate-in slide-in-from-right"
+          className="fixed inset-y-0 right-0 h-[100dvh] w-full max-w-screen bg-white shadow-lg z-[10000] lg:hidden md:px-8 animate-in slide-in-from-right"
         >
           <div className="flex items-center justify-between p-6">
             <Dialog.Close asChild>
