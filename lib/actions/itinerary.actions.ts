@@ -290,6 +290,30 @@ export const getSavesByUserId = async (userId: string, creatorId: string = null)
     }
 }
 
+export const getSavesByCreatorId = async (userId: string, creatorId: string = null) => {
+    console.log('begin')
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .rpc("get_saved_itinerary_ids", { p_current_user_id: userId, p_creator_id: creatorId }) as { 
+            data: string[] | null, 
+            error: Error | null 
+        };
+
+        if (error) {
+            console.error('Error fetching saved itineraries:', error);
+            throw new Error(error.message);
+        } 
+
+        console.log(data)
+        return data;
+    } catch (error) {
+        console.error('Error in getSavesByCreatorId:', error);
+        throw new Error(`Failed to get saved itineraries: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
 //Interactions
 export const LikeItinerary = async (itineraryId: string) => {
     const token = cookies().get("sb-access-token");

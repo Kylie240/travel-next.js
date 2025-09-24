@@ -12,7 +12,7 @@ import { Session, User } from "@supabase/supabase-js"
 import { addFollow, getProfileDataByUsername, removeFollow } from "@/lib/actions/user.actions"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { ProfileData } from "@/types/profileData"
-import { getItineraryDataByUserId } from "@/lib/actions/itinerary.actions"
+import { getItineraryDataByUserId, getSavesByCreatorId, getSavesByUserId } from "@/lib/actions/itinerary.actions"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
 
 const dummyHotels = [
@@ -96,68 +96,76 @@ export default function UserProfilePage({ params }: { params: { username: string
   const [isLoading, setIsLoading] = useState(true)
   const [isFollowing, setIsFollowing] = useState<boolean>(null)
   const [isCurrentUser, setIsCurrentUser] = useState<boolean>(false)
-
-  // Handle auth state
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
-      const newUser = session?.user ?? null
-      setCurrentUser(newUser)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [supabase])
+  const [currentUserSaves, setCurrentUserSaves] = useState<string[]>([])
 
   // Fetch initial user data
-  useEffect(() => {
-    const initUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setCurrentUser(user)
-    }
-    initUser()
-  }, [supabase])
+ useEffect(() => {
+  const initUser = async () => {
+    // Grab current session (works better than getUser on reloads)
+    const { data: { session } } = await supabase.auth.getSession()
+    setCurrentUser(session?.user ?? null)
+  }
+
+  initUser()
+
+  // Listen for auth changes
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    setCurrentUser(session?.user ?? null)
+  })
+
+  return () => {
+    subscription.unsubscribe()
+  }
+}, [supabase])
+
 
   // Fetch profile data
   useEffect(() => {
-    const fetchData = async () => {
-      if (!username) return
+  const fetchData = async () => {
+    if (!username || !currentUser) return
 
-      setIsLoading(true)
-      setUserData(null)
-      setItineraryData(null)
-      setFilteredItineraryData(null)
-      
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        const profileData = await getProfileDataByUsername(username, user?.id || '')
-        
-        if (profileData) {
-          setUserData(profileData)
-          const userId = profileData[0].userId
-          if (userId) {
-            console.log(userId, currentUser?.id)
-            setIsCurrentUser(userId == currentUser?.id)
-            setIsFollowing(profileData[0].isFollowing)
-            const itineraryData = await getItineraryDataByUserId(userId)
-            if (itineraryData) {
-              setItineraryData(itineraryData)
-              setFilteredItineraryData(itineraryData)
-            }
+    setIsLoading(true)
+    setUserData(null)
+    setItineraryData(null)
+    setFilteredItineraryData(null)
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const profileData = await getProfileDataByUsername(username, user?.id || '')
+
+      if (profileData) {
+        setUserData(profileData)
+        const userId = profileData[0].userId
+
+        if (userId) {
+          setIsCurrentUser(userId === currentUser.id)
+          setIsFollowing(profileData[0].isFollowing)
+
+          const itineraryData = await getItineraryDataByUserId(userId)
+          if (itineraryData) {
+            setItineraryData(itineraryData)
+            setFilteredItineraryData(itineraryData)
           }
-        } else {
-          setNotFound(true)
-          toast.error('User not found')
-        }
-      } catch (error) {
-        toast.error('Failed to load profile data')
-      } finally {
-        setIsLoading(false)
-      }
-    }
 
-    fetchData()
-  }, [username, supabase])
+          console.log(currentUser.id, userId)
+          const userSaves = await getSavesByCreatorId(currentUser.id, userId)
+          setCurrentUserSaves(userSaves ?? [])
+        }
+      } else {
+        setNotFound(true)
+        toast.error('User not found')
+      }
+    } catch (error) {
+      toast.error('Failed to load profile data')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  fetchData()
+}, [username, supabase, currentUser])
+
+
 
   const toggleFollow = async (isFollow: boolean, followingId: string) => {
     if(!currentUser.id) { return }
@@ -236,20 +244,13 @@ export default function UserProfilePage({ params }: { params: { username: string
                     className="object-cover rounded-full cursor-pointer"
                     style={{ width: '100%', height: '100%' }}
                   />
-                  {/* <div className="absolute block md:hidden -top-1 -right-3">
-                    {userData[0].isFollowing ? (
-                      <div onClick={() => onFollowToggle?.(user.id)}><Minus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-black bg-white hover:bg-gray-500 text-black" /></div>
-                    ) : (
-                      <div onClick={() => onFollowToggle?.(user.id)}><Plus className="h-[30px] w-[35px] px-[3px] py-[2px] cursor-pointer rounded-full border border-[3px] border-white bg-black hover:bg-gray-500 text-white" /></div>
-                    )}
-                  </div> */}
                 </div>
                 <div className="flex flex-col items-start justify-center">
                   <h1 className="text-2xl font-bold">{userData[0].name}</h1>
-                  <p className="text-gray-600">@{userData[0].username}</p>
-                  <div className="flex gap-4 mt-2 mb-6">
+                  <p className="text-gray-600">@{userData[0].username}{userData[0].name}</p>
+                  <div className="flex gap-2 mt-2">
                     {isCurrentUser ? (
-                      <Button onClick={() => toggleFollow(false, userData[0].userId)}>Unfollow</Button>
+                      <Button variant="outline" onClick={() => router.push(`/profile?tab=${encodeURIComponent('Edit Profile')}`)}>Edit Profile</Button>
                     ) : (
                       isFollowing ? (
                         <Button onClick={() => toggleFollow(false, userData[0].userId)}>Unfollow</Button>
@@ -264,12 +265,61 @@ export default function UserProfilePage({ params }: { params: { username: string
                   </div>
                 </div>
             </div>
-            {userData[0]?.userId == currentUser?.id}
           </div>
           <p className="text-gray-700">{userData[0].bio}</p>
         </div>
+        <div className="mt-4">
+          <h2 className="mb-6 font-bold p-4 border-b-2 border-blue-200 mt-6 text-xl">Itineraries</h2>
+            {itineraryData?.length > 6 && (
+              <div className="mb-8 relative max-w-[550px]">
+                <Input
+                  type="text"
+                  placeholder={`Search all ${filteredItineraryData?.length} itineraries`}
+                  value={itinerarySearch}
+                  onChange={(e) => setItinerarySearch(e.target.value)}
+                  className="pl-10 font-medium rounded-xl bg-gray-100 border-none"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredItineraryData?.map((itinerary) => ( 
+                <div 
+                  key={itinerary.id}
+                  className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
+                  onClick={() => {
+                    router.push(`/itinerary/${itinerary.id}`)
+                  }}
+                >
+                  <div className="relative aspect-[2/3]">
+                    <Image
+                      src={itinerary.mainImage}
+                      alt={itinerary.title}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                  </div>
+                  <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                    <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
+                    <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
+                      {itinerary.countries.map((country) => country).join(" · ")}
+                    </p>
+                    <p className="text-sm mt-2">{itinerary.likes} likes</p>
+                    <div className="absolute bottom-0 right-0">
+                      {!isCurrentUser && 
+                        <button className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full">
+                          <Bookmark className="h-5 w-5" />
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+                ))}
+              </div>
+        </div>
         
-        <Tabs defaultValue="itineraries" className="w-full">
+        {/* <Tabs defaultValue="itineraries" className="w-full">
           <TabsList className="w-full justify-start bg-white rounded-none p-0 h-12">
             <TabsTrigger 
               value="itineraries"
@@ -277,7 +327,7 @@ export default function UserProfilePage({ params }: { params: { username: string
             >
               Itineraries
             </TabsTrigger>
-            {/* <TabsTrigger 
+            <TabsTrigger 
               value="hotels"
               className="flex-1 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-4 data-[state=active]:border-black rounded-none"
             >
@@ -294,12 +344,11 @@ export default function UserProfilePage({ params }: { params: { username: string
               className="flex-1 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-4 data-[state=active]:border-black rounded-none"
             >
               Activities
-            </TabsTrigger> */}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="itineraries" className="mt-6">
-            <h2></h2>
-            {itineraryData?.length && (
+            {itineraryData?.length > 6 && (
               <div className="mb-8 relative max-w-[550px]">
                 <Input
                   type="text"
@@ -346,7 +395,7 @@ export default function UserProfilePage({ params }: { params: { username: string
               </div>
           </TabsContent>
 
-          {/* <TabsContent value="hotels" className="mt-6">
+          <TabsContent value="hotels" className="mt-6">
             <div className="mb-6 relative">
               <Input
                 type="text"
@@ -485,8 +534,8 @@ export default function UserProfilePage({ params }: { params: { username: string
               </div>
               ))}
             </div>
-          </TabsContent> */}
-        </Tabs>
+          </TabsContent>
+        </Tabs> */}
       </div>
     </div>
   )
