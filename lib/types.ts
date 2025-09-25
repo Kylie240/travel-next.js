@@ -19,4 +19,5 @@ export interface UserData {
     likes: number
   }
   isFollowing: boolean
+  travelerType?: number
 }

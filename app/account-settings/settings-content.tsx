@@ -9,6 +9,13 @@ import { User } from "@supabase/supabase-js"
 import { UserData } from "@/lib/types"
 import { UserStats } from "@/types/userStats"
 import { ChevronRight } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { travelerTypesMap } from "@/lib/constants/tags"
+import { setProfileData } from "@/lib/actions/user.actions"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 interface SettingsContentProps {
   initialUser: User | null;
@@ -20,6 +27,10 @@ interface SettingsContentProps {
 export function SettingsContent({ initialUser, userData, userStats, searchParams }: SettingsContentProps) {
   const [activeSection, setActiveSection] = useState(searchParams?.tab || "Dashboard")
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false)
+  const [ _, setUserData] = useState<UserData>(userData)
+  const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
+  const [isPrivateProfile, setIsPrivateProfile] = useState(false)
+  const router = useRouter()
 
   const handleSectionClick = (sectionTitle: string) => {
     if (window.innerWidth < 1020) {
@@ -28,45 +39,134 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     setActiveSection(sectionTitle)
   }
 
+  const handleTravelerTypeChange = (value: string) => {
+    setUserData({ ...userData, travelerType: parseInt(value) })
+    console.log(userData)
+  }
+
+  const handleSaveChanges = (sectionTitle: string) => {
+    switch (sectionTitle) {
+      case "Profile":
+        setProfileData(
+          userData.id, 
+          { name: updatedUserData.name, 
+            username: updatedUserData.username, 
+            bio: updatedUserData.bio, 
+            location: updatedUserData.location,
+            email: updatedUserData.email,
+            avatar: updatedUserData.avatar,
+          })
+        router.refresh()
+        break
+      case "Content Visibility":
+        setProfileData(
+          userData.id,
+          {
+            ...updatedUserData,
+            isPrivate: isPrivateProfile
+          }
+        )
+        toast.success("Privacy settings updated")
+        router.refresh()
+        break
+      default:
+        toast.error("Something went wrong")
+    }
+    setShowSettingsSidebar(false)
+  }
+
   const settingsSections = [
     {
       title: "Edit Profile",
       description: "Edit your public profile information",
       content: (
         <div className="space-y-6">
+          <div className="space-y-4">
+            <label className="block text-md font-semibold pl-2 mb-2">Profile Picture</label>
+            <div className="w-[100px] h-[100px] relative rounded-full">
+              <Image
+                src={updatedUserData.avatar}  
+                alt={updatedUserData.name}
+                className="object-cover"
+                width={100}
+                height={100}
+                />
+            </div>
+            <Button variant="outline">Change Profile Picture</Button>
+          </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Username</label>
+            <label className="block text-md font-semibold pl-2 mb-2">Name</label>
             <Input
               type="text"
-              defaultValue={userData.username}
+              defaultValue={updatedUserData.name}
+              placeholder="Enter your name"
+              className="rounded-xl"
+              onChange={(e) => setUpdatedUserData({ ...userData, name: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-md font-semibold pl-2 mb-2">Username</label>
+            <Input
+              type="text"
+              defaultValue={updatedUserData.username}
               placeholder="Enter your username"
+              className="rounded-xl"
+              onChange={(e) => setUpdatedUserData({ ...updatedUserData, username: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Title</label>
-            <Input
-              type="text"
-              defaultValue={userData.title}
-              placeholder="Enter your title (e.g. Travel Enthusiast)"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Bio</label>
+            <label className="block text-md font-semibold pl-2 mb-2">About</label>
             <textarea
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900 min-h-[100px]"
-              defaultValue={userData.bio}
+              className="w-full p-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-travel-900 min-h-[100px]"
+              defaultValue={updatedUserData.bio}
               placeholder="Tell us about yourself"
-            />
+              maxLength={250}
+              onChange={(e) => setUpdatedUserData({ ...updatedUserData, bio: e.target.value })}
+              />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Location</label>
+            <label className="block text-md font-semibold pl-2 mb-2">Email</label>
             <Input
               type="text"
-              defaultValue={userData.location}
-              placeholder="Where are you based?"
+              defaultValue={updatedUserData.email}
+              placeholder="Enter your email"
+              disabled
+              className="rounded-xl"
+              onChange={(e) => setUpdatedUserData({ ...updatedUserData, email: e.target.value })}
             />
           </div>
-          <Button>Save Changes</Button>
+          {/* <div>
+            <label className="block text-md font-semibold pl-2 mb-2">Traveler Type (Optional)</label>
+            <p className="text-sm text-gray-600 mb-4">
+              This is the type of traveler that best describes you.
+            </p>
+            <Select
+              defaultValue={userData.travelerType?.toString()}
+              onValueChange={handleTravelerTypeChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a traveler type" />
+              </SelectTrigger>
+              <SelectContent>
+                {travelerTypesMap.map((travelerType) => (
+                  <SelectItem key={travelerType.id} value={travelerType.id.toString()}>
+                    {travelerType.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div> */}
+          <div>
+            <label className="block text-md font-semibold pl-2 mb-2">Location</label>
+            <Input
+              type="text"
+              defaultValue={updatedUserData.location}
+              placeholder="Where are you based?"
+              className="rounded-xl"
+              onChange={(e) => setUpdatedUserData({ ...updatedUserData, location: e.target.value })}
+            />
+          </div>
+          <Button onClick={() => handleSaveChanges('Profile')}>Save Changes</Button>
         </div>
       )
     },
@@ -81,6 +181,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               type="text"
               defaultValue={userData.username}
               placeholder="Enter your full name"
+              onChange={(e) => setUserData({ ...userData, username: e.target.value })}
             />
           </div>
           <div>
@@ -89,6 +190,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               type="email"
               defaultValue={userData.email || ""}
               disabled
+              onChange={(e) => setUserData({ ...userData, email: e.target.value })}
             />
           </div>
           <div>
@@ -108,29 +210,32 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       content: (
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium mb-2">Current Password</label>
+            <label className="block text-md font-semibold pl-2 mb-2">Current Password</label>
             <Input
               type="password"
               placeholder="Enter your current password"
+              className="rounded-xl"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">New Password</label>
+            <label className="block text-md font-semibold pl-2 mb-2">New Password</label>
             <Input
               type="password"
               placeholder="Enter your new password"
+              className="rounded-xl"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+            <label className="block text-md font-semibold pl-2 mb-2">Confirm New Password</label>
             <Input
               type="password"
               placeholder="Confirm your new password"
+              className="rounded-xl"
             />
           </div>
           <Button>Update Password</Button>
-          <div>
-            <label className="block text-sm font-medium mb-2">Deactivate Account</label>
+          <div className="mt-4">
+            <label className="block text-md font-semibold mb-2">Deactivate Account</label>
             <p className="text-sm text-gray-600 mb-4">
             Deactivating your account means that your account will no longer be available. 
             You will not be able to sign in and your profile will not be accessible. 
@@ -146,38 +251,38 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       content: (
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium mb-2">Username</label>
-            <Input
-              type="text"
-              defaultValue={userData.username}
-              placeholder="Enter your username"
-            />
+            <label className="block text-md font-semibold mb-2">Private Profile</label>
+            <p className="text-sm text-gray-600 mb-4">
+              When your profile is private, only you can see it.
+            </p>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={isPrivateProfile}
+                onCheckedChange={setIsPrivateProfile}
+                aria-label="Toggle private profile"
+              />
+              <span className="text-sm text-gray-700">
+                {isPrivateProfile ? 'Private' : 'Public'}
+              </span>
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Title</label>
-            <Input
-              type="text"
-              defaultValue={userData.title}
-              placeholder="Enter your title (e.g. Travel Enthusiast)"
-            />
+            <label className="block text-md font-semibold mb-2">Private Profile</label>
+            <p className="text-sm text-gray-600 mb-4">
+              When your profile is private, only you can see it.
+            </p>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={isPrivateProfile}
+                onCheckedChange={setIsPrivateProfile}
+                aria-label="Toggle private profile"
+              />
+              <span className="text-sm text-gray-700">
+                {isPrivateProfile ? 'Private' : 'Public'}
+              </span>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Bio</label>
-            <textarea
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900 min-h-[100px]"
-              defaultValue={userData.bio}
-              placeholder="Tell us about yourself"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Location</label>
-            <Input
-              type="text"
-              defaultValue={userData.location}
-              placeholder="Where are you based?"
-            />
-          </div>
-          <Button>Save Changes</Button>
+          <Button onClick={() => handleSaveChanges('Content Visibility')}>Save Changes</Button>
         </div>
       )
     },

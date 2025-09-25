@@ -348,3 +348,42 @@ export const getProfileDataById = async (profileId: string, userId: string) => {
         throw new Error(`Failed to get user profile data: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
+
+// edit profile methods
+export const setProfileData = async (
+    userId: string, 
+    updatedUserData: { 
+        name?: string, 
+        username?: string, 
+        bio?: string, 
+        location?: string,
+        email?: string,
+        avatar?: string,
+        }
+    ) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies })
+    
+        const { data, error } = await supabase
+          .from("users")
+          .update({
+            ...updatedUserData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", userId)
+          .select()
+    
+        if (error) throw error
+    
+        console.log(data)
+        return data
+      } catch (err: any) {
+        console.error("Failed to update profile:", err.message)
+        throw new Error(err.message)
+      }
+}

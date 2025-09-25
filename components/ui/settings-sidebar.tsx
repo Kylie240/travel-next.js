@@ -29,7 +29,7 @@ export function SettingsSidebar({ isOpen, onClose, title, children }: SettingsSi
                 <span className="sr-only">Close</span>
               </button> 
             </Dialog.Close>
-            <Dialog.Title className="text-lg w-full pt-2 text-center font-semibold">
+            <Dialog.Title className="text-2xl w-full pt-2 text-center font-semibold">
               {title}
             </Dialog.Title>
           </div>
