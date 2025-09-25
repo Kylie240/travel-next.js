@@ -2,7 +2,7 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { SettingsContent } from "./settings-content"
-import { getUserDataById } from "@/lib/actions/user.actions"
+import { getUserDataById, getUserSettingsById } from "@/lib/actions/user.actions"
 import { getUserStatsById } from "@/lib/actions/user.actions"
 
 export default async function AccountSettingsPage({ searchParams }: { searchParams: { tab: string } }) {
@@ -14,6 +14,7 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
   }
   const userData = await getUserDataById(user.id)
   const userStats = await getUserStatsById(user.id)
+  const userSettings = await getUserSettingsById(user.id)
 
   return (
     <SettingsContent 
@@ -21,6 +22,7 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
       userData={userData}
       userStats={userStats}
       searchParams={searchParams}
+      userSettings={userSettings}
     />
   )
 }

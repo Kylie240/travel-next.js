@@ -44,7 +44,6 @@ export function UserMenu() {
         title: "Signed out successfully",
         description: "Come back soon!",
       })
-      router.push('/')
     } catch (error: any) {
       toast({
         title: "Error signing out",
@@ -52,6 +51,7 @@ export function UserMenu() {
         variant: "destructive",
       })
     }
+    router.push('/')
   }
 
   return (

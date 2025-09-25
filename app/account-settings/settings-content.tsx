@@ -12,25 +12,33 @@ import { ChevronRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { travelerTypesMap } from "@/lib/constants/tags"
-import { setProfileData } from "@/lib/actions/user.actions"
+import { getBlockedUsersById, removeBlockedUser, setContentData, setProfileData } from "@/lib/actions/user.actions"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { FollowersDialog } from "@/components/ui/followers-dialog"
+import { Followers } from "@/types/followers"
+import { UserSettings } from "@/types/profileData copy"
 
 interface SettingsContentProps {
   initialUser: User | null;
   userData: UserData;
   userStats: UserStats;
   searchParams: { tab: string };
+  userSettings: UserSettings;
 }
 
-export function SettingsContent({ initialUser, userData, userStats, searchParams }: SettingsContentProps) {
+export function SettingsContent({ initialUser, userData, userStats, searchParams, userSettings }: SettingsContentProps) {
   const [activeSection, setActiveSection] = useState(searchParams?.tab || "Dashboard")
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false)
   const [ _, setUserData] = useState<UserData>(userData)
   const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
-  const [isPrivateProfile, setIsPrivateProfile] = useState(false)
+  const [updatedContentData, setUpdatedContentData] = useState<UserData>(userData)
+  const [isPrivateProfile, setIsPrivateProfile] = useState(userSettings.isPrivate)
+  const [isItinerarySharing, setIsItinerarySharing] = useState(false)
   const router = useRouter()
+  const [showBlockedUsers, setShowBlockedUsers] = useState(false)
+  const [blockedUsers, setBlockedUsers] = useState<Followers[]>([])
 
   const handleSectionClick = (sectionTitle: string) => {
     if (window.innerWidth < 1020) {
@@ -59,10 +67,9 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         router.refresh()
         break
       case "Content Visibility":
-        setProfileData(
+        setContentData(
           userData.id,
           {
-            ...updatedUserData,
             isPrivate: isPrivateProfile
           }
         )
@@ -73,6 +80,18 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         toast.error("Something went wrong")
     }
     setShowSettingsSidebar(false)
+  }
+
+  const toggleBlockedUsers = async () => {
+    const blockedUsers = await getBlockedUsersById(userData.id)
+    setBlockedUsers(blockedUsers)
+    setShowBlockedUsers(true)
+  }
+
+  const handleUnblockUser = async (userId: string) => {
+    await removeBlockedUser(userData.id, userId)
+    toast.success("User unblocked")
+    router.refresh()
   }
 
   const settingsSections = [
@@ -170,45 +189,45 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         </div>
       )
     },
-    {
-      title: "Personal information",
-      description: "Manage your personal details",
-      content: (
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">Full Name</label>
-            <Input
-              type="text"
-              defaultValue={userData.username}
-              placeholder="Enter your full name"
-              onChange={(e) => setUserData({ ...userData, username: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <Input
-              type="email"
-              defaultValue={userData.email || ""}
-              disabled
-              onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Phone Number</label>
-            <Input
-              type="tel"
-              placeholder="Enter your phone number"
-            />
-          </div>
-          <Button>Save Changes</Button>
-        </div>
-      )
-    },
+    // {
+    //   title: "Personal information",
+    //   description: "Manage your personal details",
+    //   content: (
+    //     <div className="space-y-6">
+    //       <div>
+    //         <label className="block text-sm font-medium mb-2">Full Name</label>
+    //         <Input
+    //           type="text"
+    //           defaultValue={userData.username}
+    //           placeholder="Enter your full name"
+    //           onChange={(e) => setUserData({ ...userData, username: e.target.value })}
+    //         />
+    //       </div>
+    //       <div>
+    //         <label className="block text-sm font-medium mb-2">Email</label>
+    //         <Input
+    //           type="email"
+    //           defaultValue={userData.email || ""}
+    //           disabled
+    //           onChange={(e) => setUserData({ ...userData, email: e.target.value })}
+    //         />
+    //       </div>
+    //       <div>
+    //         <label className="block text-sm font-medium mb-2">Phone Number</label>
+    //         <Input
+    //           type="tel"
+    //           placeholder="Enter your phone number"
+    //         />
+    //       </div>
+    //       <Button>Save Changes</Button>
+    //     </div>
+    //   )
+    // },
     {
       title: "Login & Security",
       description: "Update your password and secure your account",
       content: (
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div>
             <label className="block text-md font-semibold pl-2 mb-2">Current Password</label>
             <Input
@@ -234,7 +253,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             />
           </div>
           <Button>Update Password</Button>
-          <div className="mt-4">
+          <div className="mt-6">
             <label className="block text-md font-semibold mb-2">Deactivate Account</label>
             <p className="text-sm text-gray-600 mb-4">
             Deactivating your account means that your account will no longer be available. 
@@ -249,7 +268,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       title: "Content Visibility",
       description: "Edit your public profile information",
       content: (
-        <div className="space-y-6">
+        <div className="space-y-10">
           <div>
             <label className="block text-md font-semibold mb-2">Private Profile</label>
             <p className="text-sm text-gray-600 mb-4">
@@ -267,22 +286,22 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             </div>
           </div>
           <div>
-            <label className="block text-md font-semibold mb-2">Private Profile</label>
+            <label className="block text-md font-semibold mb-2">Blocked Users</label>
             <p className="text-sm text-gray-600 mb-4">
-              When your profile is private, only you can see it.
+              Block users from viewing your profile and itineraries.
             </p>
             <div className="flex items-center space-x-2">
-              <Switch
-                checked={isPrivateProfile}
-                onCheckedChange={setIsPrivateProfile}
-                aria-label="Toggle private profile"
-              />
-              <span className="text-sm text-gray-700">
-                {isPrivateProfile ? 'Private' : 'Public'}
-              </span>
+            <Button variant="outline" onClick={() => toggleBlockedUsers()}>View Blocked Users</Button>
             </div>
           </div>
-          <Button onClick={() => handleSaveChanges('Content Visibility')}>Save Changes</Button>
+          <Button className="mt-4" onClick={() => handleSaveChanges('Content Visibility')}>Save Changes</Button>
+          <FollowersDialog
+            isOpen={showBlockedUsers}
+            onOpenChange={setShowBlockedUsers}
+            users={blockedUsers}
+            title="Blocked Users"
+            onFollowToggle={handleUnblockUser}
+          />
         </div>
       )
     },
@@ -347,41 +366,41 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     //     </div>
     //   )
     // },
-    {
-      title: "Site preferences",
-      description: "Customize your experience",
-      content: (
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">Language</label>
-            <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
-              <option value="en">English</option>
-              <option value="es">Spanish</option>
-              <option value="fr">French</option>
-              <option value="de">German</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Currency</label>
-            <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-              <option value="JPY">JPY (¥)</option>
-            </select>
-          </div>
-          {/* <div>
-            <label className="block text-sm font-medium mb-2">Theme</label>
-            <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="system">System</option>
-            </select>
-          </div> */}
-          <Button>Save Preferences</Button>
-        </div>
-      )
-    }
+    // {
+    //   title: "Site preferences",
+    //   description: "Customize your experience",
+    //   content: (
+    //     <div className="space-y-6">
+    //       <div>
+    //         <label className="block text-sm font-medium mb-2">Language</label>
+    //         <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
+    //           <option value="en">English</option>
+    //           <option value="es">Spanish</option>
+    //           <option value="fr">French</option>
+    //           <option value="de">German</option>
+    //         </select>
+    //       </div>
+    //       <div>
+    //         <label className="block text-sm font-medium mb-2">Currency</label>
+    //         <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
+    //           <option value="USD">USD ($)</option>
+    //           <option value="EUR">EUR (€)</option>
+    //           <option value="GBP">GBP (£)</option>
+    //           <option value="JPY">JPY (¥)</option>
+    //         </select>
+    //       </div>
+    //       {/* <div>
+    //         <label className="block text-sm font-medium mb-2">Theme</label>
+    //         <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
+    //           <option value="light">Light</option>
+    //           <option value="dark">Dark</option>
+    //           <option value="system">System</option>
+    //         </select>
+    //       </div> */}
+    //       <Button>Save Preferences</Button>
+    //     </div>
+    //   )
+    // }
   ]
 
   return (

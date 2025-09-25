@@ -35,7 +35,7 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
           </Dialog.Title>
 
           <div className="space-y-4">
-            {users.map((user) => (
+            { users && users.map((user) => (
               <div key={user.userId} className="flex items-center justify-between cursor-pointer"
               onClick={() => router.push(`/profile/${user.userUsername}`)}>
                 <div className="flex items-center gap-3">
@@ -55,18 +55,23 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
                 </div>
                 
                   <Button
-                    variant={user.isFollowing ? "outline" : "default"}
+                    variant={user.isFollowing || title === "Blocked Users" ? "outline" : "default"}
                     onClick={(e) => {
                       e.stopPropagation()
                       onFollowToggle?.(user.userId)
                     }}
-                    className={`h-9 rounded-xl ${user.isFollowing ? "" : "bg-gray-700"}`}
+                    className={`h-9 rounded-xl ${user.isFollowing || title === "Blocked Users" ? "" : "bg-gray-700"}`}
                   >
-                    {user.isFollowing ? "Following" : "Follow"}
+                    {title === "Blocked Users" ? "Unblock" : user.isFollowing ? "Following" : "Follow"}
                   </Button>
                 
               </div>
             ))}
+            { users && users.length === 0 && (
+              <div className="flex items-center justify-center">
+                <p className="text-gray-600 text-lg py-8">No users to display</p>
+              </div>
+            )}
           </div>
 
           <Dialog.Close asChild>

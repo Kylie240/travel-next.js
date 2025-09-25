@@ -89,6 +89,27 @@ export const getUserStatsById = async (userId: string) => {
     }
 }
 
+export const getUserSettingsById = async (userId: string) => {
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
+    } catch (error) {
+        throw new Error(`Failed to get user settings: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
 // following methods
 export const addFollow = async (userId: string, followingId: string) => {
     const token = cookies().get("sb-access-token");
@@ -253,9 +274,10 @@ export const getBlockedUsersById = async (userId: string) => {
         const supabase = createServerActionClient({ cookies });
         
         const { data, error } = await supabase
-        .from('users_blocked')
-        .select('*')
-        .eq('user_id', userId)
+        .rpc("get_blocked_users", { p_user_id: userId }) as { 
+            data: Followers[] | null, 
+            error: Error | null 
+        };
 
         if (error) {
             throw new Error(error.message);
@@ -263,7 +285,32 @@ export const getBlockedUsersById = async (userId: string) => {
 
         return data;
     } catch (error) {
-        throw new Error(`Failed to get blocked users: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`Failed to get user following: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+export const removeBlockedUser = async (userId: string, blockedUserId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users_blocked')
+        .delete()
+        .eq('user_id', userId)
+        .eq('blocked_id', blockedUserId);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
+    } catch (error) {
+        throw new Error(`Failed to remove blocked user: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
@@ -373,17 +420,44 @@ export const setProfileData = async (
           .from("users")
           .update({
             ...updatedUserData,
-            updated_at: new Date().toISOString(),
           })
           .eq("id", userId)
           .select()
     
         if (error) throw error
     
-        console.log(data)
         return data
       } catch (err: any) {
-        console.error("Failed to update profile:", err.message)
+        throw new Error(err.message)
+      }
+}
+
+export const setContentData = async (
+    userId: string, 
+    updatedContentData: { 
+        isPrivate: boolean,
+        }
+    ) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies })
+    
+        const { data, error } = await supabase
+          .from("users_settings")
+          .update({
+            ...updatedContentData,
+          })
+          .eq("user_id", userId)
+          .select()
+    
+        if (error) throw error
+    
+        return data
+      } catch (err: any) {
         throw new Error(err.message)
       }
 }
