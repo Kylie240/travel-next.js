@@ -9,9 +9,10 @@ import { Roboto } from "next/font/google";
 const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 export const metadata: Metadata = {
-  title: "Travel 3.0 - Create and Share Travel Itineraries",
+  title: "Journli- Create and Share Travel Itineraries",
   description: "Discover, create, and share travel itineraries with fellow travelers around the world.",
 };
+
 
 export default function RootLayout({
   children,

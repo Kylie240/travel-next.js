@@ -26,26 +26,47 @@ export default function Navbar() {
   const pathname = usePathname()
   const supabase = createClientComponentClient()
   const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const isExplorePage = pathname === "/explore"
   const isLandingPage = pathname === "/"
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-    }
-    getUser()
-
-    const unsubscribe = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
         setUser(session?.user ?? null)
-      } else if (event === "SIGNED_OUT") {
-        setUser(null)
+      } catch (error) {
+        console.error('Error getting initial session:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    getInitialSession()
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id)
+      switch (event) {
+        case 'SIGNED_IN':
+          setUser(session?.user ?? null)
+          break
+        case 'SIGNED_OUT':
+          setUser(null)
+          break
+        case 'TOKEN_REFRESHED':
+          setUser(session?.user ?? null)
+          break
+        case 'USER_UPDATED':
+          setUser(session?.user ?? null)
+          break
       }
     })
 
-    return () => unsubscribe.data.subscription.unsubscribe()
-  }, [])
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase.auth])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,7 +125,9 @@ export default function Navbar() {
             )}
 
             {/* User menu or auth buttons */}
-            {user ? (
+            {isLoading ? (
+              <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
+            ) : user ? (
               <UserMenu />
             ) : (
               <div className="hidden md:flex items-center gap-2">
