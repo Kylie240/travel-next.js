@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { useState } from "react"
-import { Camera, Share } from "lucide-react"
+import { Camera, Share, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FollowersDialog } from "@/components/ui/followers-dialog"
 import { toast } from "sonner"
@@ -12,6 +12,7 @@ import { UserStats } from "@/types/userStats"
 import { getFollowersById } from "@/lib/actions/user.actions"
 import { getFollowingById } from "@/lib/actions/user.actions"
 import { Followers } from "@/types/followers"
+import { FaUserLarge } from "react-icons/fa6";
 
 interface ProfileHeaderProps {
   disableEdit?: boolean
@@ -46,6 +47,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
           <Button variant="outline" onClick={() => {navigator.clipboard.writeText(window.location.href); toast.success('Copied to clipboard')}}><Share /></Button>
         </div>
         <div className="relative w-32 h-32">
+          {user?.avatar && user?.avatar !== "" ? (
           <div className="w-32 h-32 relative rounded-full overflow-hidden">
             <Image
               src={user?.avatar || ""}  
@@ -54,10 +56,12 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
               className="object-cover"
               sizes="(max-width: 640px) 128px, (max-width: 1024px) 160px, 128px"
             />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-            <Camera className="h-6 w-6 text-white" />
           </div>
-          </div>
+          ) : (
+            <div className="w-32 h-32 relative rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+              <FaUserLarge className="h-20 w-20 text-gray-300" />
+            </div>
+          )}
         </div>
         <div className="flex-1 text-center md:text-left px-8">
           <div className="text-center flex flex-col items-center">

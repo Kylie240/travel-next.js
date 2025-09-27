@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ProfileHeader } from "@/components/profile/profile-header"
 import { Input } from "@/components/ui/input"
 import { SettingsSidebar } from "@/components/ui/settings-sidebar"
-import { User } from "@supabase/supabase-js"
+import { User as UserType } from "@supabase/supabase-js"
 import { UserData } from "@/lib/types"
 import { UserStats } from "@/types/userStats"
 import { ChevronRight } from "lucide-react"
@@ -20,9 +20,10 @@ import { FollowersDialog } from "@/components/ui/followers-dialog"
 import { Followers } from "@/types/followers"
 import { UserSettings } from "@/types/profileData copy"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { FaUserLarge } from "react-icons/fa6";
 
 interface SettingsContentProps {
-  initialUser: User | null;
+  initialUser: UserType | null;
   userData: UserData;
   userStats: UserStats;
   searchParams: { tab: string };
@@ -143,19 +144,25 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         <div className="space-y-6">
           <div className="space-y-4">
             <label className="block text-md font-semibold pl-2 mb-2">Profile Picture</label>
+            {updatedUserData.avatar && updatedUserData.avatar !== "" ? (
             <div className="w-[100px] h-[100px] relative rounded-full">
               <Image
                 src={updatedUserData.avatar}  
                 alt={updatedUserData.name}
                 className="object-cover"
                 width={100}
-                height={100}
-                />
-            </div>
+                  height={100}
+                  />
+              </div>
+            ) : (
+              <div className="w-[100px] h-[100px] relative rounded-full bg-gray-100 flex items-center justify-center">
+                <FaUserLarge className="h-12 w-12 text-gray-300" />
+              </div>
+            )}
             <Button variant="outline">Change Profile Picture</Button>
           </div>
           <div>
-            <label className="block text-md font-semibold pl-2 mb-2">Name</label>
+            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Name</label>
             <Input
               type="text"
               defaultValue={updatedUserData.name}
@@ -165,7 +172,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             />
           </div>
           <div>
-            <label className="block text-md font-semibold pl-2 mb-2">Username</label>
+            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Username</label>
             <Input
               type="text"
               defaultValue={updatedUserData.username}
@@ -175,7 +182,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             />
           </div>
           <div>
-            <label className="block text-md font-semibold pl-2 mb-2">About</label>
+            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">About</label>
             <textarea
               className="w-full p-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-travel-900 min-h-[100px]"
               defaultValue={updatedUserData.bio}
@@ -185,7 +192,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               />
           </div>
           <div>
-            <label className="block text-md font-semibold pl-2 mb-2">Email</label>
+            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Email</label>
             <Input
               type="text"
               defaultValue={updatedUserData.email}
@@ -451,8 +458,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               user={userData}
               userStats={userStats}
             />
-            <div className="border-t border-gray-200 py-4">
-              <h2 className="text-3xl font-bold mb-4 pl-4">Account Settings</h2>
+            <div className="border-t pt-4 border-gray-200 py-4">
+              <h2 className="text-3xl font-medium mb-4 pl-4 pt-4 lg:pt-0">Account Settings</h2>
               <div className="space-y-2">
                 {settingsSections.map((section) => (
                   <button

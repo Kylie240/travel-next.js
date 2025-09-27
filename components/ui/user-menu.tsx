@@ -8,6 +8,7 @@ import { useState, useEffect } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { CiPassport1 } from "react-icons/ci";
 import { getUserProfileById } from "@/lib/actions/user.actions"
+import { FaUserAlt } from "react-icons/fa"
 
 export function UserMenu() {
   const supabase = createClientComponentClient()
@@ -25,6 +26,8 @@ export function UserMenu() {
         const userProfile = await getUserProfileById(user.id)
         setUserProfile(userProfile)
         console.log("userProfile", userProfile)
+      } else {
+        router.push('/')
       }
     }
     getUser()
@@ -59,7 +62,7 @@ export function UserMenu() {
     <DropdownMenu.Root open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenu.Trigger asChild>
         <button className="flex cursor-pointer items-center space-x-2 rounded-full bg-white/90 p-1.5 pr-3 hover:bg-white/100 transition-colors">
-          <div className="relative h-8 w-8 rounded-full  bg-gray-300 flex items-center justify-center overflow-hidden">
+          <div className="relative h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
             {userProfile?.avatar && userProfile.avatar !== "" ? (
               <img 
                 src={userProfile.avatar}
@@ -68,7 +71,7 @@ export function UserMenu() {
               />
             ) : (
               <span className="text-white text-sm font-medium w-full h-full flex items-center justify-center">
-                  <User className="h-6 w-6" />
+                  <FaUserAlt className="h-5 w-5 text-gray-300" />
               </span>
             )}
           </div>

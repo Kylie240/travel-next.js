@@ -203,7 +203,7 @@ export default function UserProfilePage({ params }: { params: { username: string
                     <p className="text-gray-600">@ {userData[0].username}</p>
                     <p className="text-gray-700 flex mt-2 text-center gap-1">This user's profile is 
                       <strong className="flex items-center gap-1"> 
-                        private <Lock className="h-4 w-4 font-bold" />
+                        private
                       </strong>
                     </p>
                   </div>
@@ -212,66 +212,89 @@ export default function UserProfilePage({ params }: { params: { username: string
           </div>
         </div>
         <div className="mt-4">
-          <h2 className="mb-6 font-bold p-4 border-b-2 border-gray-200 mt-6 text-xl">Itineraries</h2>
-            {!isPrivate && itineraryData?.length > 6 && (
-              <div className="mb-8 relative max-w-[550px]">
-                <Input
-                  type="text"
-                  placeholder={`Search all ${filteredItineraryData?.length} itineraries`}
-                  value={itinerarySearch}
-                  onChange={(e) => setItinerarySearch(e.target.value)}
-                  className="pl-10 font-medium rounded-xl bg-gray-100 border-none"
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              </div>
-            )}
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-              { isPrivate ? (
-                <div className="flex flex-col items-center justify-center relative">
-                  <div className="w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                      <div key={index} className="w-full h-full bg-gray-200 rounded-2xl">
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-gray-700 text-center absolute bottom-0 left-0 right-0">This user's profile is private</p>
+          {itineraryData?.length > 0 ? (
+            <h2 className="mb-6 font-bold p-4 border-b-2 border-gray-200 mt-6 text-xl">Itineraries</h2>
+          ) : (
+            <div className="flex flex-col gap-4 border-t-2 border-gray-200 pt-24 items-center justify-center">
+              <h2 className="font-thin text-gray-600 text-3xl">No itineraries</h2>
+              {isCurrentUser && (
+                <div className="flex flex-col gap-4">
+                  <p className="text-gray-600">Start creating your first itinerary</p>
+                  <Button variant="outline" onClick={() => router.push('/create')}>Create Itinerary</Button>
                 </div>
-              ) : (
-                filteredItineraryData?.map((itinerary) => ( 
-                <div 
-                  key={itinerary.id}
-                  className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
-                  onClick={() => {
-                    router.push(`/itinerary/${itinerary.id}`)
-                  }}
-                >
-                  <div className="relative aspect-[2/3]">
-                    <Image
-                      src={itinerary.mainImage}
-                      alt={itinerary.title}
-                      fill
-                      className="object-cover"
+              )}
+            </div>
+          )}
+          <div className="flex flex-col gap-4">
+            <div>
+                {!isPrivate && itineraryData?.length > 6 && (
+                  <div className="mb-8 relative max-w-[550px]">
+                    <Input
+                      type="text"
+                      placeholder={`Search all ${filteredItineraryData?.length} itineraries`}
+                      value={itinerarySearch}
+                      onChange={(e) => setItinerarySearch(e.target.value)}
+                      className="pl-10 font-medium rounded-xl bg-gray-100 border-none"
                     />
-                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   </div>
-                  <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                    <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
-                    <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
-                      {itinerary.countries.map((country) => country).join(" · ")}
-                    </p>
-                    <p className="text-sm mt-2">{itinerary.likes} likes</p>
-                    <div className="absolute bottom-0 right-0">
-                      {!isCurrentUser && 
-                        <button className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full">
-                          <Bookmark className="h-5 w-5" />
-                        </button>
-                      }
+                )}
+            </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                { isPrivate ? (
+                  <div className="col-span-full relative">
+                    <div className="w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 blur-sm">
+                      {Array.from({ length: 2 }).map((_, index) => (
+                        <div key={index} className="w-full aspect-[2/3] block md:hidden xl:hidden bg-gray-100 rounded-2xl">
+                        </div>
+                      ))}
+                      {Array.from({ length: 3 }).map((_, index) => (
+                        <div key={index} className="w-full aspect-[2/3] hidden md:block xl:hidden bg-gray-100 rounded-2xl">
+                        </div>
+                      ))}
+                      {Array.from({ length: 4 }).map((_, index) => (
+                        <div key={index} className="w-full aspect-[2/3] hidden xl:block bg-gray-100 rounded-2xl">
+                        </div>
+                      ))}
+                    </div>
+                    <Lock className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-20 w-20 text-gray-400" />                </div>
+                ) : (
+                  filteredItineraryData?.map((itinerary) => ( 
+                  <div 
+                    key={itinerary.id}
+                    className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
+                    onClick={() => {
+                      router.push(`/itinerary/${itinerary.id}`)
+                    }}
+                  >
+                    <div className="relative aspect-[2/3]">
+                      <Image
+                        src={itinerary.mainImage}
+                        alt={itinerary.title}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                    </div>
+                    <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                      <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
+                      <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
+                        {itinerary.countries.map((country) => country).join(" · ")}
+                      </p>
+                      <p className="text-sm mt-2">{itinerary.likes} likes</p>
+                      <div className="absolute bottom-0 right-0">
+                        {!isCurrentUser && 
+                          <button className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full">
+                            <Bookmark className="h-5 w-5" />
+                          </button>
+                        }
+                      </div>
                     </div>
                   </div>
+                  ))
+                )}
                 </div>
-                ))
-              )}
-              </div>
+          </div>
         </div>
         
         {/* <Tabs defaultValue="itineraries" className="w-full">

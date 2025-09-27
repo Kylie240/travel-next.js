@@ -16,7 +16,7 @@ const authSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").optional(),
+  username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").refine(s => !s.includes(' '), 'No spaces allowed'),
 })
 
 type AuthFormData = z.infer<typeof authSchema>
@@ -47,7 +47,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     setAuthError("")
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { error, data: { user } } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -62,9 +62,20 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           return
         } else {
           await supabase.from('users').insert({
-            name,
-            username,
-            email
+            id: user.id,
+            name: name,
+            username: username,
+            email: email,
+            avatar: "",
+            location: "",
+            bio: "",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          await supabase.from('users_settings').insert({
+            user_id: user.id,
+            is_private: false,
+            email_notifications: true
           })
         }
         setIsOpen(false)
@@ -161,6 +172,9 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
                 {...register("username")}
                 className={errors.username ? "border-red-500" : ""}
               />
+              {errors.username && (
+                <p className="mt-1 text-xs text-red-500">{errors.username.message}</p>
+              )}
               </div>
             </>
           )}

@@ -28,22 +28,8 @@ export default function LandingPage() {
           <p className="text-lg md:text-xl text-center mb-8 max-w-2xl">
             Travel planning made easy
           </p>
-            <div className="hidden md:flex gap-4 mt-8">
-                <ActionButtons />
-            </div>
-            
-        </div>
-
-        {/* Small device buttons */}
-        <div className="bg-white md:hidden absolute bottom-0 z-10 rounded-t-2xl w-full flex flex-col justify-center items-center pt-6 pb-8 px-16 gap-4">
-          <button className="bg-gray-900 text-white h-[50px] w-full px-12 justify-center py-3 flex items-center gap-2 shadow-[0_15px_15px_rgba(0,0,0,0.15)] rounded-lg font-medium hover:bg-gray-900 transition">
-              Sign Up For Free <ArrowRight className="w-4 h-4" />
-          </button>
-          <div className="flex gap-2 font-medium pb-6">
-              <span className="text-gray-900">Already have an account?</span>
-              <Link href="/auth/login" className="text-cyan-600 hover:text-cyan-300 transition">
-              Log in
-              </Link>
+          <div className="gap-4 mt-8">
+              <ActionButtons />
           </div>
         </div>
       </div>
