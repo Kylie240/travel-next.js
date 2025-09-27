@@ -71,7 +71,7 @@ export function UserMenu() {
               />
             ) : (
               <span className="text-white text-sm font-medium w-full h-full flex items-center justify-center">
-                  <FaUserAlt className="h-5 w-5 text-gray-300" />
+                  <FaUserAlt className="h-4 w-4 text-gray-300" />
               </span>
             )}
           </div>

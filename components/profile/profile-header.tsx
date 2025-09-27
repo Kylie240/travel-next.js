@@ -43,9 +43,6 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
   return (
     <div>
       <div className="flex flex-col items-center">
-        <div className="absolute top-6 right-4 block md:hidden">
-          <Button variant="outline" onClick={() => {navigator.clipboard.writeText(window.location.href); toast.success('Copied to clipboard')}}><Share /></Button>
-        </div>
         <div className="relative w-32 h-32">
           {user?.avatar && user?.avatar !== "" ? (
           <div className="w-32 h-32 relative rounded-full overflow-hidden">
@@ -68,7 +65,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
             <h1 className="text-2xl font-bold">{user?.name}</h1>
             <p className="text-gray-600 mb-2">@{user?.username}</p>
           </div>
-          <div className="grid grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-2 xl:gap-6 mb-4">
+          <div className="grid py-2 grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-2 xl:gap-6 mb-4">
             <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push("/my-itineraries")}>
               <div className="font-semibold">{userStats[0].totalitineraries}</div>
               <div className="text-sm">Trips</div>

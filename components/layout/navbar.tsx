@@ -92,7 +92,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            {!isExplorePage && !scrolled && (
+            {/* {!isExplorePage && !scrolled && (
               <Button 
                 variant="ghost" 
                 size="icon"
@@ -101,7 +101,7 @@ export default function Navbar() {
               >
                 <Search className="h-5 w-5" />
               </Button>
-            )}
+            )} */}
 
             {/* User menu or auth buttons */}
             {user ? (

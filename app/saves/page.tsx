@@ -78,8 +78,16 @@ export default function SavesPage() {
     ))
   }
 
-  const handleUnsave = (itineraryId: string) => {
-    UnsaveItinerary(itineraryId)
+  const handleUnsave = async (itineraryId: string) => {
+    const result = await UnsaveItinerary(itineraryId)
+    if (result.success) {
+      toast.success('Itinerary unsaved successfully')
+      setSaves(saves?.filter(itinerary => itinerary.id !== itineraryId))
+      refreshItineraries()
+    }
+    else {
+      toast.error('Failed to unsave itinerary')
+    }
   }
 
   if (loading) {
@@ -132,23 +140,19 @@ export default function SavesPage() {
                     {itinerary.countries.map((country) => country).join(" · ")}
                   </p>
                   <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
-                  <p className="text-sm text-gray-200">created by {itinerary.creatorName}</p>
-                  <p className="text-sm mt-2">{itinerary.likes} likes</p>
-                  <div className="absolute bottom-0 right-0">
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-sm text-gray-200">created by {itinerary.creatorName}</p>
+                      <p className="text-sm mt-2">{itinerary.likes} likes</p>
+                    </div>
                     <button 
-                      className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full"
+                      className="text-white"
                       onClick={async (event) => {
                       event.stopPropagation()
-                          try {
-                              await handleUnsave(itinerary.id)
-                              toast.success('Itinerary unsaved successfully')
-                              refreshItineraries()
-                          } catch (error) {
-                              toast.error('Failed to save itinerary')
-                          }
+                        handleUnsave(itinerary.id)
                     }}
                     >
-                      <Bookmark className="h-5 w-5 fill-current" />
+                      <Bookmark className="h-6 w-6 hover:h-7 hover:w-7 fill-current" />
                     </button>
                   </div>
                 </div>

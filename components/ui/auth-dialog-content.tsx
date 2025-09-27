@@ -12,14 +12,21 @@ import { useRouter } from "next/navigation"
 import { createClientComponentClient, Session } from "@supabase/auth-helpers-nextjs"
 import { toast } from "sonner"
 
-const authSchema = z.object({
+const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").refine(s => !s.includes(' '), 'No spaces allowed'),
 })
 
-type AuthFormData = z.infer<typeof authSchema>
+const signInSchema = z.object({
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+})
+
+type SignUpFormData = z.infer<typeof signUpSchema>
+type SignInFormData = z.infer<typeof signInSchema>
+type AuthFormData = SignUpFormData | SignInFormData
 
 export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: { isOpen: boolean, setIsOpen: (isOpen: boolean) => void, isSignUp: boolean, setIsSignUp: (isSignUp: boolean) => void }) {
   const [authError, setAuthError] = useState("")
@@ -34,7 +41,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     reset,
     watch
   } = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema)
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema)
   })
 
   const setSessionCookie = async (session: Session) => {
@@ -43,7 +50,10 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     document.cookie = `sb-refresh-token=${session?.refresh_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
   }
 
-  const onSubmit = async ({ email, password, name, username }: AuthFormData) => {
+  const onSubmit = async (data: AuthFormData) => {
+    const { email, password } = data
+    const name = 'name' in data ? data.name : undefined
+    const username = 'username' in data ? data.username : undefined
     setAuthError("")
     try {
       if (isSignUp) {
@@ -263,7 +273,12 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           <button
             type="button"
             className="text-blue-500 hover:underline"
-            onClick={() => {setAuthError(""); setIsSignUp(!isSignUp)}}
+            onClick={() => {
+              setAuthError("")
+              setIsSignUp(!isSignUp)
+              reset()
+              setConfirmPassword("")
+            }}
           >
             {isSignUp ? "Sign in" : "Sign up"}
           </button>

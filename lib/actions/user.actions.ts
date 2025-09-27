@@ -420,7 +420,7 @@ export const setProfileData = async (
           .eq("id", userId)
           .select()
     
-        if (error) throw error
+        if (error) return error
     
         return data
       } catch (err: any) {

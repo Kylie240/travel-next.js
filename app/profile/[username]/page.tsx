@@ -12,9 +12,10 @@ import { Session, User } from "@supabase/supabase-js"
 import { addFollow, getProfileDataByUsername, removeFollow } from "@/lib/actions/user.actions"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { ProfileData } from "@/types/profileData"
-import { getItineraryDataByUserId, getSavesByCreatorId, getSavesByUserId } from "@/lib/actions/itinerary.actions"
+import { getItineraryDataByUserId, getSavesByCreatorId, getSavesByUserId, SaveItinerary, UnsaveItinerary } from "@/lib/actions/itinerary.actions"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
 import { AuthDialog } from "@/components/ui/auth-dialog"
+import { FaUserLarge } from "react-icons/fa6"
 
 export default function UserProfilePage({ params }: { params: { username: string } }) {
   const { username } = params;
@@ -51,7 +52,6 @@ export default function UserProfilePage({ params }: { params: { username: string
   useEffect(() => {
   const fetchData = async () => {
     if (!username) return
-    console.log("fetching data")
 
     setIsLoading(true)
     setUserData(null)
@@ -81,7 +81,11 @@ export default function UserProfilePage({ params }: { params: { username: string
           
           const userSaves = currentUser?.id ? await getSavesByCreatorId(currentUser.id, userId) : []
           setCurrentUserSaves(userSaves ?? [])
-          displaySignUpDialog(3000)
+          console.log(userSaves)
+
+          if (!currentUser?.id) {
+            displaySignUpDialog(3000)
+          }
         }
       } else {
         setNotFound(true)
@@ -114,6 +118,26 @@ export default function UserProfilePage({ params }: { params: { username: string
     } 
     
     toast.success(`User succesfully ${isFollow ? '' : 'un'}followed`)
+  }
+
+  const handleSaveItinerary = async (itineraryId: string) => {
+    const result = await SaveItinerary(itineraryId)
+    if (result.success) {
+      toast.success('Itinerary saved successfully')
+      setCurrentUserSaves([...currentUserSaves, itineraryId])
+    } else {
+      toast.error('Failed to save itinerary')
+    }
+  }
+
+  const handleUnsaveItinerary = async (itineraryId: string) => {
+    const result = await UnsaveItinerary(itineraryId)
+    if (result.success) {
+      toast.success('Itinerary unsaved successfully')
+      setCurrentUserSaves(currentUserSaves.filter(save => save !== itineraryId))
+    } else {
+      toast.error('Failed to unsave itinerary')
+    }
   }
 
   // Filter itineraries when search changes
@@ -163,6 +187,7 @@ export default function UserProfilePage({ params }: { params: { username: string
         <div className="w-full flex flex-col justify-center">
           <div className="w-full flex items-center justify-start gap-6 mb-4">
             <div className="flex flex-col w-full items-center gap-4">
+              {userData[0].avatar && userData[0].avatar !== "" ? (
               <div className="w-[100px] h-[100px] relative rounded-full">
                   <Image
                     src={userData[0].avatar}
@@ -172,6 +197,11 @@ export default function UserProfilePage({ params }: { params: { username: string
                     style={{ width: '100%', height: '100%' }}
                   />
                 </div>
+              ) : (
+                <div className="w-[100px] h-[100px] relative rounded-full bg-gray-100 flex items-center justify-center">
+                  <FaUserLarge className="h-14 w-14 text-gray-300" />
+                </div>
+              )}
                 { !isPrivate ? (
                 <div className="flex flex-col gap-2 items-center justify-center">
                   <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
@@ -278,16 +308,33 @@ export default function UserProfilePage({ params }: { params: { username: string
                     </div>
                     <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
                       <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
-                      <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
-                        {itinerary.countries.map((country) => country).join(" · ")}
-                      </p>
-                      <p className="text-sm mt-2">{itinerary.likes} likes</p>
-                      <div className="absolute bottom-0 right-0">
-                        {!isCurrentUser && 
-                          <button className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full">
-                            <Bookmark className="h-5 w-5" />
-                          </button>
-                        }
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
+                            {itinerary.countries.map((country) => country).join(" · ")}
+                          </p>
+                          <p className="text-sm mt-2">{itinerary.likes} likes</p>
+                        </div>
+                        <div>
+                          {(!isCurrentUser && currentUser?.id) && 
+                            currentUserSaves.includes(itinerary.id) ? (
+                              <button className="text-white" 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleUnsaveItinerary(itinerary.id)
+                                }}>
+                                  <Bookmark className="h-6 w-6 hover:h-7 hover:w-7 fill-current" />
+                                </button>
+                            ) : (
+                              <button className="bg-white/40 text-black hover:bg-white/80 px-2 py-2 rounded-full" 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleSaveItinerary(itinerary.id)
+                                }}>
+                                  <Bookmark className="h-5 w-5" />
+                                </button>
+                            )}
+                        </div>
                       </div>
                     </div>
                   </div>

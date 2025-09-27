@@ -39,6 +39,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [isItinerarySharing, setIsItinerarySharing] = useState(false)
   const [isPrivateProfile, setIsPrivateProfile] = useState(userSettings.is_private)
   const [isEmailNotifications, setIsEmailNotifications] = useState(userSettings.email_notifications)
+  const [formError, setFormError] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
   const [showBlockedUsers, setShowBlockedUsers] = useState(false)
   const [blockedUsers, setBlockedUsers] = useState<Followers[]>([])
@@ -57,44 +59,74 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     console.log(userData)
   }
 
-  const handleSaveChanges = (sectionTitle: string) => {
-    switch (sectionTitle) {
-      case "Profile":
-        setProfileData(
-          userData.id, 
-          { name: updatedUserData.name, 
-            username: updatedUserData.username, 
-            bio: updatedUserData.bio, 
-            location: updatedUserData.location,
-            email: updatedUserData.email,
-            avatar: updatedUserData.avatar,
-          })
-        router.refresh()
-        break
-      case "Content Visibility":
-        setContentData(
-          userData.id,
-          {
-            is_private: isPrivateProfile
+  const handleSaveChanges = async (sectionTitle: string) => {
+    setFormError("")
+    setIsSaving(true)
+    try {
+      switch (sectionTitle) {
+        case "Profile":
+          const profileResult = await setProfileData(
+            userData.id, 
+            { name: updatedUserData.name, 
+              username: updatedUserData.username.toLowerCase(), 
+              bio: updatedUserData.bio, 
+              location: updatedUserData.location,
+              email: updatedUserData.email,
+              avatar: updatedUserData.avatar,
+            })
+          
+          if ('code' in profileResult) {
+            if (profileResult.message.includes("duplicate key value violates unique constraint")) {
+              setFormError("Username already exists")
+              return
+            }
+            setFormError(profileResult.message || "Failed to update profile")
+            return
           }
-        )
-        toast.success("Privacy settings updated")
-        router.refresh()
-        break
-      case "Notifications":
-        setNotificationData(
-          userData.id,
-          {
-            email_notifications: isEmailNotifications
+          toast.success("Profile updated successfully")
+          router.refresh()
+          break
+
+        case "Content Visibility":
+          const contentResult = await setContentData(
+            userData.id,
+            {
+              is_private: isPrivateProfile
+            }
+          )
+          if (contentResult instanceof Error) {
+            setFormError(contentResult.message)
+            return
           }
-        )
-        toast.success("Notifications updated")
-        router.refresh()
-        break
-      default:
-        toast.error("Something went wrong")
+          toast.success("Privacy settings updated")
+          router.refresh()
+          break
+
+        case "Notifications":
+          const notificationResult = await setNotificationData(
+            userData.id,
+            {
+              email_notifications: isEmailNotifications
+            }
+          )
+          if (notificationResult instanceof Error) {
+            setFormError(notificationResult.message)
+            return
+          }
+          toast.success("Notifications updated")
+          router.refresh()
+          break
+
+        default:
+          toast.error("Something went wrong")
+      }
+      setShowSettingsSidebar(false)
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "An unexpected error occurred")
+      toast.error("Failed to save changes")
+    } finally {
+      setIsSaving(false)
     }
-    setShowSettingsSidebar(false)
   }
 
   const toggleBlockedUsers = async () => {
@@ -115,9 +147,13 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       return
     }
     const supabase = createClientComponentClient()
-    await supabase.auth.updateUser({
+    const { data, error } = await supabase.auth.updateUser({
       password: newPassword
     })
+    if (error) {
+      toast.error(error.message)
+      return
+    }
     toast.success("Password updated")
     router.refresh()
     setNewPassword("")
@@ -178,7 +214,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               defaultValue={updatedUserData.username}
               placeholder="Enter your username"
               className="rounded-xl"
-              onChange={(e) => setUpdatedUserData({ ...updatedUserData, username: e.target.value })}
+              onChange={(e) => setUpdatedUserData({ ...updatedUserData, username: e.target.value.toLowerCase() })}
             />
           </div>
           <div>
@@ -233,7 +269,15 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               onChange={(e) => setUpdatedUserData({ ...updatedUserData, location: e.target.value })}
             />
           </div>
-          <Button onClick={() => handleSaveChanges('Profile')}>Save Changes</Button>
+          {formError && (
+            <p className="text-sm text-red-600 mb-2">{formError}</p>
+          )}
+          <Button 
+            onClick={() => handleSaveChanges('Profile')} 
+            disabled={isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
       )
     },
@@ -341,7 +385,16 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             <Button variant="outline" onClick={() => toggleBlockedUsers()}>View Blocked Users</Button>
             </div>
           </div>
-          <Button className="mt-4" onClick={() => handleSaveChanges('Content Visibility')}>Save Changes</Button>
+          {formError && (
+            <p className="text-sm text-red-600 mb-2">{formError}</p>
+          )}
+          <Button 
+            className="mt-4" 
+            onClick={() => handleSaveChanges('Content Visibility')}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
           <FollowersDialog
             isOpen={showBlockedUsers}
             onOpenChange={setShowBlockedUsers}
@@ -376,7 +429,16 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             </div>
           </div>
           </div>
-          <Button className="mt-4" onClick={() => handleSaveChanges('Notifications')}>Save Changes</Button>
+          {formError && (
+            <p className="text-sm text-red-600 mb-2">{formError}</p>
+          )}
+          <Button 
+            className="mt-4" 
+            onClick={() => handleSaveChanges('Notifications')}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
       )
     },
