@@ -12,7 +12,6 @@ export async function middleware(req: NextRequest) {
 
   // If there's no session and the user is trying to access a protected route
   if (!session && (
-    req.nextUrl.pathname.startsWith('/profile') ||
     req.nextUrl.pathname.startsWith('/my-itineraries') ||
     req.nextUrl.pathname.startsWith('/create') ||
     req.nextUrl.pathname.startsWith('/saves')
@@ -27,7 +26,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/profile/:path*',
     '/my-itineraries/:path*',
     '/create/:path*',
     '/saves/:path*',

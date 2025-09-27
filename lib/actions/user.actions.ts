@@ -95,7 +95,7 @@ export const getUserSettingsById = async (userId: string) => {
     try {
         const supabase = createServerActionClient({ cookies });
         
-        const { data, error } = await supabase
+        const { data: userSettingsData, error } = await supabase
         .from('users_settings')
         .select('*')
         .eq('user_id', userId)
@@ -105,7 +105,7 @@ export const getUserSettingsById = async (userId: string) => {
             throw new Error(error.message);
         }
 
-        return data;
+        return userSettingsData;
     } catch (error) {
         throw new Error(`Failed to get user settings: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -341,12 +341,7 @@ export const getUserByUsername = async (username: string) => {
     }
 }
 
-export const getProfileDataByUsername = async (username: string, userId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
+export const getProfileDataByUsername = async (username: string, userId: string = null) => {
     try {
         const supabase = createServerActionClient({ cookies });
         
@@ -436,7 +431,7 @@ export const setProfileData = async (
 export const setContentData = async (
     userId: string, 
     updatedContentData: { 
-        isPrivate: boolean,
+        is_private: boolean,
         }
     ) => {
     const token = cookies().get("sb-access-token");
@@ -466,7 +461,7 @@ export const setContentData = async (
 export const setNotificationData = async (
     userId: string, 
     updatedContentData: { 
-        emailNotifications: boolean,
+        email_notifications: boolean,
         }
     ) => {
     const token = cookies().get("sb-access-token");
@@ -491,4 +486,29 @@ export const setNotificationData = async (
       } catch (err: any) {
         throw new Error(err.message)
       }
+}
+
+export const deleteAccount = async (userId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
+    }
+    catch (error) {
+        throw new Error(`Failed to delete account: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }

@@ -12,13 +12,14 @@ import { ChevronRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { travelerTypesMap } from "@/lib/constants/tags"
-import { getBlockedUsersById, removeBlockedUser, setContentData, setNotificationData, setProfileData } from "@/lib/actions/user.actions"
+import { deleteAccount, getBlockedUsersById, removeBlockedUser, setContentData, setNotificationData, setProfileData } from "@/lib/actions/user.actions"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { FollowersDialog } from "@/components/ui/followers-dialog"
 import { Followers } from "@/types/followers"
 import { UserSettings } from "@/types/profileData copy"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface SettingsContentProps {
   initialUser: User | null;
@@ -35,11 +36,13 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
   const [updatedContentData, setUpdatedContentData] = useState<UserData>(userData)
   const [isItinerarySharing, setIsItinerarySharing] = useState(false)
-  const [isPrivateProfile, setIsPrivateProfile] = useState(userSettings.isPrivate)
-  const [isEmailNotifications, setIsEmailNotifications] = useState(userSettings.emailNotifications)
+  const [isPrivateProfile, setIsPrivateProfile] = useState(userSettings.is_private)
+  const [isEmailNotifications, setIsEmailNotifications] = useState(userSettings.email_notifications)
   const router = useRouter()
   const [showBlockedUsers, setShowBlockedUsers] = useState(false)
   const [blockedUsers, setBlockedUsers] = useState<Followers[]>([])
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmNewPassword, setConfirmNewPassword] = useState("")
 
   const handleSectionClick = (sectionTitle: string) => {
     if (window.innerWidth < 1020) {
@@ -71,7 +74,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         setContentData(
           userData.id,
           {
-            isPrivate: isPrivateProfile
+            is_private: isPrivateProfile
           }
         )
         toast.success("Privacy settings updated")
@@ -81,7 +84,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         setNotificationData(
           userData.id,
           {
-            emailNotifications: isEmailNotifications
+            email_notifications: isEmailNotifications
           }
         )
         toast.success("Notifications updated")
@@ -103,6 +106,33 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     await removeBlockedUser(userData.id, userId)
     toast.success("User unblocked")
     router.refresh()
+  }
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      toast.error("Passwords do not match")
+      return
+    }
+    const supabase = createClientComponentClient()
+    await supabase.auth.updateUser({
+      password: newPassword
+    })
+    toast.success("Password updated")
+    router.refresh()
+    setNewPassword("")
+    setConfirmNewPassword("")
+  }
+
+  const handleDeleteAccount = async () => {
+    if (confirm('Are you sure you want to delete your account? This action is permanent and cannot be undone.')) {
+      try {
+          await deleteAccount(userData.id)
+          toast.success('Account deleted')
+          router.refresh()
+      } catch (error) {
+          toast.error('Failed to delete account')
+      }
+  }
   }
 
   const settingsSections = [
@@ -240,19 +270,13 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       content: (
         <div className="space-y-8">
           <div>
-            <label className="block text-md font-semibold pl-2 mb-2">Current Password</label>
-            <Input
-              type="password"
-              placeholder="Enter your current password"
-              className="rounded-xl"
-            />
-          </div>
-          <div>
             <label className="block text-md font-semibold pl-2 mb-2">New Password</label>
             <Input
               type="password"
               placeholder="Enter your new password"
               className="rounded-xl"
+              onChange={(e) => setNewPassword(e.target.value)}
+              value={newPassword}
             />
           </div>
           <div>
@@ -261,17 +285,22 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               type="password"
               placeholder="Confirm your new password"
               className="rounded-xl"
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              value={confirmNewPassword}
             />
+            {newPassword !== confirmNewPassword && (
+              <p className="text-sm text-red-600">Passwords do not match</p>
+            )}
           </div>
-          <Button>Update Password</Button>
-          <div className="mt-6">
-            <label className="block text-md font-semibold mb-2">Deactivate Account</label>
+          <Button disabled={!newPassword || !confirmNewPassword || newPassword !== confirmNewPassword} onClick={() => handleUpdatePassword()}>Update Password</Button>
+          <div className="mt-12">
+            <label className="block text-md font-semibold mb-2">Delete Account</label>
             <p className="text-sm text-gray-600 mb-4">
-            Deactivating your account means that your account will no longer be available. 
+            Deleting your account means that your account will no longer be available. 
             You will not be able to sign in and your profile will not be accessible. 
             Any reviews, photos, and tips that you have contributed may continue to be displayed on the site.
             </p>
-            <a className="underline" href="">Deactivate</a>
+            <a className="underline cursor-pointer hover:text-red-600" onClick={() => handleDeleteAccount()}>Delete</a>
           </div>
         </div>
       )
@@ -311,6 +340,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             onOpenChange={setShowBlockedUsers}
             users={blockedUsers}
             title="Blocked Users"
+            currentUserId={userData.id}
             onFollowToggle={handleUnblockUser}
           />
         </div>

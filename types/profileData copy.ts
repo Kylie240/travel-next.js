@@ -1,4 +1,4 @@
 export interface UserSettings {
-  isPrivate: boolean
-  emailNotifications: boolean
+  is_private: boolean
+  email_notifications: boolean
 }

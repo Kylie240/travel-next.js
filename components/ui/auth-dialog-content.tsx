@@ -13,8 +13,10 @@ import { createClientComponentClient, Session } from "@supabase/auth-helpers-nex
 import { toast } from "sonner"
 
 const authSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").optional(),
 })
 
 type AuthFormData = z.infer<typeof authSchema>
@@ -23,12 +25,14 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
   const [authError, setAuthError] = useState("")
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const [confirmPassword, setConfirmPassword] = useState("")
   
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    reset
+    reset,
+    watch
   } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema)
   })
@@ -39,24 +43,34 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     document.cookie = `sb-refresh-token=${session?.refresh_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
   }
 
-  const onSubmit = async ({ email, password }: AuthFormData) => {
-    setAuthError("") // Clear any previous errors
+  const onSubmit = async ({ email, password, name, username }: AuthFormData) => {
+    setAuthError("")
     try {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`
+            data: {
+              name,
+              username
+            }
           }
         })
         if (error) {
           setAuthError(error.message)
           return
+        } else {
+          await supabase.from('users').insert({
+            name,
+            username,
+            email
+          })
         }
         setIsOpen(false)
         reset()
-        toast.success("Confirm your email to continue")
+        toast.success("Account created successfully")
+        router.push("/account-settings?tab=Profile")
       } else {
         const { error, data: userCredential } = await supabase.auth.signInWithPassword({
           email,
@@ -96,6 +110,20 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     }
   }
 
+  const handleForgotPassword = async (email: string) => {
+    const supabase = createClientComponentClient()
+    console.log(email)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`
+    })
+    if (error) {
+      setAuthError(error.message)
+      return
+    }
+    toast.success("Password reset email sent")
+    setIsOpen(false)
+  }
+
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
@@ -111,7 +139,33 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         </Dialog.Description>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
+        {isSignUp && (
+            <>
+            <div>
+                <label className="pl-1 block text-sm font-medium mb-1">Name</label>
+                <Input
+                  type="text"
+                  placeholder="Name"
+                  {...register("name")}
+                  className={errors.name ? "border-red-500" : ""}
+                />
+                {errors.name && (
+                  <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>
+                )}
+              </div>
+            <div>
+              <label className="pl-1 block text-sm font-medium mb-1">Username</label>
+              <Input
+                type="text"
+                placeholder="Username"
+                {...register("username")}
+                className={errors.username ? "border-red-500" : ""}
+              />
+              </div>
+            </>
+          )}
           <div>
+            <label className="pl-1 block text-sm font-medium mb-1">Email</label>
             <Input
               type="email"
               placeholder="Email"
@@ -123,6 +177,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             )}
           </div>
           <div>
+            <label className="pl-1 block text-sm font-medium mb-1">Password</label>
             <Input
               type="password"
               placeholder="Password"
@@ -133,13 +188,37 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
               <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
             )}
           </div>
-          {authError && (
-            <p className="text-sm text-red-500">{authError}</p>
+          {isSignUp && (
+            <div>
+              <label className="pl-1 block text-sm font-medium mb-1">Confirm Password</label>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={errors.password ? "border-red-500" : ""}
+              />
+              {confirmPassword !== watch("password") && (
+                <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
+              )}
+            </div>
           )}
+          <div className="flex justify-between items-center">
+            <div>
+              {authError && (
+                <p className="text-sm text-red-500">{authError}</p>
+              )}
+            </div>
+            {!isSignUp && (
+              <div className="text-right">
+                <a className="text-sm text-blue-500 hover:underline cursor-pointer" onClick={() => handleForgotPassword(watch("email"))}>Forgot password?</a>
+              </div>
+            )}
+          </div>
           <Button
             type="submit"
             className="w-full"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isSignUp && confirmPassword !== watch("password")}
           >
             {isSignUp ? "Sign Up" : "Sign In"}
           </Button>
@@ -170,7 +249,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           <button
             type="button"
             className="text-blue-500 hover:underline"
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => {setAuthError(""); setIsSignUp(!isSignUp)}}
           >
             {isSignUp ? "Sign in" : "Sign up"}
           </button>

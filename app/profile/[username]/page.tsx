@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import Image from "next/image"
-import { Bookmark, MapPin, Search, Star } from "lucide-react"
+import { Bookmark, Lock, MapPin, Search, Star } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { ProfileData } from "@/types/profileData"
 import { getItineraryDataByUserId, getSavesByCreatorId, getSavesByUserId } from "@/lib/actions/itinerary.actions"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
+import { AuthDialog } from "@/components/ui/auth-dialog"
 
 export default function UserProfilePage({ params }: { params: { username: string } }) {
   const { username } = params;
@@ -29,17 +30,14 @@ export default function UserProfilePage({ params }: { params: { username: string
   const [currentUserSaves, setCurrentUserSaves] = useState<string[]>([])
   const [isPrivate, setIsPrivate] = useState<boolean>(false)
 
-  // Fetch initial user data
  useEffect(() => {
   const initUser = async () => {
-    // Grab current session (works better than getUser on reloads)
     const { data: { session } } = await supabase.auth.getSession()
     setCurrentUser(session?.user ?? null)
   }
 
   initUser()
 
-  // Listen for auth changes
   const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
     setCurrentUser(session?.user ?? null)
   })
@@ -50,10 +48,10 @@ export default function UserProfilePage({ params }: { params: { username: string
 }, [supabase])
 
 
-  // Fetch profile data
   useEffect(() => {
   const fetchData = async () => {
-    if (!username || !currentUser) return
+    if (!username) return
+    console.log("fetching data")
 
     setIsLoading(true)
     setUserData(null)
@@ -62,17 +60,17 @@ export default function UserProfilePage({ params }: { params: { username: string
     
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      const profileData = await getProfileDataByUsername(username, user?.id || '')
+      const profileData = await getProfileDataByUsername(username, user?.id || null)
 
       if (profileData) {
         setUserData(profileData)
-        if (profileData[0].isPrivate && profileData[0].userId !== currentUser.id) {
+        if (profileData[0].isPrivate && profileData[0].userId !== currentUser?.id) {
           setIsPrivate(true)
         }
         const userId = profileData[0].userId
 
         if (userId) {
-          setIsCurrentUser(userId === currentUser.id)
+          setIsCurrentUser(userId === currentUser?.id)
           setIsFollowing(profileData[0].isFollowing)
 
           const itineraryData = await getItineraryDataByUserId(userId)
@@ -81,8 +79,9 @@ export default function UserProfilePage({ params }: { params: { username: string
             setFilteredItineraryData(itineraryData)
           }
           
-          const userSaves = await getSavesByCreatorId(currentUser.id, userId)
+          const userSaves = currentUser?.id ? await getSavesByCreatorId(currentUser.id, userId) : []
           setCurrentUserSaves(userSaves ?? [])
+          displaySignUpDialog(3000)
         }
       } else {
         setNotFound(true)
@@ -101,13 +100,16 @@ export default function UserProfilePage({ params }: { params: { username: string
 
 
   const toggleFollow = async (isFollow: boolean, followingId: string) => {
-    if(!currentUser.id) { return }
+    if(!currentUser?.id) { 
+      displaySignUpDialog()
+      return;
+    }
 
     if (isFollow) {
-      await addFollow(currentUser?.id, followingId)
+      await addFollow(currentUser.id, followingId)
       setIsFollowing(true)
     } else {
-      await removeFollow(currentUser?.id, followingId)
+      await removeFollow(currentUser.id, followingId)
       setIsFollowing(false)
     } 
     
@@ -125,6 +127,15 @@ export default function UserProfilePage({ params }: { params: { username: string
   }, [itinerarySearch, itineraryData])
 
   const [notFound, setNotFound] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(true)
+
+  const displaySignUpDialog = (timeout: number = 0) => {
+    setTimeout(() => {
+      setIsOpen(true)
+      setIsSignUp(false)
+    }, timeout)
+  }
 
   if (notFound) {
     return (
@@ -161,14 +172,18 @@ export default function UserProfilePage({ params }: { params: { username: string
                     style={{ width: '100%', height: '100%' }}
                   />
                 </div>
-                { !isPrivate && (
+                { !isPrivate ? (
                 <div className="flex flex-col gap-2 items-center justify-center">
                   <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
-                  <p className="text-gray-600">@ {userData[0].name}</p>
+                  <p className="text-gray-600">@ {userData[0].username}</p>
                   <p className="text-gray-700 text-center px-4 max-w-[550px]">{userData[0].bio}</p>
                   <div className="flex gap-2 mt-2">
                     {isCurrentUser ? (
-                      <Button onClick={() => router.push(`/profile?tab=${encodeURIComponent('Edit Profile')}`)}>Edit Profile</Button>
+                      <Button onClick={() => router.push(`/account-settings?tab=${encodeURIComponent('Edit Profile')}`)}>Edit Profile</Button>
+                    ) : !currentUser ? (
+                      <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={false} setIsSignUp={setIsSignUp}>
+                        <Button onClick={() => displaySignUpDialog()}>Follow</Button>
+                      </AuthDialog>
                     ) : (
                       isFollowing ? (
                         <Button onClick={() => toggleFollow(false, userData[0].userId)}>Unfollow</Button>
@@ -182,13 +197,23 @@ export default function UserProfilePage({ params }: { params: { username: string
                       }}>Share Profile</Button>
                   </div>
                 </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center">
+                    <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
+                    <p className="text-gray-600">@ {userData[0].username}</p>
+                    <p className="text-gray-700 flex mt-2 text-center gap-1">This user's profile is 
+                      <strong className="flex items-center gap-1"> 
+                        private <Lock className="h-4 w-4 font-bold" />
+                      </strong>
+                    </p>
+                  </div>
                 )}
             </div>
           </div>
         </div>
         <div className="mt-4">
           <h2 className="mb-6 font-bold p-4 border-b-2 border-gray-200 mt-6 text-xl">Itineraries</h2>
-            {itineraryData?.length > 6 && (
+            {!isPrivate && itineraryData?.length > 6 && (
               <div className="mb-8 relative max-w-[550px]">
                 <Input
                   type="text"
@@ -202,8 +227,14 @@ export default function UserProfilePage({ params }: { params: { username: string
             )}
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
               { isPrivate ? (
-                <div className="flex flex-col items-center justify-center">
-                  <p className="text-gray-700 text-center">This user's profile is private</p>
+                <div className="flex flex-col items-center justify-center relative">
+                  <div className="w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div key={index} className="w-full h-full bg-gray-200 rounded-2xl">
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-gray-700 text-center absolute bottom-0 left-0 right-0">This user's profile is private</p>
                 </div>
               ) : (
                 filteredItineraryData?.map((itinerary) => ( 
