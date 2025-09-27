@@ -15,73 +15,6 @@ import { ProfileData } from "@/types/profileData"
 import { getItineraryDataByUserId, getSavesByCreatorId, getSavesByUserId } from "@/lib/actions/itinerary.actions"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
 
-const dummyHotels = [
-  {
-    id: 1,
-    name: "The Ritz Paris",
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop",
-    location: "Paris, France",
-    rating: 5,
-    review: "Absolutely stunning hotel with impeccable service",
-    link: 'https://www.marriott.com/search/findHotels.mi?searchType=InCity&destinationAddress.city=Orlando&destinationAddress.stateProvince=FL&destinationAddress.country=US&nst=paid&cid=PAI_GLB0004YXE_GLE000BIMO_GLF000OETS&ppc=ppc&pId=ustbppc&gclid=6f7b1df90ebf1c8edf1b7597e57d169a&gclsrc=3p.ds&msclkid=6f7b1df90ebf1c8edf1b7597e57d169a&deviceType=mobile-web&view=list'
-  },
-  {
-    id: 2,
-    name: "Mandarin Oriental Tokyo",
-    image: "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?q=80&w=2074&auto=format&fit=crop",
-    location: "Tokyo, Japan",
-    rating: 5,
-    review: "Best views of Tokyo with amazing amenities",
-    link: 'https://www.marriott.com/search/findHotels.mi?searchType=InCity&destinationAddress.city=Orlando&destinationAddress.stateProvince=FL&destinationAddress.country=US&nst=paid&cid=PAI_GLB0004YXE_GLE000BIMO_GLF000OETS&ppc=ppc&pId=ustbppc&gclid=6f7b1df90ebf1c8edf1b7597e57d169a&gclsrc=3p.ds&msclkid=6f7b1df90ebf1c8edf1b7597e57d169a&deviceType=mobile-web&view=list'
-  }
-]
-
-const dummyRestaurants = [
-  {
-    id: 1,
-    name: "Le Cheval d'Or",
-    image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2070&auto=format&fit=crop",
-    location: "Paris, France",
-    cuisine: "French",
-    rating: 5,
-    review: "Incredible French cuisine in a cozy setting",
-    link: 'https://www.marriott.com/search/findHotels.mi?searchType=InCity&destinationAddress.city=Orlando&destinationAddress.stateProvince=FL&destinationAddress.country=US&nst=paid&cid=PAI_GLB0004YXE_GLE000BIMO_GLF000OETS&ppc=ppc&pId=ustbppc&gclid=6f7b1df90ebf1c8edf1b7597e57d169a&gclsrc=3p.ds&msclkid=6f7b1df90ebf1c8edf1b7597e57d169a&deviceType=mobile-web&view=list'
-  },
-  {
-    id: 2,
-    name: "Sushi Saito",
-    image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=2070&auto=format&fit=crop",
-    location: "Tokyo, Japan",
-    cuisine: "Japanese",
-    rating: 5,
-    review: "Best sushi experience in Tokyo",
-    link: 'https://www.marriott.com/search/findHotels.mi?searchType=InCity&destinationAddress.city=Orlando&destinationAddress.stateProvince=FL&destinationAddress.country=US&nst=paid&cid=PAI_GLB0004YXE_GLE000BIMO_GLF000OETS&ppc=ppc&pId=ustbppc&gclid=6f7b1df90ebf1c8edf1b7597e57d169a&gclsrc=3p.ds&msclkid=6f7b1df90ebf1c8edf1b7597e57d169a&deviceType=mobile-web&view=list'
-  }
-]
-
-const dummyActivities = [
-  {
-    id: 1,
-    name: "Louvre Museum Tour",
-    image: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=2070&auto=format&fit=crop",
-    location: "Paris, France",
-    type: "Cultural",
-    rating: 5,
-    review: "Must-visit museum with expert guide",
-    link: 'https://www.viator.com/Phuket/d349-ttd'
-  },
-  {
-    id: 2,
-    name: "Mount Fuji Hike",
-    image: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?q=80&w=2070&auto=format&fit=crop",
-    location: "Japan",
-    type: "Adventure",
-    rating: 5,
-    review: "Breathtaking views and great hiking experience",
-    link: 'https://www.viator.com/Phuket/d349-ttd'
-  }
-]
-
 export default function UserProfilePage({ params }: { params: { username: string } }) {
   const { username } = params;
   const supabase = createClientComponentClient()
@@ -90,13 +23,11 @@ export default function UserProfilePage({ params }: { params: { username: string
   const [itineraryData, setItineraryData] = useState<ItinerarySummary[] | null>(null)
   const [filteredItineraryData, setFilteredItineraryData] = useState<ItinerarySummary[] | null>(null)
   const [itinerarySearch, setItinerarySearch] = useState("")
-  const [hotelSearch, setHotelSearch] = useState("")
-  const [restaurantSearch, setRestaurantSearch] = useState("")
-  const [activitySearch, setActivitySearch] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isFollowing, setIsFollowing] = useState<boolean>(null)
   const [isCurrentUser, setIsCurrentUser] = useState<boolean>(false)
   const [currentUserSaves, setCurrentUserSaves] = useState<string[]>([])
+  const [isPrivate, setIsPrivate] = useState<boolean>(false)
 
   // Fetch initial user data
  useEffect(() => {
@@ -135,6 +66,9 @@ export default function UserProfilePage({ params }: { params: { username: string
 
       if (profileData) {
         setUserData(profileData)
+        if (profileData[0].isPrivate && profileData[0].userId !== currentUser.id) {
+          setIsPrivate(true)
+        }
         const userId = profileData[0].userId
 
         if (userId) {
@@ -190,23 +124,6 @@ export default function UserProfilePage({ params }: { params: { username: string
     }
   }, [itinerarySearch, itineraryData])
 
-  const filteredHotels = dummyHotels.filter(item =>
-    item.name.toLowerCase().includes(hotelSearch.toLowerCase()) ||
-    item.location.toLowerCase().includes(hotelSearch.toLowerCase())
-  )
-
-  const filteredRestaurants = dummyRestaurants.filter(item =>
-    item.name.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
-    item.location.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
-    item.cuisine.toLowerCase().includes(restaurantSearch.toLowerCase())
-  )
-
-  const filteredActivities = dummyActivities.filter(item =>
-    item.name.toLowerCase().includes(activitySearch.toLowerCase()) ||
-    item.location.toLowerCase().includes(activitySearch.toLowerCase()) ||
-    item.type.toLowerCase().includes(activitySearch.toLowerCase())
-  )
-
   const [notFound, setNotFound] = useState(false)
 
   if (notFound) {
@@ -234,7 +151,7 @@ export default function UserProfilePage({ params }: { params: { username: string
       <div className="container mx-auto px-6">
         <div className="w-full flex flex-col justify-center">
           <div className="w-full flex items-center justify-start gap-6 mb-4">
-            <div className="flex gap-4">
+            <div className="flex flex-col w-full items-center gap-4">
               <div className="w-[100px] h-[100px] relative rounded-full">
                   <Image
                     src={userData[0].avatar}
@@ -244,12 +161,14 @@ export default function UserProfilePage({ params }: { params: { username: string
                     style={{ width: '100%', height: '100%' }}
                   />
                 </div>
-                <div className="flex flex-col items-start justify-center">
-                  <h1 className="text-2xl font-bold">{userData[0].name}</h1>
-                  <p className="text-gray-600">@{userData[0].name}</p>
+                { !isPrivate && (
+                <div className="flex flex-col gap-2 items-center justify-center">
+                  <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
+                  <p className="text-gray-600">@ {userData[0].name}</p>
+                  <p className="text-gray-700 text-center px-4 max-w-[550px]">{userData[0].bio}</p>
                   <div className="flex gap-2 mt-2">
                     {isCurrentUser ? (
-                      <Button variant="outline" onClick={() => router.push(`/profile?tab=${encodeURIComponent('Edit Profile')}`)}>Edit Profile</Button>
+                      <Button onClick={() => router.push(`/profile?tab=${encodeURIComponent('Edit Profile')}`)}>Edit Profile</Button>
                     ) : (
                       isFollowing ? (
                         <Button onClick={() => toggleFollow(false, userData[0].userId)}>Unfollow</Button>
@@ -263,9 +182,9 @@ export default function UserProfilePage({ params }: { params: { username: string
                       }}>Share Profile</Button>
                   </div>
                 </div>
+                )}
             </div>
           </div>
-          <p className="text-gray-700">{userData[0].bio}</p>
         </div>
         <div className="mt-4">
           <h2 className="mb-6 font-bold p-4 border-b-2 border-gray-200 mt-6 text-xl">Itineraries</h2>
@@ -282,7 +201,12 @@ export default function UserProfilePage({ params }: { params: { username: string
               </div>
             )}
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredItineraryData?.map((itinerary) => ( 
+              { isPrivate ? (
+                <div className="flex flex-col items-center justify-center">
+                  <p className="text-gray-700 text-center">This user's profile is private</p>
+                </div>
+              ) : (
+                filteredItineraryData?.map((itinerary) => ( 
                 <div 
                   key={itinerary.id}
                   className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
@@ -314,7 +238,8 @@ export default function UserProfilePage({ params }: { params: { username: string
                     </div>
                   </div>
                 </div>
-                ))}
+                ))
+              )}
               </div>
         </div>
         

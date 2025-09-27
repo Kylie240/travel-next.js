@@ -5,6 +5,10 @@ import { SettingsContent } from "./settings-content"
 import { getUserDataById, getUserSettingsById } from "@/lib/actions/user.actions"
 import { getUserStatsById } from "@/lib/actions/user.actions"
 
+// Prevent page from being statically cached
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function AccountSettingsPage({ searchParams }: { searchParams: { tab: string } }) {
   const supabase = createServerComponentClient({ cookies })
   const { data: { user } } = await supabase.auth.getUser()

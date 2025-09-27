@@ -6,25 +6,44 @@ import Image from "next/image"
 import { Button } from "./button"
 import { useRouter } from "next/navigation"
 import { Followers } from "@/types/followers"
-
-interface User {
-  id: string
-  name: string
-  username: string
-  image: string
-  isFollowing?: boolean
-}
+import { addFollow, removeFollow } from "@/lib/actions/user.actions"
+import { toast } from "sonner"
 
 interface FollowersDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   users: Followers[]
   title: string
+  currentUserId: string
   onFollowToggle?: (userId: string) => void
 }
 
-export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowToggle }: FollowersDialogProps) {
+export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUserId }: FollowersDialogProps) {
   const router = useRouter()
+
+  const handleFollowToggle = async (userId: string, isFollowing: boolean) => {
+    try {
+      if (isFollowing) {
+        await removeFollow(currentUserId, userId)
+      } else {
+        await addFollow(currentUserId, userId)
+      }
+      
+      // Update the UI optimistically
+      const updatedUsers = users.map(user => {
+        if (user.userId === userId) {
+          return { ...user, isFollowing: !isFollowing }
+        }
+        return user
+      })
+      
+      toast.success(`Successfully ${isFollowing ? 'unfollowed' : 'followed'} user`)
+      router.refresh()
+    } catch (error) {
+      toast.error('Failed to update follow status')
+    }
+  }
+
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -54,17 +73,18 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
                   </div>
                 </div>
                 
+                {user.userId !== currentUserId && (
                   <Button
-                    variant={user.isFollowing || title === "Blocked Users" ? "outline" : "default"}
+                    variant={user.isFollowing ? "outline" : "default"}
                     onClick={(e) => {
                       e.stopPropagation()
-                      onFollowToggle?.(user.userId)
+                      handleFollowToggle(user.userId, user.isFollowing)
                     }}
-                    className={`h-9 rounded-xl ${user.isFollowing || title === "Blocked Users" ? "" : "bg-gray-700"}`}
+                    className={`h-9 rounded-xl ${user.isFollowing ? "" : "bg-gray-700"}`}
                   >
-                    {title === "Blocked Users" ? "Unblock" : user.isFollowing ? "Following" : "Follow"}
+                    {user.isFollowing ? "Following" : "Follow"}
                   </Button>
-                
+                )}
               </div>
             ))}
             { users && users.length === 0 && (
@@ -86,4 +106,4 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, onFollowTo
       </Dialog.Portal>
     </Dialog.Root>
   )
-} 
+}

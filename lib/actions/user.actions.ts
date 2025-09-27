@@ -58,6 +58,7 @@ export const getUserProfileById = async (userId: string) => {
             throw new Error(error.message);
         } 
 
+        console.log("data", data)
         return data;
     } catch (error) {
         throw new Error(`Failed to get user profile: ${error instanceof Error ? error.message : String(error)}`);
@@ -436,6 +437,36 @@ export const setContentData = async (
     userId: string, 
     updatedContentData: { 
         isPrivate: boolean,
+        }
+    ) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies })
+    
+        const { data, error } = await supabase
+          .from("users_settings")
+          .update({
+            ...updatedContentData,
+          })
+          .eq("user_id", userId)
+          .select()
+    
+        if (error) throw error
+    
+        return data
+      } catch (err: any) {
+        throw new Error(err.message)
+      }
+}
+
+export const setNotificationData = async (
+    userId: string, 
+    updatedContentData: { 
+        emailNotifications: boolean,
         }
     ) => {
     const token = cookies().get("sb-access-token");

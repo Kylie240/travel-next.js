@@ -94,7 +94,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
         onOpenChange={setShowFollowers}
         users={followers}
         title="Followers"
-        onFollowToggle={onFollowToggle}
+        currentUserId={user?.id}
       />
 
       <FollowersDialog
@@ -102,7 +102,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
         onOpenChange={setShowFollowing}
         users={following}
         title="Following"
-        onFollowToggle={onFollowToggle}
+        currentUserId={user?.id}
       />
     </div>
   )

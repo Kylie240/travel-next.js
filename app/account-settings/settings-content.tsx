@@ -12,7 +12,7 @@ import { ChevronRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { travelerTypesMap } from "@/lib/constants/tags"
-import { getBlockedUsersById, removeBlockedUser, setContentData, setProfileData } from "@/lib/actions/user.actions"
+import { getBlockedUsersById, removeBlockedUser, setContentData, setNotificationData, setProfileData } from "@/lib/actions/user.actions"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -34,8 +34,9 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [ _, setUserData] = useState<UserData>(userData)
   const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
   const [updatedContentData, setUpdatedContentData] = useState<UserData>(userData)
-  const [isPrivateProfile, setIsPrivateProfile] = useState(userSettings.isPrivate)
   const [isItinerarySharing, setIsItinerarySharing] = useState(false)
+  const [isPrivateProfile, setIsPrivateProfile] = useState(userSettings.isPrivate)
+  const [isEmailNotifications, setIsEmailNotifications] = useState(userSettings.emailNotifications)
   const router = useRouter()
   const [showBlockedUsers, setShowBlockedUsers] = useState(false)
   const [blockedUsers, setBlockedUsers] = useState<Followers[]>([])
@@ -74,6 +75,16 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           }
         )
         toast.success("Privacy settings updated")
+        router.refresh()
+        break
+      case "Notifications":
+        setNotificationData(
+          userData.id,
+          {
+            emailNotifications: isEmailNotifications
+          }
+        )
+        toast.success("Notifications updated")
         router.refresh()
         break
       default:
@@ -305,36 +316,33 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         </div>
       )
     },
-    // {
-    //   title: "Communication preferences",
-    //   description: "Choose how you want to be notified",
-    //   content: (
-    //     <div className="space-y-6">
-    //       <div>
-    //         <h3 className="font-medium mb-4">Email Notifications</h3>
-    //         <div className="space-y-3">
-    //           <label className="flex items-center">
-    //             <input type="checkbox" className="mr-2" defaultChecked />
-    //             New followers
-    //           </label>
-    //           <label className="flex items-center">
-    //             <input type="checkbox" className="mr-2" defaultChecked />
-    //             Comments on your itineraries
-    //           </label>
-    //           <label className="flex items-center">
-    //             <input type="checkbox" className="mr-2" defaultChecked />
-    //             Likes on your itineraries
-    //           </label>
-    //           <label className="flex items-center">
-    //             <input type="checkbox" className="mr-2" defaultChecked />
-    //             Trip recommendations
-    //           </label>
-    //         </div>
-    //       </div>
-    //       <Button>Save Preferences</Button>
-    //     </div>
-    //   )
-    // },
+    {
+      title: "Notifications",
+      description: "Choose how you want to be notified",
+      content: (
+        <div className="space-y-6">
+          <div>
+          <div>
+            <label className="block text-md font-semibold mb-2">Email Notifications</label>
+            <p className="text-sm text-gray-600 mb-4">
+              Choose if you want to receive email notifications.
+            </p>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={isEmailNotifications}
+                onCheckedChange={setIsEmailNotifications}
+                aria-label="Toggle email notifications"
+              />
+              <span className="text-sm text-gray-700">
+                {isEmailNotifications ? 'On' : 'Off'}
+              </span>
+            </div>
+          </div>
+          </div>
+          <Button className="mt-4" onClick={() => handleSaveChanges('Notifications')}>Save Changes</Button>
+        </div>
+      )
+    },
     // {
     //   title: "Travel preferences",
     //   description: "Set your travel style and interests",
