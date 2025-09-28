@@ -40,8 +40,8 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     formState: { errors, isSubmitting },
     reset,
     watch
-  } = useForm<AuthFormData>({
-    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema)
+  } = useForm<SignUpFormData | SignInFormData>({
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema) as any
   })
 
   const setSessionCookie = async (session: Session) => {
@@ -148,11 +148,11 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-      <Dialog.Content className="fixed left-[50%] top-[50%] max-h-[85vh] w-[90vw] max-w-[450px] translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white p-6 shadow-lg z-[10000]">
-        <Dialog.Title className="text-xl font-bold">
-          {isSignUp ? "Create an account" : "Sign in to your account"}
+      <Dialog.Content className="fixed left-[50%] top-[50%] max-h-[90vh] w-[80vw] max-w-[450px] translate-x-[-50%] translate-y-[-50%] rounded-3xl bg-white p-12 shadow-lg z-[10000]">
+        <Dialog.Title className="text-2xl text-center font-bold">
+          Welcome{isSignUp ? " " : " back"} to Journli
         </Dialog.Title>
-        <Dialog.Description className="mt-2 text-sm text-gray-500">
+        <Dialog.Description className="mt-2 text-sm text-gray-500 text-center">
           {isSignUp 
             ? "Create an account to start creating and sharing travel itineraries"
             : "Sign in to access your account and travel itineraries"
@@ -227,18 +227,12 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
               )}
             </div>
           )}
-          <div className="flex justify-between items-center">
-            <div>
-              {authError && (
-                <p className="text-sm text-red-500">{authError}</p>
-              )}
-            </div>
-            {!isSignUp && (
-              <div className="text-right">
-                <a className="text-sm text-blue-500 hover:underline cursor-pointer" onClick={() => handleForgotPassword(watch("email"))}>Forgot password?</a>
-              </div>
-            )}
-          </div>
+          {authError && (
+            <p className="text-sm text-red-500">{authError}</p>
+          )}
+          {!isSignUp && (
+            <a className="text-sm mt-2 text-blue-500 hover:underline cursor-pointer" onClick={() => handleForgotPassword(watch("email"))}>Forgot password?</a>
+          )}
           <Button
             type="submit"
             className="w-full"
@@ -248,13 +242,8 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           </Button>
         </form>
 
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">Or continue with</span>
-          </div>
+        <div className="relative my-2 flex justify-center text-sm">
+          <span className="bg-white font-bold px-2 text-gray-500">OR</span>
         </div>
 
         <Button
@@ -267,7 +256,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         </Button>
 
         <div className="mt-4 text-center text-sm">
-          <span className="text-gray-500">
+          <span className="text-gray-700">
             {isSignUp ? "Already have an account? " : "Don't have an account? "}
           </span>
           <button
@@ -282,6 +271,9 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           >
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
+        </div>
+        <div className="flex justify-center mt-2">
+          <span className="text-gray-500 text-xs text-center">By continuing, you agree to Journli's <a href="legal/terms" target="_blank" className="underline">Terms of Service</a> and acknowledge that you have read our <a href="legal/privacy" target="_blank" className="underline">Privacy Policy</a></span>
         </div>
 
         <Dialog.Close asChild>

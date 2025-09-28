@@ -12,7 +12,7 @@ import { ChevronRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { travelerTypesMap } from "@/lib/constants/tags"
-import { deleteAccount, getBlockedUsersById, removeBlockedUser, setContentData, setNotificationData, setProfileData } from "@/lib/actions/user.actions"
+import { deleteAccount, getBlockedUsersById, removeBlockedUser, setContentData, setNotificationData, setProfileData, setUserAvatar } from "@/lib/actions/user.actions"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -21,6 +21,8 @@ import { Followers } from "@/types/followers"
 import { UserSettings } from "@/types/profileData copy"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { FaUserLarge } from "react-icons/fa6";
+import { createClient } from "@/utils/supabase/client"
+import { supabase } from "@/utils/supabase/superbase-client"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -46,6 +48,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [blockedUsers, setBlockedUsers] = useState<Followers[]>([])
   const [newPassword, setNewPassword] = useState("")
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
+  const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false)
+  const [uploadedAvatar, setUploadedAvatar] = useState<File | null>(null)
 
   const handleSectionClick = (sectionTitle: string) => {
     if (window.innerWidth < 1020) {
@@ -172,6 +176,56 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   }
   }
 
+  const handleUserAvatar = (avatar: string) => {
+    setUserAvatar(userData.id, avatar)
+  }
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const supabase = createClientComponentClient();
+    try {
+      setUploadingAvatar(true)
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      // Create a unique file path
+      const safeName = file.name.replace(/\s+/g, "-");
+      const fileExt = (safeName.split(".").pop() || "").toLowerCase();
+      const fileName = `${Date.now()}-${safeName}`;
+      // path format: folder/userId/filename
+      const filePath = `1oj01fe_0/${userData.id}/${fileName}`;
+
+      // Upload the file
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: userData.avatar === "" ? false : true,
+          contentType: file.type, // use actual mime type
+        });
+
+      if (uploadError) throw uploadError
+
+      if (uploadError) {
+        throw new Error(uploadError.message || "Failed to update profile picture")
+      }
+
+      // Get the public URL
+      const { data } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath)
+
+      // Update local state
+      handleUserAvatar(data.publicUrl)
+      toast.success("Profile picture updated successfully")
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload profile picture")
+      setFormError(error.message || "Failed to upload profile picture")
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
   const settingsSections = [
     {
       title: "Edit Profile",
@@ -195,7 +249,17 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                 <FaUserLarge className="h-12 w-12 text-gray-300" />
               </div>
             )}
-            <Button variant="outline">Change Profile Picture</Button>
+              <label htmlFor="avatar-upload" className="block text-center border border-gray-300 rounded-lg w-[120px] text-[14px] h-[36px] cursor-pointer hover:bg-gray-50 transition-colors">
+                {uploadingAvatar ? 'Uploading...' : 'Change'}
+                <input 
+                  id="avatar-upload"
+                  type="file" 
+                  accept="image/jpeg,image/png"
+                  disabled={uploadingAvatar}
+                  className="hidden"
+                  onChange={handleUpload} 
+                />
+              </label>
           </div>
           <div>
             <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Name</label>

@@ -512,3 +512,28 @@ export const deleteAccount = async (userId: string) => {
         throw new Error(`Failed to delete account: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
+
+export const setUserAvatar = async (userId: string, avatar: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users')
+        .update({ avatar: avatar })
+        .eq('id', userId)
+        .select()
+
+    if (error) {
+        throw new Error(error.message);
+    }
+    return data;
+    }
+    catch (error) {
+        throw new Error(`Failed to set user avatar: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
