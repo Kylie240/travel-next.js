@@ -26,7 +26,7 @@ export default function LandingPage() {
           Welcome To Your New <br/> Travel Journal
           </h1>
           <p className="text-lg md:text-xl text-center mb-8 max-w-2xl">
-            Travel planning made easy
+            Trip planning made easy
           </p>
           <div className="gap-4 mt-8">
               <ActionButtons />

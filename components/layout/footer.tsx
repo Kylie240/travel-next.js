@@ -1,34 +1,42 @@
 import Link from "next/link"
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react"
+import { Facebook, Twitter, Instagram } from "lucide-react"
+import { FaTiktok, FaPinterest } from "react-icons/fa6"
+import { Button } from "../ui/button"
+import { Input } from "../ui/input"
+import NewsletterForm from "./newsletter-forn"
 
 const navigation = {
   main: [
     { name: "About", href: "/about" },
-    { name: "Blog", href: "/blog" },
     { name: "Contact", href: "/contact" },
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
+    { name: "Privacy Policy", href: "legal/privacy" },
+    { name: "Terms of Service", href: "legal/terms" },
   ],
   social: [
     {
       name: "Facebook",
-      href: "#",
+      href: "https://www.facebook.com/journli_travels",
       icon: Facebook,
     },
     {
       name: "Twitter",
-      href: "#",
+      href: "https://twitter.com/journli_travels",
       icon: Twitter,
     },
     {
       name: "Instagram",
-      href: "#",
+      href: "https://www.instagram.com/journli_travels",
       icon: Instagram,
     },
     {
-      name: "YouTube",
-      href: "#",
-      icon: Youtube,
+      name: "Tiktok",
+      href: "https://www.tiktok.com/@journli_travels",
+      icon: FaTiktok,
+    },
+    {
+      name: "Pinterest",
+      href: "https://www.pinterest.com/journli_travels",
+      icon: FaPinterest,
     },
   ],
 }
@@ -38,25 +46,16 @@ export default function Footer() {
     <footer className="bg-black text-white">
 
       {/* Newsletter */}
-      <section className="py-16 bg-gray-100 border-t">
+      <section className="py-16 bg-gray-100 border-t" id="newsletter">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl text-black font-medium mb-3">Stay updated with travel inspiration</h2>
-            <p className="text-gray-600 mb-8">
+            <p className="text-gray-600">
               Subscribe to our newsletter and get the latest travel tips, destinations, and exclusive offers.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200"
-              />
-              <button className="bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition-colors">
-                Subscribe
-              </button>
-            </div>
+            <NewsletterForm />
             <p className="text-sm text-gray-500 mt-4">
-              By subscribing, you agree to our Privacy Policy and consent to receive updates from us.
+              By subscribing, you agree to our <Link href="legal/privacy" className="text-gray-500 hover:text-gray-900">Privacy Policy</Link> and consent to receive updates from us.
             </p>
           </div>
         </div>
@@ -67,7 +66,7 @@ export default function Footer() {
           {/* Logo and tagline */}
           <div className="mb-8 text-center">
             <Link href="/" className="text-2xl font-bold text-white">
-              Travel 3.0
+              Journli
             </Link>
             <p className="mt-2 text-sm text-gray-400">
               Discover the world, one itinerary at a time
@@ -81,6 +80,8 @@ export default function Footer() {
                 <Link
                   key={item.name}
                   href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-gray-400 hover:text-white transition-colors"
                 >
                   {item.name}
@@ -95,6 +96,8 @@ export default function Footer() {
               <Link
                 key={item.name}
                 href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 <span className="sr-only">{item.name}</span>
@@ -105,7 +108,7 @@ export default function Footer() {
 
           {/* Copyright */}
           <p className="mt-8 text-center text-sm text-gray-400">
-            &copy; {new Date().getFullYear()} Travel 3.0. All rights reserved.
+            &copy; {new Date().getFullYear()} Journli. All rights reserved.
           </p>
         </div>
       </div>

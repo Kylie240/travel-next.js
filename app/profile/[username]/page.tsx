@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import Image from "next/image"
-import { Bookmark, Lock, MapPin, Search, Star } from "lucide-react"
+import { Bookmark, Link, Lock, MapPin, PenSquare, Search, Star } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -245,13 +245,18 @@ export default function UserProfilePage({ params }: { params: { username: string
           {itineraryData?.length > 0 ? (
             <h2 className="mb-6 font-bold p-4 border-b-2 border-gray-200 mt-6 text-xl">Itineraries</h2>
           ) : (
-            <div className="flex flex-col gap-4 border-t-2 border-gray-200 pt-24 items-center justify-center">
-              <h2 className="font-thin text-gray-600 text-3xl">No itineraries</h2>
-              {isCurrentUser && (
-                <div className="flex flex-col gap-4">
-                  <p className="text-gray-600">Start creating your first itinerary</p>
-                  <Button variant="outline" onClick={() => router.push('/create')}>Create Itinerary</Button>
-                </div>
+            <div className="text-center py-12 px-4 rounded-xl border-2 border-dashed">
+              <div className="mb-4">
+                <PenSquare className="h-12 w-12 mx-auto text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">No Itineraries Found</h3>
+              { isCurrentUser && (
+                <> 
+                <p className="text-gray-600 mb-4">Start creating your first itinerary</p>
+                <Button variant="outline" onClick={() => router.push('/create')}>
+                    Create New Itinerary
+                </Button>
+                </>
               )}
             </div>
           )}

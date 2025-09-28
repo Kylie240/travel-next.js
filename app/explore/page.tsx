@@ -7,6 +7,7 @@ import { getItineraries } from "@/lib/actions/itinerary.actions";
 import { Itinerary } from "@/types/itinerary";
 import { ExplorePageDto } from "@/dtos/ExplorePageDto";
 import { Button } from "@/components/ui/button";
+import { Globe2, PenSquare } from "lucide-react";
 
 export default async function ExplorePage({
 searchParams
@@ -330,20 +331,28 @@ searchParams
         //       </div>
         //     </div>
         // </div>
-        <div className="flex flex-col items-center justify-center h-screen">
-          <h1 className="text-2xl font-bold">Coming Soon</h1>
-          <p className="text-gray-600">We are working on the Explore page and it will be available soon. Please check back soon.</p>
-          <div className="flex gap-4 mt-4">
-          <Link href="/">
-            <Button>
-              Go Home
-            </Button>
-          </Link>
-          <Link href="/about">
-            <Button>
-              More Info
-            </Button>
-          </Link>
+        <div className="flex justify-center h-[calc(100vh-64px)] items-center">
+          <div className="text-center py-12 px-4 rounded-xl border-2 border-dashed w-full">
+            <div className="mb-4">
+              <Globe2 className="h-12 w-12 mx-auto text-gray-400" />
+            </div>
+            <h3 className="text-2xl font-medium text-gray-900 mb-4">Explore Page Coming Soon</h3>
+              <div> 
+              <p className="text-gray-600 mb-4">We’re building something exciting! Soon, you’ll be able to explore itineraries from travelers around the world! Get inspired, discover new destinations, and plan your next adventure with ease.</p>
+              <p className="text-gray-600 mb-4">Check back soon or <a href="#newsletter" className="text-blue-500">subscribe to our newsletter</a> to get notified when it’s live!</p>
+              <div className="flex justify-center mt-4 gap-4">
+                <Link href="/">
+                  <Button variant="outline">
+                    Go Home
+                  </Button>
+                </Link>
+                <Link href="/about">
+                  <Button variant="outline">
+                    More Info
+                  </Button>
+                </Link>
+              </div>
+              </div>
           </div>
         </div>
     )
