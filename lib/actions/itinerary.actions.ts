@@ -177,7 +177,7 @@ export const updateItinerary = async (id: string, itinerary: CreateItinerary) =>
         if (!existingUser) {
             throw new Error('Please login and try again');
         }
-
+        console.log(itinerary);
         const { data, error } = await supabase.rpc("update_itinerary", {
             p_itinerary: itinerary,
             p_creator_id: userId,

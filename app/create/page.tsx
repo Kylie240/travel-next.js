@@ -1,9 +1,10 @@
  "use client"
 
+ import React from "react"
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Input, Textarea } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check } from "lucide-react"
@@ -28,7 +29,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { itineraryTagsMap } from "@/lib/constants/tags"
+import { activityTagsMap, itineraryTagsMap } from "@/lib/constants/tags"
 import { createSchema } from "@/validation/createSchema"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -112,6 +113,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
   // Add state for accommodation selection
   const [showNewAccommodation, setShowNewAccommodation] = useState(false);
   const [activityTags, setActivityTags] = useState<Array<{id: number; name: string; icon: any}>>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     const fetchActivityTags = async () => {
@@ -433,10 +435,11 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 
             <div>
               <Label className="text-[16px] font-medium mb-3 ml-1">Description</Label>
-              <Input
+              <Textarea
                 {...form.register(`days.${index}.description`)}
                 placeholder="Discover the highlights of Tokyo's most famous districts"
                 className="rounded-xl"
+                rows={6}
               />
               {form.formState.errors.days?.[index]?.description && (
                 <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.description?.message}</p>
@@ -550,7 +553,9 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                                       {activityTags.map(tag => (
                                         <SelectItem key={tag.id} value={tag.id.toString()} className="cursor-pointer">
                                           <div className="flex items-center gap-2">
-                                            {tag.icon && <tag.icon className="w-3 h-3" />} {tag.name}
+                                          {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
+                                            React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)
+                                          )} {tag.name}
                                           </div>
                                         </SelectItem>
                                       ))}
@@ -774,6 +779,7 @@ export default function CreatePage() {
   const ItineraryId = useSearchParams().get('itineraryId')
   const searchParams = useSearchParams()
   const supabase = createClientComponentClient()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [itineraryLoading, setItineraryLoading] = useState(false)
@@ -1103,6 +1109,7 @@ export default function CreatePage() {
     })
   
   const saveDraft = async () => {
+    setIsSubmitting(true)
     try {
       if (!user) {
         toast.error('Please sign in to save your itinerary')
@@ -1131,6 +1138,8 @@ export default function CreatePage() {
       }
     } catch (error) {
       toast.error('Error saving draft')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -1297,7 +1306,7 @@ export default function CreatePage() {
                   </div>
 
                   <div className="flex justify-end gap-4">
-                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
+                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting || isSubmitting}>
                       Save Draft
                     </Button>
                     <Button 
@@ -1307,7 +1316,7 @@ export default function CreatePage() {
                         setCurrentStep(2)
                         scrollToTop()
                       }}
-                      disabled={form.formState.isSubmitting}
+                      disabled={form.formState.isSubmitting || isSubmitting}
                     >
                       Next: Plan Days
                     </Button>
@@ -1315,7 +1324,7 @@ export default function CreatePage() {
                       type="button"
                       variant="outline"
                       className="text-red hover:bg-red-500 hover:text-white"
-                      disabled={form.formState.isSubmitting}
+                      disabled={form.formState.isSubmitting || isSubmitting}
                       onClick={(e) => {
                         router.push('/my-itineraries')
                       }}
@@ -1349,7 +1358,7 @@ export default function CreatePage() {
                             index={index}
                             form={form}
                             onRemoveDay={handleRemoveDay}
-                            disabled={form.formState.isSubmitting}
+                            disabled={form.formState.isSubmitting || isSubmitting}
                           />
                         ))}
                       </Accordion>
@@ -1380,11 +1389,11 @@ export default function CreatePage() {
                         setCurrentStep(1)
                         scrollToTop()
                       }}
-                      disabled={form.formState.isSubmitting}
+                      disabled={form.formState.isSubmitting || isSubmitting}
                     >
                       Previous
                     </Button>
-                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
+                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting || isSubmitting}>
                       Save Draft
                     </Button>
                     <Button 
@@ -1394,7 +1403,7 @@ export default function CreatePage() {
                         setCurrentStep(3)
                         scrollToTop()
                       }}
-                      disabled={form.formState.isSubmitting}
+                      disabled={form.formState.isSubmitting || isSubmitting}
                     >
                       Next: Final Details
                     </Button>
@@ -1402,7 +1411,7 @@ export default function CreatePage() {
                       type="button"
                       variant="outline"
                       className="text-red hover:bg-red-500 hover:text-white"
-                      disabled={form.formState.isSubmitting}
+                      disabled={form.formState.isSubmitting || isSubmitting}
                       onClick={(e) => {
                         router.push('/my-itineraries')
                       }}
@@ -1444,7 +1453,7 @@ export default function CreatePage() {
                                 toggleCategory(category.id);
                               }}
                               className={`flex justify-center items-center gap-2 px-4 py-3 sm:py-4 md:gap-2 md:py-5 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
-                              disabled={form.formState.isSubmitting}
+                              disabled={form.formState.isSubmitting || isSubmitting}
                             >
                               <category.icon className="w-5 h-5 text-gray-700" />
                               <span className="text-gray-900 font-medium">{category.name}</span>
@@ -1473,7 +1482,7 @@ export default function CreatePage() {
                             appendNote({ id: newNoteId, title: '', content: '', expanded: true })
                           }}
                           className="flex items-center gap-2"
-                          disabled={form.formState.isSubmitting}
+                          disabled={form.formState.isSubmitting || isSubmitting}
                         >
                           <Plus className="h-4 w-4" />
                           Add Note
@@ -1502,7 +1511,7 @@ export default function CreatePage() {
                                         variant="ghost"
                                         size="sm"
                                         className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                                        disabled={form.formState.isSubmitting}
+                                        disabled={form.formState.isSubmitting || isSubmitting}
                                       >
                                         {form.watch(`notes.${index}.expanded`) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                       </Button>
@@ -1517,7 +1526,7 @@ export default function CreatePage() {
                                           }
                                         }}
                                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                        disabled={form.formState.isSubmitting}
+                                        disabled={form.formState.isSubmitting || isSubmitting}
                                       >
                                         <Trash2 className="h-4 w-4" />
                                       </Button>
@@ -1530,7 +1539,7 @@ export default function CreatePage() {
                                     {...form.register(`notes.${index}.title`)}
                                     placeholder="Note title"
                                     className="mb-2 rounded-xl"
-                                    disabled={form.formState.isSubmitting}
+                                    disabled={form.formState.isSubmitting || isSubmitting}
                                   />
                                   {form.formState.errors.notes?.[index]?.title && (
                                     <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.title?.message}</p>
@@ -1540,7 +1549,7 @@ export default function CreatePage() {
                                     {...form.register(`notes.${index}.content`)}
                                     placeholder="Write your note here..."
                                     className="w-full min-h-[100px] p-2 border rounded-xl"
-                                    disabled={form.formState.isSubmitting}
+                                    disabled={form.formState.isSubmitting || isSubmitting}
                                   />
                                   {form.formState.errors.notes?.[index]?.content && (
                                     <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.content?.message}</p>

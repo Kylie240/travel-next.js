@@ -9,7 +9,6 @@ import { FaCampground } from "react-icons/fa6";
 import { MdOutlineDirectionsBoat } from "react-icons/md";
 import { MdOutlineHotel } from "react-icons/md";
 
-
 const formatTime = (time: string | null | undefined) => {
   if (!time) return '';
   const [hours, minutes] = time.split(':').map(Number)

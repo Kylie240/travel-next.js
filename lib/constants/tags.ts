@@ -1,4 +1,4 @@
-import { Mountain, Utensils, Building, Palmtree, Camera, Ship, Wine, Heart, Music, TentTree, Palette, ShoppingBag, Dumbbell, Drama, Trees, BaggageClaim, Car, Presentation, HandPlatter, Caravan, Coins, HeartHandshake, RollerCoaster, Handshake, HandHeart, ChefHat, Briefcase, Backpack, BookMarked, Church, Skull, Sprout, Sailboat, CalendarFold, Syringe, Sparkles } from "lucide-react"
+import { Mountain, Utensils, Building, Palmtree, Camera, Ship, Wine, Heart, Music, TentTree, Palette, ShoppingBag, Dumbbell, Drama, Trees, BaggageClaim, Car, Presentation, HandPlatter, Caravan, Coins, HeartHandshake, RollerCoaster, Handshake, HandHeart, ChefHat, Briefcase, Backpack, BookMarked, Church, Skull, Sprout, Sailboat, CalendarFold, Syringe, Sparkles, HotelIcon } from "lucide-react"
 import { FaCity, FaHandSparkles, FaPeopleGroup, FaPersonWalkingLuggage } from "react-icons/fa6";
 import { PiFarm } from "react-icons/pi";
 import { BiSpa } from "react-icons/bi";
@@ -26,6 +26,7 @@ export const activityTagsMap = [
   { id:17, name: "Nightlife", icon: MdOutlineNightlife },
   { id:18, name: "Performance", icon: Drama },
   { id:19, name: "Workout", icon: Dumbbell },
+  { id:20, name: "Accomodation", icon: HotelIcon },
 ]
 
 export const itineraryTagsMap = [

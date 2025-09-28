@@ -11,6 +11,8 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import EditElement from "../edit-element"
 import LikeElement from "./like-element"
+import { Button } from "@/components/ui/button"
+import FollowButton from "./follow-button"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const supabase = createServerComponentClient({ cookies })
@@ -222,12 +224,12 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   <p className="text-lg font-semibold px-2">About the Creator</p>
                   <p className=" px-2">{creator.bio}</p>
                   <div className="flex gap-2 w-full mt-2">
-                    <div className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-100">
-                      View Profile
-                    </div>
-                    <div className="cursor-pointer border rounded-xl flex justify-center items-center w-full bg-gray-900 hover:bg-gray-800 text-white p-2">
-                      Follow
-                    </div>
+                    <Link href={`/profile/${creator.username}`}>
+                      <Button variant="outline" className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-100">
+                        View Profile
+                      </Button>
+                    </Link>
+                    <FollowButton creatorId={creator.userId} />
                   </div>
                 </div>
               </div>

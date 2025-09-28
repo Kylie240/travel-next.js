@@ -7,7 +7,7 @@ export const daySchema = z.object({
     image: z.string().nullable().optional(),
     cityName: z.string().min(1, "City name is required"),
     countryName: z.string().min(1, "Country name is required"),
-    title: z.string().min(1, "Title is required"),
+    title: z.string().min(1, "Title is required").max(75, "Title must be less than 75 characters"),
     description: z.string().nullable().optional(),
     notes: z.string().nullable().optional(),
     activities: z.array(activitySchema).optional(),
