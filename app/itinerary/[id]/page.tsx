@@ -229,7 +229,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                         View Profile
                       </Button>
                     </Link>
-                    <FollowButton creatorId={creator.userId} />
+                    {/* <FollowButton creatorId={creator.userId} /> */}
                   </div>
                 </div>
               </div>

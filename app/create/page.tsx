@@ -43,6 +43,7 @@ import { Note } from "@/types/Note"
 import { Activity } from "@/types/Activity"
 import { supabase } from "@/utils/supabase/superbase-client"
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
+import { ItineraryStatus } from "@/types/itineraryStatus"
 
 type City = { city: string; country: string };
 type FormData = {
@@ -777,6 +778,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
 export default function CreatePage() {
   const router = useRouter()
   const ItineraryId = useSearchParams().get('itineraryId')
+  const [itineraryStatus, setItineraryStatus] = useState<number>(ItineraryStatusEnum.draft)
   const searchParams = useSearchParams()
   const supabase = createClientComponentClient()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -866,7 +868,7 @@ export default function CreatePage() {
     const updatedDays = form.getValues('days')
     updatedDays.forEach((day, idx) => {
       day.id = (idx + 1)
-      day.title = `Day ${idx + 1}`
+      day.title = ""
     })
     form.setValue('days', updatedDays)
   }
@@ -878,6 +880,7 @@ export default function CreatePage() {
         try {
           setItineraryLoading(true)
           const itinerary = await getItineraryById(itineraryId) as CreateItinerary;
+          setItineraryStatus(itinerary.status)
           
           // Extract unique countries and cities from days
           const countries = new Set<string>();
@@ -934,7 +937,7 @@ export default function CreatePage() {
         newDays.push({
           ...INITIAL_DAY,
           id: (i + 1),
-          title: `Day ${i + 1}`
+          title: ""
         })
       }
       form.setValue('days', newDays)
@@ -1164,7 +1167,7 @@ export default function CreatePage() {
       const updatedDays = form.getValues('days')
       updatedDays.forEach((day, index) => {
         day.id = (index + 1)
-        day.title = day.title.replace(/Day \d+/, `Day ${index + 1}`)
+        day.title = day.title.replace(/Day \d+/, "")
       })
       form.setValue('days', updatedDays)
     }
@@ -1256,7 +1259,7 @@ export default function CreatePage() {
                       id="shortDescription"
                       {...form.register("shortDescription")}
                       placeholder="Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun."
-                      className="w-full p-2 border rounded-xl h-[150px] md:h-[70px]"
+                      className="w-full p-2 border rounded-xl h-[150px] md:h-[100px]"
                       disabled={form.formState.isSubmitting}
                     />
                     {form.formState.errors.shortDescription && (
@@ -1290,7 +1293,7 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="length">Number of Days * <span className="text-gray-500 text-sm">(can be changed later)</span></Label>
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="length">Number of Days</Label>
                     <Input
                       id="length"
                       type="number"
@@ -1306,7 +1309,7 @@ export default function CreatePage() {
                   </div>
 
                   <div className="flex justify-end gap-4">
-                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting || isSubmitting}>
+                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
                       Save Draft
                     </Button>
                     <Button 
@@ -1316,7 +1319,7 @@ export default function CreatePage() {
                         setCurrentStep(2)
                         scrollToTop()
                       }}
-                      disabled={form.formState.isSubmitting || isSubmitting}
+                      disabled={form.formState.isSubmitting}
                     >
                       Next: Plan Days
                     </Button>
@@ -1324,7 +1327,7 @@ export default function CreatePage() {
                       type="button"
                       variant="outline"
                       className="text-red hover:bg-red-500 hover:text-white"
-                      disabled={form.formState.isSubmitting || isSubmitting}
+                      disabled={form.formState.isSubmitting}
                       onClick={(e) => {
                         router.push('/my-itineraries')
                       }}
@@ -1358,7 +1361,7 @@ export default function CreatePage() {
                             index={index}
                             form={form}
                             onRemoveDay={handleRemoveDay}
-                            disabled={form.formState.isSubmitting || isSubmitting}
+                            disabled={form.formState.isSubmitting}
                           />
                         ))}
                       </Accordion>
@@ -1389,11 +1392,11 @@ export default function CreatePage() {
                         setCurrentStep(1)
                         scrollToTop()
                       }}
-                      disabled={form.formState.isSubmitting || isSubmitting}
+                      disabled={form.formState.isSubmitting}
                     >
                       Previous
                     </Button>
-                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting || isSubmitting}>
+                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
                       Save Draft
                     </Button>
                     <Button 
@@ -1403,7 +1406,7 @@ export default function CreatePage() {
                         setCurrentStep(3)
                         scrollToTop()
                       }}
-                      disabled={form.formState.isSubmitting || isSubmitting}
+                      disabled={form.formState.isSubmitting}
                     >
                       Next: Final Details
                     </Button>
@@ -1411,7 +1414,7 @@ export default function CreatePage() {
                       type="button"
                       variant="outline"
                       className="text-red hover:bg-red-500 hover:text-white"
-                      disabled={form.formState.isSubmitting || isSubmitting}
+                      disabled={form.formState.isSubmitting}
                       onClick={(e) => {
                         router.push('/my-itineraries')
                       }}
@@ -1453,7 +1456,7 @@ export default function CreatePage() {
                                 toggleCategory(category.id);
                               }}
                               className={`flex justify-center items-center gap-2 px-4 py-3 sm:py-4 md:gap-2 md:py-5 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
-                              disabled={form.formState.isSubmitting || isSubmitting}
+                              disabled={form.formState.isSubmitting}
                             >
                               <category.icon className="w-5 h-5 text-gray-700" />
                               <span className="text-gray-900 font-medium">{category.name}</span>
@@ -1482,7 +1485,7 @@ export default function CreatePage() {
                             appendNote({ id: newNoteId, title: '', content: '', expanded: true })
                           }}
                           className="flex items-center gap-2"
-                          disabled={form.formState.isSubmitting || isSubmitting}
+                          disabled={form.formState.isSubmitting}
                         >
                           <Plus className="h-4 w-4" />
                           Add Note
@@ -1511,7 +1514,7 @@ export default function CreatePage() {
                                         variant="ghost"
                                         size="sm"
                                         className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                                        disabled={form.formState.isSubmitting || isSubmitting}
+                                        disabled={form.formState.isSubmitting}
                                       >
                                         {form.watch(`notes.${index}.expanded`) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                       </Button>
@@ -1526,7 +1529,7 @@ export default function CreatePage() {
                                           }
                                         }}
                                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                        disabled={form.formState.isSubmitting || isSubmitting}
+                                        disabled={form.formState.isSubmitting}
                                       >
                                         <Trash2 className="h-4 w-4" />
                                       </Button>
@@ -1539,7 +1542,7 @@ export default function CreatePage() {
                                     {...form.register(`notes.${index}.title`)}
                                     placeholder="Note title"
                                     className="mb-2 rounded-xl"
-                                    disabled={form.formState.isSubmitting || isSubmitting}
+                                    disabled={form.formState.isSubmitting}
                                   />
                                   {form.formState.errors.notes?.[index]?.title && (
                                     <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.title?.message}</p>
@@ -1549,7 +1552,7 @@ export default function CreatePage() {
                                     {...form.register(`notes.${index}.content`)}
                                     placeholder="Write your note here..."
                                     className="w-full min-h-[100px] p-2 border rounded-xl"
-                                    disabled={form.formState.isSubmitting || isSubmitting}
+                                    disabled={form.formState.isSubmitting}
                                   />
                                   {form.formState.errors.notes?.[index]?.content && (
                                     <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.content?.message}</p>
@@ -1612,7 +1615,7 @@ export default function CreatePage() {
                       className="bg-black text-white hover:bg-gray-800"
                       disabled={form.formState.isSubmitting}
                     >
-                      Create
+                      {itineraryStatus === ItineraryStatusEnum.draft ? "Publish" : "Update"}
                     </Button>
                     <Button 
                       type="button"

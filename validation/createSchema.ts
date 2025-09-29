@@ -4,8 +4,8 @@ import { noteSchema } from './noteSchema'
 
 export const createSchema = z.object({
     status: z.number(),
-    title: z.string().min(1, "Name is required"),
-    shortDescription: z.string().min(1, "Short description is required"),
+    title: z.string().min(1, "Name is required").max(75, "Name must be less than 75 characters"),
+    shortDescription: z.string().min(1, "Short description is required").max(300, "Short description must be less than 300 characters"),
     mainImage: z.string().url("Must be a valid URL"),
     detailedOverview: z.string().nullable().optional(),
     duration: z.number().min(1, "Length must be at least 1 day"),
