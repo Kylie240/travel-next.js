@@ -5,6 +5,7 @@ export type Day = {
     id: number,
     image?: string,
     cityName: string,
+    provinceName?: string,
     countryName: string,
     title: string,
     description?: string,

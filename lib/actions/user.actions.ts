@@ -58,7 +58,6 @@ export const getUserProfileById = async (userId: string) => {
             throw new Error(error.message);
         } 
 
-        console.log("data", data)
         return data;
     } catch (error) {
         throw new Error(`Failed to get user profile: ${error instanceof Error ? error.message : String(error)}`);
@@ -87,27 +86,6 @@ export const getUserStatsById = async (userId: string) => {
         return data;
     } catch (error) {
         throw new Error(`Failed to get user stats: ${error instanceof Error ? error.message : String(error)}`);
-    }
-}
-
-export const getUserSettingsById = async (userId: string) => {
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-        
-        const { data: userSettingsData, error } = await supabase
-        .from('users_settings')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-        if (error) {
-            throw new Error(error.message);
-        }
-
-        return userSettingsData;
-    } catch (error) {
-        throw new Error(`Failed to get user settings: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
@@ -275,35 +253,9 @@ export const getBlockedUsersById = async (userId: string) => {
         const supabase = createServerActionClient({ cookies });
         
         const { data, error } = await supabase
-        .rpc("get_blocked_users", { p_user_id: userId }) as { 
-            data: Followers[] | null, 
-            error: Error | null 
-        };
-
-        if (error) {
-            throw new Error(error.message);
-        }
-
-        return data;
-    } catch (error) {
-        throw new Error(`Failed to get user following: ${error instanceof Error ? error.message : String(error)}`);
-    }
-}
-
-export const removeBlockedUser = async (userId: string, blockedUserId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-    
-    try {
-        const supabase = createServerActionClient({ cookies });
-        
-        const { data, error } = await supabase
         .from('users_blocked')
-        .delete()
+        .select('*')
         .eq('user_id', userId)
-        .eq('blocked_id', blockedUserId);
 
         if (error) {
             throw new Error(error.message);
@@ -311,7 +263,7 @@ export const removeBlockedUser = async (userId: string, blockedUserId: string) =
 
         return data;
     } catch (error) {
-        throw new Error(`Failed to remove blocked user: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`Failed to get blocked users: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
@@ -341,7 +293,12 @@ export const getUserByUsername = async (username: string) => {
     }
 }
 
-export const getProfileDataByUsername = async (username: string, userId: string = null) => {
+export const getProfileDataByUsername = async (username: string, userId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
     try {
         const supabase = createServerActionClient({ cookies });
         
@@ -392,148 +349,28 @@ export const getProfileDataById = async (profileId: string, userId: string) => {
     }
 }
 
-// edit profile methods
-export const setProfileData = async (
-    userId: string, 
-    updatedUserData: { 
-        name?: string, 
-        username?: string, 
-        bio?: string, 
-        location?: string,
-        email?: string,
-        avatar?: string,
-        }
-    ) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-    
-    try {
-        const supabase = createServerActionClient({ cookies })
-    
-        const { data, error } = await supabase
-          .from("users")
-          .update({
-            ...updatedUserData,
-          })
-          .eq("id", userId)
-          .select()
-    
-        if (error) return error
-    
-        return data
-      } catch (err: any) {
-        throw new Error(err.message)
-      }
-}
+export const getUserSettingsById = async (userId: string) => {
 
-export const setContentData = async (
-    userId: string, 
-    updatedContentData: { 
-        is_private: boolean,
-        }
-    ) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-    
-    try {
-        const supabase = createServerActionClient({ cookies })
-    
-        const { data, error } = await supabase
-          .from("users_settings")
-          .update({
-            ...updatedContentData,
-          })
-          .eq("user_id", userId)
-          .select()
-    
-        if (error) throw error
-    
-        return data
-      } catch (err: any) {
-        throw new Error(err.message)
-      }
-}
-
-export const setNotificationData = async (
-    userId: string, 
-    updatedContentData: { 
-        email_notifications: boolean,
-        }
-    ) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-    
-    try {
-        const supabase = createServerActionClient({ cookies })
-    
-        const { data, error } = await supabase
-          .from("users_settings")
-          .update({
-            ...updatedContentData,
-          })
-          .eq("user_id", userId)
-          .select()
-    
-        if (error) throw error
-    
-        return data
-      } catch (err: any) {
-        throw new Error(err.message)
-      }
-}
-
-export const deleteAccount = async (userId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-    
     try {
         const supabase = createServerActionClient({ cookies });
         
         const { data, error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
+        .from('users_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
         if (error) {
             throw new Error(error.message);
         }
 
         return data;
-    }
-    catch (error) {
-        throw new Error(`Failed to delete account: ${error instanceof Error ? error.message : String(error)}`);
+    } catch (error) {
+        throw new Error(`Failed to get user settings: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
-export const setUserAvatar = async (userId: string, avatar: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-        
-        const { data, error } = await supabase
-        .from('users')
-        .update({ avatar: avatar })
-        .eq('id', userId)
-        .select()
-
-    if (error) {
-        throw new Error(error.message);
-    }
-    return data;
-    }
-    catch (error) {
-        throw new Error(`Failed to set user avatar: ${error instanceof Error ? error.message : String(error)}`);
-    }
+// edit profile methods
+export const setProfileData = async () => {
+    
 }

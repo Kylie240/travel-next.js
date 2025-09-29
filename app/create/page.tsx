@@ -262,7 +262,12 @@ function SortableDay({ day, index, form, onRemoveDay }: {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-[16px] font-medium mb-3 ml-1">City *</Label>
-                {showCustomCity || filteredCities.length === 0 ? (
+                <Input
+                  {...form.register(`days.${index}.cityName`)}
+                  className="rounded-xl"
+                  placeholder="Tokyo"
+                />
+                {/* {showCustomCity || filteredCities.length === 0 ? (
                   <div className="flex gap-2">
                     <Input
                       value={customCity.city}
@@ -302,7 +307,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                   </div>
                 ) : (
                   <Select
-                    defaultValue={form.getValues(`days.${index}.cityName`) || ''}
+                    value={form.watch(`days.${index}.cityName`) || ''}
                     onValueChange={(value: string) => {
                       if (value === 'custom') {
                         setShowCustomCity(true);
@@ -326,18 +331,29 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                       <SelectValue placeholder="Select a city" />
                     </SelectTrigger>
                     <SelectContent>
-                      {filteredCities.map((city) => (
-                        <SelectItem key={city.city} value={city.city}>
-                          {city.city}
-                        </SelectItem>
-                      ))}
+                      {Array.from(new Set(filteredCities.map(city => city.city))).map((cityName) => {
+                        const city = filteredCities.find(c => c.city === cityName);
+                        return (
+                          <SelectItem key={cityName} value={cityName}>
+                            {cityName} ({city?.country})
+                          </SelectItem>
+                        );
+                      })}
                       <SelectItem value="custom">+ Add New City</SelectItem>
                     </SelectContent>
                   </Select>
-                )}
+                )} */}
                 {form.formState.errors.days?.[index]?.cityName && (
                   <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.cityName?.message}</p>
                 )}
+              </div>
+              <div>
+                <Label className="text-[16px] font-medium mb-3 ml-1">State / Province</Label>
+                <Input
+                  {...form.register(`days.${index}.province`)}
+                  className="rounded-xl"
+                  placeholder="" 
+                />
               </div>
               <div>
                 <Label className="text-[16px] font-medium mb-3 ml-1">Country *</Label>
@@ -887,10 +903,10 @@ export default function CreatePage() {
           const cities = new Set<{ city: string; country: string }>();
           
           itinerary.days.forEach(day => {
-            if (day.countryName) {
+            if (day.countryName && !countries.has(day.countryName)) {
               countries.add(day.countryName);
             }
-            if (day.cityName && day.countryName) {
+            if (day.cityName && day.countryName && !cities.has({ city: day.cityName, country: day.countryName })) {
               cities.add({
                 city: day.cityName,
                 country: day.countryName
