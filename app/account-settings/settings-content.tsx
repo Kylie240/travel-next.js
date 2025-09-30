@@ -184,38 +184,35 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     const supabase = createClientComponentClient();
     try {
       setUploadingAvatar(true)
-      const file = event.target.files?.[0]
-      if (!file) return
+      const MAX_FILE_SIZE = 2 * 1024 * 1024;
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-      // Create a unique file path
-      const safeName = file.name.replace(/\s+/g, "-");
-      const fileExt = (safeName.split(".").pop() || "").toLowerCase();
-      const fileName = `${Date.now()}-${safeName}`;
-      // path format: folder/userId/filename
-      const filePath = `1oj01fe_0/${userData.id}/${fileName}`;
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error("File size must be under 2MB");
+        return;
+      }
 
-      // Upload the file
+      const filePath = `${userData.id}/`;
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, {
           cacheControl: "3600",
           upsert: userData.avatar === "" ? false : true,
-          contentType: file.type, // use actual mime type
         });
-
-      if (uploadError) throw uploadError
+      console.log(data.publicUrl)
 
       if (uploadError) {
         throw new Error(uploadError.message || "Failed to update profile picture")
       }
 
-      // Get the public URL
       const { data } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath)
 
-      // Update local state
       handleUserAvatar(data.publicUrl)
+      console.log(data.publicUrl)
       toast.success("Profile picture updated successfully")
       router.refresh()
     } catch (error: any) {
@@ -233,23 +230,23 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       content: (
         <div className="space-y-6">
           <div className="space-y-4">
-            <label className="block text-md font-semibold pl-2 mb-2">Profile Picture</label>
+            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Profile Picture</label>
             {updatedUserData.avatar && updatedUserData.avatar !== "" ? (
-            <div className="w-[100px] h-[100px] relative rounded-full">
-              <Image
-                src={updatedUserData.avatar}  
-                alt={updatedUserData.name}
-                className="object-cover"
-                width={100}
+            <div className="w-[100px] h-[100px] relative rounded-full ml-4">
+                <Image
+                  src={updatedUserData.avatar}  
+                  alt={updatedUserData.name}
+                  className="object-cover"
+                  width={100}
                   height={100}
-                  />
+                />
               </div>
             ) : (
               <div className="w-[100px] h-[100px] relative rounded-full bg-gray-100 flex items-center justify-center">
                 <FaUserLarge className="h-12 w-12 text-gray-300" />
               </div>
             )}
-              <label htmlFor="avatar-upload" className="block text-center border border-gray-300 rounded-lg w-[120px] text-[14px] h-[36px] cursor-pointer hover:bg-gray-50 transition-colors">
+              <label htmlFor="avatar-upload" className="flex justify-center items-center gap-2 text-center border border-gray-300 rounded-lg w-[120px] text-[14px] h-[36px] cursor-pointer hover:bg-gray-50 transition-colors">
                 {uploadingAvatar ? 'Uploading...' : 'Change'}
                 <input 
                   id="avatar-upload"

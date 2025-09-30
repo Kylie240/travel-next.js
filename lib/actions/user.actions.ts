@@ -267,6 +267,31 @@ export const getBlockedUsersById = async (userId: string) => {
     }
 }
 
+export const removeBlockedUser = async (userId: string, blockedUserId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users_blocked')
+        .delete()
+        .eq('user_id', userId)
+        .eq('blocked_id', blockedUserId);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
+    } catch (error) {
+        throw new Error(`Failed to remove blocked user: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
 //profile methods
 export const getUserByUsername = async (username: string) => {
     const token = cookies().get("sb-access-token");
@@ -371,6 +396,147 @@ export const getUserSettingsById = async (userId: string) => {
 }
 
 // edit profile methods
-export const setProfileData = async () => {
+export const setProfileData = async (
+    userId: string, 
+    updatedUserData: { 
+        name?: string, 
+        username?: string, 
+        bio?: string, 
+        location?: string,
+        email?: string,
+        avatar?: string,
+        }
+    ) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
     
+    try {
+        const supabase = createServerActionClient({ cookies })
+    
+        const { data, error } = await supabase
+          .from("users")
+          .update({
+            ...updatedUserData,
+          })
+          .eq("id", userId)
+          .select()
+    
+        if (error) return error
+    
+        return data
+      } catch (err: any) {
+        throw new Error(err.message)
+      }
+}
+
+export const setContentData = async (
+    userId: string, 
+    updatedContentData: { 
+        is_private: boolean,
+        }
+    ) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies })
+    
+        const { data, error } = await supabase
+          .from("users_settings")
+          .update({
+            ...updatedContentData,
+          })
+          .eq("user_id", userId)
+          .select()
+    
+        if (error) throw error
+    
+        return data
+      } catch (err: any) {
+        throw new Error(err.message)
+      }
+}
+
+export const setNotificationData = async (
+    userId: string, 
+    updatedContentData: { 
+        email_notifications: boolean,
+        }
+    ) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies })
+    
+        const { data, error } = await supabase
+          .from("users_settings")
+          .update({
+            ...updatedContentData,
+          })
+          .eq("user_id", userId)
+          .select()
+    
+        if (error) throw error
+    
+        return data
+      } catch (err: any) {
+        throw new Error(err.message)
+      }
+}
+
+export const deleteAccount = async (userId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
+    }
+    catch (error) {
+        throw new Error(`Failed to delete account: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+export const setUserAvatar = async (userId: string, avatar: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users')
+        .update({ avatar: avatar })
+        .eq('id', userId)
+        .select()
+
+    if (error) {
+        throw new Error(error.message);
+    }
+    return data;
+    }
+    catch (error) {
+        throw new Error(`Failed to set user avatar: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }
