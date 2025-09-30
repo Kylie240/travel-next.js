@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input, Textarea } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check } from "lucide-react"
+import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload } from "lucide-react"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
 import { useForm, useFieldArray, FormProvider } from "react-hook-form"
@@ -44,6 +44,7 @@ import { Activity } from "@/types/Activity"
 import { supabase } from "@/utils/supabase/superbase-client"
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
 import { ItineraryStatus } from "@/types/itineraryStatus"
+import { v4 as uuidv4 } from 'uuid'
 
 type City = { city: string; country: string };
 type FormData = {
@@ -821,6 +822,46 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(true)
   const [itineraryLoading, setItineraryLoading] = useState(false)
   const [itineraryTags, _] = useState<Array<{id: number; name: string; icon: any}>>(itineraryTagsMap)
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false)
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploadingImage(true)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      const file = event.target.files?.[0];
+      const fileExt = file?.name.split('.').pop()?.toLowerCase()
+      if (!file) return;
+
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error("File size must be under 10MB");
+        return;
+      }
+
+      const filePath = `itineraries/${user?.id}/${Date.now()}/${uuidv4()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("itinerary-images")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message || "Failed to upload image")
+      }
+
+      const { data } = supabase.storage
+        .from("itinerary-images")
+        .getPublicUrl(filePath)
+
+      form.setValue('mainImage', data.publicUrl);
+      toast.success("Image uploaded successfully")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload image")
+    } finally {
+      setUploadingImage(false)
+    }
+  }
 
   useEffect(() => {
     const getUser = async () => {
@@ -876,12 +917,6 @@ export default function CreatePage() {
     control: form.control,
     name: "cities"
   })
-
-  const { fields: provinceFields, append: appendProvince, remove: removeProvince } = useFieldArray({
-    control: form.control,
-    name: "provinces" as const,
-    keyName: "id"
-  } as const)
 
   const { fields: dayFields, append: appendDay, remove: removeDay, move: moveDay } = useFieldArray<FormData>({
     control: form.control,
@@ -1337,14 +1372,60 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="mainImage">Main Image URL *</Label>
-                    <Input
-                      id="mainImage"
-                      {...form.register("mainImage")}
-                      placeholder="URL of the main trip image"
-                      className="rounded-xl"
-                      disabled={form.formState.isSubmitting}
-                    />
+                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="mainImage">Cover Image *</Label>
+                    
+                    <div className="mt-4 grid grid-cols-4 gap-4">
+                      {form.watch("mainImage") && form.watch("mainImage") !== "" ? (
+                        <div className="relative">
+                          <img 
+                            src={form.watch("mainImage")} 
+                            alt="Preview" 
+                            className="w-full h-[120px] object-cover rounded-lg" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => form.setValue("mainImage", "")}
+                            className="absolute top-2 right-2 bg-white/10 backdrop-blur-sm rounded-full p-1 hover:bg-white/20 transition-colors"
+                          >
+                            <X className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div 
+                      className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center"
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const files = Array.from(e.dataTransfer.files);
+                        if (files[0]) {
+                          handleImageUpload({ target: { files: [files[0]] } } as any);
+                        }
+                      }}
+                    >
+                      <div className="flex flex-col items-center gap-3">
+                        <label className="cursor-pointer gap-2 shadow-md flex justify-center items-center border border-gray-200 rounded-lg px-6 py-2 hover:bg-gray-50 transition-colors">
+                          <Upload className="w-4 h-4" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            disabled={form.formState.isSubmitting || uploadingImage}
+                          />
+                          <span className="bg-white font-medium">{uploadingImage ? 'Uploading...' : 'Upload'}</span>
+                        </label>
+                        <div className="flex flex-col">
+                          <span className="text-gray-600 text-[14px] font-medium">Choose images or drag & drop it here.</span>
+                          <span className="text-gray-500 text-sm">JPG, JPEG, PNG and WEBP. Max 10 MB.</span>
+                        </div>
+                      </div>
+                    </div>
+                      )}
+                    </div>  
                     {form.formState.errors.mainImage && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.mainImage.message}</p>
                     )}
