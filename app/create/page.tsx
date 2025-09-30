@@ -55,6 +55,7 @@ type FormData = {
   duration: number;
   countries?: string[];
   cities?: City[];
+  provinces?: string[];
   days: Day[];
   itineraryTags?: number[];
   notes?: Note[];
@@ -103,10 +104,12 @@ function SortableDay({ day, index, form, onRemoveDay }: {
   // Get the list of unique countries from step 1
   const existingCountries = form.getValues('countries') || [];
   const existingCities = form.getValues('cities') || [];
+  const existingProvinces = form.getValues('provinces') || [];
   
   // Filter out empty/null values
   const filteredCountries = existingCountries.filter(Boolean);
   const filteredCities = existingCities.filter(Boolean);
+  const filteredProvinces = existingProvinces.filter(Boolean);
   const [showCustomCountry, setShowCustomCountry] = useState(false);
   const [customCountry, setCustomCountry] = useState('');
   const [showCustomCity, setShowCustomCity] = useState(false);
@@ -182,37 +185,6 @@ function SortableDay({ day, index, form, onRemoveDay }: {
       }
       setShowCustomCountry(false);
       setCustomCountry('');
-    }
-  };
-
-  const handleCustomCitySubmit = () => {
-    const cityName = customCity.city.trim();
-    const countryName = customCity.country.trim() || form.getValues(`days.${index}.countryName`);
-    
-    if (cityName && countryName) {
-      // Update the day's city and country
-      form.setValue(`days.${index}.cityName`, cityName);
-      form.setValue(`days.${index}.countryName`, countryName);
-      
-      // Update the global countries list
-      const currentCountries = form.getValues('countries') || [];
-      if (!currentCountries.includes(countryName)) {
-        form.setValue('countries', [...currentCountries, countryName]);
-      }
-      
-      // Update the global cities list
-      const currentCities = form.getValues('cities') || [];
-      if (!currentCities.some(x => x.city === cityName)) {
-        form.setValue('cities', [...currentCities, {
-          city: cityName,
-          country: countryName
-        }]);
-      }
-      
-      setShowCustomCity(false);
-      setCustomCity({ city: '', country: '' });
-    } else {
-      toast.error('Both city and country are required');
     }
   };
 
@@ -350,7 +322,7 @@ function SortableDay({ day, index, form, onRemoveDay }: {
               <div>
                 <Label className="text-[16px] font-medium mb-3 ml-1">State / Province</Label>
                 <Input
-                  {...form.register(`days.${index}.province`)}
+                  {...form.register(`days.${index}.provinceName`)}
                   className="rounded-xl"
                   placeholder="" 
                 />
@@ -657,9 +629,19 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const newValue = !form.watch(`days.${index}.showAccommodation`);
-                    form.setValue(`days.${index}.showAccommodation`, newValue);
-                    if (newValue) {
+                    const isCurrentlyShown = form.watch(`days.${index}.showAccommodation`);
+                    if (isCurrentlyShown) {
+                      // If removing, clear all accommodation data
+                      form.setValue(`days.${index}.accommodation`, {
+                        name: '',
+                        type: '',
+                        location: '',
+                        link: ''
+                      });
+                      form.setValue(`days.${index}.showAccommodation`, false);
+                    } else {
+                      // If adding, just show the section
+                      form.setValue(`days.${index}.showAccommodation`, true);
                       setShowNewAccommodation(false);
                     }
                   }}
@@ -667,7 +649,8 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                 >
                   {form.watch(`days.${index}.showAccommodation`) ? 
                     <div className="flex items-center gap-2">
-                      Cancel
+                      <Trash2 className="h-4 w-4" />
+                      Remove Accommodation
                     </div> : 
                     <div className="flex items-center gap-2">
                       <Plus className="h-4 w-4" />
@@ -769,11 +752,47 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                         )}
                       </div>
                       <div className="flex justify-end gap-2">
+                        {getExistingAccommodations().length > 0 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowNewAccommodation(false)}
+                            className="rounded-xl"
+                          >
+                            Back to List
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            const currentAccommodation = form.getValues(`days.${index}.accommodation`);
+                            if (currentAccommodation.name) {
+                              form.setValue(`days.${index}.showAccommodation`, true);
+                              setShowNewAccommodation(false);
+                            } else {
+                              toast.error('Please enter an accommodation name');
+                            }
+                          }}
+                          className="rounded-xl"
+                        >
+                          Save
+                        </Button>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setShowNewAccommodation(false)}
+                          onClick={() => {
+                            form.setValue(`days.${index}.showAccommodation`, false);
+                            form.setValue(`days.${index}.accommodation`, {
+                              name: '',
+                              type: '',
+                              location: '',
+                              link: ''
+                            });
+                            setShowNewAccommodation(false);
+                          }}
                           className="rounded-xl"
                         >
                           Cancel
@@ -838,6 +857,7 @@ export default function CreatePage() {
       duration: 1,
       countries: [],
       cities: [],
+      provinces: [],
       days: [{
         ...INITIAL_DAY
       }],
@@ -857,6 +877,11 @@ export default function CreatePage() {
     name: "cities"
   })
 
+  const { fields: provinceFields, append: appendProvince, remove: removeProvince } = useFieldArray({
+    control: form.control,
+    name: "provinces" as const,
+    keyName: "id"
+  } as const)
 
   const { fields: dayFields, append: appendDay, remove: removeDay, move: moveDay } = useFieldArray<FormData>({
     control: form.control,
@@ -901,7 +926,8 @@ export default function CreatePage() {
           // Extract unique countries and cities from days
           const countries = new Set<string>();
           const cities = new Set<{ city: string; country: string }>();
-          
+          const provinces = new Set<string>();
+
           itinerary.days.forEach(day => {
             if (day.countryName && !countries.has(day.countryName)) {
               countries.add(day.countryName);
@@ -912,11 +938,20 @@ export default function CreatePage() {
                 country: day.countryName
               });
             }
+            if (day.provinceName && !provinces.has(day.provinceName)) {
+              provinces.add(day.provinceName);
+            }
           });
 
           // Update the itinerary object with extracted countries and cities
           itinerary.countries = Array.from(countries);
           itinerary.cities = Array.from(cities);
+
+          // Set showAccommodation to true for days that have accommodation data
+          itinerary.days = itinerary.days.map(day => ({
+            ...day,
+            showAccommodation: !!(day.accommodation && day.accommodation.name)
+          }));
 
           form.reset(itinerary);
         } catch (error) {
@@ -942,11 +977,28 @@ export default function CreatePage() {
       return
     }
     
-    form.setValue('duration', value)
-    
-    // Update days array when length changes
     const currentDays = form.getValues('days')
-    if (value > currentDays.length) {
+    
+    // If reducing days, check if any data would be lost
+    if (value < currentDays.length) {
+      const daysToRemove = currentDays.slice(value)
+      const hasData = daysToRemove.some(day => 
+        day.title || 
+        day.cityName || 
+        day.countryName || 
+        day.description || 
+        (day.activities && day.activities.length > 0) ||
+        (day.showAccommodation && day.accommodation?.name)
+      )
+
+      if (hasData) {
+        if (!confirm('Reducing the number of days will delete some days that have data. Are you sure you want to continue?')) {
+          e.target.value = currentDays.length.toString()
+          return
+        }
+      }
+      form.setValue('days', currentDays.slice(0, value))
+    } else if (value > currentDays.length) {
       // Add new days
       const newDays = [...currentDays]
       for (let i = currentDays.length; i < value; i++) {
@@ -957,10 +1009,9 @@ export default function CreatePage() {
         })
       }
       form.setValue('days', newDays)
-    } else if (value < currentDays.length) {
-      // Remove excess days
-      form.setValue('days', currentDays.slice(0, value))
     }
+    
+    form.setValue('duration', value)
   }
 
   const handleFinalSubmit = async (data: z.infer<typeof createSchema>) => {
@@ -1047,6 +1098,7 @@ export default function CreatePage() {
         detailedOverview: formData.detailedOverview,
         duration: formData.duration,
         countries: formData.countries,
+        provinces: formData.provinces,
         cities: formData.cities.map(city => ({
           city: city.city,
           country: city.country
@@ -1141,7 +1193,8 @@ export default function CreatePage() {
         ...formData,
         status: ItineraryStatusEnum.draft
       }
-      
+
+      console.log(itineraryData)
       let response = null;
       if (ItineraryId) {
         response = await updateItinerary(ItineraryId, itineraryData)

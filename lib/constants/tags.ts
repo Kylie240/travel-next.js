@@ -1,10 +1,10 @@
 import { Mountain, Utensils, Building, Palmtree, Camera, Ship, Wine, Heart, Music, TentTree, Palette, ShoppingBag, Dumbbell, Drama, Trees, BaggageClaim, Car, Presentation, HandPlatter, Caravan, Coins, HeartHandshake, RollerCoaster, Handshake, HandHeart, ChefHat, Briefcase, Backpack, BookMarked, Church, Skull, Sprout, Sailboat, CalendarFold, Syringe, Sparkles, HotelIcon } from "lucide-react"
-import { FaCity, FaHandSparkles, FaPeopleGroup, FaPersonWalkingLuggage } from "react-icons/fa6";
+import { FaCity, FaHandSparkles, FaPeopleGroup, FaPersonWalkingLuggage, FaWheelchair, FaWheelchairMove } from "react-icons/fa6";
 import { PiFarm } from "react-icons/pi";
 import { BiSpa } from "react-icons/bi";
 import { LuAmphora, LuBinoculars, LuBriefcaseMedical, LuCookingPot, LuTicketsPlane } from "react-icons/lu";
-import { MdOutlineNightlife } from "react-icons/md";
-import { TbYoga } from "react-icons/tb";
+import { MdOutlineNightlife, MdOutlineNordicWalking } from "react-icons/md";
+import { TbHeartHandshake, TbYoga } from "react-icons/tb";
 
 export const activityTagsMap = [
   { id:1, name: "Outdoor", icon: TentTree },
@@ -26,7 +26,7 @@ export const activityTagsMap = [
   { id:17, name: "Nightlife", icon: MdOutlineNightlife },
   { id:18, name: "Performance", icon: Drama },
   { id:19, name: "Workout", icon: Dumbbell },
-  { id:20, name: "Accomodation", icon: HotelIcon },
+  { id:20, name: "Accommodation", icon: HotelIcon },
 ]
 
 export const itineraryTagsMap = [
@@ -40,7 +40,7 @@ export const itineraryTagsMap = [
   { id:8, name :"Romantic", icon: Wine }, 
   { id:9, name :"Digital Nomad", icon: Camera }, 
   { id:10, name :"Solo", icon: FaPersonWalkingLuggage }, 
-  { id:11, name :"Weekend", icon: CalendarFold }, 
+  { id:11, name :"Weekend Trip", icon: CalendarFold }, 
   { id:12, name :"Cruise", icon: Ship }, 
   { id:13, name :"Sustainable", icon: Sprout }, 
   { id:14, name :"Medical", icon: Syringe }, 
@@ -56,7 +56,11 @@ export const itineraryTagsMap = [
   { id:24, name :"Adventure", icon: RollerCoaster }, 
   { id:25, name :"Multi-Country", icon: LuTicketsPlane }, 
   { id:26, name :"Action Packed", icon: Music }, 
-  { id:27, name :"Family Friendly", icon: FaPeopleGroup },
+  { id:27, name :"Family Oriented", icon: FaPeopleGroup },
+  { id:28, name :"LGBTQ+", icon: TbHeartHandshake },
+  { id:29, name :"Accessible", icon: FaWheelchairMove },
+  { id:30, name :"Off The Grid", icon: MdOutlineNordicWalking },
+  { id:30, name :"Camping", icon: TentTree },
   ]
 
   export const travelerTypesMap = [
