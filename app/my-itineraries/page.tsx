@@ -76,6 +76,19 @@ export default function MyItinerariesPage() {
     ))
   }
 
+  const handleDeleteItinerary = async (itineraryId: string) => {
+    try {
+      await deleteItinerary(itineraryId)
+      toast.success('Itinerary deleted successfully')
+      const newItinerarySummaries = itinerarySummaries?.filter(itinerary => itinerary.id !== itineraryId)
+      setItinerarySummaries(newItinerarySummaries as ItinerarySummary[])
+      setFilteredItinerarySummaries(newItinerarySummaries as ItinerarySummary[])
+      // refreshItineraries()
+    } catch (error) {
+      toast.error('Failed to delete itinerary')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white py-8">
       <div className="container mx-auto px-6 md:px-8 xl:px-10">
@@ -218,9 +231,7 @@ export default function MyItinerariesPage() {
                                       event.stopPropagation()
                                       if (confirm('Are you sure you want to delete this itinerary?')) {
                                           try {
-                                              await deleteItinerary(itinerary.id)
-                                              toast.success('Itinerary deleted successfully')
-                                              refreshItineraries()
+                                              handleDeleteItinerary(itinerary.id)
                                           } catch (error) {
                                               toast.error('Failed to delete itinerary')
                                           }

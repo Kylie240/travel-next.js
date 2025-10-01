@@ -195,22 +195,21 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
 
       const filePath = `${userData.id}/`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, {
           cacheControl: "3600",
           upsert: userData.avatar === "" ? false : true,
         });
-      console.log(data.publicUrl)
-
-      if (uploadError) {
+        
+        if (uploadError) {
         throw new Error(uploadError.message || "Failed to update profile picture")
       }
 
       const { data } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath)
-
+        
       handleUserAvatar(data.publicUrl)
       console.log(data.publicUrl)
       toast.success("Profile picture updated successfully")

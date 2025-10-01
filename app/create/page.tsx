@@ -44,6 +44,7 @@ import { Activity } from "@/types/Activity"
 import { supabase } from "@/utils/supabase/superbase-client"
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
 import { ItineraryStatus } from "@/types/itineraryStatus"
+import { ImageUpload } from "@/components/ui/image-upload"
 import { v4 as uuidv4 } from 'uuid'
 
 type City = { city: string; country: string };
@@ -81,12 +82,13 @@ const INITIAL_DAY: Day = {
   }
 };
 
-function SortableDay({ day, index, form, onRemoveDay }: { 
+function SortableDay({ day, index, form, onRemoveDay, userId }: { 
   day: any; // Temporarily use any to fix type issues
   index: number;
   form: ReturnType<typeof useForm<FormData>>;
   onRemoveDay: (index: number) => void;
   disabled: boolean;
+  userId: string;
 }) {
   const {
     attributes,
@@ -416,10 +418,13 @@ function SortableDay({ day, index, form, onRemoveDay }: {
             
             <div>
               <Label className="text-[16px] font-medium mb-3 ml-1">Cover Image</Label>
-              <Input
-                {...form.register(`days.${index}.image`)}
-                className="rounded-xl"
-                placeholder=""
+              <ImageUpload
+                value={form.watch(`days.${index}.image`)}
+                onChange={(url) => form.setValue(`days.${index}.image`, url)}
+                onRemove={() => form.setValue(`days.${index}.image`, "")}
+                disabled={form.formState.isSubmitting}
+                bucket="itinerary-images"
+                folder={`itineraries/${userId}/days`}
               />
             </div>
 
@@ -640,10 +645,12 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                         link: ''
                       });
                       form.setValue(`days.${index}.showAccommodation`, false);
+                      setShowNewAccommodation(false); // Reset the new accommodation form state
                     } else {
-                      // If adding, just show the section
+                      // If adding, show the section and determine which view to show
                       form.setValue(`days.${index}.showAccommodation`, true);
-                      setShowNewAccommodation(false);
+                      // Show the dropdown if there are existing accommodations
+                      setShowNewAccommodation(getExistingAccommodations().length === 0);
                     }
                   }}
                   className={`rounded-xl ${form.watch(`days.${index}.showAccommodation`) ? 'bg-gray-100' : ''}`}
@@ -685,8 +692,10 @@ function SortableDay({ day, index, form, onRemoveDay }: {
                                   shouldDirty: true,
                                   shouldTouch: true
                                 });
+                                // Keep the accommodation section open
                                 form.setValue(`days.${index}.showAccommodation`, true);
-                                setShowNewAccommodation(false);
+                                // Don't close the dropdown
+                                // setShowNewAccommodation(false);
                               }
                             }
                           }}
@@ -822,46 +831,6 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(true)
   const [itineraryLoading, setItineraryLoading] = useState(false)
   const [itineraryTags, _] = useState<Array<{id: number; name: string; icon: any}>>(itineraryTagsMap)
-  const [uploadingImage, setUploadingImage] = useState<boolean>(false)
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploadingImage(true)
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-      const file = event.target.files?.[0];
-      const fileExt = file?.name.split('.').pop()?.toLowerCase()
-      if (!file) return;
-
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error("File size must be under 10MB");
-        return;
-      }
-
-      const filePath = `itineraries/${user?.id}/${Date.now()}/${uuidv4()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("itinerary-images")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (uploadError) {
-        throw new Error(uploadError.message || "Failed to upload image")
-      }
-
-      const { data } = supabase.storage
-        .from("itinerary-images")
-        .getPublicUrl(filePath)
-
-      form.setValue('mainImage', data.publicUrl);
-      toast.success("Image uploaded successfully")
-    } catch (error: any) {
-      toast.error(error.message || "Failed to upload image")
-    } finally {
-      setUploadingImage(false)
-    }
-  }
 
   useEffect(() => {
     const getUser = async () => {
@@ -1320,7 +1289,7 @@ export default function CreatePage() {
         <div className="md:container mx-auto md:px-4 md:max-w-4xl">
           <div className="bg-white md:rounded-2xl p-4 md:p-12 md:shadow">
             <div className="flex justify-between items-center py-4 mb-8">
-              <h1 className="text-2xl ms:text-3xl font-semibold">{ItineraryId ? "Create New" : "Edit"} Itinerary</h1>
+              <h1 className="text-2xl ms:text-3xl font-semibold">{!ItineraryId ? "Create New" : "Edit"} Itinerary</h1>
               <div className="flex gap-2">
                 {[1, 2, 3].map(step => (
                   <div onClick={() => setCurrentStep(step)}
@@ -1373,59 +1342,14 @@ export default function CreatePage() {
 
                   <div>
                     <Label className="text-md font-medium mb-3 ml-1" htmlFor="mainImage">Cover Image *</Label>
-                    
-                    <div className="mt-4 grid grid-cols-4 gap-4">
-                      {form.watch("mainImage") && form.watch("mainImage") !== "" ? (
-                        <div className="relative">
-                          <img 
-                            src={form.watch("mainImage")} 
-                            alt="Preview" 
-                            className="w-full h-[120px] object-cover rounded-lg" 
-                          />
-                          <button
-                            type="button"
-                            onClick={() => form.setValue("mainImage", "")}
-                            className="absolute top-2 right-2 bg-white/10 backdrop-blur-sm rounded-full p-1 hover:bg-white/20 transition-colors"
-                          >
-                            <X className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div 
-                      className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center"
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const files = Array.from(e.dataTransfer.files);
-                        if (files[0]) {
-                          handleImageUpload({ target: { files: [files[0]] } } as any);
-                        }
-                      }}
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <label className="cursor-pointer gap-2 shadow-md flex justify-center items-center border border-gray-200 rounded-lg px-6 py-2 hover:bg-gray-50 transition-colors">
-                          <Upload className="w-4 h-4" />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                            disabled={form.formState.isSubmitting || uploadingImage}
-                          />
-                          <span className="bg-white font-medium">{uploadingImage ? 'Uploading...' : 'Upload'}</span>
-                        </label>
-                        <div className="flex flex-col">
-                          <span className="text-gray-600 text-[14px] font-medium">Choose images or drag & drop it here.</span>
-                          <span className="text-gray-500 text-sm">JPG, JPEG, PNG and WEBP. Max 10 MB.</span>
-                        </div>
-                      </div>
-                    </div>
-                      )}
-                    </div>  
+                    <ImageUpload
+                      value={form.watch("mainImage")}
+                      onChange={(url) => form.setValue("mainImage", url)}
+                      onRemove={() => form.setValue("mainImage", "")}
+                      disabled={form.formState.isSubmitting}
+                      bucket="itinerary-images"
+                      folder={`itineraries/${user?.id}/main`}
+                    />
                     {form.formState.errors.mainImage && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.mainImage.message}</p>
                     )}
@@ -1512,6 +1436,7 @@ export default function CreatePage() {
                             form={form}
                             onRemoveDay={handleRemoveDay}
                             disabled={form.formState.isSubmitting}
+                            userId={user?.id}
                           />
                         ))}
                       </Accordion>
@@ -1582,7 +1507,7 @@ export default function CreatePage() {
                     <p>Help other travelers budget their trip. Not sure? Select a budget range instead</p>
                       <Input
                         {...form.register('budget', {
-                          setValueAs: (value) => value === "" ? null : Number.isNaN(parseInt(value, 10)) ? null : parseInt(value, 10)
+                          setValueAs: (value) => value === "" ? null : Number.isNaN(parseInt(value)) ? null : parseInt(value)
                         })}
                         placeholder="Estimated cost per person"
                         type="number"
