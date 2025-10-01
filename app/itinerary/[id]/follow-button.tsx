@@ -7,7 +7,7 @@ import { addFollow, removeFollow } from '@/lib/actions/user.actions'
 import { supabase } from '@/utils/supabase/superbase-client'
 import { User } from '@supabase/supabase-js'
 
-const FollowButton = ({ creatorId }: { creatorId: string }) => {
+const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string }) => {
   const [user, setUser] = useState<User | null>(null)
   const [isFollowing, setIsFollowing] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -51,7 +51,7 @@ const FollowButton = ({ creatorId }: { creatorId: string }) => {
   }
 
   return (
-    <Button onClick={() => toggleFollow(true)} variant="outline" className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-100">
+    <Button onClick={() => toggleFollow(true)} variant="outline" className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-800 hover:text-white">
       Follow
     </Button>
   )

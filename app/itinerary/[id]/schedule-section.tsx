@@ -91,7 +91,7 @@ const ScheduleSection = ({ schedule, notes }: { schedule: Day[], notes: Note[] }
             </div>
           ))}
         </div>
-        <div className="block lg:hidden mt-8">
+        <div className="block w-full px-2 md:px-6 lg:hidden mt-8">
           <p className="text-xl text-center w-full font-medium mt-8">Useful Trip Notes</p>
           <NoteSection notes={notes} />
         </div>

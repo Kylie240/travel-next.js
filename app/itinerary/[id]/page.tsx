@@ -1,4 +1,4 @@
-import { Calendar, MapPin, DollarSign, Link } from "lucide-react"
+import { Calendar, MapPin, DollarSign } from "lucide-react"
 import Image from "next/image"
 import { Itinerary } from "@/types/itinerary"
 import BookmarkElement from "./bookmark-element"
@@ -13,6 +13,10 @@ import EditElement from "../edit-element"
 import LikeElement from "./like-element"
 import { Button } from "@/components/ui/button"
 import FollowButton from "./follow-button"
+import { collectAllPhotos } from "@/lib/utils/photos"
+import ItineraryGallery from "./itinerary-gallery"
+import Link from "next/link"
+import { FiEdit } from "react-icons/fi"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const supabase = createServerComponentClient({ cookies })
@@ -27,12 +31,13 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const activityTags = itinerary.days.flatMap(day =>
     day.activities.map(activity => activity.type).filter(Boolean)
   );
-
+  const photos = collectAllPhotos(itinerary);
   const canEdit = currentUserId === itinerary.creatorId;
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
       {/* Hero Section */}
-      <div className="flex flex-col justify-between sticky h-[calc(100vh-70px)] min-h-[800px] lg:min-h-fit px-2 md:px-8 lg:px-[6rem] gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
+      <div className="flex flex-col justify-between sticky h-[calc(100vh-70px)] min-h-[800px] lg:min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
           <div className="flex-1 h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
@@ -74,9 +79,11 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             <div className="flex w-full justify-between">
               <h2 className="text-xl font-semibold mb-2">Trip Overview</h2>
               <div className="flex gap-2">
-                {!canEdit ?
+                {canEdit ?
                 (
-                  <EditElement itineraryId={itinerary.id} />
+                  <Link href={`/create?itineraryId=${itinerary.id}`}>
+                    <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
+                  </Link>
                 ) : (
                   <div className="flex gap-2">
                     <LikeElement itineraryId={itinerary.id} />  
@@ -131,7 +138,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         
         <div className="h-full w-full lg:w-[40%] hidden lg:flex ">
           <div className="flex flex-col h-full gap-4">
-            <div className="w-full relative rounded-3xl h-[40%] overflow-hidden">
+            {/* <div className="w-full relative rounded-3xl h-[40%] overflow-hidden">
               <Image
                 src="https://uploads.exoticca.com/p/16561/50656/i/ism_horizontal_aspect_ratio_3_29.jpg"
                 alt="Secondary view"
@@ -143,22 +150,16 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
 
             <div className="lg:bg-gray-800 w-full lg:h-[40%] rounded-3xl p-6 text-black lg:text-white flex flex-col justify-end gap-2">
               {itinerary.shortDescription}
+            </div> */}
+            <div className="lg:bg-gray-800 w-full lg:h-[70%] rounded-3xl p-6 text-black lg:text-white flex flex-col justify-center gap-2">
+              {itinerary.shortDescription}
             </div>
-            <div className="bg-gray-800 relative w-full h-[20%] overflow-hidden rounded-3xl text-white flex justify-center items-center curstor-pointer"
-            style={{
-              backgroundImage: `url(${itinerary.mainImage})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}>
-              <div className="w-full h-full inset-0 bg-black/20 z-1 cursor-pointer hover:bg-black/10 font-medium text-lg flex justify-center items-center">
-                View All 20 Photos
-              </div>
-            </div>
+            <ItineraryGallery photos={photos} />
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 lg:px-[4rem] py-8">
+      <div className="container mx-auto px-6 lg:px-[3rem] xl:px-[6rem] py-8">
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-2 md:px-8">
           {/* Left Column - Schedule */}
@@ -167,9 +168,11 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <div className="flex w-full justify-between">
                 <h2 className="text-2xl md:text-2xl font-semibold mb-2 hidden lg:block">Trip Overview</h2>
                 <div className="flex gap-2">
-                  {!canEdit ?
+                  {canEdit ?
                   (
-                    <EditElement itineraryId={itinerary.id} />
+                    <Link href={`/create?itineraryId=${itinerary.id}`}>
+                      <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
+                    </Link>
                   ) : (
                     <div className="flex gap-2">
                     <LikeElement itineraryId={itinerary.id} />  
@@ -211,9 +214,9 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     />
                   </div>
                   <div>
-                    <div className="flex gap-2">
-                      <p className="font-medium">{creator.name}</p>
-                      <p className="font-medium text-gray-600">@{creator.username}</p>
+                    <div className="flex flex-col">
+                      <p className="font-medium text-lg">{creator.name}</p>
+                      <p className="text-gray-500">@{creator.username}</p>
                     </div>
                     <p className="text-sm text-gray-600">
                       {creator.title} {creator.trips && ` · ${creator.trips} trips created`}
@@ -224,18 +227,29 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   <p className="text-lg font-semibold px-2">About the Creator</p>
                   <p className=" px-2">{creator.bio}</p>
                   <div className="flex gap-2 w-full mt-2">
-                    <Link href={`/profile/${creator.username}`}>
+                    <Link href={`/profile/${creator.username}`} className="w-1/2">
                       <Button variant="outline" className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-100">
                         View Profile
                       </Button>
                     </Link>
-                    {/* <FollowButton creatorId={creator.userId} /> */}
+                    {canEdit ?
+                    (
+                      <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
+                        <Button className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+                          Edit Profile
+                        </Button>
+                      </Link>
+                    ) : (
+                      <div className="w-1/2">
+                        <FollowButton creatorId={creator.userId} userId={currentUserId} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
               {/* Creator Notes */}
               <p className="text-lg text-center font-medium mt-8">Useful Trip Notes</p>
-              <div className="px-1">
+              <div className="px-1 w-full">
                 <NoteSection notes={itinerary.notes} />
               </div>
             </div>
