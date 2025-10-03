@@ -13,7 +13,6 @@ export default function LandingPage() {
           <Image
             src="/images/boat-photo2.jpg"
             alt="Travel background"
-            objectPosition="bottom"
              fill
              className="object-cover rotate-180"
              priority

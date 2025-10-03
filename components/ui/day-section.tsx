@@ -28,7 +28,7 @@ export interface DaySectionProps {
 export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps) => {
   return (
    <div>
-      <div className="relative border-black border-l-[.18rem] pb-4 pl-4 ml-2 mr-2">
+      <div className="relative border-black border-l-[.18rem] pb-4 pl-4 mr-2">
         <div className="absolute -left-[.83rem] bg-white py-4">
           <button onClick={onToggle} className="bg-transparent border-none p-0">
             {day.id === 1 && !isActive ? (
@@ -43,7 +43,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
           </button>
         </div>  
         <button 
-          className={`w-full relative inset-x-3 overflow-hidden h-[120px] md:h-[150px] top-4 p-8 flex items-center rounded-2xl cursor-pointer ${(day.image !== null && day.image !== '') ? 'shadow-lg' : ''}`} 
+          className={`w-full relative inset-x-3 h-[120px] md:h-[150px] top-4 p-8 flex items-center rounded-2xl cursor-pointer overflow-hidden ${(day.image !== null && day.image !== '') ? 'shadow-lg' : ''}`} 
           onClick={onToggle}
           style={{
             backgroundImage: `url(${day.image})`,
@@ -75,10 +75,10 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
           className="overflow-hidden relative left-4"
         >
           <div className="mt-8 space-y-6">
-            <p className={`text-sm md:text-lg pl-2 ${day.image ? 'font-medium' : 'font-normal'}`}>{day.description}</p>
+            <p className={`text-sm md:text-md pl-2 ${day.image ? 'font-medium' : 'font-normal'}`}>{day.description}</p>
             {day.activities.map((activity, index) => (
               <div className="relative">
-                <div className="absolute z-[5] flex flex-col justify-center items-center gap-2" style={{ left: '-60px' }}>
+                <div className="absolute z-[5] bg-white flex flex-col justify-center items-center p-2 gap-2" style={{ left: '-63px', top: '7px' }}>
                   {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
                     React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)
                   )}

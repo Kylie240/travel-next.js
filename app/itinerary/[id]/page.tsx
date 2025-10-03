@@ -17,15 +17,16 @@ import { collectAllPhotos } from "@/lib/utils/photos"
 import ItineraryGallery from "./itinerary-gallery"
 import Link from "next/link"
 import { FiEdit } from "react-icons/fi"
+import { redirect } from "next/navigation"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const supabase = createServerComponentClient({ cookies })
   const { data: { user } } = await supabase.auth.getUser()
   const currentUserId = user?.id
-
   const paramsValue = await params;
   const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
   const creator = itinerary.creator;
+  const isPrivate = itinerary.creator?.isPrivate;
   const countries = itinerary.days.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index);
   const cities = itinerary.days.map(day => day.cityName).filter((value, index, self) => self.indexOf(value) === index);
   const activityTags = itinerary.days.flatMap(day =>
@@ -33,6 +34,10 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   );
   const photos = collectAllPhotos(itinerary);
   const canEdit = currentUserId === itinerary.creatorId;
+
+  if (isPrivate && currentUserId !== itinerary.creatorId) {
+    redirect("/not-authorized");
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
@@ -86,8 +91,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   </Link>
                 ) : (
                   <div className="flex gap-2">
-                    <LikeElement itineraryId={itinerary.id} />  
-                    <BookmarkElement itineraryId={itinerary.id} />
+                    <LikeElement itineraryId={itinerary.id} currentUserId={currentUserId}/>  
+                    <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} />
                   </div>
                 )}
                 <ShareElement />
@@ -175,8 +180,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     </Link>
                   ) : (
                     <div className="flex gap-2">
-                    <LikeElement itineraryId={itinerary.id} />  
-                    <BookmarkElement itineraryId={itinerary.id} />
+                    <LikeElement itineraryId={itinerary.id} currentUserId={currentUserId}/>  
+                    <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} />
                   </div>
                   )}
                   <ShareElement />
@@ -197,6 +202,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             <ScheduleSection 
               schedule={itinerary.days} 
               notes={itinerary.notes}
+              itineraryId={itinerary.id}
+              isCreator={canEdit}
             />
           </div>
 

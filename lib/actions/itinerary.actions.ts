@@ -240,13 +240,11 @@ export const deleteItinerary = async (itineraryId: string) => {
     try {
         const supabase = createServerActionClient({ cookies });
         
-        // Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             throw new Error("Not authenticated");
         }
 
-        // Delete the itinerary
         const { error: itineraryError } = await supabase
         .from('itineraries')
         .delete()
@@ -260,6 +258,17 @@ export const deleteItinerary = async (itineraryId: string) => {
     } catch (error) {
         throw new Error(`Failed to delete itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }
+}
+
+export const incrementItineraryViewCount = async (itineraryId: string) => {
+    const supabase = createServerActionClient({ cookies });
+    
+    const { data, error } = await supabase
+    .rpc("increment_itinerary_view", { p_itinerary_id: itineraryId });
+
+    if (error) {
+        console.log("Error incrementing view count:", error)
+    } 
 }
 
 export const getSavesByUserId = async (userId: string, creatorId: string = null) => {
@@ -312,13 +321,11 @@ export const LikeItinerary = async (itineraryId: string) => {
     try {
         const supabase = createServerActionClient({ cookies });
         
-        // Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             throw new Error("Not authenticated");
         }
 
-        // Delete the itinerary
         const { error: itineraryError } = await supabase
         .from('interactions_likes')
         .insert({
@@ -336,6 +343,36 @@ export const LikeItinerary = async (itineraryId: string) => {
     }
 }
 
+export const UnlikeItinerary = async (itineraryId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            throw new Error("Not authenticated");
+        }
+
+        const { error: itineraryError } = await supabase
+        .from('interactions_likes')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('itinerary_id', itineraryId);
+
+        if (itineraryError) {
+            throw itineraryError;
+        }
+
+        return { success: true };
+    } catch (error) {
+        throw new Error(`Failed to unlike itinerary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
 export const SaveItinerary = async (itineraryId: string) => {
     const token = cookies().get("sb-access-token");
     if (!token) {
@@ -345,13 +382,11 @@ export const SaveItinerary = async (itineraryId: string) => {
     try {
         const supabase = createServerActionClient({ cookies });
         
-        // Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             throw new Error("Not authenticated");
         }
 
-        // Delete the itinerary
         const { error: itineraryError } = await supabase
         .from('interactions_saves')
         .insert({
@@ -360,12 +395,21 @@ export const SaveItinerary = async (itineraryId: string) => {
         });
 
         if (itineraryError) {
+            if (itineraryError.code === "23505") {
+                return { success: true, message: "Already saved" };
+            }
             throw itineraryError;
         }
 
         return { success: true };
     } catch (error) {
-        throw new Error(`Failed to save itinerary: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(
+            `Failed to save itinerary: ${
+                error instanceof Error
+                ? error.message
+                : JSON.stringify(error, null, 2)
+            }`
+        );
     }
 }
 
@@ -378,13 +422,11 @@ export const UnsaveItinerary = async (itineraryId: string) => {
     try {
         const supabase = createServerActionClient({ cookies });
         
-        // Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
             throw new Error("Not authenticated");
         }
 
-        // Delete the itinerary
         const { error: itineraryError } = await supabase
         .from('interactions_saves')
         .delete()

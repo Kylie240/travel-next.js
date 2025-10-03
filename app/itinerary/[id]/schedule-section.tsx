@@ -6,8 +6,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Day } from '@/types/Day'
 import { Note } from '@/types/Note'
 import NoteSection from './note-section'
+import { incrementItineraryViewCount } from '@/lib/actions/itinerary.actions'
 
-const ScheduleSection = ({ schedule, notes }: { schedule: Day[], notes: Note[] }) => {
+const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule: Day[], notes: Note[], itineraryId: string, isCreator: boolean }) => {
   const [activeDays, setActiveDays] = useState<number[]>([])
   const [showScrollTop, setShowScrollTop] = useState(false)
   const headerRef = useRef<HTMLHeadingElement>(null)
@@ -23,6 +24,16 @@ const ScheduleSection = ({ schedule, notes }: { schedule: Day[], notes: Note[] }
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [activeDays.length])
+
+  
+  
+  useEffect(() => {
+    const key = `viewed-${itineraryId}`;
+    if (!sessionStorage.getItem(key) && isCreator) {
+      incrementItineraryViewCount(itineraryId);
+      sessionStorage.setItem(key, "true");
+    }
+  }, [itineraryId]);
 
   const scrollToTop = () => {
     if (headerRef.current) {

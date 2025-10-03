@@ -10,7 +10,7 @@ const ItineraryGallery = ({ photos }: { photos: PhotoItem[] }) => {
     <>
     <div className="bg-gray-800 relative w-full h-[30%] overflow-hidden rounded-3xl text-white flex justify-center items-center curstor-pointer"
         style={{
-            backgroundImage: `url(${photos[2].url ?? photos[0].url})`,
+            backgroundImage: `url(${photos[1]?.url ?? photos[0].url})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
         }}>
