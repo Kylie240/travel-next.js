@@ -39,8 +39,6 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     redirect("/not-authorized");
   }
 
-  console.log(itinerary.creator)
-
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
       {/* Hero Section */}
