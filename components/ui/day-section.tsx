@@ -23,25 +23,30 @@ export interface DaySectionProps {
   isActive: boolean;
   onToggle: () => void;
   onClose?: () => void;
+  duration: number;
 }
 
-export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps) => {
+export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySectionProps) => {
   return (
    <div>
-      <div className="relative border-black border-l-[.18rem] pb-4 pl-4 mr-2">
+      <div className={`relative border-black border-l-[.18rem] pl-4 mr-2 ${isActive ? 'pb-4' : ''}`}>
         <div className="absolute -left-[.83rem] bg-white py-4">
           <button onClick={onToggle} className="bg-transparent border-none p-0">
             {day.id === 1 && !isActive ? (
-              <MapPin strokeWidth={3} size={25} className="-left-[.2rem] relative"/>
+              <MapPin strokeWidth={2.8} size={25} className="-left-[.19rem] relative"/>
             ) : day.id === 1 && isActive ? (
-              <MapPin fill="currentColor" size={25} className="-left-[.2rem] relative"/>
+              <MapPin fill="currentColor" size={25} className="-left-[.19rem] relative"/>
             ) : isActive ? (
-              <Circle fill="currentColor" size={18} />
+              <Circle fill="currentColor" size={18} className="left-[2px] relative" />
             ) : (
-              <Circle strokeWidth={4} size={18} />
+              <Circle strokeWidth={4} size={18} className="left-[2px] relative" />
             )}
           </button>
-        </div>  
+        </div>
+        {duration === day.id &&
+          <div className="absolute -left-[.40rem] bottom-0 w-[10px] h-[2px] bg-black">
+          </div>  
+        }
         <button 
           className={`w-full relative inset-x-3 h-[120px] md:h-[150px] top-4 p-8 flex items-center rounded-2xl cursor-pointer overflow-hidden ${(day.image !== null && day.image !== '') ? 'shadow-lg' : ''}`} 
           onClick={onToggle}
@@ -72,18 +77,20 @@ export const DaySection = ({ day, isActive, onToggle, onClose }: DaySectionProps
           transition={{
             duration: 0.3,
           }}
-          className="overflow-hidden relative left-4"
+          className="relative left-4"
         >
           <div className="mt-8 space-y-6">
             <p className={`text-sm md:text-md pl-2 ${day.image ? 'font-medium' : 'font-normal'}`}>{day.description}</p>
             {day.activities.map((activity, index) => (
               <div className="relative">
-                <div className="absolute z-[5] bg-white flex flex-col justify-center items-center p-2 gap-2" style={{ left: '-63px', top: '7px' }}>
-                  {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
-                    React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)
-                  )}
-                  <p className="text-sm text-gray-500">{formatTime(activity.time)}</p>
-                </div>
+                {activity?.type && 
+                  <div className="absolute z-[5] min-w-[52px] bg-white flex flex-col justify-center items-center p-2 gap-2" style={{ left: '-67px', top: '7px' }}>
+                    {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
+                      React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)
+                    )}
+                    <p className="text-sm text-gray-500">{formatTime(activity.time)}</p>
+                  </div>
+                }
                 <motion.div
                   key={activity.id || index}
                   initial={false}

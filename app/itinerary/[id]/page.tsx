@@ -39,6 +39,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     redirect("/not-authorized");
   }
 
+  console.log(itinerary.creator)
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
       {/* Hero Section */}
@@ -122,17 +124,32 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   />
                 </div>
                 <div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col">
                     <p className="font-medium">{creator.name}</p>
                     <p className="font-medium text-gray-600">@{creator.username}</p>
                   </div>
                   <p className="text-sm text-gray-600">
-                    {creator.title} {creator.trips && ` · ${creator.trips} trips created`}
+                    {creator.title} {creator.tripCount && ` · ${creator.tripCount} trips created`}
                   </p>
                 </div>
               </div>
-              <div className="cursor-pointer border rounded-xl flex justify-center items-center w-[130px] h-[30px] bg-gray-900 hover:bg-gray-800 text-white p-4">
-                Follow
+              <div className="flex w-1/2 gap-2">
+                <Link href={`/profile/${creator.username}`} className="w-1/2">
+                  <Button variant="outline" className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-100">
+                    View Profile
+                  </Button>
+                </Link>
+                {canEdit ? (
+                  <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
+                    <Button className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+                      Edit Profile
+                    </Button>
+                  </Link>
+                  ) : (
+                    <div className="w-1/2">
+                      <FollowButton creatorId={creator.userId} userId={currentUserId} />
+                    </div>
+                  )}
               </div>
             </div>
             <div className="mt-4 space-y-2">
@@ -255,10 +272,14 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 </div>
               </div>
               {/* Creator Notes */}
-              <p className="text-lg text-center font-medium mt-8">Useful Trip Notes</p>
-              <div className="px-1 w-full">
-                <NoteSection notes={itinerary.notes} />
-              </div>
+              {itinerary?.notes.length > 0 &&
+              <>
+                <p className="text-lg text-center font-medium mt-8">Useful Trip Notes</p>
+                <div className="px-1 w-full">
+                  <NoteSection notes={itinerary.notes} />
+                </div>
+              </>
+              }
             </div>
           </div>
         </div>

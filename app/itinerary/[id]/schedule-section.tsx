@@ -7,6 +7,7 @@ import { Day } from '@/types/Day'
 import { Note } from '@/types/Note'
 import NoteSection from './note-section'
 import { incrementItineraryViewCount } from '@/lib/actions/itinerary.actions'
+import { itinerary } from './data'
 
 const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule: Day[], notes: Note[], itineraryId: string, isCreator: boolean }) => {
   const [activeDays, setActiveDays] = useState<number[]>([])
@@ -98,14 +99,17 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
                 isActive={activeDays.includes(day.id)}
                 onToggle={() => toggleDay(day.id)}
                 onClose={() => toggleDay(day.id)}
+                duration={schedule.length}
               />
             </div>
           ))}
         </div>
-        <div className="block w-full px-2 md:px-6 lg:hidden mt-8">
-          <p className="text-xl text-center w-full font-medium mt-8">Useful Trip Notes</p>
-          <NoteSection notes={notes} />
-        </div>
+        {notes?.length > 0 && 
+          <div className="block w-full px-2 md:px-6 lg:hidden mt-8">
+            <p className="text-xl text-center w-full font-medium mt-8">Useful Trip Notes</p>
+            <NoteSection notes={notes} />
+          </div>
+        }
       </div>
     </div>
   )
