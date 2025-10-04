@@ -143,7 +143,7 @@ const handleSearch = (text: string) => {
                         <Lock className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-20 w-20 text-gray-400" />                </div>
                     ) : (
                       filteredItineraryData?.map((itinerary) => ( 
-                        <Link href={`/itinerary/${itinerary.id}`}>
+                        <Link key={itinerary.id} href={`/itinerary/${itinerary.id}`}>
                             <div 
                                 key={itinerary.id}
                                 className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"

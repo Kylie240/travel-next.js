@@ -40,7 +40,7 @@ export function UserMenu() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [])
 
   // Listen for avatar updates
   useEffect(() => {

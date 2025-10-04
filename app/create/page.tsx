@@ -147,7 +147,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId }: {
     }
 
     fetchActivityTags()
-  }, [supabase])
+  }, [])
   
   // Get existing accommodations from all days
   const getExistingAccommodations = () => {
@@ -470,7 +470,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId }: {
 
               <div className="space-y-4">
                 {activityFields.map((activity, activityIndex) => (
-                  <div className="border rounded-lg px-4">
+                  <div key={activity.id} className="border rounded-lg px-4">
                     <AccordionItem value={activity.id}>
                       <div className="flex-1">
                         <AccordionTrigger>

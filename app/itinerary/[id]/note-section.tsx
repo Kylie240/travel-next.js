@@ -9,7 +9,7 @@ const NoteSection = ({ notes }: { notes: Note[] }) => {
     <>
         <Accordion type="single" collapsible className="w-full">
             {notes.map((note, index) => (
-                <AccordionItem value={note.id.toString()} style={{borderBottom: index !== notes.length - 1 ? "1px solid lightgray" : ""}}>
+                <AccordionItem key={note.id} value={note.id.toString()} style={{borderBottom: index !== notes.length - 1 ? "1px solid lightgray" : ""}}>
                     <AccordionTrigger>{note.title}</AccordionTrigger>
                     <AccordionContent>{note.content}</AccordionContent>
                 </AccordionItem>

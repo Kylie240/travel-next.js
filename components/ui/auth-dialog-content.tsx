@@ -170,11 +170,11 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
                 <Input
                   type="text"
                   placeholder="Name"
-                  {...register("name")}
-                  className={errors.name ? "border-red-500" : ""}
+                  {...(isSignUp ? signUpForm.register("name") : {})}
+                  className={isSignUp && signUpForm.formState.errors.name ? "border-red-500" : ""}
                 />
-                {errors.name && (
-                  <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>
+                {isSignUp && signUpForm.formState.errors.name && (
+                  <p className="mt-1 text-xs text-red-500">{signUpForm.formState.errors.name.message}</p>
                 )}
               </div>
             <div>
@@ -182,11 +182,11 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
               <Input
                 type="text"
                 placeholder="Username"
-                {...register("username")}
-                className={errors.username ? "border-red-500" : ""}
+                  {...(isSignUp ? signUpForm.register("username") : {})}
+                className={isSignUp && signUpForm.formState.errors.username ? "border-red-500" : ""}
               />
-              {errors.username && (
-                <p className="mt-1 text-xs text-red-500">{errors.username.message}</p>
+              {isSignUp && signUpForm.formState.errors.username && (
+                <p className="mt-1 text-xs text-red-500">{signUpForm.formState.errors.username.message}</p>
               )}
               </div>
             </>
@@ -196,11 +196,11 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             <Input
               type="email"
               placeholder="Email"
-              {...register("email")}
-              className={errors.email ? "border-red-500" : ""}
+              {...(isSignUp ? signUpForm.register("email") : signInForm.register("email"))}
+              className={(isSignUp ? signUpForm.formState.errors.email : signInForm.formState.errors.email) ? "border-red-500" : ""}
             />
-            {errors.email && (
-              <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+            {(isSignUp ? signUpForm.formState.errors.email : signInForm.formState.errors.email) && (
+              <p className="mt-1 text-xs text-red-500">{(isSignUp ? signUpForm.formState.errors.email : signInForm.formState.errors.email)?.message}</p>
             )}
           </div>
           <div>
@@ -208,11 +208,11 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             <Input
               type="password"
               placeholder="Password"
-              {...register("password")}
-              className={errors.password ? "border-red-500" : ""}
+              {...(isSignUp ? signUpForm.register("password") : signInForm.register("password"))}
+              className={(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password) ? "border-red-500" : ""}
             />
-            {errors.password && (
-              <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
+            {(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password) && (
+              <p className="mt-1 text-xs text-red-500">{(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password)?.message}</p>
             )}
           </div>
           {isSignUp && (
@@ -223,9 +223,9 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
                 placeholder="Password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className={errors.password ? "border-red-500" : ""}
+                className={signUpForm.formState.errors.password ? "border-red-500" : ""}
               />
-              {confirmPassword !== watch("password") && (
+              {confirmPassword !== (isSignUp ? signUpForm.watch("password") : signInForm.watch("password")) && (
                 <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
               )}
             </div>
@@ -234,12 +234,12 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             <p className="text-sm text-red-500">{authError}</p>
           )}
           {!isSignUp && (
-            <a className="text-sm mt-2 text-blue-500 hover:underline cursor-pointer" onClick={() => handleForgotPassword(watch("email"))}>Forgot password?</a>
+            <a className="text-sm mt-2 text-blue-500 hover:underline cursor-pointer" onClick={() => handleForgotPassword(signInForm.watch("email"))}>Forgot password?</a>
           )}
           <Button
             type="submit"
             className="w-full"
-            disabled={isSubmitting || isSignUp && confirmPassword !== watch("password")}
+            disabled={isSubmitting || (isSignUp && confirmPassword !== signUpForm.watch("password"))}
           >
             {isSignUp ? "Sign Up" : "Sign In"}
           </Button>

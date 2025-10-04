@@ -82,7 +82,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           <div className="mt-8 space-y-6">
             <p className="text-sm md:text-[16px] pl-2">{day.description}</p>
             {day.activities.map((activity, index) => (
-              <div className="relative">
+              <div key={activity.id || index} className="relative">
                 {activity?.type && 
                   <div className="absolute z-[5] min-w-[52px] bg-white flex flex-col justify-center items-center p-2 gap-2" style={{ left: '-67px', top: '7px' }}>
                     {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
