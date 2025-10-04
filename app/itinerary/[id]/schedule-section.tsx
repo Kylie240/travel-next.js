@@ -64,7 +64,7 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
     <div className="lg:col-span-2 relative">
       <div className="flex flex-col justify-between items-center mb-6">
         <h2 ref={headerRef} className="text-2xl w-full text-left font-medium">Itinerary Schedule</h2>
-        <div className="sticky top-20 z-50 w-full flex flex-col items-end gap-2">
+        <div className="sticky w-full top-20 z-50 flex flex-col items-end gap-2">
           <button 
             onClick={activeDays.length > 0 ? closeAllDays : openAllDays} 
             className="flex cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
@@ -90,7 +90,7 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
             </button>
           )}
         </div>
-        <div className="flex flex-col">
+        <div className="flex w-full flex-col">
           {schedule.map((day: Day, index) => (
             <div key={day.id}>
               <DaySection

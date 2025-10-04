@@ -1287,9 +1287,9 @@ export default function CreatePage() {
         noValidate
       >
         <div className="md:container mx-auto md:px-4 md:max-w-4xl">
-          <div className="bg-white md:rounded-2xl p-4 md:p-12 md:shadow">
-            <div className="flex justify-between items-center py-4 mb-8">
-              <h1 className="text-2xl ms:text-3xl font-semibold">{!ItineraryId ? "Create New" : "Edit"} Itinerary</h1>
+          <div className="bg-white md:rounded-2xl min-h-[calc(100vh-85px)] md:min-h-0 p-4 md:p-12 md:shadow">
+            <div className="flex justify-between items-center py-4 mb-2 md:mb-8">
+              <h1 className="text-xl md:text-2xl font-semibold">{!ItineraryId ? "Create New" : "Edit"} Itinerary</h1>
               <div className="flex gap-2">
                 {[1, 2, 3].map(step => (
                   <div onClick={() => setCurrentStep(step)}
@@ -1309,7 +1309,7 @@ export default function CreatePage() {
                 ))}
               </div>
             </div>
-            <div>
+            <div className="h-full">
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div>
@@ -1382,7 +1382,7 @@ export default function CreatePage() {
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-4">
+                  <div className="flex justify-end gap-1 sm:gap-4">
                     <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
                       Save
                     </Button>
@@ -1395,7 +1395,7 @@ export default function CreatePage() {
                       }}
                       disabled={form.formState.isSubmitting}
                     >
-                      Next: Plan Days
+                      Next<span className="hidden sm:block">: Plan Days</span>
                     </Button>
                     <Button 
                       type="button"
@@ -1413,89 +1413,91 @@ export default function CreatePage() {
               )}
 
               {currentStep === 2 && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">Day Planning</h2>
-                  </div>
+                <div className="h-full">
+                  <div className="flex flex-col h-full justify-between">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-xl font-semibold">Day Planning</h2>
+                    </div>
 
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={dayFields.map(day => day.id)}
-                      strategy={verticalListSortingStrategy}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
                     >
-                      <Accordion type="multiple" className="space-y-4">
-                        {dayFields.map((day, index) => (
-                          <SortableDay
-                            key={day.id}
-                            day={day}
-                            index={index}
-                            form={form}
-                            onRemoveDay={handleRemoveDay}
-                            disabled={form.formState.isSubmitting}
-                            userId={user?.id}
-                          />
-                        ))}
-                      </Accordion>
-                    </SortableContext>
-                  </DndContext>
+                      <SortableContext
+                        items={dayFields.map(day => day.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <Accordion type="multiple" className="space-y-4">
+                          {dayFields.map((day, index) => (
+                            <SortableDay
+                              key={day.id}
+                              day={day}
+                              index={index}
+                              form={form}
+                              onRemoveDay={handleRemoveDay}
+                              disabled={form.formState.isSubmitting}
+                              userId={user?.id}
+                            />
+                          ))}
+                        </Accordion>
+                      </SortableContext>
+                    </DndContext>
 
-                  <div className="flex w-full justify-start items-center gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        const newDayId = (dayFields.length + 1);
-                        appendDay({ ...INITIAL_DAY, id: newDayId })
-                        form.setValue('duration', dayFields.length + 1)
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Day
-                    </Button>
-                  </div>
+                    <div className="flex w-full justify-start items-center gap-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const newDayId = (dayFields.length + 1);
+                          appendDay({ ...INITIAL_DAY, id: newDayId })
+                          form.setValue('duration', dayFields.length + 1)
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Day
+                      </Button>
+                    </div>
 
-                  <div className="flex justify-end gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setCurrentStep(1)
-                        scrollToTop()
-                      }}
-                      disabled={form.formState.isSubmitting}
-                    >
-                      Previous
-                    </Button>
-                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
-                      Save
-                    </Button>
-                    <Button 
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setCurrentStep(3)
-                        scrollToTop()
-                      }}
-                      disabled={form.formState.isSubmitting}
-                    >
-                      Next: Final Details
-                    </Button>
-                    <Button 
-                      type="button"
-                      variant="outline"
-                      className="text-red hover:bg-red-500 hover:text-white"
-                      disabled={form.formState.isSubmitting}
-                      onClick={(e) => {
-                        router.push('/my-itineraries')
-                      }}
-                    >
-                      Cancel
-                    </Button>
+                    <div className="flex justify-end gap-1 sm:gap-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setCurrentStep(1)
+                          scrollToTop()
+                        }}
+                        disabled={form.formState.isSubmitting}
+                      >
+                        Previous
+                      </Button>
+                      <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
+                        Save
+                      </Button>
+                      <Button 
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setCurrentStep(3)
+                          scrollToTop()
+                        }}
+                        disabled={form.formState.isSubmitting}
+                      >
+                        Next<span className="hidden sm:block">: Final Details</span>
+                      </Button>
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        className="text-red hover:bg-red-500 hover:text-white"
+                        disabled={form.formState.isSubmitting}
+                        onClick={(e) => {
+                          router.push('/my-itineraries')
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

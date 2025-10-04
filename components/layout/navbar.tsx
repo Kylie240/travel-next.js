@@ -91,7 +91,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center md:space-x-4">
             {/* {!isExplorePage && !scrolled && (
               <Button 
                 variant="ghost" 

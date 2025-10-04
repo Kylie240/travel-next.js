@@ -88,7 +88,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                     {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
                       React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)
                     )}
-                    <p className="text-sm text-gray-500">{formatTime(activity.time)}</p>
+                    <p className="text-sm text-gray-500 tracking-tight">{formatTime(activity.time)}</p>
                   </div>
                 }
                 <motion.div

@@ -91,11 +91,11 @@ export default function MyItinerariesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-[6rem]">
+    <div className="min-h-screen bg-white pt-12 sm:pt-[6rem]">
       <div className="container mx-auto px-6 md:px-[3rem] lg:px-[6rem]">
         <div className="mb-10">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-row items-center gap-2">
               <h1 className="text-3xl font-semibold">My Itineraries</h1>
               {itinerarySummaries && itinerarySummaries?.length > 0 && (
                 <p className="text-xl text-gray-500 md:text-2xl">
@@ -106,7 +106,12 @@ export default function MyItinerariesPage() {
             {itinerarySummaries && itinerarySummaries?.length > 0 && (
               <Button disabled={loading}>
                 <Link href="/create">
+                <span className="hidden sm:block">
                   Create New Itinerary
+                </span>
+                <span className="sm:hidden">
+                  <Edit />
+                </span>
                 </Link>
               </Button>
             )}
