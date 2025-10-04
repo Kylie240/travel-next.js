@@ -9,6 +9,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { CiPassport1 } from "react-icons/ci";
 import { getUserProfileById } from "@/lib/actions/user.actions"
 import { FaUserAlt } from "react-icons/fa"
+import { listenToAvatarUpdates } from "@/lib/utils/avatar-events"
 
 export function UserMenu() {
   const supabase = createClientComponentClient()
@@ -40,6 +41,19 @@ export function UserMenu() {
       subscription.unsubscribe()
     }
   }, [supabase])
+
+  // Listen for avatar updates
+  useEffect(() => {
+    const unsubscribe = listenToAvatarUpdates((event) => {
+      const { userId, avatarUrl } = event.detail
+      // Only update if it's for the current user
+      if (user?.id === userId) {
+        setUserProfile(prev => prev ? { ...prev, avatar: avatarUrl } : null)
+      }
+    })
+
+    return unsubscribe
+  }, [user?.id])
 
   const handleSignOut = async () => {
     try {

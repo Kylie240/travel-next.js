@@ -23,6 +23,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { FaUserLarge } from "react-icons/fa6";
 import { createClient } from "@/utils/supabase/client"
 import { supabase } from "@/utils/supabase/superbase-client"
+import { dispatchAvatarUpdate } from "@/lib/utils/avatar-events"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -176,8 +177,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   }
   }
 
-  const handleUserAvatar = (avatar: string) => {
-    setUserAvatar(userData.id, avatar)
+  const handleUserAvatar = async (avatar: string) => {
+    await setUserAvatar(userData.id, avatar)
   }
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,6 +187,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       setUploadingAvatar(true)
       const MAX_FILE_SIZE = 2 * 1024 * 1024;
       const file = event.target.files?.[0];
+      const fileExt = file?.name.split(".")[1]
+      const fileName = file?.name.split(".")[0]
       if (!file) return;
 
       if (file.size > MAX_FILE_SIZE) {
@@ -193,12 +196,11 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         return;
       }
 
-      const filePath = `${userData.id}`;
+      const filePath = `${userData.id}/${fileName}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, {
-          cacheControl: "3600",
           upsert: true,
         });
         
@@ -206,12 +208,13 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         throw new Error(uploadError.message || "Failed to update profile picture")
       }
 
-      const { data } = supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath)
         
-      handleUserAvatar(data.publicUrl)
-      setUpdatedUserData({...updatedUserData, avatar: data.publicUrl})
+      handleUserAvatar(publicUrl)
+      setUpdatedUserData({...updatedUserData, avatar: publicUrl})
+      dispatchAvatarUpdate(userData.id, publicUrl)
       toast.success("Profile picture updated successfully")
       router.refresh()
     } catch (error: any) {
@@ -219,6 +222,21 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       setFormError(error.message || "Failed to upload profile picture")
     } finally {
       setUploadingAvatar(false)
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    try {
+      if (updatedUserData.avatar) {
+        await supabase.storage.from("avatars").remove([updatedUserData.avatar]);
+      }
+      await setUserAvatar(userData.id, "")
+      setUpdatedUserData({...updatedUserData, avatar: ""})
+      dispatchAvatarUpdate(userData.id, "")
+      toast.success("Profile picture removed")
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || "Failed to remove profile picture")
     }
   }
 
@@ -231,7 +249,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           <div className="space-y-4">
             <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Profile Picture</label>
             {updatedUserData.avatar && updatedUserData.avatar !== "" ? (
-            <div className="w-[100px] h-[100px] relative rounded-full ml-2">
+            <div className="w-[100px] h-[100px] overflow-hidden relative rounded-full ml-2">
                 <Image
                   src={updatedUserData.avatar}  
                   alt={updatedUserData.name}
@@ -245,8 +263,9 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                 <FaUserLarge className="h-12 w-12 text-gray-300" />
               </div>
             )}
-              <label htmlFor="avatar-upload" className="flex justify-center items-center gap-2 text-center border border-gray-300 rounded-lg w-[120px] text-[14px] h-[36px] cursor-pointer hover:bg-gray-50 transition-colors">
-                {uploadingAvatar ? 'Uploading...' : 'Change'}
+            <div className="pl-2 flex flex-col gap-2">
+              <label htmlFor="avatar-upload" className="flex justify-center items-center font-medium text-sm shadow-sm gap-2 text-center border border-gray-200 rounded-md w-[90px] text-[14px] h-[36px] cursor-pointer hover:bg-gray-50 transition-colors">
+                {uploadingAvatar ? 'Uploading...' : 'Upload'}
                 <input 
                   id="avatar-upload"
                   type="file" 
@@ -256,6 +275,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   onChange={handleUpload} 
                 />
               </label>
+              <Button variant="outline" className="w-[90px] text-sm" onClick={() => handleRemoveAvatar()} disabled={uploadingAvatar}>Remove</Button>
+            </div>
           </div>
           <div>
             <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Name</label>
@@ -577,7 +598,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           {/* Left Column: Profile Header*/}
           <div className="bg-white lg:shadow-sm rounded-xl p-6 flex flex-col gap-8">
             <ProfileHeader 
-              user={userData}
+              user={updatedUserData}
               userStats={userStats}
             />
             <div className="border-t pt-4 border-gray-200 py-4">

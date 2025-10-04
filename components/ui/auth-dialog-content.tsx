@@ -34,15 +34,16 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
   const supabase = createClientComponentClient()
   const [confirmPassword, setConfirmPassword] = useState("")
   
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-    watch
-  } = useForm<SignUpFormData | SignInFormData>({
-    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema) as any
+  const signUpForm = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema)
   })
+  
+  const signInForm = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema)
+  })
+  
+  const currentForm = isSignUp ? signUpForm : signInForm
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = currentForm
 
   const setSessionCookie = async (session: Session) => {
     const token = await supabase.auth.getSession();
@@ -89,7 +90,8 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           })
         }
         setIsOpen(false)
-        reset()
+        signUpForm.reset()
+        signInForm.reset()
         toast.success("Account created successfully")
         router.push("/account-settings?tab=Profile")
       } else {
@@ -103,7 +105,8 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         }
         setSessionCookie(userCredential.session)
         setIsOpen(false)
-        reset()
+        signUpForm.reset()
+        signInForm.reset()
         router.refresh()
         toast.success("Successfully signed in")
       }
@@ -265,7 +268,8 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             onClick={() => {
               setAuthError("")
               setIsSignUp(!isSignUp)
-              reset()
+              signUpForm.reset()
+              signInForm.reset()
               setConfirmPassword("")
             }}
           >
