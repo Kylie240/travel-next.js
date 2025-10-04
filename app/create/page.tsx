@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input, Textarea } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload } from "lucide-react"
+import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload, ChevronLeft, ChevronRight } from "lucide-react"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
 import { useForm, useFieldArray, FormProvider } from "react-hook-form"
@@ -203,7 +203,11 @@ function SortableDay({ day, index, form, onRemoveDay, userId }: {
               <div className="flex w-full items-center justify-between gap-4">
                 <div className="flex-1 text-left">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Day {index + 1} {day.title && `: ${form.watch(`days.${index}.title`)}`}</h3>
+                    {form.watch(`days.${index}.title`) ? (
+                      <h3 className="text-lg font-semibold"> <span className="hidden md:flex">Day :{index + 1}</span> {day.title && `${form.watch(`days.${index}.title`)}`}</h3>
+                    ) : (
+                      <h3 className="text-lg font-semibold">Day {index + 1}</h3>
+                    )}
                   </div>
                   {form.watch(`days.${index}.cityName`) && (
                     <p className="text-sm text-gray-600">
@@ -218,7 +222,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId }: {
                   size="sm"
                   onClick={(event) => {
                     event.stopPropagation()
-                    if (confirm('Are you sure you want to delete this note?')) {
+                    if (confirm('Are you sure you want to delete this day?')) {
                       onRemoveDay(index)
                     }
                   }}
@@ -1287,7 +1291,7 @@ export default function CreatePage() {
         noValidate
       >
         <div className="md:container mx-auto md:px-4 md:max-w-4xl">
-          <div className="bg-white md:rounded-2xl min-h-[calc(100vh-85px)] md:min-h-0 p-4 md:p-12 md:shadow">
+          <div className="bg-white md:rounded-2xl min-h-screen md:min-h-0 p-4 md:p-12 md:shadow">
             <div className="flex justify-between items-center py-4 mb-2 md:mb-8">
               <h1 className="text-xl md:text-2xl font-semibold">{!ItineraryId ? "Create New" : "Edit"} Itinerary</h1>
               <div className="flex gap-2">
@@ -1382,9 +1386,9 @@ export default function CreatePage() {
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-1 sm:gap-4">
+                  <div className="flex justify-end gap-1 sm:gap-4 pt-10 md:pt-0">
                     <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
-                      Save
+                      {itineraryStatus === ItineraryStatusEnum.published ? 'Draft' : 'Save'}
                     </Button>
                     <Button 
                       type="button" 
@@ -1395,18 +1399,24 @@ export default function CreatePage() {
                       }}
                       disabled={form.formState.isSubmitting}
                     >
-                      Next<span className="hidden sm:block">: Plan Days</span>
+                      <ChevronRight className="sm:hidden"/>
+                        <p className="hidden sm:flex">
+                          Next
+                          <span className="hidden md:block">: Plan Days</span>
+                        </p>
                     </Button>
                     <Button 
                       type="button"
                       variant="outline"
+                      color="crimson"
                       className="text-red hover:bg-red-500 hover:text-white"
                       disabled={form.formState.isSubmitting}
                       onClick={(e) => {
                         router.push('/my-itineraries')
                       }}
                     >
-                      Cancel
+                      <X className="sm:hidden"/>
+                      <span className="hidden sm:block">Cancel</span>
                     </Button>
                   </div>
                 </div>
@@ -1416,7 +1426,7 @@ export default function CreatePage() {
                 <div className="h-full">
                   <div className="flex flex-col h-full justify-between">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-xl font-semibold">Day Planning</h2>
+                      <h2 className="text-xl md:font-semibold p-2 sm:p-0">Day Planning</h2>
                     </div>
 
                     <DndContext
@@ -1455,11 +1465,11 @@ export default function CreatePage() {
                         }}
                       >
                         <Plus className="h-4 w-4 mr-1" />
-                        Add Day
+                        <span className="hidden sm:block">Add Day</span>
                       </Button>
                     </div>
 
-                    <div className="flex justify-end gap-1 sm:gap-4">
+                    <div className="flex justify-end gap-1 sm:gap-4 pt-10 md:pt-0">
                       <Button
                         type="button"
                         variant="outline"
@@ -1470,10 +1480,8 @@ export default function CreatePage() {
                         }}
                         disabled={form.formState.isSubmitting}
                       >
-                        Previous
-                      </Button>
-                      <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
-                        Save
+                        <span className="hidden sm:block">Back</span>
+                        <ChevronLeft className="sm:hidden" />
                       </Button>
                       <Button 
                         type="button"
@@ -1484,18 +1492,24 @@ export default function CreatePage() {
                         }}
                         disabled={form.formState.isSubmitting}
                       >
-                        Next<span className="hidden sm:block">: Final Details</span>
+                        <ChevronRight className="sm:hidden"/>
+                        <p className="hidden sm:flex">
+                          Next
+                          <span className="hidden md:block">: Final Details</span>
+                        </p>
                       </Button>
                       <Button 
                         type="button"
                         variant="outline"
+                        color="crimson"
                         className="text-red hover:bg-red-500 hover:text-white"
                         disabled={form.formState.isSubmitting}
                         onClick={(e) => {
                           router.push('/my-itineraries')
                         }}
                       >
-                        Cancel
+                        <X className="sm:hidden"/>
+                        <span className="hidden sm:block">Cancel</span>
                       </Button>
                     </div>
                   </div>
@@ -1505,8 +1519,8 @@ export default function CreatePage() {
               {currentStep === 3 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-lg font-medium mb-3 ml-1">Estimated Expense</h2>
-                    <p>Help other travelers budget their trip. Not sure? Select a budget range instead</p>
+                    <h2 className="text-lg font-medium sm:mb-3 ml-1">Estimated Expense</h2>
+                    <p className="text-xs sm:text-sm p-1 sm:p-0">Help other travelers budget their trip. Not sure? Select a budget range instead</p>
                       <Input
                         {...form.register('budget', {
                           setValueAs: (value) => value === "" ? null : Number.isNaN(parseInt(value)) ? null : parseInt(value)
@@ -1519,7 +1533,7 @@ export default function CreatePage() {
 
                   <div>
                     <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 5)</span></h2>
-                    <div className="flex flex-wrap sm:grid sm:grid-cols-3 md:grid-cols-4 gap-3 w-full">
+                    <div className="md:flex smd:flex-wrap grid grid-cols-2 sm:grid-cols-3 gap-1 md:gap-3 w-full">
                       {itineraryTags.map((category) => {
                         const currentTags = form.watch('itineraryTags') || []
                         const isSelected = currentTags.includes(category.id)
@@ -1667,7 +1681,7 @@ export default function CreatePage() {
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-4">
+                  <div className="flex justify-end gap-1 sm:gap-4 pt-10 md:pt-0">
                     <Button 
                       type="button" 
                       variant="outline" 
@@ -1677,7 +1691,8 @@ export default function CreatePage() {
                         scrollToTop()
                       }}
                     >
-                      Previous
+                      <span className="hidden sm:block">Back</span>
+                      <ChevronLeft className="sm:hidden" />
                     </Button>
                     <Button 
                       type="button" 
@@ -1685,7 +1700,7 @@ export default function CreatePage() {
                       onClick={saveDraft}
                       disabled={form.formState.isSubmitting}
                     >
-                      Save
+                      {itineraryStatus === ItineraryStatusEnum.published ? 'Draft' : 'Save'}
                     </Button>
                     <Button 
                       type="submit"
@@ -1697,13 +1712,15 @@ export default function CreatePage() {
                     <Button 
                       type="button"
                       variant="outline"
+                      color="crimson"
                       className="text-red hover:bg-red-500 hover:text-white"
                       disabled={form.formState.isSubmitting}
                       onClick={(e) => {
                         router.push('/my-itineraries')
                       }}
                     >
-                      Cancel
+                      <X className="sm:hidden"/>
+                      <span className="hidden sm:block">Cancel</span>
                     </Button>
                   </div>
                 </div>

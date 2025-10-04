@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { getItineraryDataByUserId } from "@/lib/actions/itinerary.actions";
 import { getProfileDataByUsername } from "@/lib/actions/user.actions";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Lock, PenSquare, Search } from "lucide-react";
+import { Lock, PenSquare, Search, ThumbsUp } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cookies } from 'next/headers'
@@ -61,7 +61,7 @@ const handleSearch = (text: string) => {
                     <div className="flex flex-col gap-2 items-center justify-center">
                       <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
                       <p className="text-gray-600">@ {userData[0].username}</p>
-                      <p className="text-gray-700 text-center px-4 max-w-[550px]">{userData[0].bio}</p>
+                      <p className="text-gray-700 text-center px-0 sm:px-4 max-w-[550px]">{userData[0].bio}</p>
                       <div className="flex gap-2 mt-2">
                         {isCurrentUser ? (
                         <Link href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
@@ -149,27 +149,30 @@ const handleSearch = (text: string) => {
                                 className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
                             >
                                 <div className="relative aspect-[2/3]">
-                                <Image
-                                    src={itinerary.mainImage}
-                                    alt={itinerary.title}
-                                    fill
-                                    className="object-cover"
-                                />
-                                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                                  <Image
+                                      src={itinerary.mainImage}
+                                      alt={itinerary.title}
+                                      fill
+                                      className="object-cover"
+                                  />
+                                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                                 </div>
-                                <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                                <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
+                                <div className="p-4 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                                <p className="font-medium leading-6 text-lg sm:text-xl sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                                 <div className="flex justify-between items-end">
                                     <div>
-                                    <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
-                                        {itinerary.countries.map((country) => country).join(" · ")}
-                                    </p>
-                                    <p className="text-sm mt-2">{itinerary.likes} likes</p>
+                                      <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
+                                          {itinerary.countries.map((country) => country).join(" · ")}
+                                      </p>
+                                      <div className="flex relative items-center">
+                                        <ThumbsUp className="h-5 w-5 pb-1 pr-1"/>
+                                        <p className="text-sm">{itinerary.likes}</p>
+                                      </div>
                                     </div>
                                     <div>
-                                    {!isCurrentUser && currentUser?.id && 
-                                        <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUser.id} />
-                                    }
+                                      {!isCurrentUser && currentUser?.id && 
+                                          <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUser.id} />
+                                      }
                                     </div>
                                 </div>
                                 </div>

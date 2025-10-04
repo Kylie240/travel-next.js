@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Bookmark, Heart, Search } from "lucide-react"
+import { Bookmark, Heart, Search, ThumbsUp } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Session, User } from "@supabase/supabase-js"
 import { getSavesByUserId, UnsaveItinerary } from "@/lib/actions/itinerary.actions"
@@ -99,17 +99,17 @@ export default function SavesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-[6rem]">
+    <div className="min-h-screen bg-white pt-12 sm:pt-[6rem]">
       <div className="container mx-auto px-6 md:px-[3rem] lg:px-[6rem]">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-semibold">Saved Itineraries</h1>
         </div>
 
-        {saves && saves.length > 0 && (
+        {saves && saves.length > 6 && (
         <div className="relative mb-8">
           <Input
             type="text"
-            placeholder="Search by title, description, creator or country..."
+            placeholder="Search itineraries..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-10 rounded-xl lg:max-w-[550px]"
@@ -119,14 +119,14 @@ export default function SavesPage() {
         )}
 
         {filteredSaves && filteredSaves.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
             {filteredSaves.map((itinerary) => (
               <div
                 key={itinerary.id}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
                 onClick={() => router.push(`/itinerary/${itinerary.id}`)}
               >
-                <div className="relative aspect-[3/4]">
+                <div className="relative aspect-[2/3]">
                   <Image
                     src={itinerary.mainImage}
                     alt={itinerary.title}
@@ -135,16 +135,13 @@ export default function SavesPage() {
                   />
                   <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                 </div>
-                <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                  <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
+                <div className="p-4 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                  <p className="text-sm hidden md:flex items-center gap-1 mt-1 opacity-90">
                     {itinerary.countries.map((country) => country).join(" · ")}
                   </p>
-                  <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
+                  <p className="font-medium leading-6 text-lg sm:text-xl sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                   <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-sm text-gray-200">created by {itinerary.creatorName}</p>
-                      <p className="text-sm mt-2">{itinerary.likes} likes</p>
-                    </div>
+                    <p className="text-sm text-gray-200/50">@{itinerary.creatorUsername}</p>
                     <button 
                       className="text-white"
                       onClick={async (event) => {

@@ -116,7 +116,7 @@ export default function MyItinerariesPage() {
               </Button>
             )}
           </div>
-          {itinerarySummaries && itinerarySummaries?.length > 0 && (
+          {itinerarySummaries && itinerarySummaries?.length > 6 && (
             <div className="relative mb-8">
             <Input
               type="text"
@@ -136,13 +136,13 @@ export default function MyItinerariesPage() {
           </div>
         ) : (
           (filteredItinerarySummaries && filteredItinerarySummaries?.length > 0) ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {filteredItinerarySummaries.map((itinerary: ItinerarySummary) => (
                 <Link key={itinerary.id} href={itinerary.status !== ItineraryStatusEnum.draft ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
                   <div
                     className="group relative rounded-2xl overflow-hidden cursor-pointer bg-gray-300 shadow-md"
                   >
-                    <div className="relative aspect-[3/4]">
+                    <div className="relative aspect-[2/3]">
                       <Image
                         src={itinerary.mainImage || "/images/placeholder.jpg"}
                         alt={itinerary.title}
@@ -165,8 +165,8 @@ export default function MyItinerariesPage() {
                         <DropdownMenu.Root>
                           <DropdownMenu.Trigger asChild>
                             <button 
-                              className="p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors">
-                              <MoreVertical className="h-5 w-5 text-white" />
+                              className="p-2 rounded-full bg-white/40 hover:bg-white/50 transition-colors">
+                              <MoreVertical className="h-4 w-4 text-black" />
                             </button>
                           </DropdownMenu.Trigger>
                           <DropdownMenu.Portal>
@@ -258,13 +258,13 @@ export default function MyItinerariesPage() {
                             navigator.clipboard.writeText(`${window.location.href}/itinerary/${itinerary.id}`);
                             toast.success('Copied to clipboard')
                             }}
-                          className="p-1.5 absolute top-8 mt-6 right-4 rounded-full bg-black/20 hover:bg-black/40 transition-colors">
-                          <Share className="h-5 w-5 text-white" />
+                          className="p-2 absolute top-8 mt-6 right-4 rounded-full bg-white/40 hover:bg-white/50 transition-colors">
+                          <Share className="h-4 w-4 text-black" />
                         </button>
                       )}
                     </div>
-                      <div className="px-4 pb-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                        <p className="font-medium text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
+                      <div className="px-4 pb-3 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                        <p className="font-medium leading-6 text-lg sm:text-xl sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                         <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
                           {/* {itinerary?.cities?.length > 0 ? itinerary?.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")} */}
                         </p>

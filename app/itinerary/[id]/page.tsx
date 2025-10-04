@@ -56,22 +56,31 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
             <div className="absolute inset-0 flex items-end md:items-end">
               <div className="container px-0 mx-0 lg:mx-auto">
-                <div className="text-white m-0 p-6 md:p-8 md:mb-8 md:ml-4">
-                  <h1 className="text-3xl max-w-[80%] leading-[40px] md:leading-[40px] md:text-4xl lg:text-5xl font-bold mb-4">{itinerary.title}</h1>
-                  {/* <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.shortDescription}</p> */}
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="flex items-center">
-                      <Calendar className="h-5 w-5 mr-2" />
-                      {itinerary.duration} days
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin className="h-5 w-5 mr-2" />
-                      {countries.length > 0 ? countries.map((country: any) => country).join(' · ') : ''}
-                    </div>
-                    {itinerary?.budget && 
+                <div className="flex justify-between items-end text-white m-0 sm:m-2 p-6 md:p-8 md:mb-8 md:ml-4 relative">
+                  <div>
+                    <h1 className="max-w-[80%] leading-[40px] md:leading-[40px] text-3xl xl:text-4xl font-bold mb-4">{itinerary.title}</h1>
+                    {/* <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.shortDescription}</p> */}
+                    <div className="flex items-center gap-2 sm:gap-6 text-sm">
                       <div className="flex items-center">
-                        <DollarSign className="h-5 w-5 mr-2" />
-                        {itinerary?.budget}/person
+                        <Calendar className="h-5 w-5 sm:mr-2" />
+                        {itinerary.duration} days
+                      </div>
+                      <div className="flex items-center">
+                        <MapPin className="h-5 w-5 sm:mr-2" />
+                        {countries.length > 0 ? countries.map((country: any) => country).join(' · ') : ''}
+                      </div>
+                      {itinerary?.budget && 
+                        <div className="flex items-center">
+                          <DollarSign className="h-5 w-5 sm:mr-1" />
+                          {itinerary?.budget}/person
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  <div>
+                    {photos?.length > 2 && 
+                      <div className="lg:hidden bg-white rounded-md p-[3px] h-[55px] w-[55px]">
+                        <ItineraryGallery photos={photos} />
                       </div>
                     }
                   </div>
@@ -113,9 +122,12 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     </span>
                   ))}
               </div>
-              {itinerary.shortDescription}
+              <p className="text-sm md:text-md">
+                {itinerary.shortDescription}
+              </p>
           </div>
-          <div className="p-4 border rounded-2xl">
+          <div className="p-4 border rounded-xl">
+            <p className="text-md font-medium px-2">About the Creator</p>
             <div className="flex flex-col gap-2 md:flex-row md:justify-between justify-start">
               <div className="flex items-center gap-4 px-1">
                 <div className="relative h-12 w-12 rounded-full overflow-hidden">
@@ -217,9 +229,12 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   ))}
               </div>
               {itinerary?.detailedOverview && 
-                <p className="my-4">
+              <>
+                <h2 className="text-xl lg:hidden font-semibold">Details</h2>
+                <p className="my-4 text-sm md:text-md">
                   {itinerary.detailedOverview}
                 </p>
+              </>
               }
             </div>
             <ScheduleSection 
