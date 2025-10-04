@@ -60,7 +60,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   <div>
                     <h1 className="max-w-[80%] leading-[40px] md:leading-[40px] text-3xl xl:text-4xl font-bold mb-4">{itinerary.title}</h1>
                     {/* <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.shortDescription}</p> */}
-                    <div className="flex items-center gap-2 sm:gap-6 text-sm">
+                    <div className="flex items-center gap-1 flex-wrap sm:gap-6 text-sm">
                       <div className="flex items-center">
                         <Calendar className="h-5 w-5 sm:mr-2" />
                         {itinerary.duration} days

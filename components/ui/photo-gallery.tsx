@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { PhotoItem } from "@/lib/utils/photos";
@@ -20,6 +20,22 @@ export default function PhotoGallery({
   initialIndex = 0 
 }: PhotoGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Prevent body scrolling when gallery is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to restore scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   if (!isOpen || photos.length === 0) return null;
 
@@ -39,9 +55,34 @@ export default function PhotoGallery({
     if (e.key === 'ArrowRight') goToNext();
   };
 
+  // Touch event handlers for swipe functionality
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && photos.length > 1) {
+      goToNext();
+    }
+    if (isRightSwipe && photos.length > 1) {
+      goToPrevious();
+    }
+  };
+
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+      className="fixed inset-0 z-50 bg-white flex items-center justify-center"
       onKeyDown={handleKeyDown}
       tabIndex={-1}
     >
@@ -49,60 +90,64 @@ export default function PhotoGallery({
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-4 right-4 z-10 text-white hover:bg-white/20"
+        className="absolute top-20 right-4 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
         onClick={onClose}
       >
         <X className="h-6 w-6" />
       </Button>
 
-      {/* Navigation buttons */}
-      {photos.length > 1 && (
-        <>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-4 z-10 text-white hover:bg-white/20"
-            onClick={goToPrevious}
-          >
-            <ChevronLeft className="h-8 w-8" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 z-10 text-white hover:bg-white/20"
-            onClick={goToNext}
-          >
-            <ChevronRight className="h-8 w-8" />
-          </Button>
-        </>
-      )}
-
       {/* Main image */}
-      <div className="relative max-w-[90vw] max-h-[90vh] mx-4">
+      <div 
+        className="relative max-w-[90vw] max-h-[90vh] mx-4"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Navigation buttons */}
+        {photos.length > 1 && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-4 top-1/2 transform hidden md:block -translate-y-1/2 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
+              onClick={goToPrevious}
+            >
+              <ChevronLeft className="h-8 w-8" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-1/2 transform hidden md:block -translate-y-1/2 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
+              onClick={goToNext}
+            >
+              <ChevronRight className="h-8 w-8" />
+            </Button>
+          </>
+        )}
         <Image
           src={currentPhoto.url}
           alt={currentPhoto.title}
           width={1200}
           height={800}
-          className="object-contain max-w-full max-h-full"
+          className="object-contain max-w-full max-h-full rounded-lg"
           priority
         />
         
         {/* Photo info */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-4">
+        {/* <div className="absolute bottom-0 left-0 right-0 bg-white/90 text-gray-800 p-4 border-t border-gray-200">
           <h3 className="text-lg font-semibold">{currentPhoto.title}</h3>
-          <div className="text-sm text-gray-300">
+          <div className="text-sm text-gray-600">
             {currentPhoto.type === 'main' && 'Main Itinerary Photo'}
             {currentPhoto.type === 'day' && `Day: ${currentPhoto.dayTitle}`}
             {currentPhoto.type === 'activity' && `Activity: ${currentPhoto.activityTitle} (Day: ${currentPhoto.dayTitle})`}
             {currentPhoto.type === 'accommodation' && `Accommodation: ${currentPhoto.accommodationName} (Day: ${currentPhoto.dayTitle})`}
           </div>
           {photos.length > 1 && (
-            <div className="text-sm text-gray-400 mt-1">
+            <div className="text-sm text-gray-500 mt-1">
               {currentIndex + 1} of {photos.length}
             </div>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* Thumbnail strip */}
@@ -113,7 +158,7 @@ export default function PhotoGallery({
               key={photo.id}
               onClick={() => setCurrentIndex(index)}
               className={`relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 ${
-                index === currentIndex ? 'ring-2 ring-white' : 'opacity-70 hover:opacity-100'
+                index === currentIndex ? 'ring-2 ring-gray-700' : 'opacity-70 hover:opacity-100'
               }`}
             >
               <Image
