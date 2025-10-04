@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Bookmark, Heart, Search, ThumbsUp } from "lucide-react"
+import { Bookmark, Heart, MapPin, Search, ThumbsUp } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Session, User } from "@supabase/supabase-js"
 import { getSavesByUserId, UnsaveItinerary } from "@/lib/actions/itinerary.actions"
@@ -136,8 +136,8 @@ export default function SavesPage() {
                   <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                 </div>
                 <div className="p-4 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                  <p className="text-sm hidden md:flex items-center gap-1 mt-1 opacity-90">
-                    {itinerary.countries.map((country) => country).join(" · ")}
+                  <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90">
+                      <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
                   </p>
                   <p className="font-medium leading-6 text-lg sm:text-xl sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                   <div className="flex justify-between items-end">

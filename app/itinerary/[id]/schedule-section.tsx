@@ -63,19 +63,19 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
   return (
     <div className="lg:col-span-2 relative">
       <div className="flex flex-col justify-between items-center mb-6">
-        <h2 ref={headerRef} className="text-2xl w-full text-left font-medium">Itinerary Schedule</h2>
+        <h2 ref={headerRef} className="text-lg md:text-2xl w-full text-left font-semibold">Itinerary Schedule</h2>
         <div className="sticky w-full top-20 z-50 flex flex-col items-end gap-2">
           <button 
             onClick={activeDays.length > 0 ? closeAllDays : openAllDays} 
             className="flex cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
           >
             {activeDays.length > 0 ? (
-              <div className='flex items-center gap-1' onClick={closeAllDays}>
+              <div className='flex text-xs sm:text-sm items-center gap-1' onClick={closeAllDays}>
                 Close
                 <Minus strokeWidth={4} size={18} />
               </div>
             ) : (
-              <div className='flex items-center gap-1' onClick={openAllDays}>
+              <div className='flex text-xs sm:text-sm items-center gap-1' onClick={openAllDays}>
                 Open
                 <Plus strokeWidth={4} size={18} />
               </div>

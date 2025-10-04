@@ -193,13 +193,13 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         return;
       }
 
-      const filePath = `${userData.id}/`;
+      const filePath = `${userData.id}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, {
           cacheControl: "3600",
-          upsert: userData.avatar === "" ? false : true,
+          upsert: true,
         });
         
         if (uploadError) {
@@ -211,7 +211,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         .getPublicUrl(filePath)
         
       handleUserAvatar(data.publicUrl)
-      console.log(data.publicUrl)
+      setUpdatedUserData({...updatedUserData, avatar: data.publicUrl})
       toast.success("Profile picture updated successfully")
       router.refresh()
     } catch (error: any) {

@@ -110,7 +110,7 @@ export function ImageUpload({
                   className="hidden"
                   disabled={disabled || uploadingImage}
                 />
-                <span className="bg-white rounded-full font-medium">{uploadingImage ? 'Uploading...' : 'Upload'}</span>
+                <span className="bg-white text-sm md:text:md rounded-full font-medium">{uploadingImage ? 'Uploading...' : 'Upload'}</span>
               </label>
               <div className="flex flex-col">
                 <span className="text-gray-600 text-[14px] font-medium">Choose images or drag & drop it here.</span>

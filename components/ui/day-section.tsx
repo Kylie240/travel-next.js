@@ -66,7 +66,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           onClick={onToggle}
         >
           <h2 className={`text-xl md:text-2xl ${day.image ? 'font-bold' : 'font-semibold'}`}>{day.title}</h2>
-          <p className={`text-xs md:text-sm lg:text-md text-whte/80 ${day.image ? 'font-normal' : 'font-thin'}`}>{day.cityName}, {day.countryName}</p>
+          <p className={`text-xs md:text-sm lg:text-[16px] text-whte/80 ${day.image ? 'font-normal' : 'font-thin'}`}>{day.cityName}, {day.countryName}</p>
         </button>
         <motion.div
           initial={false}
@@ -80,7 +80,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           className="relative left-4"
         >
           <div className="mt-8 space-y-6">
-            <p className={`text-sm md:text-md pl-2 ${day.image ? 'font-medium' : 'font-normal'}`}>{day.description}</p>
+            <p className="text-sm md:text-[16px] pl-2">{day.description}</p>
             {day.activities.map((activity, index) => (
               <div className="relative">
                 {activity?.type && 

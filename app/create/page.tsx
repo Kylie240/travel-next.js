@@ -662,7 +662,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId }: {
                   {form.watch(`days.${index}.showAccommodation`) ? 
                     <div className="flex items-center gap-2">
                       <Trash2 className="h-4 w-4" />
-                      Remove Accommodation
+                      Remove
                     </div> : 
                     <div className="flex items-center gap-2">
                       <Plus className="h-4 w-4" />
@@ -1336,7 +1336,7 @@ export default function CreatePage() {
                       id="shortDescription"
                       {...form.register("shortDescription")}
                       placeholder="Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun."
-                      className="w-full p-2 border rounded-xl h-[150px] md:h-[100px]"
+                      className="w-full text-sm md:text-md p-2 border rounded-xl h-[150px] md:h-[100px]"
                       disabled={form.formState.isSubmitting}
                     />
                     {form.formState.errors.shortDescription && (
@@ -1360,18 +1360,18 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="detailedOverview">Detailed Overview</Label>
+                    <Label className="font-medium mb-3 ml-1" htmlFor="detailedOverview">Detailed Overview</Label>
                     <textarea
                       id="detailedOverview"
                       {...form.register("detailedOverview")}
                       placeholder="This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours."
-                      className="w-full p-2 border rounded-xl min-h-[210px] md:min-h-[150px]"
+                      className="w-full text-sm md:text-md p-2 border rounded-xl min-h-[210px] md:min-h-[150px]"
                       disabled={form.formState.isSubmitting}
                     />
                   </div>
 
                   <div>
-                    <Label className="text-md font-medium mb-3 ml-1" htmlFor="length">Number of Days</Label>
+                    <Label className="text-sm md:text:md font-medium mb-3 ml-1" htmlFor="length">Number of Days</Label>
                     <Input
                       id="length"
                       type="number"
