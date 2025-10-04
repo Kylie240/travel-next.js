@@ -13,6 +13,7 @@ import { getFollowersById } from "@/lib/actions/user.actions"
 import { getFollowingById } from "@/lib/actions/user.actions"
 import { Followers } from "@/types/followers"
 import { FaUserLarge } from "react-icons/fa6";
+import ShareProfileButton from "@/app/profile/[username]/share-profile"
 
 interface ProfileHeaderProps {
   disableEdit?: boolean
@@ -85,7 +86,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
           </div>
           <div className="flex justify-center gap-4">
             <Button variant="outline" onClick={() => router.push(`/profile/${user.username}`)}>View Profile</Button>
-            <Button variant="outline" onClick={() => {navigator.clipboard.writeText(window.location.href); toast.success('Copied to clipboard')}}>Share Profile</Button>
+            <ShareProfileButton />
           </div>
         </div>
       </div>

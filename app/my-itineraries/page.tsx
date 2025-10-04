@@ -30,6 +30,7 @@ export default function MyItinerariesPage() {
         setLoading(true)
         const userItineraries = await getItinerarySummaries(user.id)
         setItinerarySummaries(userItineraries as ItinerarySummary[])
+        setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
       } catch (error) {
         toast.error('Failed to refresh itineraries')
       } finally {
@@ -90,12 +91,12 @@ export default function MyItinerariesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-8">
-      <div className="container mx-auto px-6 md:px-8 xl:px-10">
+    <div className="min-h-screen bg-white pt-[6rem]">
+      <div className="container mx-auto px-6 md:px-[3rem] lg:px-[6rem]">
         <div className="mb-10">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl xl:text-4xl font-semibold">My Itineraries</h1>
+              <h1 className="text-3xl font-semibold">My Itineraries</h1>
               {itinerarySummaries && itinerarySummaries?.length > 0 && (
                 <p className="text-xl text-gray-500 md:text-2xl">
                   ({itinerarySummaries?.length})
@@ -117,7 +118,7 @@ export default function MyItinerariesPage() {
               placeholder="Search itineraries..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 rounded-xl max-w-[550px]"
+              className="pl-10 rounded-xl lg:max-w-[550px]"
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
@@ -134,7 +135,7 @@ export default function MyItinerariesPage() {
               {filteredItinerarySummaries.map((itinerary: ItinerarySummary) => (
                 <Link key={itinerary.id} href={itinerary.status !== ItineraryStatusEnum.draft ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
                   <div
-                    className="group relative rounded-2xl overflow-hidden cursor-pointer bg-gray-300 shadow-md/30"
+                    className="group relative rounded-2xl overflow-hidden cursor-pointer bg-gray-300 shadow-md"
                   >
                     <div className="relative aspect-[3/4]">
                       <Image
@@ -247,7 +248,11 @@ export default function MyItinerariesPage() {
                       </div>
                       {itinerary.status == ItineraryStatusEnum.published && (
                         <button 
-                          onClick={() => {navigator.clipboard.writeText(`${window.location.href}/itinerary/${itinerary.id}`); toast.success('Copied to clipboard')}}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(`${window.location.href}/itinerary/${itinerary.id}`);
+                            toast.success('Copied to clipboard')
+                            }}
                           className="p-1.5 absolute top-8 mt-6 right-4 rounded-full bg-black/20 hover:bg-black/40 transition-colors">
                           <Share className="h-5 w-5 text-white" />
                         </button>

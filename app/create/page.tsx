@@ -1195,7 +1195,7 @@ export default function CreatePage() {
       const formData = form.getValues()
       const itineraryData: CreateItinerary = {
         ...formData,
-        status: ItineraryStatusEnum.draft
+        status: itineraryStatus === ItineraryStatusEnum.archived ? ItineraryStatusEnum.archived : ItineraryStatusEnum.draft
       }
 
       console.log(itineraryData)
@@ -1207,13 +1207,13 @@ export default function CreatePage() {
       }
       
       if (response) {
-        toast.success('Draft saved successfully')
+        toast.success('Itinerary saved successfully')
         router.push('/my-itineraries')
       } else {
-        throw new Error('Failed to save draft')
+        throw new Error('Failed to save itinerary')
       }
     } catch (error) {
-      toast.error('Error saving draft')
+      toast.error('Error saving itinerary')
     } finally {
       setIsSubmitting(false)
     }
@@ -1384,7 +1384,7 @@ export default function CreatePage() {
 
                   <div className="flex justify-end gap-4">
                     <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
-                      Save Draft
+                      Save
                     </Button>
                     <Button 
                       type="button" 
@@ -1472,7 +1472,7 @@ export default function CreatePage() {
                       Previous
                     </Button>
                     <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
-                      Save Draft
+                      Save
                     </Button>
                     <Button 
                       type="button"
@@ -1683,7 +1683,7 @@ export default function CreatePage() {
                       onClick={saveDraft}
                       disabled={form.formState.isSubmitting}
                     >
-                      Save Draft
+                      Save
                     </Button>
                     <Button 
                       type="submit"

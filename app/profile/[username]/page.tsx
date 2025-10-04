@@ -114,7 +114,7 @@ const handleSearch = (text: string) => {
                       <div className="mb-8 relative max-w-[550px]">
                         <Input
                           type="text"
-                          placeholder={`Search all ${filteredItineraryData?.length} itineraries`}
+                          placeholder={`Search all ${itineraryData?.length} itineraries`}
                           value={searchValue}
                           onChange={(e) => handleSearch(e.target.value)}
                           className="pl-10 font-medium rounded-xl bg-gray-100 border-none"

@@ -99,10 +99,10 @@ export default function SavesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-8">
-      <div className="container mx-auto px-6">
+    <div className="min-h-screen bg-white pt-[6rem]">
+      <div className="container mx-auto px-6 md:px-[3rem] lg:px-[6rem]">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl xl:text-4xl font-semibold">Saved Itineraries</h1>
+          <h1 className="text-3xl font-semibold">Saved Itineraries</h1>
         </div>
 
         {saves && saves.length > 0 && (
@@ -112,7 +112,7 @@ export default function SavesPage() {
             placeholder="Search by title, description, creator or country..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10 rounded-xl"
+            className="pl-10 rounded-xl lg:max-w-[550px]"
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         </div>

@@ -33,7 +33,7 @@ interface SettingsContentProps {
 }
 
 export function SettingsContent({ initialUser, userData, userStats, searchParams, userSettings }: SettingsContentProps) {
-  const [activeSection, setActiveSection] = useState(searchParams?.tab || "Dashboard")
+  const [activeSection, setActiveSection] = useState(searchParams?.tab || "Edit Profile")
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false)
   const [ _, setUserData] = useState<UserData>(userData)
   const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
@@ -231,11 +231,11 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           <div className="space-y-4">
             <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Profile Picture</label>
             {updatedUserData.avatar && updatedUserData.avatar !== "" ? (
-            <div className="w-[100px] h-[100px] relative rounded-full ml-4">
+            <div className="w-[100px] h-[100px] relative rounded-full ml-2">
                 <Image
                   src={updatedUserData.avatar}  
                   alt={updatedUserData.name}
-                  className="object-cover"
+                  className="object-cover rounded-full"
                   width={100}
                   height={100}
                 />
@@ -571,17 +571,17 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   ]
 
   return (
-    <div className="min-h-screen h-[calc(100vh-64px)] bg-white lg:bg-gray-50">
+    <div className="min-h-fit h-[calc(100vh-64px)] bg-white lg:bg-gray-50">
       <div className="h-full min-h-fit">
-        <div className="p-6 grid md:grid-cols-1 lg:grid-cols-3 space-y-6 lg:space-y-0 lg:gap-6 relative">
+        <div className="p-6 h-full grid md:grid-cols-1 lg:grid-cols-3 space-y-6 lg:space-y-0 lg:gap-6">
           {/* Left Column: Profile Header*/}
-          <div className="bg-white lg:shadow-sm rounded-xl p-6 flex flex-col gap-8 relative">
+          <div className="bg-white lg:shadow-sm rounded-xl p-6 flex flex-col gap-8">
             <ProfileHeader 
               user={userData}
               userStats={userStats}
             />
             <div className="border-t pt-4 border-gray-200 py-4">
-              <h2 className="text-3xl font-medium mb-4 pl-4 pt-4 lg:pt-0">Account Settings</h2>
+              <h2 className="text-2xl font-medium mb-4 pl-4 pt-8 lg:pt-0">Account Settings</h2>
               <div className="space-y-2">
                 {settingsSections.map((section) => (
                   <button

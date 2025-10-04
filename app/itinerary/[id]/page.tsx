@@ -18,6 +18,7 @@ import ItineraryGallery from "./itinerary-gallery"
 import Link from "next/link"
 import { FiEdit } from "react-icons/fi"
 import { redirect } from "next/navigation"
+import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const supabase = createServerComponentClient({ cookies })
@@ -95,7 +96,9 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} />
                   </div>
                 )}
-                <ShareElement />
+                {itinerary.status === ItineraryStatusEnum.published && 
+                  <ShareElement />
+                }
               </div>
             </div>
               <div className="flex flex-wrap gap-2 mb-2">
@@ -199,7 +202,9 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} />
                   </div>
                   )}
-                  <ShareElement />
+                  {itinerary.status === ItineraryStatusEnum.published && 
+                    <ShareElement />
+                  }
                 </div>
               </div>
               <div className="hidden flex-wrap gap-2 mb-2 lg:flex">

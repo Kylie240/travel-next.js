@@ -60,7 +60,7 @@ export const itineraryTagsMap = [
   { id:28, name :"LGBTQ+", icon: TbHeartHandshake },
   { id:29, name :"Accessible", icon: FaWheelchairMove },
   { id:30, name :"Off The Grid", icon: MdOutlineNordicWalking },
-  { id:30, name :"Camping", icon: TentTree },
+  { id:31, name :"Camping", icon: TentTree },
   ]
 
   export const travelerTypesMap = [
