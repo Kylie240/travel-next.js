@@ -63,7 +63,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     <div className="flex items-center gap-1 flex-wrap sm:gap-4 md:gap-6 text-sm">
                       <div className="flex items-center">
                         <Calendar className="h-5 w-5 mr-1 sm:mr-2" />
-                        {itinerary.duration} days
+                        {itinerary.duration} {itinerary.duration > 1 ? 'days' : 'day'}
                       </div>
                       <div className="flex items-center">
                         <MapPin className="h-5 w-5 mr-1 sm:mr-2" />
@@ -126,9 +126,9 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 {itinerary.shortDescription}
               </p>
           </div>
-          <div className="p-4 border rounded-xl">
-            <p className="text-md font-medium px-2">About the Creator</p>
+          <div className="p-4 border rounded-md">
             <div className="flex flex-col gap-2 md:flex-row md:justify-between justify-start">
+              <p className="text-md font-medium px-2">About the Creator</p>
               <div className="flex items-center gap-4 px-1">
                 <div className="relative h-12 w-12 rounded-full overflow-hidden">
                   <Image
@@ -147,13 +147,13 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               </div>
               <div className="flex w-full md:w-1/2 gap-4">
                 <Link href={`/profile/${creator.username}`} className="w-1/2">
-                  <Button variant="outline" className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-100">
+                  <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
                     View Profile
                   </Button>
                 </Link>
                 {canEdit ? (
                   <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
-                    <Button className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+                    <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
                       Edit Profile
                     </Button>
                   </Link>
@@ -165,7 +165,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               </div>
             </div>
             <div className="mt-2 space-y-2">
-              <p className="text-sm md:text-md px-2">{creator.bio}</p>
+              <p className="text-sm md:text-md">{creator.bio}</p>
             </div>
           </div>
         </div>

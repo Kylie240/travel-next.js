@@ -3,4 +3,5 @@ export interface UserStats {
   followerscount: number
   followingcount: number
   totallikes: number
+  totalSaves: number
 }

@@ -74,7 +74,7 @@ export const getUserStatsById = async (userId: string) => {
         const supabase = createServerActionClient({ cookies });
         
         const { data, error } = await supabase
-        .rpc("get_user_stats_summary", { p_user_id: userId }) as { 
+        .rpc("get_user_stats", { p_user_id: userId }) as { 
             data: UserStats | null, 
             error: Error | null 
         };
@@ -318,19 +318,13 @@ export const getUserByUsername = async (username: string) => {
     }
 }
 
-export const getProfileDataByUsername = async (username: string, userId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
+export const getProfileDataByUsername = async (username: string) => {
     try {
         const supabase = createServerActionClient({ cookies });
         
         const { data, error } = await supabase
-        .rpc("get_user_profile_by_username", { 
+        .rpc("get_user_profile", { 
             p_profile_username: username,
-            p_viewer_user_id: userId
         }) as { 
         data: ProfileData | null, 
         error: Error | null 

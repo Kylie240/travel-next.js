@@ -61,26 +61,26 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
             </div>
           )}
         </div>
-        <div className="flex-1 text-center md:text-left px-8">
+        <div className="flex-1 text-center md:text-left px-2 sm:px-4 md:px-8">
           <div className="text-center flex flex-col items-center">
             <h1 className="text-2xl font-bold">{user?.name}</h1>
             <p className="text-gray-600 mb-2">@{user?.username}</p>
           </div>
           <div className="grid py-2 grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-2 xl:gap-6 mb-4">
-            <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push("/my-itineraries")}>
-              <div className="font-semibold">{userStats[0].totalitineraries}</div>
-              <div className="text-sm">Trips</div>
+            <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push("/favorites")}>
+              <div className="font-semibold">{userStats[0].totalSaves}</div>
+              <div className="text-sm">Saves</div>
             </div>
             <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => handleFollowers(true)}>
-              <div className="font-semibold">{userStats[0].followerscount}</div>
+              <div className="font-semibold">{userStats[0].followersCount}</div>
               <div className="text-sm">Followers</div>
             </div>
             <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => handleFollowing(true)}>
-              <div className="font-semibold">{userStats[0].followingcount}</div>
+              <div className="font-semibold">{userStats[0].followingCount}</div>
               <div className="text-sm">Following</div>
             </div>
             <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push("/favorites")}>
-              <div className="font-semibold">{userStats[0].totallikes}</div>
+              <div className="font-semibold">{userStats[0].totalLikes}</div>
               <div className="text-sm">Likes</div>
             </div>
           </div>

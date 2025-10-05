@@ -151,14 +151,14 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-      <Dialog.Content className="fixed left-[50%] top-[50%] max-h-[90vh] w-[80vw] max-w-[450px] translate-x-[-50%] translate-y-[-50%] rounded-3xl bg-white p-12 shadow-lg z-[10000]">
+      <Dialog.Content className="fixed left-[50%] top-[50%] max-h-[90vh] w-[80vw] max-w-[450px] translate-x-[-50%] translate-y-[-50%] rounded-xl bg-white p-6 md:p-12 shadow-lg z-[10000]">
         <Dialog.Title className="text-2xl text-center font-bold">
           Welcome{isSignUp ? " " : " back"} to Journli
         </Dialog.Title>
         <Dialog.Description className="mt-2 text-sm text-gray-500 text-center">
           {isSignUp 
-            ? "Create an account to start creating and sharing travel itineraries"
-            : "Sign in to access your account and travel itineraries"
+            ? "Join now to start creating"
+            : "Sign in to access your account"
           }
         </Dialog.Description>
 

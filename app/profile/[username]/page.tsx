@@ -16,14 +16,14 @@ export default async function UserProfilePage({ params }: { params: { username: 
 const { username } = params;
 const supabase = createServerComponentClient({ cookies })
 const { data: { user: currentUser } } = await supabase.auth.getUser()
-const userData = await getProfileDataByUsername(username, currentUser?.id || null)
-const userId = userData[0].userId;
+const userData = await getProfileDataByUsername(username.toLowerCase())
+console.log('user', userData[0])
+const userId = userData[0]?.userId;
 let isPrivate: boolean = false;
-if (userData[0].isPrivate && userId !== currentUser?.id) {
+if (userData[0]?.isPrivate && userId !== currentUser?.id) {
 isPrivate = true
 }
 const isCurrentUser = userId == currentUser?.id;
-const isFollowing = userData[0].isFollowing;
 const itineraryData = await getItineraryDataByUserId(userId)
 let filteredItineraryData = itineraryData;
 const searchValue: string = '';
@@ -41,7 +41,7 @@ const handleSearch = (text: string) => {
           <div className="container mx-auto px-6">
             <div className="w-full flex flex-col justify-center">
               <div className="w-full flex items-center justify-start gap-6 mb-4">
-                <div className="flex flex-col w-full items-center gap-4">
+                <div className="flex flex-col w-full items-center gap-2 md:gap-4">
                   {userData[0].avatar && userData[0].avatar !== "" ? (
                   <div className="w-[100px] h-[100px] relative rounded-full">
                       <Image
@@ -59,16 +59,18 @@ const handleSearch = (text: string) => {
                   )}
                     { !isPrivate ? (
                     <div className="flex flex-col gap-2 items-center justify-center">
-                      <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
-                      <p className="text-gray-600">@ {userData[0].username}</p>
-                      <p className="text-gray-700 text-center px-0 sm:px-4 max-w-[550px]">{userData[0].bio}</p>
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex flex-col gap-1">
+                        <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
+                        <p className="text-gray-600">@ {userData[0].username}</p>
+                      </div>
+                      <p className="text-gray-700 text-center px-0 sm:px-4 text-sm md:text-md max-w-[550px]">{userData[0].bio}</p>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
                         {isCurrentUser ? (
                         <Link href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
                             <Button>Edit Profile</Button>
                         </Link>
                         ) : (
-                            <FollowButton creatorId={userId} userId={currentUser.id} />
+                            <FollowButton creatorId={userId} userId={currentUser?.id || ''} />
                         )}
                         <ShareProfileButton />
                       </div>
@@ -87,9 +89,9 @@ const handleSearch = (text: string) => {
                 </div>
               </div>
             </div>
-            <div className="mt-4 mb-8">
+            <div className="md:mt-4 mb-4 md:mb-8">
               {itineraryData?.length > 0 ? (
-                <h2 className="mb-6 font-bold p-4 border-b-2 border-gray-200 mt-6 text-xl">Itineraries</h2>
+                <h2 className="sm:m-3 md:m-6 font-bold p-4 border-b-2 border-gray-200 text-xl">Itineraries</h2>
               ) : (
                 <div className="text-center py-12 px-4 rounded-xl border-2 border-dashed">
                   <div className="mb-4">
@@ -123,10 +125,10 @@ const handleSearch = (text: string) => {
                       </div>
                     )}
                 </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                     { isPrivate ? (
                       <div className="col-span-full relative">
-                        <div className="w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 blur-sm">
+                        <div className="w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8 blur-sm">
                           {Array.from({ length: 2 }).map((_, index) => (
                             <div key={index} className="w-full aspect-[2/3] block md:hidden xl:hidden bg-gray-100 rounded-2xl">
                             </div>
@@ -158,10 +160,10 @@ const handleSearch = (text: string) => {
                                   <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                                 </div>
                                 <div className="p-4 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                                <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90">
+                                <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90 line-clamp-1 sm:line-clamp-2 md:line-clamp-0">
                                     <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
                                 </p>
-                                <p className="font-medium leading-6 text-lg sm:text-xl sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
+                                <p className="sm:font-medium leading-[18px] sm:leading-6 text-lg sm:text-xl sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                                 <div className="flex mt-1 justify-between items-end">
                                     <div>
                                       <div className="flex relative items-center">
@@ -170,8 +172,10 @@ const handleSearch = (text: string) => {
                                       </div>
                                     </div>
                                     <div>
-                                      {!isCurrentUser && currentUser?.id && 
-                                          <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUser.id} />
+                                      {!isCurrentUser && currentUser &&
+                                        <div className="absolute top-0 right-0">
+                                          <BookmarkElement  itineraryId={itinerary.id} currentUserId={currentUser?.id || ''} />
+                                        </div>
                                       }
                                     </div>
                                 </div>

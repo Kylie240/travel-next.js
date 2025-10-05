@@ -602,13 +602,13 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               userStats={userStats}
             />
             <div className="border-t pt-4 border-gray-200 py-4">
-              <h2 className="text-2xl font-medium mb-4 pl-4 pt-8 lg:pt-0">Account Settings</h2>
+              <h2 className="text-2xl font-medium mb-4 md:pl-4 pt-4 md:pt-8 lg:pt-0">Account Settings</h2>
               <div className="space-y-2">
                 {settingsSections.map((section) => (
                   <button
                     key={section.title}
                     onClick={() => handleSectionClick(section.title)}
-                    className={`w-full p-4 md:rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors text-left ${
+                    className={`w-full p-2 md:p-4 md:rounded-xl flex items-center justify-between hover:bg-gray-50 transition-colors text-left ${
                       activeSection === section.title ? "md:bg-gray-100" : ""
                     }`}
                   >
@@ -616,7 +616,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                       <div className="flex">
                         <h3 className="font-medium">{section.title}</h3>
                       </div>
-                      <ChevronRight className="block lg:hidden" />
+                      <ChevronRight strokeWidth={1} className="block lg:hidden" />
                     </div>
                   </button>
                 ))}
