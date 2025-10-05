@@ -2,19 +2,21 @@
 
 import { useRouter } from "next/navigation"
 
-interface CategoryCardProps {
+interface CountryCardProps {
   name: string
-  icon: React.ComponentType<any>
   imageUrl: string
+  tripCount: number
   onClick?: () => void
 }
 
-export const CategoryCard = ({ name, icon: Icon, imageUrl, onClick }: CategoryCardProps) => {
+export const CountryCard = ({ name, imageUrl, tripCount, onClick }: CountryCardProps) => {
   const router = useRouter();
   return (
     <button 
-      onClick={() => router.push(`/explore?category=${name.toLowerCase()}`)}
-      className="relative flex items-center gap-3 p-6 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
+      onClick={() => {
+        router.push(`/explore?destination=${name}`);
+      }}
+      className="relative rounded-lg bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
       style={{ aspectRatio: '2/1' }}
     >
       {/* Background image that only shows on hover */}
@@ -30,14 +32,14 @@ export const CategoryCard = ({ name, icon: Icon, imageUrl, onClick }: CategoryCa
       </div>
       
       {/* Content */}
-      <div className="relative z-10 flex items-center gap-3">
-        <div className="p-3 bg-gray-100 group-hover:bg-white/20 rounded-lg transition-colors">
-          <Icon className="w-6 h-6 text-gray-700 group-hover:text-white transition-colors" />
-        </div>
+      <div className="relative z-10 p-4 flex flex-col justify-between h-full">
         <div className="text-left">
           <h3 className="text-lg font-semibold text-gray-900 group-hover:text-white transition-colors">
             {name}
           </h3>
+          <p className="text-sm text-gray-600 group-hover:text-gray-200 transition-colors">
+            {tripCount} trips
+          </p>
         </div>
       </div>
     </button>

@@ -5,6 +5,8 @@ import { Mountain, Palmtree, Building, Utensils, Camera, Tent, Bike, Ship } from
 import { SearchArea } from "@/components/ui/search-area"
 import { ItinerarySection } from "@/components/ui/itinerary-section"
 import { BlackBanner } from "@/components/ui/black-banner"
+import { CountryCard } from "@/components/ui/country-card"
+import { CategoryCard } from "@/components/ui/category-card"
 import { useRouter } from "next/navigation"
 import LandingPage from "./landing/page"
 
@@ -412,83 +414,6 @@ const fadeInUp = {
   transition: { duration: 0.5 }
 }
 
-interface CountryCardProps {
-  name: string;
-  imageUrl: string;
-  tripCount: number;
-  onClick?: () => void;
-}
-
-const CountryCard = ({ name, imageUrl, tripCount, onClick }: CountryCardProps) => {
-  const router = useRouter();
-  return (
-    <button 
-      onClick={() => {
-        router.push(`/explore?destination=${name}`);
-      }}
-      className="relative rounded-lg bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
-      style={{ aspectRatio: '2/1' }}
-    >
-      {/* Background image that only shows on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="absolute inset-0">
-          <img
-            src={imageUrl}
-            alt={name}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/60" />
-        </div>
-      </div>
-
-      {/* Text content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full">
-        <span className="text-xl font-medium text-gray-900 group-hover:text-white mb-3">{name}</span>
-        <span className="px-3 py-1 rounded-full bg-gray-100 text-sm font-medium text-gray-700 group-hover:bg-white/20 group-hover:text-white transition-colors">
-          {tripCount} Trips
-        </span>
-      </div>
-    </button>
-  );
-};
-
-interface CategoryCardProps {
-  name: string;
-  icon: any;
-  imageUrl: string;
-  onClick?: () => void;
-}
-
-const CategoryCard = ({ name, icon: Icon, imageUrl, onClick }: CategoryCardProps) => {
-  const router = useRouter();
-  return (
-    <button 
-      onClick={() => router.push(`/explore?category=${name.toLowerCase()}`)}
-      className="relative flex items-center gap-3 p-6 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 w-full group overflow-hidden"
-      style={{ aspectRatio: '2/1' }}
-    >
-      {/* Background image that only shows on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="absolute inset-0">
-          <img
-            src={imageUrl}
-            alt={name}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/60" />
-        </div>
-      </div>
-
-      {/* Icon and text content */}
-      <div className="relative z-10 flex items-center justify-center gap-3 w-full">
-        <div className="bg-gray-100 rounded-full p-3 group-hover:bg-white/20">
-          <Icon className="w-5 h-5 text-gray-700 group-hover:text-white" />
-        </div>
-        <span className="text-gray-900 font-medium group-hover:text-white">{name}</span>
-      </div>
-    </button>
-  );
-};
 
 export default function Home() {
   const router = useRouter()
