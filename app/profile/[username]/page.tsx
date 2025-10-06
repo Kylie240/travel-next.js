@@ -67,7 +67,7 @@ const handleSearch = (text: string) => {
                       <div className="grid grid-cols-2 gap-2 mt-2">
                         {isCurrentUser ? (
                         <Link href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
-                            <Button>Edit Profile</Button>
+                            <Button className="w-full">Edit Profile</Button>
                         </Link>
                         ) : (
                             <FollowButton creatorId={userId} userId={currentUser?.id || ''} />

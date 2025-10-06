@@ -32,6 +32,7 @@ export function ImageUpload({
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       const file = event.target.files?.[0];
       const fileExt = file?.name.split('.').pop()?.toLowerCase()
+      
       if (!file) return;
 
       if (file.size > MAX_FILE_SIZE) {
@@ -39,8 +40,14 @@ export function ImageUpload({
         return;
       }
 
-      const filePath = `${folder}/${Date.now()}/${uuidv4()}.${fileExt}`;
+      let filePath = '';
+      if(bucket === "itinerary-images") { 
+        filePath = `${folder}/${uuidv4()}.${fileExt}`;
+      } else {
+        filePath = `${folder}/${Date.now()}/${uuidv4()}.${fileExt}`;
+      }
 
+      console.log(filePath, bucket)
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {

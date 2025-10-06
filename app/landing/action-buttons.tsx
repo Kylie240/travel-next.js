@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { AuthDialog } from '@/components/ui/auth-dialog'
+import { Button } from '@/components/ui/button'
 
 const ActionButtons = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -14,22 +15,19 @@ const ActionButtons = () => {
 
   return (
     <div className="w-full"> 
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={isSignUp} setIsSignUp={setIsSignUp}>
-          <button 
-            onClick={() => handleAuthClick(false)} 
-            className="border-2 h-[40px] flex items-center text-white px-8 py-3 gap-2 rounded-lg font-medium hover:bg-gray-200/20 transition"
-          >
+          <Button variant="outline" className="cursor-pointer border bg-transparent flex justify-center items-center w-full p-2 hover:bg-gray-100">
             Log In
-          </button>
+          </Button>
         </AuthDialog>
         <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={isSignUp} setIsSignUp={setIsSignUp}>
-          <button 
+          <Button 
             onClick={() => handleAuthClick(true)} 
-            className="bg-gray-900 h-[40px] flex items-center text-white px-8 py-3 gap-2 rounded-lg font-medium hover:bg-gray-800 transition"
+            className="bg-gray-900 flex items-center text-white font-medium"
           >
             Sign Up For Free
-          </button>
+          </Button>
         </AuthDialog>
       </div>
       {/* Mobile version */}

@@ -592,9 +592,9 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   ]
 
   return (
-    <div className="min-h-fit h-[calc(100vh-64px)] bg-white lg:bg-gray-50">
+    <div className="min-h-fit h-screen md:h-[calc(100vh-64px)] bg-white lg:bg-gray-50">
       <div className="h-full min-h-fit">
-        <div className="p-6 h-full grid md:grid-cols-1 lg:grid-cols-3 space-y-6 lg:space-y-0 lg:gap-6">
+        <div className="md:p-6 h-full grid md:grid-cols-1 lg:grid-cols-3 space-y-6 lg:space-y-0 lg:gap-6">
           {/* Left Column: Profile Header*/}
           <div className="bg-white lg:shadow-sm rounded-xl p-6 flex flex-col gap-8">
             <ProfileHeader 
@@ -602,7 +602,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               userStats={userStats}
             />
             <div className="border-t pt-4 border-gray-200 py-4">
-              <h2 className="text-2xl font-medium mb-4 md:pl-4 pt-4 md:pt-8 lg:pt-0">Account Settings</h2>
+              <h2 className="text-2xl font-medium mb-4 pl-2 md:pl-4 pt-4 md:pt-8 lg:pt-0">Account Settings</h2>
               <div className="space-y-2">
                 {settingsSections.map((section) => (
                   <button
@@ -625,7 +625,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           </div>
 
           {/* Right Column: Settings Content */}
-          <div className="hidden lg:block col-span-2 p-2 md:p-0 h-full bg-white md:rounded-xl lg:shadow-sm md:p-6">
+          <div className="hidden lg:block col-span-2 p-2 md:p-0 h-full bg-white md:rounded-xl lg:shadow-sm md:p-6 overflow-y-auto">
             <div className="space-y-6">
               <div >
                 <h3 className="text-xl font-semibold mb-6">{activeSection}</h3>

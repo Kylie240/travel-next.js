@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 
 const ShareProfileButton = () => {
   return (
-    <Button variant="outline" onClick={() => {
+    <Button variant="outline" className='w-full' onClick={() => {
         navigator.clipboard.writeText(window.location.href)
         toast.success('Link copied to clipboard')
     }}>Share Profile</Button>

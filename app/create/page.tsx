@@ -82,13 +82,14 @@ const INITIAL_DAY: Day = {
   }
 };
 
-function SortableDay({ day, index, form, onRemoveDay, userId }: { 
+function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: { 
   day: any; // Temporarily use any to fix type issues
   index: number;
   form: ReturnType<typeof useForm<FormData>>;
   onRemoveDay: (index: number) => void;
   disabled: boolean;
   userId: string;
+  galleryUUID: string;
 }) {
   const {
     attributes,
@@ -428,7 +429,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId }: {
                 onRemove={() => form.setValue(`days.${index}.image`, "")}
                 disabled={form.formState.isSubmitting}
                 bucket="itinerary-images"
-                folder={`itineraries/${userId}/days`}
+                folder={`${userId}/${galleryUUID}/days/${index}`}
               />
             </div>
 
@@ -835,6 +836,11 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(true)
   const [itineraryLoading, setItineraryLoading] = useState(false)
   const [itineraryTags, _] = useState<Array<{id: number; name: string; icon: any}>>(itineraryTagsMap)
+  const [galleryUUID, setGalleryUUID] = useState('')
+
+  useEffect(() => {
+    fetchGalleryUUID()
+  }, [])
 
   useEffect(() => {
     const getUser = async () => {
@@ -880,6 +886,40 @@ export default function CreatePage() {
       // budget: null
     }
   })
+
+  
+  const fetchGalleryUUID = async () => {
+    if (ItineraryId) {  
+    const { data, error } = await supabase
+      .from('itinerary_gallery')
+      .select('*')
+      .eq('itinerary_id', ItineraryId)
+      .maybeSingle()
+      if (error) {
+        throw error
+      }
+      if (!data) {
+        createGalleryUUID(false)
+      } else {
+        setGalleryUUID(data.gallery_uuid)
+      }
+    } else {
+      createGalleryUUID()
+    }
+  }
+
+  const createGalleryUUID = async (isNew: boolean = true) => {
+    setGalleryUUID(uuidv4())
+
+    if(!isNew) {
+    const { data, error } = await supabase
+      .from('itinerary_gallery')
+      .insert({
+          itinerary_id: ItineraryId,
+          gallery_uuid: uuidv4()
+        })
+    }
+  }
 
   const { fields: countryFields, append: appendCountry, remove: removeCountry } = useFieldArray({
     control: form.control,
@@ -1188,6 +1228,11 @@ export default function CreatePage() {
     })
   
   const saveDraft = async () => {
+    if ( checkForEmptyValues() ) {
+      toast.error('Please add a title andat least one day')
+      return
+    }
+    
     setIsSubmitting(true)
     try {
       if (!user) {
@@ -1202,12 +1247,17 @@ export default function CreatePage() {
         status: itineraryStatus === ItineraryStatusEnum.archived ? ItineraryStatusEnum.archived : ItineraryStatusEnum.draft
       }
 
-      console.log(itineraryData)
       let response = null;
       if (ItineraryId) {
         response = await updateItinerary(ItineraryId, itineraryData)
       } else {
         response = await createItinerary(itineraryData)
+        await supabase
+          .from('itinerary_gallery')
+          .insert({
+              itinerary_id: ItineraryId,
+              gallery_uuid: galleryUUID
+            })
       }
       
       if (response) {
@@ -1229,6 +1279,10 @@ export default function CreatePage() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
+
+  const checkForEmptyValues = () => {
+    return form.getValues('title') === '' || form.getValues('days').length === 0
+  }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -1352,7 +1406,7 @@ export default function CreatePage() {
                       onRemove={() => form.setValue("mainImage", "")}
                       disabled={form.formState.isSubmitting}
                       bucket="itinerary-images"
-                      folder={`itineraries/${user?.id}/main`}
+                      folder={`${user?.id}/${galleryUUID}/main`}
                     />
                     {form.formState.errors.mainImage && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.mainImage.message}</p>
@@ -1448,6 +1502,7 @@ export default function CreatePage() {
                               onRemoveDay={handleRemoveDay}
                               disabled={form.formState.isSubmitting}
                               userId={user?.id}
+                              galleryUUID={galleryUUID}
                             />
                           ))}
                         </Accordion>

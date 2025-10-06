@@ -23,10 +23,10 @@ export default function LandingPage() {
         </div>
         
         <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4">
-          <h1 className="text-5xl lg:text-6xl font-bold text-center mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-2 md:mb-6">
           Welcome To Your New <br/> Travel Journal
           </h1>
-          <p className="text-lg md:text-xl text-center mb-8 max-w-2xl">
+          <p className="text-sm sm:text-md md:text-lg md:text-xl text-center mb-8 max-w-2xl">
             Trip planning made easy
           </p>
           <div className="gap-4 mt-8">
@@ -39,10 +39,10 @@ export default function LandingPage() {
       <div className="py-20 px-8">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center justify-center mb-16">
-            <h2 className="text-3xl lg:text-4xl px-6 font-bold text-center mb-2">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl px-6 font-bold text-center mb-2">
               Plan smarter. Travel better. Share the journey.
             </h2>
-            <p className="text-gray-600 text-lg px-4 text-center">Journli Makes Creating and Sharing Travel Plans a Breeze</p>
+            <p className="text-gray-600 text-sm md:text-lg px-4 text-center">Journli Makes Creating and Sharing Travel Plans a Breeze</p>
           </div>
           
           <div className="flex flex-col items-center justify-center space-y-16 md:space-y-32">
