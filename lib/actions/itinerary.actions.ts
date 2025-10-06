@@ -145,7 +145,7 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
 
         if (error) throw new Error(error.message);
 
-        return { success: true };
+        return data;
     } catch (error) {
         throw new Error(`Failed to create itinerary: ${error instanceof Error ? error.message : String(error)}`);
     }

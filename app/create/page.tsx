@@ -1229,7 +1229,7 @@ export default function CreatePage() {
   
   const saveDraft = async () => {
     if ( checkForEmptyValues() ) {
-      toast.error('Please add a title andat least one day')
+      toast.error('Please add a title and at least one day')
       return
     }
     
@@ -1252,12 +1252,14 @@ export default function CreatePage() {
         response = await updateItinerary(ItineraryId, itineraryData)
       } else {
         response = await createItinerary(itineraryData)
-        await supabase
-          .from('itinerary_gallery')
-          .insert({
-              itinerary_id: ItineraryId,
-              gallery_uuid: galleryUUID
-            })
+        if(response) {
+          await supabase
+            .from('itinerary_gallery')
+            .insert({
+                itinerary_id: response,
+                gallery_id: galleryUUID
+              })
+        }
       }
       
       if (response) {
@@ -1441,9 +1443,12 @@ export default function CreatePage() {
                   </div>
 
                   <div className="flex justify-end gap-1 sm:gap-4 pt-10 md:pt-0">
-                    <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
-                      {itineraryStatus === ItineraryStatusEnum.published ? 'Draft' : 'Save'}
-                    </Button>
+                    {ItineraryId && 
+                      <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
+                        {itineraryStatus === ItineraryStatusEnum.published ? 'Draft' : 'Save'}
+                      </Button>
+                    }
+
                     <Button 
                       type="button" 
                       onClick={(e) => {
@@ -1588,7 +1593,7 @@ export default function CreatePage() {
 
                   <div>
                     <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 5)</span></h2>
-                    <div className="md:flex smd:flex-wrap grid grid-cols-2 sm:grid-cols-3 gap-1 md:gap-3 w-full">
+                    <div className="md:grid-cols-4 grid grid-cols-2 sm:grid-cols-3 gap-1 md:gap-3 w-full">
                       {itineraryTags.map((category) => {
                         const currentTags = form.watch('itineraryTags') || []
                         const isSelected = currentTags.includes(category.id)
