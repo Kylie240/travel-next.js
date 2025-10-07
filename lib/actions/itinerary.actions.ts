@@ -254,6 +254,19 @@ export const deleteItinerary = async (itineraryId: string) => {
             throw itineraryError;
         }
 
+        const { data: galleryUUID } = await supabase
+        .from('itinerary_gallery')
+        .select('gallery_id')
+        .eq('itinerary_id', itineraryId)
+        .maybeSingle();
+
+        //logic for deleting
+
+        // const { error: galleryError } = await supabase
+        // .from('itinerary_gallery')
+        // .delete()
+        // .eq('itinerary_id', itineraryId);
+
         return { success: true };
     } catch (error) {
         throw new Error(`Failed to delete itinerary: ${error instanceof Error ? error.message : String(error)}`);

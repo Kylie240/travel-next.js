@@ -5,7 +5,7 @@ import { Bookmark } from "lucide-react"
 import { SaveItinerary, UnsaveItinerary } from '@/lib/actions/itinerary.actions'
 import { supabase } from '@/utils/supabase/superbase-client'
 
-const BookmarkElement = ({ itineraryId, currentUserId }: { itineraryId: string, currentUserId: string }) => {
+const BookmarkElement = ({ itineraryId, currentUserId, color }: { itineraryId: string, currentUserId: string, color?: string }) => {
   const [isSaved, setIsSaved] = useState(false)
 
   useEffect(() => {
@@ -18,7 +18,8 @@ const BookmarkElement = ({ itineraryId, currentUserId }: { itineraryId: string, 
       checkFollow()
     }, [itineraryId, currentUserId])
 
-  const handleBookmark = () => {
+  const handleBookmark = (e) => {
+    e.stopPropagation();
     if (!currentUserId) {
       // Redirect to login if user is not authenticated
       window.location.href = '/login'
@@ -36,10 +37,10 @@ const BookmarkElement = ({ itineraryId, currentUserId }: { itineraryId: string, 
 
   return (
     <Bookmark size={35}
-        className={`transition-colors cursor-pointer h-10 w-10 p-2 ${
+        className={`${color == 'black' ? 'p-2' : ''} transition-colors cursor-pointer h-6 w-6 md:h-10 md:w-10 ${
         isSaved
-            ? "fill-black text-black"
-            : "text-black hover:bg-gray-100 rounded-lg"
+            ? `${color == 'black' ? 'fill-black text-black hover:fill-black/70' : 'fill-white text-transparent hover:fill-white/70'}`
+            : `${color == 'black' ? 'fill-black text-transparent hover:fill-black/70 rounded-lg' : 'text-transparent fill-white/40 hover:fill-text/70 hover:fill-white/70 rounded-lg'}`
         }`}
         onClick={handleBookmark}
     />

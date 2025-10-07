@@ -3,22 +3,23 @@
 import { LikeItinerary, UnlikeItinerary } from '@/lib/actions/itinerary.actions'
 import { supabase } from '@/utils/supabase/superbase-client'
 import React, { useEffect, useState } from 'react'
-import { FaRegStar } from "react-icons/fa6"
+import { FaRegStar, FaStar } from "react-icons/fa6"
 
 const LikeElement = ({ itineraryId, currentUserId }: { itineraryId: string, currentUserId: string }) => {
   const [isLiked, setIsLiked] = useState(false)
   
     useEffect(() => {
-        const checkFollow = async () => {
+        const checkLike = async () => {
           if (!currentUserId) return // Don't check if user is not logged in
-          const { data, error } = await supabase.from('interactions_saves').select('*').eq('user_id', currentUserId).eq('itinerary_id', itineraryId).maybeSingle()
-          if (error) console.log('Error checking save status')
+          const { data, error } = await supabase.from('interactions_likes').select('*').eq('user_id', currentUserId).eq('itinerary_id', itineraryId).maybeSingle()
+          if (error) console.log('Error checking like status')
           setIsLiked(!!data)
         }
-        checkFollow()
+        checkLike()
       }, [itineraryId, currentUserId])
 
-  const handleLike = () => {
+  const handleLike = (e) => {
+    e.stopPropagation();
     if (!currentUserId) {
       // Redirect to login if user is not authenticated
       window.location.href = '/login'
@@ -35,14 +36,19 @@ const LikeElement = ({ itineraryId, currentUserId }: { itineraryId: string, curr
   }
 
   return (
-    <FaRegStar size={35}
-        className={`transition-colors cursor-pointer h-10 w-10  p-2 ${
-        isLiked
-            ? "fill-black text-black"
-            : "text-black hover:bg-gray-100 rounded-lg p-2"
-        }`}
-        onClick={handleLike}
-    />
+    <>
+      {isLiked ? (
+        <FaStar size={35}
+            className="transition-colors cursor-pointer h-10 w-10 p-2 fill-black text-black hover:bg-gray-100 rounded-lg"
+            onClick={handleLike}
+        />
+      ) : (
+        <FaRegStar size={35}
+            className="transition-colors cursor-pointer h-10 w-10 p-2 text-black hover:bg-gray-100 rounded-lg"
+            onClick={handleLike}
+        />
+      )}
+    </>
   )
 }
 

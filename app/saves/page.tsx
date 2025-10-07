@@ -11,6 +11,7 @@ import { getSavesByUserId, UnsaveItinerary } from "@/lib/actions/itinerary.actio
 import { SavedItinerary } from "@/types/savedItinerary"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { toast } from "sonner"
+import BookmarkElement from "../itinerary/[id]/bookmark-element"
 
 export default function SavesPage() { 
   const router = useRouter()
@@ -139,19 +140,13 @@ export default function SavesPage() {
                   <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90">
                       <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
                   </p>
-                  <p className="font-medium leading-6 text-lg sm:text-xl sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
+                  <p className="font-medium leading-6 text-lg sm:text-xl md:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                   <div className="flex justify-between items-end">
                     <p className="text-sm text-gray-200/50">@{itinerary.creatorUsername}</p>
-                    <button 
-                      className="text-white"
-                      onClick={async (event) => {
-                      event.stopPropagation()
-                        handleUnsave(itinerary.id)
-                    }}
-                    >
-                      <Bookmark className="h-6 w-6 hover:h-7 hover:w-7 fill-current" />
-                    </button>
                   </div>
+                </div>
+                <div className="absolute top-2 right-2">
+                  <BookmarkElement itineraryId={itinerary.id} currentUserId={user?.id || ''} />
                 </div>
               </div>
             ))}

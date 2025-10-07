@@ -18,7 +18,7 @@ export function SettingsSidebar({ isOpen, onClose, title, children }: SettingsSi
           className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[9999] lg:hidden md:px-8"
         />
         <Dialog.Content 
-          className="fixed inset-y-0 right-0 h-[100dvh] w-full max-w-screen bg-white shadow-lg z-[10000] lg:hidden md:px-8 animate-in slide-in-from-right"
+          className="fixed inset-y-0 right-0 h-[100vh] w-full max-w-screen bg-white shadow-lg z-[10000] lg:hidden md:px-8 animate-in slide-in-from-right"
         >
           <div className="flex items-center justify-between p-6">
             <Dialog.Close asChild>
@@ -34,7 +34,7 @@ export function SettingsSidebar({ isOpen, onClose, title, children }: SettingsSi
             </Dialog.Title>
           </div>
           
-          <div className="overflow-y-auto h-[calc(100dvh-65px)] p-4">
+          <div className="overflow-y-auto h-[100vh] p-4">
             {children}
           </div>
         </Dialog.Content>

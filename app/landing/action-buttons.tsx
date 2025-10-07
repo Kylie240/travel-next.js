@@ -17,16 +17,16 @@ const ActionButtons = () => {
     <div className="w-full"> 
       <div className="flex flex-col sm:flex-row gap-4">
         <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={isSignUp} setIsSignUp={setIsSignUp}>
-          <Button variant="outline" className="cursor-pointer border bg-transparent flex justify-center items-center w-full p-2 hover:bg-gray-100">
+          <Button variant="outline" size="lg" className="cursor-pointer border bg-transparent flex justify-center items-center w-full p-2 hover:bg-gray-100">
             Log In
           </Button>
         </AuthDialog>
         <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={isSignUp} setIsSignUp={setIsSignUp}>
-          <Button 
+          <Button size="lg"
             onClick={() => handleAuthClick(true)} 
             className="bg-gray-900 flex items-center text-white font-medium"
           >
-            Sign Up For Free
+            Sign Up
           </Button>
         </AuthDialog>
       </div>

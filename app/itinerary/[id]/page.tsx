@@ -39,11 +39,12 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   if (isPrivate && currentUserId !== itinerary.creatorId) {
     redirect("/not-authorized");
   }
+  
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
       {/* Hero Section */}
-      <div className="flex flex-col justify-between sticky h-[calc(100vh-70px)] min-h-fit lg:min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-4 md:gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
+      <div className="flex flex-col justify-between sticky h-[calc(100vh-64px)] min-h-fit lg:min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-4 md:gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
           <div className="flex-1 h-[400px] sm:h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
@@ -104,7 +105,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 ) : (
                   <div className="flex gap-2">
                     <LikeElement itineraryId={itinerary.id} currentUserId={currentUserId}/>  
-                    <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} />
+                    <BookmarkElement color={'black'} itineraryId={itinerary.id} currentUserId={currentUserId} />
                   </div>
                 )}
                 {itinerary.status === ItineraryStatusEnum.published && 

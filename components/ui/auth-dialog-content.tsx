@@ -75,7 +75,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           await supabase.from('users').insert({
             id: user.id,
             name: name,
-            username: username,
+            username: username.ToLowercase(),
             email: email,
             avatar: "",
             location: "",

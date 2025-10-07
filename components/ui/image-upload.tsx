@@ -47,7 +47,6 @@ export function ImageUpload({
         filePath = `${folder}/${Date.now()}/${uuidv4()}.${fileExt}`;
       }
 
-      console.log(filePath, bucket)
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {

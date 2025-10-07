@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { getItineraryDataByUserId } from "@/lib/actions/itinerary.actions";
 import { getProfileDataByUsername } from "@/lib/actions/user.actions";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Lock, MapPin, PenSquare, Search, ThumbsUp } from "lucide-react";
+import { Lock, MapPin, PenSquare, Search, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cookies } from 'next/headers'
@@ -59,9 +59,9 @@ const handleSearch = (text: string) => {
                   )}
                     { !isPrivate ? (
                     <div className="flex flex-col gap-2 items-center justify-center">
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col items-center justify-center gap-1">
                         <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
-                        <p className="text-gray-600">@ {userData[0].username}</p>
+                        <p className="text-gray-600 text-center">@ {userData[0].username}</p>
                       </div>
                       <p className="text-gray-700 text-center px-0 sm:px-4 text-sm md:text-md max-w-[550px]">{userData[0].bio}</p>
                       <div className="grid grid-cols-2 gap-2 mt-2">
@@ -78,7 +78,7 @@ const handleSearch = (text: string) => {
                     ) : (
                       <div className="flex flex-col items-center justify-center">
                         <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
-                        <p className="text-gray-600">@ {userData[0].username}</p>
+                        <p className="text-gray-600 text-center">@ {userData[0].username}</p>
                         <p className="text-gray-700 flex mt-2 text-center gap-1">This user's profile is 
                           <strong className="flex items-center gap-1"> 
                             private
@@ -167,19 +167,19 @@ const handleSearch = (text: string) => {
                                 <div className="flex mt-1 justify-between items-end">
                                     <div>
                                       <div className="flex relative items-center">
-                                        <ThumbsUp className="h-5 w-5 pb-1 pr-1"/>
+                                        <Star className="h-5 w-5 pb-1 pr-1"/>
                                         <p className="text-sm">{itinerary.likes}</p>
                                       </div>
                                     </div>
                                     <div>
-                                      {!isCurrentUser && currentUser &&
-                                        <div className="absolute top-0 right-0">
-                                          <BookmarkElement  itineraryId={itinerary.id} currentUserId={currentUser?.id || ''} />
-                                        </div>
-                                      }
                                     </div>
                                 </div>
                                 </div>
+                              {!isCurrentUser && currentUser &&
+                                <div className="absolute top-2 right-2">
+                                  <BookmarkElement  itineraryId={itinerary.id} currentUserId={currentUser?.id || ''} />
+                                </div>
+                              }
                             </div>
                         </Link>
                       ))

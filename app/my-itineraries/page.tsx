@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, ThumbsUp, Bookmark, Share, Search } from "lucide-react"
+import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, Bookmark, Share, Search, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { deleteItinerary, getItinerarySummaries, updateItineraryStatus } from "@/lib/actions/itinerary.actions"
@@ -275,7 +275,7 @@ export default function MyItinerariesPage() {
                               <p className="text-sm">{itinerary.views}</p>
                             </div>
                             <div className="flex relative items-center">
-                              <ThumbsUp className="h-5 w-5 pb-1 pr-1"/>
+                              <Star className="h-5 w-5 pb-1 pr-1"/>
                               <p className="text-sm">{itinerary.likes}</p>
                             </div>
                             <div className="flex relative items-center">

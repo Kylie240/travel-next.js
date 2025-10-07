@@ -44,30 +44,30 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
   return (
     <div>
       <div className="flex flex-col items-center">
-        <div className="relative w-32 h-32">
+        <div className="flex flex-col w-full items-center gap-2 md:gap-4">
           {user?.avatar && user?.avatar !== "" ? (
-          <div className="w-32 h-32 relative rounded-full overflow-hidden">
+          <div className="w-[100px] h-[100px] relative rounded-full">
             <Image
-              src={user?.avatar || ""}  
-              alt={user?.name || ""}
+              src={user.avatar}
+              alt={user.name}
               fill
-              className="object-cover"
-              sizes="(max-width: 640px) 128px, (max-width: 1024px) 160px, 128px"
+              className="object-cover rounded-full cursor-pointer"
+              style={{ width: '100%', height: '100%' }}
             />
           </div>
           ) : (
-            <div className="w-32 h-32 relative rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-              <FaUserLarge className="h-20 w-20 text-gray-300" />
+            <div className="w-[100px] h-[100px] relative rounded-full bg-gray-100 flex items-center justify-center">
+              <FaUserLarge className="h-14 w-14 text-gray-300" />
             </div>
           )}
         </div>
         <div className="flex-1 text-center md:text-left px-2 sm:px-4 md:px-8">
-          <div className="text-center flex flex-col items-center">
-            <h1 className="text-2xl font-bold">{user?.name}</h1>
-            <p className="text-gray-600 mb-2">@{user?.username}</p>
+          <div className="flex flex-col items-center justify-center mt-2 gap-1">
+            <h1 className="text-4xl font-semibold">{user.name}</h1>
+            <p className="text-gray-600">@ {user.username}</p>
           </div>
           <div className="grid py-2 grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-2 xl:gap-6 mb-4">
-            <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push("/favorites")}>
+            <div className="cursor-pointer flex flex-col items-center hover:text-gray-500">
               <div className="font-semibold">{userStats[0].totalSaves}</div>
               <div className="text-sm">Saves</div>
             </div>
@@ -79,7 +79,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
               <div className="font-semibold">{userStats[0].followingCount}</div>
               <div className="text-sm">Following</div>
             </div>
-            <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push("/favorites")}>
+            <div className="cursor-pointer flex flex-col items-center hover:text-gray-500">
               <div className="font-semibold">{userStats[0].totalLikes}</div>
               <div className="text-sm">Likes</div>
             </div>
