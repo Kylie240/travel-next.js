@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { TbWriting } from "react-icons/tb"
 import ActionButtons from "./action-buttons"
+import { Button } from "@/components/ui/button"
 
 export default function LandingPage() {
   return (
@@ -24,9 +25,9 @@ export default function LandingPage() {
         
         <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-2 md:mb-6">
-          Welcome To Your New <br/> Travel Journal
+          Welcome To Your New Travel Journal
           </h1>
-          <p className="text-sm sm:text-md md:text-lg md:text-xl text-center mb-8 max-w-2xl">
+          <p className="text-md sm:text-md md:text-lg md:text-xl text-center mb-8 max-w-2xl">
             Trip planning made easy
           </p>
           <div className="gap-4 mt-8">
@@ -127,18 +128,17 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <div className="py-20 px-4 bg-gray-900">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl text-white md:text-4xl font-bold mb-6">
+        <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl text-white md:text-4xl font-bold mb-6">
             Start Planning Your Journey
           </h2>
           <p className="text-md md:text-lg text-white mb-8 px-8">
             Sign up to start creating and sharing your travel experiences with fellow adventurers.
           </p>
-          <Link 
-            href="/auth/signup"
-            className="bg-white text-grey-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition inline-block"
-          >
-            Start Creating
+          <Link href="/about">
+            <Button className="px-6 text-md md:font-large md:h-12 md:py-4 md:px-8 md:text-xl text-black cursor-pointer border bg-white flex justify-center items-center p-2 hover:bg-gray-100">
+              Learn More
+            </Button>
           </Link>
         </div>
       </div>
@@ -146,7 +146,7 @@ export default function LandingPage() {
       {/* FAQ Section */}
       <div className="py-20 px-4 md:px-8 bg-gray-50">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+          <h2 className="text-2xl md:text-3xl md:text-4xl font-bold text-center mb-4">
             Frequently Asked Questions
           </h2>
           <p className="text-gray-600 text-center mb-12">
