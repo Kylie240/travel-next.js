@@ -129,40 +129,46 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
           </div>
           <div className="p-4 border rounded-md">
             <div className="flex flex-col gap-2 md:flex-row md:justify-between justify-start">
-              <p className="text-md font-medium px-2">About the Creator</p>
-              <div className="flex items-center gap-4 px-1">
-                <div className="relative h-12 w-12 rounded-full overflow-hidden">
-                  <Image
-                    src={creator.avatar}
-                    alt={creator.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="flex flex-col">
-                    <p className="text-xl font-medium">{creator.name}</p>
-                    <p className="text-gray-500">@{creator.username}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex w-full md:w-1/2 gap-4">
-                <Link href={`/profile/${creator.username}`} className="w-1/2">
-                  <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
-                    View Profile
-                  </Button>
-                </Link>
-                {canEdit ? (
-                  <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
-                    <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
-                      Edit Profile
-                    </Button>
-                  </Link>
-                  ) : (
-                    <div className="w-1/2">
-                      <FollowButton creatorId={creator.userId} userId={currentUserId} />
+              <p className="text-md hidden md:block font-medium px-2">About the Creator</p>
+              <div className="flex justify-between md:flex-col">
+                <Link href={`/profile/${creator.username}`} className="w-full cursor-pointer">
+                  <div className="flex items-center gap-2 px-1">
+                    <div className="relative h-12 w-12 rounded-full overflow-hidden">
+                      <Image
+                        src={creator.avatar}
+                        alt={creator.name}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-                  )}
+                    <div>
+                      <div className="flex flex-col">
+                        <p className="text-xl font-medium">{creator.name}</p>
+                        <p className="text-gray-500">@{creator.username}</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+                <div className="flex w-full gap-4 items-starts">
+                  <div className="w-1/2">
+                    <Link href={`/profile/${creator.username}`} className="hidden lg:block">
+                      <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
+                        View Profile
+                      </Button>
+                    </Link>
+                  </div>
+                  {canEdit ? (
+                    <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
+                      <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+                        Edit Profile
+                      </Button>
+                    </Link>
+                    ) : (
+                      <div className="w-1/2">
+                        <FollowButton creatorId={creator.userId} userId={currentUserId} />
+                      </div>
+                    )}
+                </div>
               </div>
             </div>
             <div className="mt-2 space-y-2">
