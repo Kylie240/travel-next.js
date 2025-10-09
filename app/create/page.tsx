@@ -205,7 +205,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: {
                 <div className="flex-1 text-left">
                   <div className="flex items-center justify-between">
                     {form.watch(`days.${index}.title`) ? (
-                      <h3 className="text-lg font-semibold"> <span className="hidden md:flex">Day :{index + 1}</span> {day.title && `${form.watch(`days.${index}.title`)}`}</h3>
+                      <h3 className="text-lg flex items-center font-semibold"> <span className="hidden md:flex md:ml-2">Day :{index + 1}</span> {form.watch(`days.${index}.title`)} </h3>
                     ) : (
                       <h3 className="text-lg font-semibold">Day {index + 1}</h3>
                     )}

@@ -1,7 +1,7 @@
 import { Calendar, MapPin, DollarSign } from "lucide-react"
 import Image from "next/image"
 import { Itinerary } from "@/types/itinerary"
-import BookmarkElement from "./bookmark-element"
+import BookmarkElement from "../../../components/ui/bookmark-element"
 import ScheduleSection from "./schedule-section"
 import NoteSection from "./note-section"
 import ShareElement from "./share-element"

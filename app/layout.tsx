@@ -5,6 +5,7 @@ import Footer from "@/components/layout/footer";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/auth";
 import { Roboto } from "next/font/google";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
 const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={roboto.className}>
         <AuthProvider>
+        <ScrollToTop />
         <div className="flex min-h-screen flex-col">
           <Navbar />
           <main className="flex-1 pt-16">{children}</main>

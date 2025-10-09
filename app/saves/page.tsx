@@ -11,7 +11,7 @@ import { getSavesByUserId, UnsaveItinerary } from "@/lib/actions/itinerary.actio
 import { SavedItinerary } from "@/types/savedItinerary"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { toast } from "sonner"
-import BookmarkElement from "../itinerary/[id]/bookmark-element"
+import BookmarkElement from "../../components/ui/bookmark-element"
 
 export default function SavesPage() { 
   const router = useRouter()

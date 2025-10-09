@@ -1,4 +1,4 @@
-import BookmarkElement from "@/app/itinerary/[id]/bookmark-element";
+import BookmarkElement from "@/components/ui/bookmark-element";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getItineraryDataByUserId } from "@/lib/actions/itinerary.actions";
@@ -44,7 +44,7 @@ const handleSearch = (text: string) => {
               <div className="w-full flex items-center justify-start gap-6 mb-4">
                 <div className="flex flex-col w-full items-center gap-2 md:gap-4">
                   {userData[0].avatar && userData[0].avatar !== "" ? (
-                  <div className="w-[100px] h-[100px] relative rounded-full">
+                  <div className="w-[120px] h-[120px] relative rounded-full">
                       <Image
                         src={userData[0].avatar}
                         alt={userData[0].name}
@@ -54,7 +54,7 @@ const handleSearch = (text: string) => {
                       />
                     </div>
                   ) : (
-                    <div className="w-[100px] h-[100px] relative rounded-full bg-gray-100 flex items-center justify-center">
+                    <div className="w-[120px] h-[120px] relative rounded-full bg-gray-100 flex items-center justify-center">
                       <FaUserLarge className="h-14 w-14 text-gray-300" />
                     </div>
                   )}

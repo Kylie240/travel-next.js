@@ -9,20 +9,19 @@ const BookmarkElement = ({ itineraryId, currentUserId, color }: { itineraryId: s
   const [isSaved, setIsSaved] = useState(false)
 
   useEffect(() => {
-      const checkFollow = async () => {
-        if (!currentUserId) return // Don't check if user is not logged in
+      const isSaved = async () => {
+        if (!currentUserId) return
         const { data, error } = await supabase.from('interactions_saves').select('*').eq('user_id', currentUserId).eq('itinerary_id', itineraryId).maybeSingle()
         if (error) console.log('Error checking save status')
         setIsSaved(!!data)
       }
-      checkFollow()
+      isSaved()
     }, [itineraryId, currentUserId])
 
   const handleBookmark = (e) => {
     e.stopPropagation();
     if (!currentUserId) {
-      // Redirect to login if user is not authenticated
-      window.location.href = '/login'
+      window.location.href = '/'
       return
     }
     
@@ -37,10 +36,10 @@ const BookmarkElement = ({ itineraryId, currentUserId, color }: { itineraryId: s
 
   return (
     <Bookmark size={35}
-        className={`${color == 'black' ? 'p-2' : ''} transition-colors cursor-pointer h-6 w-6 md:h-10 md:w-10 ${
+        className={`${color == 'black' ? 'p-2' : ''} transition-colors cursor-pointer h-6 w-6 md:h-10 md:w-10 hover:bg-gray-100 rounded-lg ${
         isSaved
             ? `${color == 'black' ? 'fill-black text-black hover:fill-black/70' : 'fill-white text-transparent hover:fill-white/70'}`
-            : `${color == 'black' ? 'fill-black text-transparent hover:fill-black/70 rounded-lg' : 'text-transparent fill-white/40 hover:fill-text/70 hover:fill-white/70 rounded-lg'}`
+            : `${color == 'black' ? 'fill-white text-black hover:fill-black/70 rounded-lg' : 'text-black fill-white/40 rounded-lg'}`
         }`}
         onClick={handleBookmark}
     />
