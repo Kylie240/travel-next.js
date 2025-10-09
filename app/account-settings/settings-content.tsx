@@ -174,7 +174,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       } catch (error) {
           toast.error('Failed to delete account')
       }
-  }
+    }
   }
 
   const handleUserAvatar = async (avatar: string) => {
@@ -249,7 +249,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           <div className="space-y-4">
             <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Profile Picture</label>
             {updatedUserData.avatar && updatedUserData.avatar !== "" ? (
-            <div className="w-[100px] h-[100px] overflow-hidden relative rounded-full ml-2">
+            <div className="w-[120px] h-[120px] overflow-hidden relative rounded-full ml-2">
                 <Image
                   src={updatedUserData.avatar}  
                   alt={updatedUserData.name}
@@ -259,7 +259,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                 />
               </div>
             ) : (
-              <div className="w-[100px] h-[100px] relative rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-[120px] h-[120px] relative rounded-full bg-gray-100 flex items-center justify-center">
                 <FaUserLarge className="h-12 w-12 text-gray-300" />
               </div>
             )}

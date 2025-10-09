@@ -51,7 +51,7 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row gap-8 w-full">
               <div className="relative w-full md:w-1/2 aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
                 <Image 
-                  src="https://img.freepik.com/premium-psd/smartphone-screen-mockup-grey-background_413715-396.jpg"
+                  src="/images/create1.png"
                   alt="Plan It"
                   fill
                   className="object-cover hover:scale-105 transition-transform duration-500"
@@ -76,7 +76,7 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row-reverse gap-8 md:px-[8rem] w-full">
               <div className="relative w-full md:w-1/2 aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
                 <Image 
-                  src="https://img.freepik.com/premium-psd/smartphone-screen-mockup-grey-background_413715-396.jpg"
+                  src="/images/days.png"
                   alt="Create It"
                   fill
                   className="object-cover hover:scale-105 transition-transform duration-500"
@@ -102,7 +102,7 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row gap-8 w-full">
               <div className="relative w-full md:w-1/2 aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
                 <Image 
-                  src="https://img.freepik.com/premium-psd/smartphone-screen-mockup-grey-background_413715-396.jpg"
+                  src="/images/share.png"
                   alt="Share It"
                   fill
                   className="object-cover hover:scale-105 transition-transform duration-500"

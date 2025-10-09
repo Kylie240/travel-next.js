@@ -11,6 +11,7 @@ import { cookies } from 'next/headers'
 import { FaUserLarge } from "react-icons/fa6";
 import FollowButton from "@/app/itinerary/[id]/follow-button";
 import ShareProfileButton from "./share-profile";
+import ProfileMenuButton from "./profile-menu-button";
 
 export default async function UserProfilePage({ params }: { params: { username: string } }) {
 const { username } = params;
@@ -64,15 +65,22 @@ const handleSearch = (text: string) => {
                         <p className="text-gray-600 text-center">@ {userData[0].username}</p>
                       </div>
                       <p className="text-gray-700 text-center px-0 sm:px-4 text-sm md:text-md max-w-[550px]">{userData[0].bio}</p>
-                      <div className="grid grid-cols-2 gap-2 mt-2">
-                        {isCurrentUser ? (
-                        <Link href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
-                            <Button className="w-full">Edit Profile</Button>
-                        </Link>
-                        ) : (
-                            <FollowButton creatorId={userId} userId={currentUser?.id || ''} />
+                      <div className="flex gap-2 mt-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          {isCurrentUser ? (
+                          <Link href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
+                              <Button className="w-full">Edit Profile</Button>
+                          </Link>
+                          ) : (
+                            <div>
+                              <FollowButton creatorId={userId} userId={currentUser?.id || null} />
+                            </div>
+                          )}
+                          <ShareProfileButton />
+                        </div>
+                        {!isCurrentUser && currentUser && (
+                          <ProfileMenuButton creatorId={userId} userId={currentUser?.id || null} />
                         )}
-                        <ShareProfileButton />
                       </div>
                     </div>
                     ) : (
@@ -163,7 +171,7 @@ const handleSearch = (text: string) => {
                                 <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90 line-clamp-1 sm:line-clamp-2">
                                     <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
                                 </p>
-                                <p className="sm:font-medium leading-[18px] sm:leading-6 text-lg sm:text-xl sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
+                                <p className="sm:font-medium leading-[18px] sm:leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                                 <div className="flex mt-1 justify-between items-end">
                                     <div>
                                       <div className="flex relative items-center">

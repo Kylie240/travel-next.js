@@ -154,7 +154,7 @@ export default function MyItinerariesPage() {
                       {/* Status Badge */}
                       {itinerary.status !== ItineraryStatusEnum.published && (
                         <div className="absolute top-5 left-5">
-                          <span className={`px-3 py-2 rounded-full text-md font-semibold capitalize bg-gray-700/80 text-white`}>
+                          <span className={`px-3 py-2 rounded-full text-sm md:text-md font-semibold capitalize bg-gray-700/80 text-white`}>
                             {ItineraryStatusEnumString[itinerary.status]}
                           </span>
                         </div>

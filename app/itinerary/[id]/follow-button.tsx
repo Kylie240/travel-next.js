@@ -5,11 +5,9 @@ import { Button } from '@/components/ui/button'
 import React, { useEffect, useState } from 'react'
 import { addFollow, removeFollow } from '@/lib/actions/user.actions'
 import { supabase } from '@/utils/supabase/superbase-client'
-import { User } from '@supabase/supabase-js'
 import { AuthDialog } from '@/components/ui/auth-dialog'
 
 const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string }) => {
-  const [user, setUser] = useState<User | null>(null)
   const [isFollowing, setIsFollowing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
@@ -17,50 +15,29 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
   const [isSignUp, setIsSignUp] = useState(false)
 
   useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        setUser(user)
-      } catch (error) {
-        setLoading(false)
-      }
-    }
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  useEffect(() => {
     const checkFollow = async () => {
-      if (!user?.id) {
+      if (!userId) {
         setLoading(false)
         return
       }
-      const isFollowing = await supabase.from('users_following').select('*').eq('user_id', userId).eq('following_id', user?.id).single()
-      setIsFollowing(isFollowing.data?.isFollowing)
+      const isFollowing = await supabase.from('users_following').select('*').eq('user_id', userId).eq('following_id', creatorId).single()
+      setIsFollowing(isFollowing.data?.following_id)
       setLoading(false)
     }
     checkFollow()
-  }, [creatorId, user?.id])
+  }, [creatorId, userId])
 
   const toggleFollow = async (isFollow: boolean) => {
-    if (!user?.id) {
+    if (!userId) {
       // Redirect to login if user is not authenticated
       window.location.href = '/login'
       return
     }
     
     if (isFollow) {
-      await addFollow(user?.id, creatorId)
+      await addFollow(userId, creatorId)
     } else {
-      await removeFollow(user?.id, creatorId)
+      await removeFollow(userId, creatorId)
     }
     setIsFollowing(isFollow)
   }
@@ -71,7 +48,7 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
   }
 
   // If user is not logged in, show login prompt
-  if (!user?.id) {
+  if (!userId) {
     return (
       <AuthDialog 
         isOpen={isAuthOpen} 
@@ -94,7 +71,9 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
   }
 
   return (
-    <Button onClick={() => toggleFollow(!isFollowing)} variant="outline" className="cursor-pointer flex justify-center items-center w-full p-2 hover:bg-gray-800 hover:text-white">
+    <Button onClick={() => toggleFollow(!isFollowing)} 
+      variant="outline" 
+      className={`${!isFollowing ? 'bg-gray-900 text-white hover:bg-gray-800 hoveR:text-white' : 'text-gray-800 hover:bg-gray-100'} cursor-pointer flex justify-center items-center w-full p-2 `}>
       {isFollowing ? 'Unfollow' : 'Follow'}
     </Button>
   )
