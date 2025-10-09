@@ -1,6 +1,6 @@
 "use client"
 
-import { Map, Send, ArrowRight } from "lucide-react"
+import { Map, Send } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { TbWriting } from "react-icons/tb"
@@ -27,7 +27,7 @@ export default function LandingPage() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-2 md:mb-6">
           Welcome To Your New Travel Journal
           </h1>
-          <p className="text-md sm:text-md md:text-lg md:text-xl text-center mb-8 max-w-2xl">
+          <p className="text-md sm:text-mlg md:text-xl text-center mb-8 max-w-2xl">
             Trip planning made easy
           </p>
           <div className="gap-4 mt-8">

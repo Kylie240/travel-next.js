@@ -45,7 +45,7 @@ export default function Navbar() {
     })
 
     return () => unsubscribe.data.subscription.unsubscribe()
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -107,7 +107,7 @@ export default function Navbar() {
             {user ? (
               <UserMenu />
             ) : (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="items-center gap-2">
                 <AuthDialog 
                   isOpen={isAuthOpen} 
                   setIsOpen={setIsAuthOpen} 
@@ -170,7 +170,7 @@ export default function Navbar() {
                   {item.name}
                 </Link>
               ))}
-              {!user && (
+              {/* {!user && (
                 <div className="flex flex-col gap-2 p-3">
                   <AuthDialog 
                     isOpen={isAuthOpen} 
@@ -191,7 +191,7 @@ export default function Navbar() {
                     </Button>
                   </AuthDialog>
                 </div>
-              )}
+              )} */}
             </div>
           </motion.div>
         )}

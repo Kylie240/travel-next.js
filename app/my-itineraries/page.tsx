@@ -68,7 +68,7 @@ export default function MyItinerariesPage() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [supabase])
 
   const handleSearch = (searchTerm: string) => {
     setSearchTerm(searchTerm)

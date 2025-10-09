@@ -10,6 +10,7 @@ import { CiPassport1 } from "react-icons/ci";
 import { getUserProfileById } from "@/lib/actions/user.actions"
 import { FaUserAlt } from "react-icons/fa"
 import { listenToAvatarUpdates } from "@/lib/utils/avatar-events"
+import Image from "next/image"
 
 export function UserMenu() {
   const supabase = createClientComponentClient()
@@ -40,7 +41,7 @@ export function UserMenu() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [router, supabase.auth])
 
   // Listen for avatar updates
   useEffect(() => {
@@ -78,9 +79,10 @@ export function UserMenu() {
         <button className="flex cursor-pointer items-center space-x-2 rounded-full bg-white/90 p-1.5 hover:bg-white/100 transition-colors">
           <div className="relative h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
             {userProfile?.avatar && userProfile.avatar !== "" ? (
-              <img 
+              <Image 
                 src={userProfile.avatar}
                 alt={user.user_metadata.username || "User avatar"} 
+                fill
                 className="h-full w-full object-cover"
               />
             ) : (

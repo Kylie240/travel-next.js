@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 interface ItineraryCardProps {
@@ -40,9 +41,10 @@ export function ItineraryCard({
       onClick={handleCardClick}
     >
       <div className="relative overflow-hidden rounded-2xl h-[440px]">
-        <img
+        <Image
           src={imageUrl}
           alt={title}
+          fill
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />

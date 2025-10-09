@@ -5,6 +5,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { toast } from "sonner"
 import { useState } from "react"
 import { v4 as uuidv4 } from 'uuid'
+import Image from "next/image"
 
 interface ImageUploadProps {
   value?: string
@@ -77,9 +78,10 @@ export function ImageUpload({
         {value && value !== "" ? (
           <div className="relative">
             <div className={`${folder.includes("main") ? "h-[150px]" : "h-[100px]"} w-[300px] relative`}>
-              <img 
+              <Image 
                 src={value} 
                 alt="Preview" 
+                fill
                 className="w-full h-full object-cover rounded-lg" 
               />
               <button

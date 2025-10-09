@@ -34,7 +34,7 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
       incrementItineraryViewCount(itineraryId);
       sessionStorage.setItem(key, "true");
     }
-  }, [itineraryId]);
+  }, [itineraryId, isCreator]);
 
   const scrollToTop = () => {
     if (headerRef.current) {

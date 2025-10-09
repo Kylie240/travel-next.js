@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 
 interface CountryCardProps {
@@ -22,9 +23,10 @@ export const CountryCard = ({ name, imageUrl, tripCount, onClick }: CountryCardP
       {/* Background image that only shows on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <div className="absolute inset-0">
-          <img
+          <Image
             src={imageUrl}
             alt={name}
+            fill
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/60" />

@@ -840,7 +840,7 @@ export default function CreatePage() {
 
   useEffect(() => {
     fetchGalleryUUID()
-  }, [])
+  }, [supabase, ItineraryId])
 
   useEffect(() => {
     const getUser = async () => {

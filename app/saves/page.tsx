@@ -52,7 +52,7 @@ export default function SavesPage() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [supabase])
 
   const refreshItineraries = async () => {
     if (user) {

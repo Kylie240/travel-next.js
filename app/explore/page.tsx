@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import FiltersForm from "./filters-form";
 import Link from "next/link";
 import Image from "next/image";
-import { BookmarkButton } from "@/components/ui/bookmark-button";
+import BookmarkElement from "../../components/ui/bookmark-element"
 import { getItineraries } from "@/lib/actions/itinerary.actions";
 import { Itinerary } from "@/types/itinerary";
 import { ExplorePageDto } from "@/dtos/ExplorePageDto";
@@ -275,7 +275,7 @@ searchParams
         //                   </div>
         //                 )}
         //                 <div className="absolute top-4 right-4">
-        //                   <BookmarkButton />
+        //                   <BookmarkElement itineraryId={itinerary.id} currentUserId={user?.id || ''} />
         //                 </div>
         //                 <div className="p-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
         //                   <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
