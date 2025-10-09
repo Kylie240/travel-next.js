@@ -38,21 +38,21 @@ const ActionButtons = () => {
     <div className="w-full"> 
       {currentUser ? (
         <Link href="/create">
-          <Button size="default" className="px-6 text-md md:font-large md:h-12 md:py-4 md:px-8 md:text-xl cursor-pointer border bg-transparent flex justify-center items-center w-full p-2 hover:bg-gray-100">
+          <Button size="default" className="px-6 text-md md:h-12 md:py-4 md:px-8 md:text-xl cursor-pointer border bg-transparent flex justify-center items-center w-full p-2 hover:text-black hover:bg-gray-100">
             Start Creating
           </Button>
         </Link>
       ) : (
       <div className="flex flex-col sm:flex-row gap-4">
         <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={false} setIsSignUp={setIsSignUp}>
-          <Button variant="outline" size="default" className="px-6 text-md md:font-large md:h-12 md:py-4 md:px-8 md:text-xl cursor-pointer border bg-transparent flex justify-center items-center w-full p-2 hover:bg-gray-100">
+          <Button variant="outline" size="default" className="px-8 text-lg h-10 md:h-12 py-4 md:text-xl border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
             Log In
           </Button>
         </AuthDialog>
         <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={true} setIsSignUp={setIsSignUp}>
           <Button size="default"
             onClick={() => handleAuthClick(true)} 
-            className="bg-gray-900 flex items-center text-white px-6 text-md md:font-large md:h-12 md:py-4 md:px-8 md:text-xl"
+            className="bg-gray-900 flex items-center text-white px-8 text-lg h-10 md:h-12 py-4 md:text-xl"
           >
             Sign Up
             </Button>

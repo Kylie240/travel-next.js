@@ -253,9 +253,10 @@ export const getBlockedUsersById = async (userId: string) => {
         const supabase = createServerActionClient({ cookies });
         
         const { data, error } = await supabase
-        .from('users_blocked')
-        .select('*')
-        .eq('user_id', userId)
+        .rpc("get_blocked_users", { p_user_id: userId }) as { 
+            data: Followers[] | null, 
+            error: Error | null 
+        };
 
         if (error) {
             throw new Error(error.message);
@@ -264,6 +265,34 @@ export const getBlockedUsersById = async (userId: string) => {
         return data;
     } catch (error) {
         throw new Error(`Failed to get blocked users: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+export const blockUser = async (userId: string, blockedUserId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+        
+        const { data, error } = await supabase
+        .from('users_blocked')
+        .insert([
+            {
+                user_id: userId,
+                blocked_id: blockedUserId
+            }
+        ]);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
+    } catch (error) {
+        throw new Error(`Failed to block user: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 

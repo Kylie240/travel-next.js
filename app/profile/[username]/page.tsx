@@ -78,9 +78,9 @@ const handleSearch = (text: string) => {
                           )}
                           <ShareProfileButton />
                         </div>
-                        {!isCurrentUser && currentUser && (
+                        {/* {!isCurrentUser && currentUser && (
                           <ProfileMenuButton creatorId={userId} userId={currentUser?.id || null} />
-                        )}
+                        )} */}
                       </div>
                     </div>
                     ) : (

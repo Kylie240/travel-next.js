@@ -4,4 +4,5 @@ export interface Followers {
     userUsername: string
     userAvatar: string
     isFollowing: boolean
+    isBlocked?: boolean
 }

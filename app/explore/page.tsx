@@ -332,7 +332,7 @@ searchParams
         //     </div>
         // </div>
         <div className="flex justify-center h-[calc(100vh-64px)] items-center">
-          <div className="text-center py-12 px-4 rounded-xl border-2 border-dashed w-full">
+          <div className="mx-6 md:mx-8 max-w-[800px] text-center py-12 px-4 rounded-xl border-2 border-dashed w-full">
             <div className="mb-4">
               <Globe2 className="h-12 w-12 mx-auto text-gray-400" />
             </div>

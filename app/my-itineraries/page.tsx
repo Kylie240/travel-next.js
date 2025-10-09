@@ -92,7 +92,7 @@ export default function MyItinerariesPage() {
 
   return (
     <div className="min-h-screen bg-white pt-12 sm:pt-[6rem]">
-      <div className="container mx-auto px-6 md:px-[3rem] lg:px-[6rem]">
+      <div className="container mx-auto px-6 mb-12 md:px-[3rem] lg:px-[6rem]">
         <div className="mb-10">
           <div className="flex items-center justify-between mb-6">
             <div className="flex flex-row items-center gap-2">
@@ -147,7 +147,7 @@ export default function MyItinerariesPage() {
                         src={itinerary.mainImage || "/images/placeholder.jpg"}
                         alt={itinerary.title}
                         fill
-                        className={`object-cover ${itinerary.status !== ItineraryStatusEnum.published ? "opacity-50" : ""}`}
+                        className={`object-cover ${itinerary.status !== ItineraryStatusEnum.published ? "opacity-40" : ""}`}
                       />
                       <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                       

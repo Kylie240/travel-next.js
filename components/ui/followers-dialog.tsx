@@ -6,8 +6,10 @@ import Image from "next/image"
 import { Button } from "./button"
 import { useRouter } from "next/navigation"
 import { Followers } from "@/types/followers"
-import { addFollow, removeFollow } from "@/lib/actions/user.actions"
+import { addFollow, removeFollow, blockUser, removeBlockedUser } from "@/lib/actions/user.actions"
 import { toast } from "sonner"
+import { supabase } from "@/utils/supabase/superbase-client"
+import { useState, useEffect } from "react"
 
 interface FollowersDialogProps {
   isOpen: boolean
@@ -20,27 +22,64 @@ interface FollowersDialogProps {
 
 export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUserId }: FollowersDialogProps) {
   const router = useRouter()
+  const [followStatus, setFollowStatus] = useState<Record<string, boolean>>({})
+  const [blockStatus, setBlockStatus] = useState<Record<string, boolean>>({})
 
-  const handleFollowToggle = async (userId: string, isFollowing: boolean) => {
+  // Initialize follow and block status from props
+  useEffect(() => {
+    const initialFollowStatus: Record<string, boolean> = {}
+    const initialBlockStatus: Record<string, boolean> = {}
+    users.forEach(user => {
+      initialFollowStatus[user.userId] = user.isFollowing
+      initialBlockStatus[user.userId] = user.isBlocked || false
+    })
+    setFollowStatus(initialFollowStatus)
+    setBlockStatus(initialBlockStatus)
+  }, [users])
+
+  const handleFollowToggle = async (userId: string) => {
+    const currentStatus = followStatus[userId]
+    
     try {
-      if (isFollowing) {
+      if (currentStatus) {
         await removeFollow(currentUserId, userId)
       } else {
         await addFollow(currentUserId, userId)
       }
       
-      // Update the UI optimistically
-      const updatedUsers = users.map(user => {
-        if (user.userId === userId) {
-          return { ...user, isFollowing: !isFollowing }
-        }
-        return user
-      })
+      // Update local state optimistically
+      setFollowStatus(prev => ({
+        ...prev,
+        [userId]: !currentStatus
+      }))
       
-      toast.success(`Successfully ${isFollowing ? 'unfollowed' : 'followed'} user`)
+      toast.success(`Successfully ${currentStatus ? 'unfollowed' : 'followed'} user`)
       router.refresh()
     } catch (error) {
       toast.error('Failed to update follow status')
+    }
+  }
+
+  const handleBlockToggle = async (userId: string) => {
+    const currentStatus = blockStatus[userId]
+    
+    try {
+      if (currentStatus) {
+        await removeBlockedUser(currentUserId, userId)
+      } else {
+        await blockUser(currentUserId, userId)
+      }
+      
+      // Update local state optimistically
+      setBlockStatus(prev => ({
+        ...prev,
+        [userId]: !currentStatus
+      }))
+      
+      toast.success(`Successfully ${currentStatus ? 'unblocked' : 'blocked'} user`)
+      router.refresh()
+    } catch (error) {
+      toast.error('Failed to update block status')
     }
   }
 
@@ -74,16 +113,46 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUse
                 </div>
                 
                 {user.userId !== currentUserId && (
-                  <Button
-                    variant={user.isFollowing ? "outline" : "default"}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleFollowToggle(user.userId, user.isFollowing)
-                    }}
-                    className={`h-9 rounded-xl ${user.isFollowing ? "" : "bg-gray-700"}`}
-                  >
-                    {user.isFollowing ? "Following" : "Follow"}
-                  </Button>
+                  <>
+                  {title === "Followers" && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant={followStatus[user.userId] ? "outline" : "default"}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleFollowToggle(user.userId)
+                        }}
+                        className={`h-9 rounded-xl ${followStatus[user.userId] ? "" : "bg-gray-700"}`}
+                      >
+                        {followStatus[user.userId] ? "Unfollow" : "Follow"}
+                      </Button>
+                      {!blockStatus[user.userId] && (
+                        <Button
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleBlockToggle(user.userId)
+                          }}
+                          className="h-9 rounded-xl border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          Block
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  {title === "Blocked Users" && (
+                    <Button
+                      variant={blockStatus[user.userId] ? "outline" : "default"}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleBlockToggle(user.userId)
+                      }}
+                      className={`h-9 rounded-xl ${blockStatus[user.userId] ? "" : "bg-red-600 hover:bg-red-700"}`}
+                    >
+                      {blockStatus[user.userId] ? "Unblock" : "Block"}
+                    </Button>
+                  )}
+                  </>
                 )}
               </div>
             ))}

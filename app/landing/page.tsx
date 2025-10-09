@@ -11,7 +11,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative h-[calc(100vh-64px)] max-h-screen max-w-[1800px] mx-auto lg:px-8 md:rounded-3xl overflow-hidden">
+      <div className="relative h-[calc(100vh-64px)] max-h-screen max-w-[1800px] px-2 md:px-8 md:rounded-3xl overflow-hidden">
         <div className="absolute inset-0">
           <Image
             src="/images/boat-photo2.jpg"
@@ -24,10 +24,10 @@ export default function LandingPage() {
         </div>
         
         <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-2 md:mb-6">
-          Welcome To Your New Travel Journal
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-center mb-6">
+          Welcome To Your New <br className="hidden md:block" /> Travel Journal
           </h1>
-          <p className="text-md sm:text-mlg md:text-xl text-center mb-8 max-w-2xl">
+          <p className="text-xl sm:text-2xl lg:text-3xl text-center mb-8 max-w-2xl">
             Trip planning made easy
           </p>
           <div className="gap-4 mt-8">
