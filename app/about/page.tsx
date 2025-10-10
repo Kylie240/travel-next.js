@@ -6,7 +6,7 @@ import { GrAppsRounded } from "react-icons/gr";
 
 const AboutPage = () => {
   return (
-    <div className="min-h-screen bg-white py-6 md:y-10 py-16">
+    <div className="min-h-screen bg-white py-6 md:py-10 lg:py-16 mb-12">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 max-w-4xl">
         {/* Header Section */}
         <div className="text-center mb-6 md:mb-10 lg:mb-16">

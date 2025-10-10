@@ -101,7 +101,7 @@ export default function SavesPage() {
 
   return (
     <div className="min-h-screen bg-white pt-12 sm:pt-[6rem]">
-      <div className="container mx-auto px-6 md:px-[3rem] lg:px-[6rem]">
+      <div className="container mx-auto px-6 sm:px-12 md:px-[3rem] lg:px-[6rem]">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-semibold">Saved Itineraries</h1>
         </div>
@@ -140,7 +140,7 @@ export default function SavesPage() {
                   <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90">
                       <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
                   </p>
-                  <p className="font-medium leading-6 text-lg sm:text-xl md:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
+                  <p className="font-medium leading-5 md:leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                   <div className="flex justify-between items-end">
                     <p className="text-sm text-gray-200/50">@{itinerary.creatorUsername}</p>
                   </div>

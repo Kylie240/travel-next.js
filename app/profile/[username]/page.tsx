@@ -39,7 +39,7 @@ const handleSearch = (text: string) => {
 
   return (
     <div className="min-h-screen max-w-[1340px] mx-auto bg-white py-8 mb-4">
-          <div className="container mx-auto px-6">
+          <div className="container mx-auto px-6 sm:px-8 md:px-[3rem] lg:px-[6rem]">
             <div className="w-full flex flex-col justify-center">
               <div className="w-full flex items-center justify-start gap-6 mb-4">
                 <div className="flex flex-col w-full items-center gap-2 md:gap-4">
@@ -64,7 +64,7 @@ const handleSearch = (text: string) => {
                         <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
                         <p className="text-gray-600 text-center">@ {userData[0].username}</p>
                       </div>
-                      <p className="text-gray-700 text-center px-0 sm:px-4 text-sm md:text-md max-w-[550px]">{userData[0].bio}</p>
+                      <p className="text-gray-700 text-center px-0 sm:px-4 text-sm md:text-md max-w-[500px] mx-4">{userData[0].bio}</p>
                       <div className="flex gap-2 mt-2">
                         <div className="grid grid-cols-2 gap-2">
                           {isCurrentUser ? (
@@ -168,7 +168,7 @@ const handleSearch = (text: string) => {
                                   <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                                 </div>
                                 <div className="p-4 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                                <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90 line-clamp-1 sm:line-clamp-2">
+                                <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90">
                                     <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
                                 </p>
                                 <p className="sm:font-medium leading-[18px] sm:leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>

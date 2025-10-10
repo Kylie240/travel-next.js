@@ -264,7 +264,7 @@ export default function MyItinerariesPage() {
                       )}
                     </div>
                       <div className="px-4 pb-3 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                        <p className="font-medium leading-6 text-lg sm:text-xl sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
+                        <p className="font-medium leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                         <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
                           {/* {itinerary?.cities?.length > 0 ? itinerary?.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")} */}
                         </p>

@@ -36,10 +36,10 @@ const BookmarkElement = ({ itineraryId, currentUserId, color }: { itineraryId: s
 
   return (
     <Bookmark size={35}
-        className={`${color == 'black' ? 'p-2' : ''} transition-colors cursor-pointer h-6 w-6 md:h-10 md:w-10 hover:bg-gray-100 rounded-lg ${
+        className={`${color == 'black' ? 'p-2' : ''} transition-colors cursor-pointer h-10 w-100 rounded-lg ${
         isSaved
-            ? `${color == 'black' ? 'fill-black text-black hover:fill-black/70' : 'fill-white text-transparent hover:fill-white/70'}`
-            : `${color == 'black' ? 'fill-white text-black hover:fill-black/70 rounded-lg' : 'text-black fill-white/40 rounded-lg'}`
+            ? `${color == 'black' ? 'fill-black text-black hover:fill-black/70' : 'fill-white text-transparent'}`
+            : `${color == 'black' ? 'fill-white text-black hover:fill-black/70 rounded-lg' : 'fill-white/40'}`
         }`}
         onClick={handleBookmark}
     />

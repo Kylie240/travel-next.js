@@ -205,13 +205,13 @@ function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: {
                 <div className="flex-1 text-left">
                   <div className="flex items-center justify-between">
                     {form.watch(`days.${index}.title`) ? (
-                      <h3 className="text-lg flex items-center font-semibold"> <span className="hidden md:flex md:ml-2">Day :{index + 1}</span> {form.watch(`days.${index}.title`)} </h3>
+                      <h3 className="text-lg flex items-center font-semibold"> <span className="hidden md:flex md:ml-2 mr-2">Day :{index + 1}</span> {form.watch(`days.${index}.title`)} </h3>
                     ) : (
-                      <h3 className="text-lg font-semibold">Day {index + 1}</h3>
+                      <h3 className="text-lg font-semibold md:ml-2">Day {index + 1}</h3>
                     )}
                   </div>
                   {form.watch(`days.${index}.cityName`) && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 md:ml-2">
                       {form.watch(`days.${index}.cityName`)}, {form.watch(`days.${index}.countryName`)}
                     </p>
                   )}
@@ -1214,16 +1214,81 @@ export default function CreatePage() {
 
     const onSubmit = form.handleSubmit(async (data) => {
       try {
+        // Pre-submission validation check
+        const hasEmptyActivities = data.days.some(day => 
+          day.activities?.some(activity => !activity.title || activity.title.trim() === '')
+        )
+        
+        if (hasEmptyActivities) {
+          toast.error('Please add titles to all activities before publishing')
+          return
+        }
+        
         const isValid = await form.trigger()
         if (isValid) {
           await handleFinalSubmit(data)
         } else {
-          toast.error('Please fill in all required fields')
+          // Get specific validation errors
+          const errors = form.formState.errors
+          console.log('Validation errors:', errors)
+          
+          // Check for specific missing fields
+          if (errors.title) {
+            toast.error('Title is required')
+          } else if (errors.shortDescription) {
+            toast.error('Short description is required')
+          } else if (errors.mainImage) {
+            toast.error('Main image URL is required')
+          } else if (errors.duration) {
+            toast.error('Duration must be at least 1 day')
+          } else if (errors.countries) {
+            toast.error('At least one country is required')
+          } else if (errors.cities) {
+            toast.error('At least one city is required')
+          } else if (errors.days) {
+            // Check for specific day errors
+            const dayErrors = errors.days
+            if (Array.isArray(dayErrors)) {
+              for (let i = 0; i < dayErrors.length; i++) {
+                const dayError = dayErrors[i]
+                if (dayError?.title) {
+                  toast.error(`Day ${i + 1}: Title is required`)
+                  break
+                } else if (dayError?.cityName) {
+                  toast.error(`Day ${i + 1}: City name is required`)
+                  break
+                } else if (dayError?.countryName) {
+                  toast.error(`Day ${i + 1}: Country name is required`)
+                  break
+                } else if (dayError?.activities) {
+                  // Check for specific activity errors
+                  const activityErrors = dayError.activities
+                  if (Array.isArray(activityErrors)) {
+                    for (let j = 0; j < activityErrors.length; j++) {
+                      const activityError = activityErrors[j]
+                      if (activityError?.title) {
+                        toast.error(`Day ${i + 1}, Activity ${j + 1}: Title is required`)
+                        break
+                      }
+                    }
+                  } else {
+                    toast.error(`Day ${i + 1}: Activity titles are required`)
+                  }
+                  break
+                }
+              }
+            } else {
+              toast.error('At least one day is required')
+            }
+          } else {
+            toast.error('Please fill in all required fields')
+          }
         }
       } catch (error) {
         toast.error('Error submitting form')
       }
     }, (errors) => {
+      console.log('Form validation errors:', errors)
       toast.error('Please fill in all required fields')
     })
   
@@ -1442,7 +1507,7 @@ export default function CreatePage() {
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-1 sm:gap-4 pt-10 md:pt-0">
+                  <div className="flex justify-end gap-2 pt-10 md:pt-0">
                     {ItineraryId && 
                       <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
                         {itineraryStatus === ItineraryStatusEnum.published ? 'Draft' : 'Save'}
@@ -1485,7 +1550,7 @@ export default function CreatePage() {
                 <div className="h-full">
                   <div className="flex flex-col h-full justify-between">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-xl md:font-semibold p-2 sm:p-0">Day Planning</h2>
+                      <h2 className="text-xl md:font-semibold p-2">Day Planning</h2>
                     </div>
 
                     <DndContext
@@ -1529,7 +1594,7 @@ export default function CreatePage() {
                       </Button>
                     </div>
 
-                    <div className="flex justify-end gap-1 sm:gap-4 pt-10 md:pt-0">
+                    <div className="flex justify-end gap-2 pt-10 md:pt-0">
                       <Button
                         type="button"
                         variant="outline"
@@ -1741,7 +1806,7 @@ export default function CreatePage() {
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-1 sm:gap-4 pt-10 md:pt-0">
+                  <div className="flex justify-end gap-2 pt-10 md:pt-0">
                     <Button 
                       type="button" 
                       variant="outline" 

@@ -13,7 +13,7 @@ export const createSchema = z.object({
     cities: z.array(z.object({
       city: z.string(),
       country: z.string(),
-    })).min(1, "At least one city is required"),
+    })).optional(),
     days: z.array(daySchema).min(1, "At least one day is required"),
     itineraryTags: z.array(z.number()).max(5, "Maximum 5 tags allowed"),
     notes: z.array(noteSchema).nullable().optional(),

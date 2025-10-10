@@ -84,7 +84,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
               <div className="text-sm">Likes</div>
             </div>
           </div>
-          <div className="grid grid-cols-2 justify-center gap-4">
+          <div className="grid grid-cols-2 justify-center gap-2">
             <Button variant="outline" onClick={() => router.push(`/profile/${user.username}`)}>View Profile</Button>
             <ShareProfileButton />
           </div>
