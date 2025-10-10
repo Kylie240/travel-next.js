@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input, Textarea } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload, ChevronLeft, ChevronRight, CalendarPlus, PencilRuler, Flag } from "lucide-react"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
 import { useForm, useFieldArray, FormProvider } from "react-hook-form"
@@ -863,7 +863,7 @@ export default function CreatePage() {
     }
   }, [supabase])
   
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(0)
 
   const form = useForm<FormData>({
     resolver: zodResolver(createSchema),
@@ -1413,7 +1413,7 @@ export default function CreatePage() {
       >
         <div className="md:container mx-auto md:px-4 md:max-w-4xl">
           <div className="bg-white md:rounded-2xl min-h-screen md:min-h-0 p-4 md:p-12 md:shadow">
-            <div className="flex justify-between items-center py-4 mb-2 md:mb-8">
+            {currentStep !== 0 && <div className="flex justify-between items-center py-4 mb-2 md:mb-8">
               <h1 className="text-xl md:text-2xl font-semibold">{!ItineraryId ? "Create New" : "Edit"} Itinerary</h1>
               <div className="flex gap-2">
                 {[1, 2, 3].map(step => (
@@ -1433,8 +1433,52 @@ export default function CreatePage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div>}
             <div className="h-full">
+              {currentStep === 0 && (
+                <div className="space-y-6 mx-4 sm:mx-6 py-4 mb-2 md:mb-8">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Welcome to the Itinerary Creator</h1>
+                  <p className="pb-4 text-md sm:text-lg lg:text-xl text-gray-500">We made creating an itinerary easy for you. Just fill in the details and we'll take care of the rest.</p>
+                  <div className="space-y-10">
+                    <div className="flex gap-4 md:gap-6">
+                      <p className="text-xl md:text-2xl font-semibold w-[20px]">1</p>
+                      <div className="w-full sm:mr-2">
+                        <p className="text-xl md:text-2xl font-semibold">Start with the basics</p>
+                        <p className="text-md md:text-lg lg:text-xl text-gray-500">Add general information about your trip, like the duration add description.</p>
+                      </div>
+                      <div className="w-[50px] h-[50px]">
+                        <PencilRuler className="w-full h-full" />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 md:gap-6">
+                      <p className="text-xl md:text-2xl font-semibold w-[20px]">2</p>
+                      <div className="w-full sm:mr-2">
+                        <p className="text-xl md:text-2xl font-semibold">Create the schedule</p>
+                        <p className="text-md md:text-lg lg:text-xl text-gray-500">Include important day to day details, like the activities and accommodations.</p>
+                      </div>
+                      <div className="w-[50px] h-[50px]">
+                        <CalendarPlus className="w-full h-full" />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 md:gap-6">
+                      <p className="text-xl md:text-2xl font-semibold w-[20px]">3</p>
+                      <div className="w-full sm:mr-2">
+                        <p className="text-xl md:text-2xl font-semibold">Add the final details</p>
+                        <p className="text-md md:text-lg lg:text-xl text-gray-500">Help other travelers budget for this trip, and add any categories and notes.</p>
+                      </div>
+                      <div className="w-[50px] h-[50px]">
+                        <Flag className="w-full h-full" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-center mx-10 pt-6">
+                    <Button className="w-full md:w-[300px]" onClick={() => setCurrentStep(1)}>Get Started</Button>
+                  </div>
+                </div>
+              )}
+
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div>
