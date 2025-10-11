@@ -863,7 +863,7 @@ export default function CreatePage() {
     }
   }, [supabase])
   
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState(ItineraryId ? 1 : 0)
 
   const form = useForm<FormData>({
     resolver: zodResolver(createSchema),
@@ -1436,7 +1436,7 @@ export default function CreatePage() {
             </div>}
             <div className="h-full">
               {currentStep === 0 && (
-                <div className="space-y-6 mx-4 sm:mx-6 py-4 mb-2 md:mb-8">
+                <div className="space-y-4 mx-4 sm:mx-6 py-4 mb-2 md:mb-8">
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Welcome to the Itinerary Creator</h1>
                   <p className="pb-4 text-md sm:text-lg lg:text-xl text-gray-500">We made creating an itinerary easy for you. Just fill in the details and we'll take care of the rest.</p>
                   <div className="space-y-10">

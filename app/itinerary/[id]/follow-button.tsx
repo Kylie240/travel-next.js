@@ -64,7 +64,7 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
     if (isMobile) {
       return (
         <Button 
-          className="text-white hover:text-black w-full"
+          className="w-full"
           onClick={() => router.push('/login?mode=login')}
         >
           Log In to Follow
@@ -80,7 +80,7 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
         setIsSignUp={setIsSignUp}
       >
         <Button 
-          className="text-white hover:text-black w-full"
+          className="w-full"
           onClick={() => {
             setIsSignUp(false)
             setIsAuthOpen(true)

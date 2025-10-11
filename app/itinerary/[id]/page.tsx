@@ -19,6 +19,7 @@ import Link from "next/link"
 import { FiEdit } from "react-icons/fi"
 import { redirect } from "next/navigation"
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
+import BioSection from "./bio-section"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const supabase = createServerComponentClient({ cookies })
@@ -44,7 +45,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
       {/* Hero Section */}
-      <div className="flex flex-col justify-between sticky h-[calc(100vh-64px)] min-h-fit lg:min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-4 md:gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
+      <div className="flex flex-col space-y-6 lg:space-y-0 min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-4 md:gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
           <div className="flex-1 h-[400px] sm:h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
@@ -78,7 +79,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                       </div>
                       <div>
                         {photos?.length > 2 && 
-                          <div className="lg:hidden rounded-md p-[3px] h-[55px] w-[65px]">
+                          <div className="lg:hidden rounded-md h-[45px] w-[65px]">
                             <ItineraryGallery photos={photos} />
                           </div>
                         }
@@ -127,10 +128,10 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               </p>
           </div>
           <div className="p-4 border rounded-md">
+            <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
             <div className="flex w-full justify-between">
               <div>
-                <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
-                <Link href={`/profile/${creator.username}`} className="w-[100px] md:w-full cursor-pointer">
+                <Link href={`/profile/${creator.username}`} className="min-w-[100px] md:w-full cursor-pointer">
                   <div className="flex items-center gap-2 px-1">
                     <div className="relative h-12 w-12 rounded-full overflow-hidden">
                       <Image
@@ -158,20 +159,20 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   </Link>
                 </div>
                 {canEdit ? (
-                  <Link className="w-[100px] md:w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
+                  <Link className="min-w-[100px] md:w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
                     <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
                       Edit Profile
                     </Button>
                   </Link>
                   ) : (
-                    <div className="w-[100px] md:w-1/2">
+                    <div className="min-w-[100px] md:w-1/2">
                       <FollowButton creatorId={creator.userId} userId={currentUserId} />
                     </div>
                   )}
               </div>
             </div>
             <div className="mt-2 space-y-2">
-              <p className="text-sm md:text-md">{creator.bio}</p>
+              <BioSection bio={creator.bio} />
             </div>
           </div>
         </div>
@@ -208,17 +209,17 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <div className="w-full justify-between hidden lg:flex">
                 <h2 className="text-2xl md:text-2xl font-semibold mb-2">Trip Overview</h2>
                 <div className="flex gap-2">
-                  {canEdit ?
-                  (
+                  {currentUserId && !canEdit &&
+                    <div className="flex gap-2">
+                      <LikeElement itineraryId={itinerary.id} currentUserId={currentUserId}/>  
+                      <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} />
+                    </div>
+                  }
+                  {canEdit &&
                     <Link href={`/create?itineraryId=${itinerary.id}`}>
                       <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                     </Link>
-                  ) : (
-                    <div className="flex gap-2">
-                    <LikeElement itineraryId={itinerary.id} currentUserId={currentUserId}/>  
-                    <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} />
-                  </div>
-                  )}
+                  }
                   {itinerary.status === ItineraryStatusEnum.published && 
                     <ShareElement />
                   }

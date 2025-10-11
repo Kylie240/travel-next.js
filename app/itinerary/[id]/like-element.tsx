@@ -21,7 +21,6 @@ const LikeElement = ({ itineraryId, currentUserId }: { itineraryId: string, curr
   const handleLike = (e) => {
     e.stopPropagation();
     if (!currentUserId) {
-      // Redirect to login if user is not authenticated
       window.location.href = '/login'
       return
     }

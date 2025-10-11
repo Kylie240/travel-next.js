@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Share, Copy, Mail, MessageCircle, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import * as Popover from '@radix-ui/react-popover'
@@ -9,7 +9,33 @@ import { FaFacebook, FaTwitter, FaWhatsapp } from 'react-icons/fa'
 const ShareElement = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [canUseNativeShare, setCanUseNativeShare] = useState(false)
   const currentUrl = typeof window !== 'undefined' ? window.location.href : ''
+
+  useEffect(() => {
+    // Check if native share is available (typically on mobile devices)
+    setCanUseNativeShare(
+      typeof navigator !== 'undefined' && 
+      navigator.share !== undefined &&
+      window.innerWidth < 768
+    )
+  }, [])
+
+  const handleNativeShare = async () => {
+    try {
+      await navigator.share({
+        title: document.title || 'Check out this itinerary',
+        text: 'I thought you might like this travel itinerary!',
+        url: currentUrl,
+      })
+    } catch (error) {
+      // User cancelled or share failed
+      if (error instanceof Error && error.name !== 'AbortError') {
+        // Fallback to copying link if share fails
+        handleCopyLink()
+      }
+    }
+  }
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(currentUrl)
@@ -53,6 +79,19 @@ const ShareElement = () => {
     setIsOpen(false)
   }
 
+  // If mobile and native share is available, use native share
+  if (canUseNativeShare) {
+    return (
+      <button 
+        onClick={handleNativeShare}
+        className="cursor-pointer hover:bg-gray-100 h-10 w-10 rounded-lg p-2 flex items-center justify-center"
+      >
+        <Share size={24} />
+      </button>
+    )
+  }
+
+  // Otherwise, show the popover menu (desktop)
   return (
     <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
       <Popover.Trigger asChild>

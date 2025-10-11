@@ -29,17 +29,17 @@ export interface DaySectionProps {
 export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySectionProps) => {
   return (
    <div>
-      <div className={`relative border-black border-l-[.18rem] pl-4 mr-2 ${isActive ? 'pb-4' : ''}`}>
-        <div className="absolute -left-[.83rem] bg-white py-4">
-          <button onClick={onToggle} className="bg-transparent border-none p-0">
+      <div className={`relative border-black border-l-[.12rem] pl-4 mr-2 ${isActive ? 'pb-4' : ''}`}>
+        <div className="absolute -left-[.83rem] bg-white py-2">
+          <button onClick={onToggle} className={`bg-transparent border-none p-0 ${day.id !== 1 ? 'top-2' : ''}`}>
             {day.id === 1 && !isActive ? (
-              <MapPin strokeWidth={2.8} size={25} className="-left-[.19rem] relative"/>
+              <MapPin strokeWidth={2} size={25} className="-left-[2px] relative"/>
             ) : day.id === 1 && isActive ? (
-              <MapPin fill="currentColor" size={25} className="-left-[.19rem] relative"/>
+              <MapPin fill="currentColor" size={25} className="-left-[2px] relative"/>
             ) : isActive ? (
               <Circle fill="currentColor" size={18} className="left-[2px] relative" />
             ) : (
-              <Circle strokeWidth={4} size={18} className="left-[2px] relative" />
+              <Circle strokeWidth={3} size={18} className="left-[2px] relative" />
             )}
           </button>
         </div>

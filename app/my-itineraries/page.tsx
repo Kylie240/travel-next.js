@@ -23,6 +23,7 @@ export default function MyItinerariesPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredItinerarySummaries, setFilteredItinerarySummaries] = useState<ItinerarySummary[] | null>(null)
+  const [canUseNativeShare, setCanUseNativeShare] = useState(false)
 
   const refreshItineraries = async () => {
     if (user) {
@@ -69,6 +70,41 @@ export default function MyItinerariesPage() {
       subscription.unsubscribe()
     }
   }, [supabase])
+
+  useEffect(() => {
+    // Check if native share is available (typically on mobile devices)
+    setCanUseNativeShare(
+      typeof navigator !== 'undefined' && 
+      navigator.share !== undefined &&
+      window.innerWidth < 768
+    )
+  }, [])
+
+  const handleShare = async (e: React.MouseEvent, itinerary: ItinerarySummary) => {
+    e.stopPropagation()
+    const shareUrl = `${window.location.origin}/itinerary/${itinerary.id}`
+    
+    if (canUseNativeShare) {
+      try {
+        await navigator.share({
+          title: itinerary.title,
+          text: 'Check out this travel itinerary!',
+          url: shareUrl,
+        })
+      } catch (error) {
+        // User cancelled or share failed
+        if (error instanceof Error && error.name !== 'AbortError') {
+          // Fallback to copying link
+          navigator.clipboard.writeText(shareUrl)
+          toast.success('Copied to clipboard')
+        }
+      }
+    } else {
+      // Desktop: just copy to clipboard
+      navigator.clipboard.writeText(shareUrl)
+      toast.success('Copied to clipboard')
+    }
+  }
 
   const handleSearch = (searchTerm: string) => {
     setSearchTerm(searchTerm)
@@ -253,11 +289,7 @@ export default function MyItinerariesPage() {
                       </div>
                       {itinerary.status == ItineraryStatusEnum.published && (
                         <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(`${window.location.href}/itinerary/${itinerary.id}`);
-                            toast.success('Copied to clipboard')
-                            }}
+                          onClick={(e) => handleShare(e, itinerary)}
                           className="p-2 absolute top-8 mt-6 right-4 rounded-full bg-white/40 hover:bg-white/60 transition-colors">
                           <Share className="h-4 w-4 text-black" />
                         </button>

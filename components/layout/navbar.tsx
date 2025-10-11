@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Menu, X, Search } from "lucide-react"
@@ -30,6 +30,8 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const isExplorePage = pathname === "/explore"
   const isLandingPage = pathname === "/"
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const getUser = async () => {
@@ -72,6 +74,29 @@ export default function Navbar() {
 
     return () => window.removeEventListener('scroll', handleScroll)
   }, [scrolled])
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isOpen &&
+        mobileMenuRef.current &&
+        menuButtonRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        !menuButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
 
   const navigation = publicNavigation
 
@@ -152,6 +177,7 @@ export default function Navbar() {
 
             {/* Mobile menu button */}
             <Button
+              ref={menuButtonRef}
               variant="ghost"
               size="icon"
               onClick={() => setIsOpen(!isOpen)}
@@ -172,6 +198,7 @@ export default function Navbar() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            ref={mobileMenuRef}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}

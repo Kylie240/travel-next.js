@@ -37,17 +37,6 @@ export default function LoginPage() {
   const supabase = createClientComponentClient()
   const [confirmPassword, setConfirmPassword] = useState("")
   
-  // Redirect desktop users back to home
-  useEffect(() => {
-    const checkDevice = () => {
-      if (window.innerWidth >= 768) {
-        router.push('/')
-      }
-    }
-    checkDevice()
-    window.addEventListener('resize', checkDevice)
-    return () => window.removeEventListener('resize', checkDevice)
-  }, [router])
   
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema)
@@ -164,7 +153,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <div className="flex-1 flex flex-col p-6 max-w-[450px] mx-auto w-full">
 
-        <div className="flex-1 flex flex-col mt-8">
+        <div className="flex-1 flex flex-col mt-8 md:mt-12 lg:mt-16">
           <h1 className="text-2xl text-center font-bold mb-2">
             Welcome{isSignUp ? " " : " back"} to Journli
           </h1>
