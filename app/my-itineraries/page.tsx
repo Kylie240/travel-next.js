@@ -165,7 +165,7 @@ export default function MyItinerariesPage() {
                         <DropdownMenu.Root>
                           <DropdownMenu.Trigger asChild>
                             <button 
-                              className="p-2 rounded-full bg-white/40 hover:bg-white/50 transition-colors">
+                              className="p-2 rounded-full bg-white/40 hover:bg-white/60 transition-colors">
                               <MoreVertical className="h-4 w-4 text-black" />
                             </button>
                           </DropdownMenu.Trigger>
@@ -214,7 +214,7 @@ export default function MyItinerariesPage() {
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                  onClick={async (event) => {
                                       event.stopPropagation()
-                                      if (confirm('Are you sure you want to archiv this itinerary?')) {
+                                      if (confirm('Are you sure you want to archive this itinerary? This will hide it from your profile and other users will not be able to see it. You can always publish it again later.')) {
                                           try {
                                               await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.archived)
                                               toast.success('Itinerary archived successfully')
@@ -235,7 +235,7 @@ export default function MyItinerariesPage() {
                                   className="flex items-center px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
                                   onClick={async (event) => {
                                       event.stopPropagation()
-                                      if (confirm('Are you sure you want to delete this itinerary?')) {
+                                      if (confirm('Are you sure you want to delete this itinerary? This will permanently delete the itinerary and all of its data.')) {
                                           try {
                                               handleDeleteItinerary(itinerary.id)
                                           } catch (error) {
@@ -258,7 +258,7 @@ export default function MyItinerariesPage() {
                             navigator.clipboard.writeText(`${window.location.href}/itinerary/${itinerary.id}`);
                             toast.success('Copied to clipboard')
                             }}
-                          className="p-2 absolute top-8 mt-6 right-4 rounded-full bg-white/40 hover:bg-white/50 transition-colors">
+                          className="p-2 absolute top-8 mt-6 right-4 rounded-full bg-white/40 hover:bg-white/60 transition-colors">
                           <Share className="h-4 w-4 text-black" />
                         </button>
                       )}

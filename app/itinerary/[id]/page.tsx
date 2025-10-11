@@ -57,34 +57,33 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
             <div className="absolute inset-0 flex items-end md:items-end">
               <div className="container px-0 mx-0 lg:mx-auto">
-                <div className="flex justify-between items-end text-white m-0 sm:m-2 p-6 md:p-8 md:mb-8 md:ml-4 relative">
-                  <div>
-                    <h1 className="max-w-[80%] leading-[30px] md:leading-[40px] text-3xl xl:text-4xl font-bold mb-4">{itinerary.title}</h1>
-                    {/* <p className="text-sm md:text-xl mb-6 hidden md:block">{itinerary.shortDescription}</p> */}
-                    <div className="flex items-center gap-1 flex-wrap sm:gap-4 md:gap-6 text-sm">
-                      <div className="flex items-center">
-                        <Calendar className="h-5 w-5 mr-1 sm:mr-2" />
-                        {itinerary.duration} {itinerary.duration > 1 ? 'days' : 'day'}
-                      </div>
-                      <div className="flex items-center">
-                        <MapPin className="h-5 w-5 mr-1 sm:mr-2" />
-                        {countries.length > 0 ? countries.map((country: any) => country).join(' · ') : ''}
-                      </div>
-                      {itinerary?.budget && 
+                <div className="flex flex-col text-white m-0 sm:m-2 p-6 md:p-8 md:mb-8 md:ml-4 relative">
+                    <h1 className="max-w-[100%] lg:max-w-[80%] text-left leading-[30px] md:leading-[40px] text-3xl xl:text-4xl font-bold lg:mb-4 mr-0 md:mr-6 lg:mr-0">{itinerary.title}</h1>
+                    <div className="w-full flex justify-between items-center">
+                      <div className="flex items-center gap-1 flex-wrap sm:gap-4 md:gap-6 text-sm">
                         <div className="flex items-center">
-                          <DollarSign className="h-5 w-5 sm:mr-1" />
-                          {itinerary?.budget}/person
+                          <Calendar className="h-5 w-5 mr-1 sm:mr-2" />
+                          {itinerary.duration} {itinerary.duration > 1 ? 'days' : 'day'}
                         </div>
-                      }
-                    </div>
-                  </div>
-                  <div>
-                    {photos?.length > 2 && 
-                      <div className="lg:hidden bg-white rounded-md p-[3px] h-[55px] w-[55px]">
-                        <ItineraryGallery photos={photos} />
+                        <div className="flex items-center">
+                          <MapPin className="h-5 w-5 mr-1 sm:mr-2" />
+                          {countries.length > 0 ? countries.map((country: any) => country).join(' · ') : ''}
+                        </div>
+                        {itinerary?.budget && 
+                          <div className="flex items-center">
+                            <DollarSign className="h-5 w-5 sm:mr-1" />
+                            {itinerary?.budget}/person
+                          </div>
+                        }
                       </div>
-                    }
-                  </div>
+                      <div>
+                        {photos?.length > 2 && 
+                          <div className="lg:hidden rounded-md p-[3px] h-[55px] w-[65px]">
+                            <ItineraryGallery photos={photos} />
+                          </div>
+                        }
+                      </div>
+                    </div>
                 </div>
               </div>
             </div>
@@ -128,10 +127,10 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               </p>
           </div>
           <div className="p-4 border rounded-md">
-            <div className="flex flex-col gap-2 md:flex-row md:justify-between justify-start">
-              <p className="text-md hidden md:block font-medium px-2">About the Creator</p>
-              <div className="flex justify-between md:flex-col">
-                <Link href={`/profile/${creator.username}`} className="w-full cursor-pointer">
+            <div className="flex w-full justify-between">
+              <div>
+                <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
+                <Link href={`/profile/${creator.username}`} className="w-[100px] md:w-full cursor-pointer">
                   <div className="flex items-center gap-2 px-1">
                     <div className="relative h-12 w-12 rounded-full overflow-hidden">
                       <Image
@@ -149,26 +148,26 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     </div>
                   </div>
                 </Link>
-                <div className="flex w-full gap-4 items-starts">
-                  <div className="w-1/2">
-                    <Link href={`/profile/${creator.username}`} className="hidden lg:block">
-                      <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
-                        View Profile
-                      </Button>
-                    </Link>
-                  </div>
-                  {canEdit ? (
-                    <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
-                      <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
-                        Edit Profile
-                      </Button>
-                    </Link>
-                    ) : (
-                      <div className="w-1/2">
-                        <FollowButton creatorId={creator.userId} userId={currentUserId} />
-                      </div>
-                    )}
+              </div>
+              <div className="flex w-full gap-4 justify-end items-start">
+                <div className="hidden md:block md:w-1/2">
+                  <Link href={`/profile/${creator.username}`} className="hidden lg:block">
+                    <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
+                      View Profile
+                    </Button>
+                  </Link>
                 </div>
+                {canEdit ? (
+                  <Link className="w-[100px] md:w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
+                    <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+                      Edit Profile
+                    </Button>
+                  </Link>
+                  ) : (
+                    <div className="w-[100px] md:w-1/2">
+                      <FollowButton creatorId={creator.userId} userId={currentUserId} />
+                    </div>
+                  )}
               </div>
             </div>
             <div className="mt-2 space-y-2">

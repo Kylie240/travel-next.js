@@ -86,7 +86,7 @@ const handleSearch = (text: string) => {
                     ) : (
                       <div className="flex flex-col items-center justify-center">
                         <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
-                        <p className="text-gray-600 text-center">@ {userData[0].username}</p>
+                        <p className="text-gray-600 text-center">@{userData[0].username}</p>
                         <p className="text-gray-700 flex mt-2 text-center gap-1">This user's profile is 
                           <strong className="flex items-center gap-1"> 
                             private
@@ -185,7 +185,7 @@ const handleSearch = (text: string) => {
                                 </div>
                               {!isCurrentUser && currentUser &&
                                 <div className="absolute top-2 right-2">
-                                  <BookmarkElement  itineraryId={itinerary.id} currentUserId={currentUser?.id || ''} />
+                                  <BookmarkElement  itineraryId={itinerary.id} currentUserId={currentUser?.id || ''} color="white" />
                                 </div>
                               }
                             </div>

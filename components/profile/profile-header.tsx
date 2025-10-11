@@ -46,7 +46,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
       <div className="flex flex-col items-center">
         <div className="flex flex-col w-full items-center gap-2 md:gap-4">
           {user?.avatar && user?.avatar !== "" ? (
-          <div className="w-[100px] h-[100px] relative rounded-full">
+          <div className="w-[120px] h-[120px] relative rounded-full">
             <Image
               src={user.avatar}
               alt={user.name}
@@ -56,7 +56,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
             />
           </div>
           ) : (
-            <div className="w-[100px] h-[100px] relative rounded-full bg-gray-100 flex items-center justify-center">
+            <div className="w-[120px] h-[120px] relative rounded-full bg-gray-100 flex items-center justify-center">
               <FaUserLarge className="h-14 w-14 text-gray-300" />
             </div>
           )}
@@ -64,7 +64,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
         <div className="flex-1 text-center md:text-left px-2 sm:px-4 md:px-8">
           <div className="flex flex-col items-center justify-center mt-2 gap-1">
             <h1 className="text-4xl font-semibold">{user.name}</h1>
-            <p className="text-gray-600">@ {user.username}</p>
+            <p className="text-gray-600">@{user.username}</p>
           </div>
           <div className="grid py-2 grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-2 xl:gap-6 mb-4">
             <div className="cursor-pointer flex flex-col items-center hover:text-gray-500">

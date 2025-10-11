@@ -10,6 +10,7 @@ import { addFollow, removeFollow, blockUser, removeBlockedUser } from "@/lib/act
 import { toast } from "sonner"
 import { supabase } from "@/utils/supabase/superbase-client"
 import { useState, useEffect } from "react"
+import { FaUserLarge } from "react-icons/fa6"
 
 interface FollowersDialogProps {
   isOpen: boolean
@@ -98,6 +99,7 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUse
               onClick={() => router.push(`/profile/${user.userUsername}`)}>
                 <div className="flex items-center gap-3">
                   <div className="relative w-10 h-10">
+                    {user.userAvatar && user.userAvatar !== "" ? (
                     <Image
                       src={user.userAvatar}
                       alt={user.userName}
@@ -105,6 +107,11 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUse
                       className="object-cover rounded-full"
                       sizes="40px"
                     />
+                    ) : (
+                      <div className="relative w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <FaUserLarge className="h-6 w-6 text-gray-300" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="font-semibold">{user.userName}</p>
@@ -114,7 +121,7 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUse
                 
                 {user.userId !== currentUserId && (
                   <>
-                  {title === "Followers" && (
+                  {title !== "Blocked Users" && (
                     <div className="flex gap-2">
                       <Button
                         variant={followStatus[user.userId] ? "outline" : "default"}
@@ -126,18 +133,6 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUse
                       >
                         {followStatus[user.userId] ? "Unfollow" : "Follow"}
                       </Button>
-                      {!blockStatus[user.userId] && (
-                        <Button
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleBlockToggle(user.userId)
-                          }}
-                          className="h-9 rounded-xl border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                          Block
-                        </Button>
-                      )}
                     </div>
                   )}
                   {title === "Blocked Users" && (
