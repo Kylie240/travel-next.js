@@ -1,13 +1,12 @@
 "use client"
 
 import { DaySection } from '@/components/ui/day-section'
-import { ChevronUp, Minus, Plus } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import React, { useState, useEffect, useRef } from 'react'
 import { Day } from '@/types/Day'
 import { Note } from '@/types/Note'
 import NoteSection from './note-section'
 import { incrementItineraryViewCount } from '@/lib/actions/itinerary.actions'
-import { itinerary } from './data'
 
 const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule: Day[], notes: Note[], itineraryId: string, isCreator: boolean }) => {
   const [activeDays, setActiveDays] = useState<number[]>([])
@@ -63,7 +62,7 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
   return (
     <div className="lg:col-span-2 relative">
       <div className="flex flex-col justify-between items-center mb-6">
-        <h2 ref={headerRef} className="text-lg md:text-2xl w-full text-left font-semibold">Itinerary Schedule</h2>
+        <h2 ref={headerRef} className="text-xl md:text-2xl w-full text-left font-semibold">Itinerary Schedule</h2>
         <div className="sticky w-full top-20 z-50 flex flex-col items-end gap-2">
           <button 
             onClick={activeDays.length > 0 ? closeAllDays : openAllDays} 
@@ -72,21 +71,21 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
             {activeDays.length > 0 ? (
               <div className='flex text-xs sm:text-sm items-center gap-1' onClick={closeAllDays}>
                 Close
-                <Minus strokeWidth={4} size={18} />
+                <ChevronUp strokeWidth={3} size={18} />
               </div>
             ) : (
               <div className='flex text-xs sm:text-sm items-center gap-1' onClick={openAllDays}>
                 Open
-                <Plus strokeWidth={4} size={18} />
+                <ChevronDown strokeWidth={3} size={18} />
               </div>
             )}
           </button>
           {showScrollTop && (
             <button
               onClick={scrollToTop}
-              className="flex cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
+              className="flex text-xs sm:text-sm cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
             >
-              <ChevronUp strokeWidth={4} size={18} />
+              To Top
             </button>
           )}
         </div>

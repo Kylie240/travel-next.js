@@ -27,6 +27,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const currentUserId = user?.id
   const paramsValue = await params;
   const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
+  console.log(itinerary.days[0].activities)
   const creator = itinerary.creator;
   const isPrivate = itinerary.creator?.isPrivate;
   const countries = itinerary.days.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index);
@@ -45,7 +46,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
       {/* Hero Section */}
-      <div className="flex flex-col space-y-6 lg:space-y-0 min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-4 md:gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
+      <div className="flex flex-col min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-4 md:gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
           <div className="flex-1 h-[400px] sm:h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
@@ -92,9 +93,9 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         </div>
 
         {/* Mobile Items List */}
-        <div className="flex flex-col h-full lg:hidden justify-between px-4 md:pt-4">
+        <div className="flex mt-4 flex-col h-full lg:hidden justify-between px-4 md:pt-4">
           <div className="mb-2">
-            <div className="flex w-full justify-between items-end mb-2">
+            <div className="flex w-full justify-between items-center mb-2">
               <h2 className="text-xl flex items-center font-semibold">Trip Overview</h2>
               <div className="flex gap-2">
                 {canEdit ?
@@ -127,7 +128,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 {itinerary.shortDescription}
               </p>
           </div>
-          <div className="p-4 border rounded-md">
+          <div className="p-4 border mt-4 rounded-md">
             <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
             <div className="flex w-full justify-between">
               <div>

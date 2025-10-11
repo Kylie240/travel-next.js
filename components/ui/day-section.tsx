@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Circle, MapPin, ChevronDown, Link, Hotel, Caravan } from "lucide-react"
 import { motion } from "framer-motion"
 import { activityTagsMap } from "@/lib/constants/tags"
@@ -12,9 +12,8 @@ import { MdOutlineHotel } from "react-icons/md";
 const formatTime = (time: string | null | undefined) => {
   if (!time) return '';
   const [hours, minutes] = time.split(':').map(Number)
-  const period = hours >= 12 ? 'PM' : 'AM'
   const formattedHours = hours % 12 || 12
-  return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period}`
+  return `${formattedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 }
 import { Day } from "@/types/Day"
 
@@ -27,11 +26,38 @@ export interface DaySectionProps {
 }
 
 export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySectionProps) => {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
+  const [expandedActivities, setExpandedActivities] = useState<Set<number>>(new Set())
+  
+  // Check if description is long enough to need truncation (roughly 4 lines worth of text)
+  const needsDescriptionTruncation = day.description && day.description.length > 200
+  
+  // Check if day has any expandable content beyond title and location
+  const hasExpandableContent = 
+    (day.description && day.description.trim().length > 0) ||
+    (day.activities && day.activities.length > 0) ||
+    (day.accommodation && day.accommodation.name)
+  
+  const toggleActivity = (index: number) => {
+    setExpandedActivities(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(index)) {
+        newSet.delete(index)
+      } else {
+        newSet.add(index)
+      }
+      return newSet
+    })
+  }
   return (
    <div>
-      <div className={`relative border-black border-l-[.12rem] pl-4 mr-2 ${isActive ? 'pb-4' : ''}`}>
-        <div className="absolute -left-[.83rem] bg-white py-2">
-          <button onClick={onToggle} className={`bg-transparent border-none p-0 ${day.id !== 1 ? 'top-2' : ''}`}>
+      <div className={`relative border-black border-l-[.12rem] pl-2 md:pl-4 mr-2 ${isActive ? 'pb-4' : ''}`}>
+        <div className="absolute -left-[.83rem] bg-white py-4">
+          <button 
+            onClick={() => hasExpandableContent && onToggle()} 
+            className={`bg-transparent border-none p-0 ${day.id !== 1 ? 'top-2' : ''} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`}
+            disabled={!hasExpandableContent}
+          >
             {day.id === 1 && !isActive ? (
               <MapPin strokeWidth={2} size={25} className="-left-[2px] relative"/>
             ) : day.id === 1 && isActive ? (
@@ -44,12 +70,13 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           </button>
         </div>
         {duration === day.id &&
-          <div className="absolute -left-[.40rem] bottom-0 w-[10px] h-[2px] bg-black">
+          <div className="absolute -left-[.40rem] bottom-0 w-[10px] h-[.12rem] bg-black">
           </div>  
         }
         <button 
-          className={`w-full relative inset-x-3 h-[120px] md:h-[150px] top-4 p-8 flex items-center rounded-2xl cursor-pointer overflow-hidden ${(day.image !== null && day.image !== '') ? 'shadow-lg' : ''}`} 
-          onClick={onToggle}
+          className={`w-full relative inset-x-3 h-[120px] md:h-[150px] top-4 p-8 flex items-center rounded-2xl overflow-hidden ${(day.image !== null && day.image !== '') ? 'shadow-lg' : ''} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
+          onClick={() => hasExpandableContent && onToggle()}
+          disabled={!hasExpandableContent}
           style={{
             backgroundImage: `url(${day.image})`,
             backgroundSize: 'cover',
@@ -62,10 +89,11 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           }
         </button>
         <button 
-          className={`absolute top-[50px] md:top-[70px] cursor-pointer left-[60px] z-[4] text-left bg-transparent border-none ${day.image ? 'text-white' : 'text-gray-700'}`} 
-          onClick={onToggle}
+          className={`absolute top-[60px] md:top-[70px] left-[60px] z-[4] text-left bg-transparent border-none ${day.image ? 'text-white' : 'text-gray-700'} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
+          onClick={() => hasExpandableContent && onToggle()}
+          disabled={!hasExpandableContent}
         >
-          <h2 className={`text-xl md:text-2xl ${day.image ? 'font-bold' : 'font-semibold'}`}>{day.title}</h2>
+          <h2 className={`text-xl md:text-2xl leading-5 ${day.image ? 'font-bold' : 'font-semibold'}`}>{day.title}</h2>
           <p className={`text-xs md:text-sm lg:text-[16px] text-whte/80 ${day.image ? 'font-normal' : 'font-thin'}`}>{day.cityName}, {day.countryName}</p>
         </button>
         <motion.div
@@ -79,46 +107,55 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           }}
           className="relative left-4"
         >
-          <div className="mt-8 space-y-6">
-            <p className="text-sm md:text-[16px] pl-2">{day.description}</p>
+          <div className="mt-8">
+            <div className="p-2">
+              <p className={`text-sm md:text-[16px] ${!isDescriptionExpanded && needsDescriptionTruncation ? 'line-clamp-4' : ''}`}>
+                {day.description}
+              </p>
+              {needsDescriptionTruncation && (
+                <button
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  className="text-sm underline text-gray-500 hover:text-gray-800 font-medium mt-1"
+                >
+                  {isDescriptionExpanded ? 'Read less' : 'Read more'}
+                </button>
+              )}
+            </div>
             {day.activities.map((activity, index) => (
-              <div key={activity.id || index} className="relative">
+              <div key={activity.id || index} className="relative mb-2">
                 {activity?.type && 
-                  <div className="absolute z-[5] min-w-[52px] bg-white flex flex-col justify-center items-center p-2 gap-2" style={{ left: '-67px', top: '7px' }}>
+                  <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity.time ? '14px' : '7px'}` }}>
                     {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
-                      React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)
+                      <div className="w-5 h-5">
+                        {React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)}
+                      </div>
                     )}
-                    <p className="text-sm text-gray-500 tracking-tight">{formatTime(activity.time)}</p>
+                    <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity.time)}</p>
                   </div>
                 }
                 <motion.div
                   key={activity.id || index}
                   initial={false}
-                  className="bg-white rounded-xl p-4 shadow-sm"
+                  className="bg-white rounded-xl p-4 shadow-md"
                 >
                   <div 
-                    className="flex items-start justify-between cursor-pointer"
-                    onClick={() => {
-                      // Toggle activity visibility
-                      const element = document.getElementById(`activity-${day.id}-${index}`);
-                      if (element) {
-                        element.style.display = element.style.display === 'none' ? 'block' : 'none';
-                      }
-                    }}
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() => toggleActivity(index)}
                   >
                     <div className="flex-1">
-                      <h3 className="text-lg font-medium">{activity.title}</h3>
+                      <h3 className="text-md lg:text-lg font-medium leading-5">{activity.title}</h3>
                     </div>
                     <motion.button 
                       className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                      animate={{ rotate: document.getElementById(`activity-${day.id}-${index}`)?.style.display === 'none' ? 0 : 180 }}
+                      animate={{ rotate: expandedActivities.has(index) ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
                       <ChevronDown className="w-5 h-5 text-gray-500" />
                     </motion.button>
                   </div>
                   
-                  <div id={`activity-${day.id}-${index}`} className="mt-4" style={{ display: 'none' }}>
+                  {expandedActivities.has(index) && (
+                  <div className="mt-4">
                     {activity.description && (
                       <p className="text-gray-600 mb-3">{activity.description}</p>
                     )}
@@ -132,7 +169,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                       <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration} minutes</p>
                     )}
                     {activity.link && (
-                      <div className="flex mt-4 w-full items-center text-sm cursor-pointer text-gray-500 border p-3 rounded-xl shadow-sm hover:shadow-md"
+                      <div className="flex mt-4 w-full items-center text-sm cursor-pointer hover:bg-gray-100/50 text-gray-500 border p-2 rounded-xl shadow-md"
                       onClick={() => {
                         window.open(activity.link, '_blank');
                       }}>
@@ -143,16 +180,21 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                       </div>
                     )}
                   </div>
+                  )}
                 </motion.div>
               </div>
             ))}
             
             {day.accommodation?.name && (
+            <>
+              <h3 className="text-md mt-6 lg:text-lg pl-2">Accommodation</h3>
               <div
               key={day.id}
-              className="bg-white rounded-xl flex items-start p-4 shadow-sm gap-4 cursor-pointer"
+              className={`bg-white rounded-xl flex items-start p-4 gap-4 mt-2 ${day.accommodation.link ? 'shadow-md cursor-pointer' : ''}`}
               onClick={() => {
-                window.open(day.accommodation.link, '_blank');
+                if (day.accommodation.link) {
+                  window.open(day.accommodation.link, '_blank');
+                }
               }}
               >
                 <div className="rounded-lg border border-gray-200 p-3">
@@ -168,8 +210,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                   }
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium">Accommodation</h3>
-                  <p className="text-gray-600">{day.accommodation.name}</p>
+                  <p className="text-gray-600 text-md font-medium leading-5">{day.accommodation.name}</p>
                   {day.accommodation.location && (
                     <div className="flex items-center text-sm text-gray-500 mt-2">
                       <MapPin className="w-4 h-4 mr-1" />
@@ -178,6 +219,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                   )}
                 </div>
               </div>
+            </>
             )}
           </div>
         </motion.div>
