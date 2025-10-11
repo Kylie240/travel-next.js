@@ -18,14 +18,14 @@ const ShareProfileButton = () => {
     setCanUseNativeShare(
       typeof navigator !== 'undefined' && 
       navigator.share !== undefined &&
-      window.innerWidth < 768
+      window.innerWidth < 1028
     )
-  }, [])
+  }, [ window.innerWidth ])
 
   const handleNativeShare = async () => {
     try {
       await navigator.share({
-        title: document.title || 'Check out this profile',
+        title: document.title || 'Check out this profile on Journli',
         text: 'I thought you might like this travel profile!',
         url: currentUrl,
       })
@@ -83,7 +83,6 @@ const ShareProfileButton = () => {
   if (canUseNativeShare) {
     return (
       <Button variant="outline" className='w-full' onClick={handleNativeShare}>
-        <Share2 size={16} className="mr-2" />
         Share Profile
       </Button>
     )

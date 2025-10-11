@@ -17,14 +17,14 @@ const ShareElement = () => {
     setCanUseNativeShare(
       typeof navigator !== 'undefined' && 
       navigator.share !== undefined &&
-      window.innerWidth < 768
+      window.innerWidth < 1028
     )
-  }, [])
+  }, [ window.innerWidth ])
 
   const handleNativeShare = async () => {
     try {
       await navigator.share({
-        title: document.title || 'Check out this itinerary',
+        title: document.title || 'Check out this itinerary on Journli',
         text: 'I thought you might like this travel itinerary!',
         url: currentUrl,
       })

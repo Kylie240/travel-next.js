@@ -51,7 +51,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
   }
   return (
    <div>
-      <div className={`relative border-black border-l-[.12rem] pl-2 md:pl-4 mr-2 ${isActive ? 'pb-4' : ''}`}>
+      <div className={`relative border-black border-l-[.12rem] pl-4 mr-2 ${isActive ? 'pb-4' : ''}`}>
         <div className="absolute -left-[.83rem] bg-white py-4">
           <button 
             onClick={() => hasExpandableContent && onToggle()} 
