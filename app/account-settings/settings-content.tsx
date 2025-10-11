@@ -363,6 +363,18 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       )
     },
     // {
+    //   title: "User Stats",
+    //   description: "View your user stats",
+    //   content: (
+    //     <div className="space-y-6">
+    //       <div>
+    //         <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Username</label>
+           
+    //       </div>
+    //     </div>
+    //   )
+    // },
+    // {
     //   title: "Personal information",
     //   description: "Manage your personal details",
     //   content: (

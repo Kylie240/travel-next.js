@@ -1,7 +1,8 @@
 "use client"
 
 import { MapPin } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { AuthDialog } from "./auth-dialog"
 import { Button } from "./button"
 
@@ -15,6 +16,17 @@ interface BlackBannerProps {
 export function BlackBanner({ icon = <MapPin className="w-4 h-4" />, subtitle, title, description }: BlackBannerProps) {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   return (
     <section className="py-16 bg-black">
@@ -25,23 +37,33 @@ export function BlackBanner({ icon = <MapPin className="w-4 h-4" />, subtitle, t
         </span>
         <h2 className="text-5xl font-bold mb-4 text-white">{title}</h2>
         <p className="text-xl font-light pb-8">{description}</p>
-        <AuthDialog 
-          isOpen={isAuthOpen} 
-          setIsOpen={setIsAuthOpen} 
-          isSignUp={isSignUp} 
-          setIsSignUp={setIsSignUp}
-        >
+        {!isMobile ? (
+          <AuthDialog 
+            isOpen={isAuthOpen} 
+            setIsOpen={setIsAuthOpen} 
+            isSignUp={isSignUp} 
+            setIsSignUp={setIsSignUp}
+          >
+            <Button 
+              variant="outline" 
+              className="bg-white text-black hover:bg-gray-100"
+              onClick={() => {
+                setIsSignUp(false)
+                setIsAuthOpen(true)
+              }}
+            >
+              Sign In
+            </Button>
+          </AuthDialog>
+        ) : (
           <Button 
             variant="outline" 
             className="bg-white text-black hover:bg-gray-100"
-            onClick={() => {
-              setIsSignUp(false)
-              setIsAuthOpen(true)
-            }}
+            onClick={() => router.push('/login?mode=login')}
           >
             Sign In
           </Button>
-        </AuthDialog>
+        )}
       </div>
     </section>
   )

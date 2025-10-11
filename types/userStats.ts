@@ -4,4 +4,6 @@ export interface UserStats {
   followingcount: number
   totallikes: number
   totalSaves: number
+  userlikes: number
+  usersaves: number
 }

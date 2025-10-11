@@ -24,7 +24,7 @@ export default function LandingPage() {
         </div>
         
         <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-center mb-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-center mb-6">
           Welcome To Your New <br className="hidden md:block" /> Travel Journal
           </h1>
           <p className="text-xl sm:text-2xl lg:text-3xl text-center mb-8 max-w-2xl">

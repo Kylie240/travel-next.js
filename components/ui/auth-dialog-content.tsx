@@ -11,6 +11,7 @@ import { Input } from "./input"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient, Session } from "@supabase/auth-helpers-nextjs"
 import { toast } from "sonner"
+import Image from "next/image"
 
 const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
@@ -151,7 +152,10 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-      <Dialog.Content className="fixed left-[50%] top-[50%] max-h-[90vh] w-[80vw] max-w-[450px] translate-x-[-50%] translate-y-[-50%] rounded-xl bg-white p-6 md:p-12 shadow-lg z-[10000]">
+      <Dialog.Content 
+        className="fixed left-[50%] top-[50%] max-h-[90vh] w-[80vw] max-w-[450px] translate-x-[-50%] translate-y-[-50%] rounded-xl bg-white p-6 md:p-12 shadow-lg z-[10000]"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <Dialog.Title className="text-lg sm:text-2xl text-center font-bold">
           Welcome{isSignUp ? " " : " back"} to Journli
         </Dialog.Title>
@@ -255,7 +259,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           className="w-full"
           onClick={handleGoogleSignIn}
         >
-          Continue with Google
+          <Image src="/images/google-oauth.png" alt="Google" width={20} height={20} /> Continue with Google
         </Button>
 
         <div className="mt-4 text-center text-sm">

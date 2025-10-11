@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, X, Search } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,9 @@ export default function Navbar() {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const supabase = createClientComponentClient()
   const [user, setUser] = useState<User | null>(null)
   const isExplorePage = pathname === "/explore"
@@ -36,6 +38,13 @@ export default function Navbar() {
     }
     getUser()
 
+    // Check if mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+
     const unsubscribe = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN") {
         setUser(session?.user ?? null)
@@ -44,7 +53,10 @@ export default function Navbar() {
       }
     })
 
-    return () => unsubscribe.data.subscription.unsubscribe()
+    return () => {
+      unsubscribe.data.subscription.unsubscribe()
+      window.removeEventListener('resize', checkMobile)
+    }
   }, [supabase])
 
   useEffect(() => {
@@ -108,23 +120,33 @@ export default function Navbar() {
               <UserMenu />
             ) : (
               <div className="items-center gap-2">
-                <AuthDialog 
-                  isOpen={isAuthOpen} 
-                  setIsOpen={setIsAuthOpen} 
-                  isSignUp={isSignUp} 
-                  setIsSignUp={setIsSignUp}
-                >
+                {!isMobile ? (
+                  <AuthDialog 
+                    isOpen={isAuthOpen} 
+                    setIsOpen={setIsAuthOpen} 
+                    isSignUp={isSignUp} 
+                    setIsSignUp={setIsSignUp}
+                  >
+                    <Button 
+                      variant="ghost" 
+                      className="text-gray-700 hover:text-black"
+                      onClick={() => {
+                        setIsSignUp(false)
+                        setIsAuthOpen(true)
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  </AuthDialog>
+                ) : (
                   <Button 
                     variant="ghost" 
                     className="text-gray-700 hover:text-black"
-                    onClick={() => {
-                      setIsSignUp(false)
-                      setIsAuthOpen(true)
-                    }}
+                    onClick={() => router.push('/login?mode=login')}
                   >
                     Sign In
                   </Button>
-                </AuthDialog>
+                )}
               </div>
             )}
 

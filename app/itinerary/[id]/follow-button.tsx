@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react'
 import { addFollow, removeFollow } from '@/lib/actions/user.actions'
 import { supabase } from '@/utils/supabase/superbase-client'
 import { AuthDialog } from '@/components/ui/auth-dialog'
+import { useRouter } from 'next/navigation'
 
 const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string }) => {
   const [isFollowing, setIsFollowing] = useState(false)
@@ -13,6 +14,8 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
   const [isOpen, setIsOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const checkFollow = async () => {
@@ -25,6 +28,15 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
       setLoading(false)
     }
     checkFollow()
+
+    // Check if mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+
+    return () => window.removeEventListener('resize', checkMobile)
   }, [creatorId, userId])
 
   const toggleFollow = async (isFollow: boolean) => {
@@ -49,6 +61,17 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
 
   // If user is not logged in, show login prompt
   if (!userId) {
+    if (isMobile) {
+      return (
+        <Button 
+          className="text-white hover:text-black w-full"
+          onClick={() => router.push('/login?mode=login')}
+        >
+          Log In to Follow
+        </Button>
+      )
+    }
+    
     return (
       <AuthDialog 
         isOpen={isAuthOpen} 
@@ -63,7 +86,7 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
             setIsAuthOpen(true)
           }}
         >
-          Login to Follow
+          Log In to Follow
         </Button>
       </AuthDialog>
       

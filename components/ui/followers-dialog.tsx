@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation"
 import { Followers } from "@/types/followers"
 import { addFollow, removeFollow, blockUser, removeBlockedUser } from "@/lib/actions/user.actions"
 import { toast } from "sonner"
-import { supabase } from "@/utils/supabase/superbase-client"
 import { useState, useEffect } from "react"
 import { FaUserLarge } from "react-icons/fa6"
 
@@ -54,7 +53,6 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUse
         [userId]: !currentStatus
       }))
       
-      toast.success(`Successfully ${currentStatus ? 'unfollowed' : 'followed'} user`)
       router.refresh()
     } catch (error) {
       toast.error('Failed to update follow status')
@@ -121,7 +119,7 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUse
                 
                 {user.userId !== currentUserId && (
                   <>
-                  {title !== "Blocked Users" && (
+                  {title !== "Blocked Users" && !user.isPrivate && (
                     <div className="flex gap-2">
                       <Button
                         variant={followStatus[user.userId] ? "outline" : "default"}
