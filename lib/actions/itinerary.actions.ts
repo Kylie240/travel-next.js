@@ -143,6 +143,9 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             p_creator_id: userId,
         });
 
+        if (error && error.message === "Maximum number of itineraries reached") {
+            throw new Error("Maximum number of itineraries reached");
+        }
         if (error) throw new Error(error.message);
 
         return data;

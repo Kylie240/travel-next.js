@@ -24,6 +24,7 @@ export default function MyItinerariesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredItinerarySummaries, setFilteredItinerarySummaries] = useState<ItinerarySummary[] | null>(null)
   const [canUseNativeShare, setCanUseNativeShare] = useState(false)
+  const [userPlan, setUserPlan] = useState<string | null>(null)
 
   const refreshItineraries = async () => {
     if (user) {
@@ -50,6 +51,13 @@ export default function MyItinerariesPage() {
       }
     }
     getUser()
+
+    const getUserPlan = async () => {
+      const { data } = await supabase.from('users_settings').select('plan').eq('id', user?.id).single()
+      setUserPlan(data?.plan)
+    }
+    getUserPlan()
+    console.log("userPlan", userPlan)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
       const currentUser = session?.user ?? null
@@ -126,6 +134,8 @@ export default function MyItinerariesPage() {
     }
   }
 
+  const activeItineraries = itinerarySummaries?.filter(itinerary => itinerary.status !== ItineraryStatusEnum.archived)
+  
   return (
     <div className="min-h-screen bg-white pt-12 sm:pt-[6rem]">
       <div className="container mx-auto px-6 mb-12 md:px-[3rem] lg:px-[6rem]">
@@ -140,7 +150,7 @@ export default function MyItinerariesPage() {
               )}
             </div>
             {itinerarySummaries && itinerarySummaries?.length > 0 && (
-              <Button disabled={loading}>
+              <Button disabled={loading || (itinerarySummaries?.length >= 2 && userPlan === "free")}>
                 <Link href="/create">
                 <span className="hidden sm:block">
                   Create New Itinerary

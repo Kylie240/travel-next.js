@@ -15,6 +15,7 @@ import { User } from "@supabase/supabase-js"
 
 const publicNavigation = [
   { name: "Explore", href: "/explore" },
+  { name: "Plans", href: "/plans" },
   { name: "About", href: "/about" },
 ]
 
