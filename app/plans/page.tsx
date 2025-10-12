@@ -10,10 +10,10 @@ export const metadata: Metadata = {
   description: "Choose the perfect plan for your travel planning needs. Start free forever or upgrade to Pro for advanced features.",
 }
 
-const supabase = createServerComponentClient({ cookies })
-const { data: { user } } = await supabase.auth.getUser()
-
 export default async function PlansPage() {
+  const supabase = createServerComponentClient({ cookies })
+  const { data: { user } } = await supabase.auth.getUser()
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
