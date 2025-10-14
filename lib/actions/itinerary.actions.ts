@@ -143,10 +143,9 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             p_creator_id: userId,
         });
 
-        if (error && error.message === "Maximum number of itineraries reached") {
-            throw new Error("Maximum number of itineraries reached");
-        }
-        if (error) throw new Error(error.message);
+        if (error && error.message == "Maximum number of itineraries reached.") {
+            throw new Error("Maximum number of itineraries reached.");
+        } else if (error) throw new Error(error.message);
 
         return data;
     } catch (error) {
@@ -207,15 +206,32 @@ export const getItinerarySummaries = async (userId?: string) => {
     return data;
 }
 
-export const updateItineraryStatus = async (itineraryId: string, status: number) => {
+export const updateItineraryStatus = async (itineraryId: string, status: number, creatorId: string) => {
+    const token = cookies().get("sb-access-token");
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    try {
+        const supabase = createServerActionClient({ cookies });
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            throw new Error("Not authenticated");
+        }
+
     const { data, error } = await supabase.rpc("update_itinerary_status", {
+        p_creator_id: creatorId,
         p_itinerary_id: itineraryId,
         p_status: status,
     });
 
     if (error) throw new Error(error.message);
 
-    return { success: true };
+        return { success: true };
+    } catch (error) {
+        throw new Error(`Failed to update itinerary status: ${error instanceof Error ? error.message : String(error)}`);
+    }
 }
 
 export const getItineraryById = async (itineraryId: string) => {

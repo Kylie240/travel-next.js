@@ -44,6 +44,7 @@ import { Activity } from "@/types/Activity"
 import { supabase } from "@/utils/supabase/superbase-client"
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
 import { ItineraryStatus } from "@/types/itineraryStatus"
+import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { v4 as uuidv4 } from 'uuid'
 
@@ -837,6 +838,8 @@ export default function CreatePage() {
   const [itineraryLoading, setItineraryLoading] = useState(false)
   const [itineraryTags, _] = useState<Array<{id: number; name: string; icon: any}>>(itineraryTagsMap)
   const [galleryUUID, setGalleryUUID] = useState('')
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
+  const [pendingItineraryData, setPendingItineraryData] = useState<any>(null)
 
   useEffect(() => {
     fetchGalleryUUID()
@@ -1125,20 +1128,15 @@ export default function CreatePage() {
 
       await handleSaveItinerary()
     } catch (error) {
+      if (error instanceof Error && !error.message.includes('Maximum number of itineraries reached.')) {
       toast.error('Error submitting form')
     }
   }
+  }
 
-      const handleSaveItinerary = async () => {
-    try {
-      if (!user) {
-        toast.error('Please sign in to save your itinerary')
-        router.push('/') // Redirect to home/login page
-        return
-      }
-      
+  const buildItineraryData = () => {
       const formData = form.getValues();
-      const itineraryData = {
+    return {
         status: formData.status as number,
         title: formData.title,
         shortDescription: formData.shortDescription,
@@ -1183,7 +1181,54 @@ export default function CreatePage() {
           expanded: note.expanded ?? true
         } as Note)),
         budget: formData.budget
-      };
+    };
+  };
+
+  const saveItineraryAsDraft = async () => {
+    try {
+      const itineraryData = buildItineraryData();
+      // Force status to draft
+      itineraryData.status = ItineraryStatusEnum.draft;
+      
+      if (ItineraryId) {
+        await updateItinerary(ItineraryId, itineraryData);
+      } else {
+        await createItinerary(itineraryData);
+      }
+      toast.success('Itinerary saved as draft');
+      return true;
+    } catch (error) {
+      // If it fails, just show a generic error
+      toast.error('Failed to save draft');
+      return false;
+    }
+  };
+
+  const handleUpgradeClick = async () => {
+    setShowUpgradeDialog(false);
+    const saved = await saveItineraryAsDraft();
+    if (saved) {
+      router.push('/plans');
+    }
+  };
+
+  const handleSaveDraftClick = async () => {
+    setShowUpgradeDialog(false);
+    const saved = await saveItineraryAsDraft();
+    if (saved) {
+      router.push('/my-itineraries');
+    }
+  };
+
+  const handleSaveItinerary = async () => {
+    try {
+      if (!user) {
+        toast.error('Please sign in to save your itinerary')
+        router.push('/login')
+        return
+      }
+      
+      const itineraryData = buildItineraryData();
       
       try {
         let response = null;
@@ -1198,17 +1243,26 @@ export default function CreatePage() {
       } catch (error) {
         if (error instanceof Error && error.message === 'Unauthorized') {
           throw error;
-        }
+        } else if (error instanceof Error && error.message.includes('Maximum number of itineraries reached.')) {
+          throw error;
+        } else {
         throw new Error('Failed to save itinerary');
+        }
       }
     } catch (error) {
       if (error instanceof Error && error.message === 'Unauthorized') {
         toast.error('Session expired. Please sign in again.')
         router.push('/')
+        throw error
+      } else if (error instanceof Error && error.message.includes('Maximum number of itineraries reached.')) {
+        // Show upgrade dialog instead of toast
+        setPendingItineraryData(buildItineraryData());
+        setShowUpgradeDialog(true);
+        // Don't throw - dialog handles the flow
       } else {
         toast.error('Error saving itinerary')
+        throw error
       }
-      throw error // Re-throw to be caught by handleFinalSubmit
     }
   }
 
@@ -1898,6 +1952,13 @@ export default function CreatePage() {
           </div>
         </div>
       </form>
+      
+      <UpgradeDialog
+        isOpen={showUpgradeDialog}
+        setIsOpen={setShowUpgradeDialog}
+        onUpgrade={handleUpgradeClick}
+        onSaveDraft={handleSaveDraftClick}
+      />
     </FormProvider>
   )
 } 

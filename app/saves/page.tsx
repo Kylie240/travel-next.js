@@ -104,6 +104,11 @@ export default function SavesPage() {
       <div className="container mx-auto px-6 sm:px-12 md:px-[3rem] lg:px-[6rem]">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-semibold">Saved Itineraries</h1>
+          {filteredSaves && filteredSaves?.length > 0 && (
+            <p className="text-xl text-gray-500 md:text-2xl">
+              ({filteredSaves?.length})
+            </p>
+          )}
         </div>
 
         {saves && saves.length > 6 && (

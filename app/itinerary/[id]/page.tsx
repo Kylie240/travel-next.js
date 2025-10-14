@@ -27,7 +27,6 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const currentUserId = user?.id
   const paramsValue = await params;
   const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
-  console.log(itinerary.days[0].activities)
   const creator = itinerary.creator;
   const isPrivate = itinerary.creator?.isPrivate;
   const countries = itinerary.days.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index);
@@ -36,6 +35,9 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     day.activities.map(activity => activity.type).filter(Boolean)
   );
   const photos = collectAllPhotos(itinerary);
+  const { data: userPlan } = await supabase.from('users_settings').select('plan').eq('user_id', currentUserId).single()
+  console.log("userPlan", userPlan)
+  const paidUser = userPlan.plan != "free";
   const canEdit = currentUserId === itinerary.creatorId;
 
   if (isPrivate && currentUserId !== itinerary.creatorId) {
@@ -98,9 +100,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             <div className="flex w-full justify-between items-center mb-2">
               <h2 className="text-xl flex items-center font-semibold">Trip Overview</h2>
               <div className="flex gap-2">
-                {canEdit ?
-                (
-                  <Link href={`/create?itineraryId=${itinerary.id}`}>
+                {canEdit ? (
+                  <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
                     <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                   </Link>
                 ) : (
@@ -217,7 +218,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     </div>
                   }
                   {canEdit &&
-                    <Link href={`/create?itineraryId=${itinerary.id}`}>
+                    <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
                       <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                     </Link>
                   }

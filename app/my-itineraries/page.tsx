@@ -14,6 +14,7 @@ import { ItinerarySummary } from "@/types/ItinerarySummary"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
+import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 
 export default function MyItinerariesPage() {
   const router = useRouter()
@@ -25,6 +26,7 @@ export default function MyItinerariesPage() {
   const [filteredItinerarySummaries, setFilteredItinerarySummaries] = useState<ItinerarySummary[] | null>(null)
   const [canUseNativeShare, setCanUseNativeShare] = useState(false)
   const [userPlan, setUserPlan] = useState<string | null>(null)
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
 
   const refreshItineraries = async () => {
     if (user) {
@@ -53,11 +55,11 @@ export default function MyItinerariesPage() {
     getUser()
 
     const getUserPlan = async () => {
-      const { data } = await supabase.from('users_settings').select('plan').eq('id', user?.id).single()
-      setUserPlan(data?.plan)
+      const { data } = await supabase.from('users_settings').select('plan').eq('user_id', user?.id).single()
+      console.log("data", data)
+      setUserPlan(data?.plan || "free")
     }
     getUserPlan()
-    console.log("userPlan", userPlan)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
       const currentUser = session?.user ?? null
@@ -143,14 +145,14 @@ export default function MyItinerariesPage() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex flex-row items-center gap-2">
               <h1 className="text-3xl font-semibold">My Itineraries</h1>
-              {itinerarySummaries && itinerarySummaries?.length > 0 && (
+              {filteredItinerarySummaries && filteredItinerarySummaries?.length > 0 && (
                 <p className="text-xl text-gray-500 md:text-2xl">
-                  ({itinerarySummaries?.length})
+                  ({filteredItinerarySummaries?.length})
                 </p>
               )}
             </div>
             {itinerarySummaries && itinerarySummaries?.length > 0 && (
-              <Button disabled={loading || (itinerarySummaries?.length >= 2 && userPlan === "free")}>
+              <Button disabled={loading}>
                 <Link href="/create">
                 <span className="hidden sm:block">
                   Create New Itinerary
@@ -221,6 +223,7 @@ export default function MyItinerariesPage() {
                               align="end"
                               sideOffset={5}
                             >
+                              {userPlan != "free" && 
                               <DropdownMenu.Item
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                 onClick={(event) => {
@@ -233,6 +236,7 @@ export default function MyItinerariesPage() {
                                     Edit
                                 </Link>
                               </DropdownMenu.Item>
+                              }
                               {itinerary.status == ItineraryStatusEnum.archived && (
                                 <DropdownMenu.Item
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
@@ -240,11 +244,15 @@ export default function MyItinerariesPage() {
                                       event.stopPropagation()
                                       if (confirm('Are you sure you want to publish this itinerary?')) {
                                           try {
-                                              await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.published)
+                                              await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.published, user?.id)
                                               toast.success('Itinerary published successfully')
                                               refreshItineraries()
                                           } catch (error) {
+                                            if (error.message == "Maximum number of itineraries reached.") {
+                                              setShowUpgradeDialog(true);
+                                            } else {
                                               toast.error('Failed to publish itinerary')
+                                            }
                                           }
                                       }
                                   }}
@@ -262,11 +270,11 @@ export default function MyItinerariesPage() {
                                       event.stopPropagation()
                                       if (confirm('Are you sure you want to archive this itinerary? This will hide it from your profile and other users will not be able to see it. You can always publish it again later.')) {
                                           try {
-                                              await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.archived)
+                                              await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.archived, user?.id)
                                               toast.success('Itinerary archived successfully')
                                               refreshItineraries()
                                           } catch (error) {
-                                              toast.error('Failed to archive itinerary')
+                                            toast.error('Failed to archive itinerary')
                                           }
                                       }
                                   }}
@@ -306,7 +314,7 @@ export default function MyItinerariesPage() {
                       )}
                     </div>
                       <div className="px-4 pb-3 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                        <p className="font-medium leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
+                      <p className="font-medium leading-5 md:leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
                         <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
                           {/* {itinerary?.cities?.length > 0 ? itinerary?.cities.map((city) => city.city).join(" · ") : itinerary.countries.join(" · ")} */}
                         </p>
@@ -347,6 +355,12 @@ export default function MyItinerariesPage() {
           )
         )}
       </div>
+      <UpgradeDialog
+      isOpen={showUpgradeDialog}
+      setIsOpen={setShowUpgradeDialog}
+      onUpgrade={() => { router.push('/plans') }}
+      onSaveDraft={() => { setShowUpgradeDialog(false) }}
+      />
     </div>
   )
 } 
