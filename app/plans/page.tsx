@@ -19,12 +19,8 @@ export default async function PlansPage() {
       {/* Hero Section */}
       <div className="container mx-auto px-6 py-16 md:py-24">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
-            Choose Your Plan
-          </h1>
-          <p className="text-md md:text-lg lg:text-xl text-gray-600">
-            Start creating amazing travel itineraries for free. More features coming soon!
-          </p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">Choose Your Plan</h1>
+          <p className="text-md md:text-lg lg:text-xl text-gray-600">Start creating amazing travel itineraries for free. More features coming soon!</p>
         </div>
 
         {/* Plans Grid */}
@@ -58,27 +54,17 @@ export default async function PlansPage() {
               
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Create up to 20 itineraries</span>
+                <span className="text-gray-700">20 public itineraries</span>
               </div>
 
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Day-by-day trip planning</span>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Add activities, notes, and accommodations</span>
+                <span className="text-gray-700">Access to day-by-day planner</span>
               </div>
 
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-700">Share itineraries with anyone</span>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Explore public itineraries (coming soon)</span>
               </div>
 
               <div className="flex items-start gap-3">
@@ -98,7 +84,7 @@ export default async function PlansPage() {
             </div>
           </div>
           
-          {/* Paid Plan */}
+          {/* Standard */}
           <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-2 border-blue-200 relative overflow-hidden">
             <div className="absolute top-4 right-4">
               <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
@@ -109,7 +95,7 @@ export default async function PlansPage() {
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-6 h-6 text-cyan-600" />
-                <h2 className="text-2xl font-bold text-gray-900">Paid Plan</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Standard</h2>
               </div>
               <p className="text-gray-600">Ideal for frequent travelers who want more tools and customizability</p>
             </div>
@@ -122,7 +108,7 @@ export default async function PlansPage() {
             </div>
 
             <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
-              Get Paid Plan
+              Get Standard
             </Button>
 
             <div className="space-y-4">
@@ -140,12 +126,7 @@ export default async function PlansPage() {
 
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Export itineraries to PDF</span>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Photo gallery support</span>
+                <span className="text-gray-700">Offline access to itineraries</span>
               </div>
 
               <div className="flex items-start gap-3">
@@ -160,12 +141,17 @@ export default async function PlansPage() {
 
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Custom itinerary themes and templates</span>
+                <span className="text-gray-700">Custom themes and templates</span>
               </div>
+
+              {/* <div className="flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">Monetization capabilities</span>
+              </div> */}
             </div>
           </div>
 
-          {/* Pro Plan - Coming Soon */}
+          {/* Premium - Coming Soon */}
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow-lg p-8 border-2 border-purple-200 relative overflow-hidden">
             <div className="absolute top-4 right-4">
               <span className="bg-purple-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
@@ -176,7 +162,7 @@ export default async function PlansPage() {
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <Lock className="w-6 h-6 text-purple-600" />
-                <h2 className="text-2xl font-bold text-gray-900">Pro Plan</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Premium</h2>
               </div>
               <p className="text-gray-600">Advanced capabilities for creators looking to monetize their content</p>
             </div>
@@ -189,11 +175,11 @@ export default async function PlansPage() {
             </div>
 
             <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
-              Get Pro Plan
+              Get Premium
             </Button>
 
             <div className="space-y-4 opacity-75">
-              <h3 className="font-semibold text-gray-900 mb-4">Everything in Explorer, plus:</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Everything in Paid, plus:</h3>
               
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
@@ -239,8 +225,8 @@ export default async function PlansPage() {
                   <tr className="bg-gray-50 border-b border-gray-200">
                     <th className="text-left py-4 px-6 font-semibold text-gray-900">Features</th>
                     <th className="text-center py-4 px-6 font-semibold text-gray-900">Free</th>
-                    <th className="text-center py-4 px-6 font-semibold text-cyan-600">Paid</th>
-                    <th className="text-center py-4 px-6 font-semibold text-purple-600">Pro</th>
+                    <th className="text-center py-4 px-6 font-semibold text-cyan-600">Standard</th>
+                    <th className="text-center py-4 px-6 font-semibold text-purple-600">Premium</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -406,13 +392,12 @@ export default async function PlansPage() {
         </div>
 
         {/* Plan Details Section */}
-        <div className="mt-24 max-w-4xl mx-auto">
+        {/* <div className="mt-24 max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
             Plan Details
           </h2>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Free Plan Details */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
               <h3 className="text-xl font-bold mb-4 text-gray-900">Free Plan</h3>
               <p className="text-gray-600 mb-4">
@@ -428,10 +413,9 @@ export default async function PlansPage() {
               </ul>
             </div>
 
-            {/* Paid Plan Details */}
             <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 shadow-sm border border-blue-200">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Paid Plan</h3>
+                <h3 className="text-xl font-bold text-gray-900">Standard</h3>
                 <span className="bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded">
                   Coming Soon
                 </span>
@@ -449,10 +433,9 @@ export default async function PlansPage() {
               </ul>
             </div>
 
-            {/* Pro Plan Details */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 shadow-sm border border-purple-200">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Pro Plan</h3>
+                <h3 className="text-xl font-bold text-gray-900">Premium</h3>
                 <span className="bg-purple-600 text-white text-xs font-semibold px-2 py-1 rounded">
                   Coming Soon
                 </span>
@@ -470,7 +453,7 @@ export default async function PlansPage() {
               </ul>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* FAQ Section */}
         <div className="mt-24 max-w-3xl mx-auto">
@@ -494,7 +477,7 @@ export default async function PlansPage() {
                 When will the other plans be available?
               </h3>
               <p className="text-gray-600">
-                We're working hard on bringing the Paid and PRo plans to life! Sign up for our newsletter 
+                We're working hard on bringing the Standard and Premium plans to life! Sign up for our newsletter 
                 to be the first to know when they launch.
               </p>
             </div>
@@ -504,7 +487,7 @@ export default async function PlansPage() {
                 Can I upgrade or downgrade my plan later?
               </h3>
               <p className="text-gray-600">
-                Once Pro plans are available, you'll be able to upgrade at any time. You can also 
+                Once the Standard and Premium plans are available, you'll be able to upgrade at any time. You can also 
                 downgrade back to the free plan, and all your itineraries will be preserved.
               </p>
             </div>
@@ -514,7 +497,7 @@ export default async function PlansPage() {
                 What payment methods do you accept?
               </h3>
               <p className="text-gray-600">
-                When Pro plans launch, we'll accept all major credit cards, PayPal, and other 
+                When Premiums launch, we'll accept all major credit cards, PayPal, and other 
                 popular payment methods. Pricing will be transparent with no hidden fees.
               </p>
             </div>

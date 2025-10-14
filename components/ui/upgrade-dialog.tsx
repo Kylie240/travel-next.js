@@ -9,9 +9,10 @@ interface UpgradeDialogProps {
   setIsOpen: (isOpen: boolean) => void
   onUpgrade: () => void
   onSaveDraft: () => void
+  showDraftButton: boolean
 }
 
-export function UpgradeDialog({ isOpen, setIsOpen, onUpgrade, onSaveDraft }: UpgradeDialogProps) {
+export function UpgradeDialog({ isOpen, setIsOpen, onUpgrade, onSaveDraft, showDraftButton = true }: UpgradeDialogProps) {
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Portal>
@@ -44,15 +45,23 @@ export function UpgradeDialog({ isOpen, setIsOpen, onUpgrade, onSaveDraft }: Upg
                 </div>
                 <div className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Export to PDF</span>
+                  <span className="text-sm text-gray-700">Offline access to itineraries</span>
                 </div>
                 <div className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Photo galleries</span>
+                  <span className="text-sm text-gray-700">Collaborative editing</span>
                 </div>
                 <div className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Collaboration tools</span>
+                  <span className="text-sm text-gray-700">Additional content control</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-700">Custom themes and templates</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-700">Monetization capabilities</span>
                 </div>
               </div>
             </div>
@@ -66,13 +75,15 @@ export function UpgradeDialog({ isOpen, setIsOpen, onUpgrade, onSaveDraft }: Upg
                 View Plans
               </Button>
               
-              <Button
+              {showDraftButton && (
+                <Button
                 onClick={onSaveDraft}
                 variant="outline"
                 className="w-full py-6 text-base"
               >
-                Save as Draft
-              </Button>
+                  Save as Draft
+                </Button>
+              )}
             </div>
 
             {/* Close button */}

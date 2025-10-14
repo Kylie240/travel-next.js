@@ -29,20 +29,21 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
     }
     checkFollow()
 
-    // Check if mobile
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
+    // Check if mobile - only run on client side
+    if (typeof window !== 'undefined') {
+      const checkMobile = () => {
+        setIsMobile(window.innerWidth < 768)
+      }
+      checkMobile()
+      window.addEventListener('resize', checkMobile)
 
-    return () => window.removeEventListener('resize', checkMobile)
+      return () => window.removeEventListener('resize', checkMobile)
+    }
   }, [creatorId, userId])
 
   const toggleFollow = async (isFollow: boolean) => {
     if (!userId) {
-      // Redirect to login if user is not authenticated
-      window.location.href = '/login'
+      router.push('/login')
       return
     }
     
@@ -96,7 +97,7 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
   return (
     <Button onClick={() => toggleFollow(!isFollowing)} 
       variant="outline" 
-      className={`${!isFollowing ? 'bg-gray-900 text-white hover:bg-gray-800 hoveR:text-white' : 'text-gray-800 hover:bg-gray-100'} cursor-pointer flex justify-center items-center w-full p-2 `}>
+      className={`${!isFollowing ? 'bg-gray-900 text-white hover:bg-gray-800 hover:text-white' : 'text-gray-800 hover:bg-gray-100'} cursor-pointer flex justify-center items-center w-full p-2 `}>
       {isFollowing ? 'Unfollow' : 'Follow'}
     </Button>
   )

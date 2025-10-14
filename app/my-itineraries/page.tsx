@@ -248,7 +248,7 @@ export default function MyItinerariesPage() {
                                               toast.success('Itinerary published successfully')
                                               refreshItineraries()
                                           } catch (error) {
-                                            if (error.message == "Maximum number of itineraries reached.") {
+                                            if (error.message.includes("Maximum number of itineraries reached")) {
                                               setShowUpgradeDialog(true);
                                             } else {
                                               toast.error('Failed to publish itinerary')
@@ -360,6 +360,7 @@ export default function MyItinerariesPage() {
       setIsOpen={setShowUpgradeDialog}
       onUpgrade={() => { router.push('/plans') }}
       onSaveDraft={() => { setShowUpgradeDialog(false) }}
+      showDraftButton={false}
       />
     </div>
   )

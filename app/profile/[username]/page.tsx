@@ -1,10 +1,8 @@
-import BookmarkElement from "@/components/ui/bookmark-element";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { getItineraryDataByUserId } from "@/lib/actions/itinerary.actions";
 import { getProfileDataByUsername } from "@/lib/actions/user.actions";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Lock, MapPin, PenSquare, Search, Star } from "lucide-react";
+import { PenSquare } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cookies } from 'next/headers'
@@ -12,6 +10,7 @@ import { FaUserLarge } from "react-icons/fa6";
 import FollowButton from "@/app/itinerary/[id]/follow-button";
 import ShareProfileButton from "./share-profile";
 import ProfileMenuButton from "./profile-menu-button";
+import ItineraryGrid from "./itinerary-grid";
 
 export default async function UserProfilePage({ params }: { params: { username: string } }) {
 const { username } = params;
@@ -26,16 +25,6 @@ isPrivate = true
 }
 const isCurrentUser = userId == currentUser?.id;
 const itineraryData = await getItineraryDataByUserId(userId)
-let filteredItineraryData = itineraryData;
-const searchValue: string = '';
-
-const handleSearch = (text: string) => {
-    if (searchValue == '') { return }
-    const filtered = itineraryData.filter(item =>
-        item.title.toLowerCase().includes(searchValue.toLowerCase())
-      )
-      filteredItineraryData = filtered;
-}
 
   return (
     <div className="min-h-screen max-w-[1340px] mx-auto bg-white py-8 mb-4">
@@ -99,7 +88,7 @@ const handleSearch = (text: string) => {
             </div>
             <div className="md:mt-4 mb-4 md:mb-8">
               {itineraryData?.length > 0 ? (
-                <h2 className="sm:m-3 md:m-6 font-bold p-4 border-b-2 border-gray-200 text-xl">Itineraries</h2>
+                <h2 className="my-3 md:my-6 font-bold py-4 border-b-2 border-gray-200 text-xl">Itineraries</h2>
               ) : (
                 <div className="text-center py-12 px-4 rounded-xl border-2 border-dashed">
                   <div className="mb-4">
@@ -118,82 +107,12 @@ const handleSearch = (text: string) => {
                   )}
                 </div>
               )}
-              <div className="flex flex-col gap-4">
-                <div>
-                    {!isPrivate && itineraryData?.length > 6 && (
-                      <div className="mb-8 relative max-w-[550px]">
-                        <Input
-                          type="text"
-                          placeholder={`Search all ${itineraryData?.length} itineraries`}
-                          value={searchValue}
-                          onChange={(e) => handleSearch(e.target.value)}
-                          className="pl-10 font-medium rounded-xl bg-gray-100 border-none"
-                        />
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      </div>
-                    )}
-                </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-                    { isPrivate ? (
-                      <div className="col-span-full relative">
-                        <div className="w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8 blur-sm">
-                          {Array.from({ length: 2 }).map((_, index) => (
-                            <div key={index} className="w-full aspect-[2/3] block md:hidden xl:hidden bg-gray-100 rounded-2xl">
-                            </div>
-                          ))}
-                          {Array.from({ length: 3 }).map((_, index) => (
-                            <div key={index} className="w-full aspect-[2/3] hidden md:block xl:hidden bg-gray-100 rounded-2xl">
-                            </div>
-                          ))}
-                          {Array.from({ length: 4 }).map((_, index) => (
-                            <div key={index} className="w-full aspect-[2/3] hidden xl:block bg-gray-100 rounded-2xl">
-                            </div>
-                          ))}
-                        </div>
-                        <Lock className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-20 w-20 text-gray-400" />                </div>
-                    ) : (
-                      filteredItineraryData?.map((itinerary) => ( 
-                        <Link key={itinerary.id} href={`/itinerary/${itinerary.id}`}>
-                            <div 
-                                key={itinerary.id}
-                                className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
-                            >
-                                <div className="relative aspect-[2/3]">
-                                  <Image
-                                      src={itinerary.mainImage}
-                                      alt={itinerary.title}
-                                      fill
-                                      className="object-cover"
-                                  />
-                                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                                </div>
-                                <div className="p-4 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                                <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90">
-                                    <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
-                                </p>
-                                <p className="sm:font-medium leading-[18px] sm:leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
-                                <div className="flex mt-1 justify-between items-end">
-                                    <div>
-                                      <div className="flex relative items-center">
-                                        <Star className="h-5 w-5 pb-1 pr-1"/>
-                                        <p className="text-sm">{itinerary.likes}</p>
-                                      </div>
-                                    </div>
-                                    <div>
-                                    </div>
-                                </div>
-                                </div>
-                              {!isCurrentUser && currentUser &&
-                                <div className="absolute top-2 right-2">
-                                  <BookmarkElement  itineraryId={itinerary.id} currentUserId={currentUser?.id || ''} color="white" />
-                                </div>
-                              }
-                            </div>
-                        </Link>
-                      ))
-                    )}
-                    </div>
-              </div>
+              <ItineraryGrid 
+                itineraryData={itineraryData}
+                isPrivate={isPrivate}
+                isCurrentUser={isCurrentUser}
+                currentUserId={currentUser?.id}
+              />
             </div>
             
             {/* <Tabs defaultValue="itineraries" className="w-full">

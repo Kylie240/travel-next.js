@@ -226,9 +226,11 @@ export const updateItineraryStatus = async (itineraryId: string, status: number,
         p_status: status,
     });
 
-    if (error) throw new Error(error.message);
-
-        return { success: true };
+    if (error && error.message == "Maximum number of itineraries reached.") {
+        throw new Error("Maximum number of itineraries reached.");
+    } else if (error) throw new Error(error.message);
+    
+    return { success: true };
     } catch (error) {
         throw new Error(`Failed to update itinerary status: ${error instanceof Error ? error.message : String(error)}`);
     }
