@@ -61,8 +61,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
             <div className="absolute inset-0 flex items-end md:items-end">
               <div className="container px-0 mx-0 lg:mx-auto">
-                <div className="flex flex-col text-white m-0 sm:m-2 p-6 md:p-8 md:mb-8 md:ml-4 relative">
-                    <h1 className="max-w-[100%] lg:max-w-[80%] text-left leading-[30px] md:leading-[40px] text-3xl xl:text-4xl font-bold lg:mb-4 mr-0 md:mr-6 lg:mr-0">{itinerary.title}</h1>
+                <div className="flex flex-col text-white m-2 p-6 md:p-8 md:mb-4 md:ml-4 relative">
+                    <h1 className="max-w-[100%] lg:max-w-[80%] text-left leading-[30px] md:leading-[40px] mt-2 md:mt-0 text-3xl xl:text-4xl font-bold lg:mb-4 mr-0 md:mr-6 lg:mr-0">{itinerary.title}</h1>
                     <div className="w-full flex justify-between items-center">
                       <div className="flex items-center gap-1 flex-wrap sm:gap-4 md:gap-6 text-sm">
                         <div className="flex items-center">
@@ -131,7 +131,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
           </div>
           <div className="p-4 border mt-4 rounded-md">
             <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
-            <div className="flex w-full justify-between">
+            <div className="flex flex-wrap w-full justify-between">
               <div>
                 <Link href={`/profile/${creator.username}`} className="min-w-[100px] md:w-full cursor-pointer">
                   <div className="flex items-center gap-2 px-1">
@@ -152,9 +152,9 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   </div>
                 </Link>
               </div>
-              <div className="flex w-full gap-4 justify-end items-start">
+              <div className="flex w-fit gap-4 justify-end items-start">
                 <div className="hidden md:block md:w-1/2">
-                  <Link href={`/profile/${creator.username}`} className="hidden lg:block">
+                  <Link href={`/profile/${creator.username}`} className="hidden md:block">
                     <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
                       View Profile
                     </Button>
@@ -258,22 +258,24 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
           <div className="hidden lg:block">
             <div className="sticky top-24">
               <div className=" px-4 pt-6 pb-4 border rounded-2xl">
-                <div className="flex items-center gap-4 px-1">
-                  <div className="relative h-12 w-12 rounded-full overflow-hidden">
-                    <Image
-                      src={creator.avatar}
-                      alt={creator.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex flex-col">
-                      <p className="font-medium text-lg">{creator.name}</p>
-                      <p className="text-gray-500">@{creator.username}</p>
+                <Link href={`/profile/${creator.username}`} className="cursor-pointer">
+                  <div className="flex items-center gap-4 px-1">
+                    <div className="relative h-12 w-12 rounded-full overflow-hidden">
+                      <Image
+                        src={creator.avatar}
+                        alt={creator.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex flex-col">
+                        <p className="font-medium text-lg">{creator.name}</p>
+                        <p className="text-gray-500">@{creator.username}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Link>
                 <div className="mt-4 hidden lg:block space-y-2">
                   <p className="text-lg font-semibold px-2">About the Creator</p>
                   <p className=" px-2">{creator.bio}</p>

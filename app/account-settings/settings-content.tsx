@@ -24,6 +24,7 @@ import { FaUserLarge } from "react-icons/fa6";
 import { createClient } from "@/utils/supabase/client"
 import { supabase } from "@/utils/supabase/superbase-client"
 import { dispatchAvatarUpdate } from "@/lib/utils/avatar-events"
+import ImageCropModal from "@/components/ui/image-crop-modal"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -51,6 +52,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false)
   const [uploadedAvatar, setUploadedAvatar] = useState<File | null>(null)
+  const [showCropModal, setShowCropModal] = useState(false)
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string>("")
 
   const handleSectionClick = (sectionTitle: string) => {
     if (window.innerWidth < 1020) {
@@ -181,22 +184,31 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     await setUserAvatar(userData.id, avatar)
   }
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
     const supabase = createClientComponentClient();
     try {
       setUploadingAvatar(true)
-      const MAX_FILE_SIZE = 2 * 1024 * 1024;
-      const file = event.target.files?.[0];
-      const fileExt = file?.name.split(".")[1]
-      const fileName = file?.name.split(".")[0]
-      if (!file) return;
-
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error("File size must be under 2MB");
-        return;
-      }
-
+      
+      // Create a file from the blob
+      const file = new File([croppedImageBlob], 'profile-picture.jpg', { type: 'image/jpeg' });
+      
+      const fileExt = 'jpg';
+      const fileName = `profile-picture-${Date.now()}`;
       const filePath = `${userData.id}/${fileName}.${fileExt}`;
+
+      if (userData.avatar) {
+        const oldFilePath = userData.avatar.split("/avatars/")[1];
+        console.log(oldFilePath)
+        if (oldFilePath) {
+          const { error: deleteError } = await supabase.storage
+            .from("avatars")
+            .remove([oldFilePath]);
+  
+          if (deleteError) {
+            console.warn("Failed to delete old avatar:", deleteError.message);
+          }
+        }
+      }
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
@@ -204,7 +216,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           upsert: true,
         });
         
-        if (uploadError) {
+      if (uploadError) {
         throw new Error(uploadError.message || "Failed to update profile picture")
       }
 
@@ -222,6 +234,34 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       setFormError(error.message || "Failed to upload profile picture")
     } finally {
       setUploadingAvatar(false)
+      // Clean up the object URL
+      if (selectedImageSrc) {
+        URL.revokeObjectURL(selectedImageSrc);
+        setSelectedImageSrc("");
+      }
+    }
+  }
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const MAX_FILE_SIZE = 2 * 1024 * 1024;
+      const file = event.target.files?.[0];
+      
+      if (!file) return;
+
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error("File size must be under 2MB");
+        return;
+      }
+
+      // Create object URL for the image
+      const imageSrc = URL.createObjectURL(file);
+      setSelectedImageSrc(imageSrc);
+      setShowCropModal(true);
+      
+    } catch (error: any) {
+      toast.error(error.message || "Failed to process image")
+      setFormError(error.message || "Failed to process image")
     }
   }
 
@@ -254,8 +294,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   src={updatedUserData.avatar}  
                   alt={updatedUserData.name}
                   className="object-cover rounded-full"
-                  width={100}
-                  height={100}
+                  width={120}
+                  height={120}
                 />
               </div>
             ) : (
@@ -653,8 +693,22 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         onClose={() => setShowSettingsSidebar(false)}
         title={activeSection}
       >
-        {settingsSections.find(section => section.title === activeSection)?.content}
+        {settingsSections.find(section => section.title === activeSection)?.content}                                                                            
       </SettingsSidebar>
+      
+      <ImageCropModal
+        isOpen={showCropModal}
+        onClose={() => {
+          setShowCropModal(false);
+          if (selectedImageSrc) {
+            URL.revokeObjectURL(selectedImageSrc);
+            setSelectedImageSrc("");
+          }
+        }}
+        imageSrc={selectedImageSrc}
+        onCropComplete={handleCropComplete}
+        aspectRatio={1}
+      />
     </div>
   )
 }

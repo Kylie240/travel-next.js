@@ -102,7 +102,7 @@ export default function SavesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-12 sm:pt-[6rem]">
+    <div className="min-h-screen bg-white py-12 sm:pt-[6rem]">
       <div className="container mx-auto px-6 sm:px-12 md:px-[3rem] lg:px-[6rem]">
         <div className="flex flex-row items-center gap-2 mb-10">
           <h1 className="text-3xl font-semibold">Saved Itineraries</h1>
