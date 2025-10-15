@@ -107,7 +107,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 ) : (
                   <div className="flex gap-2">
                     <LikeElement itineraryId={itinerary.id} currentUserId={currentUserId}/>  
-                    <BookmarkElement color={'black'} itineraryId={itinerary.id} currentUserId={currentUserId} />
+                    <BookmarkElement color="black" itineraryId={itinerary.id} currentUserId={currentUserId} />
                   </div>
                 )}
                 {itinerary.status === ItineraryStatusEnum.published && 
@@ -214,7 +214,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   {currentUserId && !canEdit &&
                     <div className="flex gap-2">
                       <LikeElement itineraryId={itinerary.id} currentUserId={currentUserId}/>  
-                      <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} />
+                      <BookmarkElement color="black" itineraryId={itinerary.id} currentUserId={currentUserId} />
                     </div>
                   }
                   {canEdit &&

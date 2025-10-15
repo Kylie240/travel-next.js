@@ -42,6 +42,7 @@ export default function SavesPage() {
         setSaves(userItineraries as SavedItinerary[])
         setFilteredSaves(userItineraries as SavedItinerary[])
         setLoading(false)
+        console.log("userItineraries", userItineraries)
       } else {
         setSaves(null)
         setFilteredSaves(null)
@@ -102,7 +103,7 @@ export default function SavesPage() {
   return (
     <div className="min-h-screen bg-white pt-12 sm:pt-[6rem]">
       <div className="container mx-auto px-6 sm:px-12 md:px-[3rem] lg:px-[6rem]">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-row items-center gap-2 mb-10">
           <h1 className="text-3xl font-semibold">Saved Itineraries</h1>
           {filteredSaves && filteredSaves?.length > 0 && (
             <p className="text-xl text-gray-500 md:text-2xl">
@@ -151,7 +152,7 @@ export default function SavesPage() {
                   </div>
                 </div>
                 <div className="absolute top-2 right-2">
-                  <BookmarkElement itineraryId={itinerary.id} currentUserId={user?.id || ''} />
+                  <BookmarkElement itineraryId={itinerary.id} currentUserId={user?.id || ''} color="white" initialIsSaved={true} />
                 </div>
               </div>
             ))}
