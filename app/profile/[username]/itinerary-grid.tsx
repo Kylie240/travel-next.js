@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import Link from "next/link"
 import { MapPin, Star } from "lucide-react"
 import BookmarkElement from "@/components/ui/bookmark-element"
 import SearchItineraries from "./search-itineraries"
@@ -61,43 +60,42 @@ export default function ItineraryGrid({
           </div>
         ) : (
           filteredItineraryData?.map((itinerary) => ( 
-            <Link key={itinerary.id} href={`/itinerary/${itinerary.id}`}>
-              <div 
-                key={itinerary.id}
-                className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
-              >
-                <div className="relative aspect-[2/3]">
-                  <Image
-                    src={itinerary.mainImage}
-                    alt={itinerary.title}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                </div>
-                <div className="p-4 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                  <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90">
-                    <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
-                  </p>
-                  <p className="sm:font-medium leading-[18px] sm:leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
-                  <div className="flex mt-1 justify-between items-end">
-                    <div>
-                      <div className="flex relative items-center">
-                        <Star className="h-5 w-5 pb-1 pr-1"/>
-                        <p className="text-sm">{itinerary.likes}</p>
-                      </div>
-                    </div>
-                    <div>
-                    </div>
-                  </div>
-                </div>
-                {!isCurrentUser && currentUserId &&
-                  <div className="absolute top-2 right-2">
-                    <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} color="white" />
-                  </div>
-                }
+            <div 
+              key={itinerary.id}
+              className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
+              onClick={() => window.location.href = `/itinerary/${itinerary.id}`}
+            >
+              <div className="relative aspect-[2/3]">
+                <Image
+                  src={itinerary.mainImage}
+                  alt={itinerary.title}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
               </div>
-            </Link>
+              <div className="p-4 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90">
+                  <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
+                </p>
+                <p className="sm:font-medium leading-[18px] sm:leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
+                <div className="flex mt-1 justify-between items-end">
+                  <div>
+                    <div className="flex relative items-center">
+                      <Star className="h-5 w-5 pb-1 pr-1"/>
+                      <p className="text-sm">{itinerary.likes}</p>
+                    </div>
+                  </div>
+                  <div>
+                  </div>
+                </div>
+              </div>
+              {!isCurrentUser && currentUserId &&
+                <div className="absolute top-2 right-2">
+                  <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} color="white" />
+                </div>
+              }
+            </div>
           ))
         )}
       </div>

@@ -85,6 +85,7 @@ export default function SavesPage() {
     if (result.success) {
       toast.success('Itinerary unsaved successfully')
       setSaves(saves?.filter(itinerary => itinerary.id !== itineraryId))
+      setFilteredSaves(filteredSaves?.filter(itinerary => itinerary.id !== itineraryId))
       refreshItineraries()
     }
     else {
@@ -152,7 +153,7 @@ export default function SavesPage() {
                   </div>
                 </div>
                 <div className="absolute top-2 right-2">
-                  <BookmarkElement itineraryId={itinerary.id} currentUserId={user?.id || ''} color="white" initialIsSaved={true} />
+                  <BookmarkElement itineraryId={itinerary.id} currentUserId={user?.id || ''} color="white" initialIsSaved={true} onUnsave={handleUnsave} />
                 </div>
               </div>
             ))}

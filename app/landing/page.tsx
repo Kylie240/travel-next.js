@@ -11,31 +11,32 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative h-[calc(100vh-64px)] max-h-screen max-w-[1800px] px-2 md:px-8 md:rounded-3xl overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src="/images/boat-photo2.jpg"
-            alt="Travel background"
-             fill
-             className="object-cover rotate-180"
-             priority
-           />
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-        
-        <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4">
-          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-center mb-6">
-          Welcome To Your New <br className="hidden md:block" /> Travel Journal
-          </h1>
-          <p className="text-xl sm:text-2xl lg:text-3xl text-center mb-8 max-w-2xl">
-            Trip planning made easy
-          </p>
-          <div className="gap-4 mt-8">
-              <ActionButtons />
+      <div className="w-full flex justify-center items-center">
+        <div className="relative h-[calc(100vh-64px)] max-h-screen w-screen max-w-[1800px] px-2 md:px-8 md:rounded-3xl overflow-hidden">
+          <div className="absolute inset-0">
+            <Image
+              src="/images/boat-photo2.jpg"
+              alt="Travel background"
+              fill
+              className="object-cover rotate-180"
+              priority
+            />
+            <div className="absolute inset-0 bg-black/40" />
+          </div>
+          
+          <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-center mb-6">
+            Welcome To Your New <br className="hidden md:block" /> Travel Journal
+            </h1>
+            <p className="text-xl sm:text-2xl lg:text-3xl text-center mb-8 max-w-2xl">
+              Trip planning made easy
+            </p>
+            <div className="gap-4 mt-8">
+                <ActionButtons />
+            </div>
           </div>
         </div>
       </div>
-
       {/* Features Section */}
       <div className="py-20 px-8">
         <div className="max-w-6xl mx-auto">
