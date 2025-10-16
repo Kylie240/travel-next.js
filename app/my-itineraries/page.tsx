@@ -79,7 +79,7 @@ export default function MyItinerariesPage() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [supabase, user?.id ])
 
   useEffect(() => {
     // Check if native share is available (typically on mobile devices)
@@ -125,15 +125,58 @@ export default function MyItinerariesPage() {
 
   const handleDeleteItinerary = async (itineraryId: string) => {
     try {
+      const galleryUUID = await supabase.from('itinerary_gallery').select('gallery_id').eq('itinerary_id', itineraryId).maybeSingle()
+      console.log("galleryUUID", galleryUUID)
       await deleteItinerary(itineraryId)
       toast.success('Itinerary deleted successfully')
       const newItinerarySummaries = itinerarySummaries?.filter(itinerary => itinerary.id !== itineraryId)
       setItinerarySummaries(newItinerarySummaries as ItinerarySummary[])
       setFilteredItinerarySummaries(newItinerarySummaries as ItinerarySummary[])
-      // refreshItineraries()
+      
+      if (galleryUUID.data?.gallery_id) {
+        await handleDeleteGallery(galleryUUID.data.gallery_id)
+      }
     } catch (error) {
       toast.error('Failed to delete itinerary')
     }
+  }
+
+  const handleDeleteGallery = async (galleryId: string) => {
+    if (!user?.id) return;
+
+    const supabaseBucket = supabase.storage.from("itinerary-images");
+    const folderPath = `${user.id}/${galleryId}`;
+  
+    // recursive function to delete a folder and its subfolders
+    const deleteFolderRecursively = async (path: string) => {
+      console.log("path", path)
+      const { data: items, error: listError } = await supabaseBucket.list(path, { limit: 100 });
+      console.log("items", items)
+      if (listError) {
+        console.warn(`Failed to list items in ${path}:`, listError.message);
+        return;
+      }
+  
+      // separate files and folders
+      const files = items?.filter((i) => i.id && !i.name.endsWith("/")) || [];
+      const folders = items?.filter((i) => i.name && i.name !== "" && i.metadata === null) || [];
+  
+      // delete files in current folder
+      console.log("files", files)
+      if (files.length > 0) {
+        const filePaths = files.map((f) => `${path}/${f.name}`);
+        const { error: removeError } = await supabaseBucket.remove(filePaths);
+        if (removeError) console.warn(`Failed to remove files in ${path}:`, removeError.message);
+      }
+  
+      // recursively delete subfolders
+      for (const folder of folders) {
+        await deleteFolderRecursively(`${path}/${folder.name}`);
+      }
+    };
+  
+    // start recursive deletion
+    await deleteFolderRecursively(folderPath);
   }
 
   const activeItineraries = itinerarySummaries?.filter(itinerary => itinerary.status !== ItineraryStatusEnum.archived)
