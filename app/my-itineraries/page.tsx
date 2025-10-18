@@ -12,7 +12,7 @@ import { User, Session } from "@supabase/supabase-js"
 import { ItineraryStatusEnum, ItineraryStatusEnumString } from "@/enums/itineraryStatusEnum"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation" 
 import { Input } from "@/components/ui/input"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 
