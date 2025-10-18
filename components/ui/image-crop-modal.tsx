@@ -5,6 +5,7 @@ import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-im
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import 'react-image-crop/dist/ReactCrop.css'
+import Image from 'next/image'
 
 interface ImageCropModalProps {
   isOpen: boolean
@@ -118,7 +119,9 @@ export default function ImageCropModal({
               minWidth={100}
               minHeight={100}
             >
-              <img
+              <Image
+                width={100}
+                height={100}
                 ref={imgRef}
                 alt="Crop me"
                 src={imageSrc}

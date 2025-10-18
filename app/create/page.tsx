@@ -837,7 +837,7 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(true)
   const [itineraryLoading, setItineraryLoading] = useState(false)
   const [itineraryTags, _] = useState<Array<{id: number; name: string; icon: any}>>(itineraryTagsMap)
-  const [galleryUUID, setGalleryUUID] = useState('')
+  const [galleryUUID, setGalleryUUID] = useState(null)
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
   const [pendingItineraryData, setPendingItineraryData] = useState<any>(null)
 
@@ -913,7 +913,7 @@ export default function CreatePage() {
 
   const createGalleryUUID = async (isNew: boolean = true) => {
     setGalleryUUID(uuidv4())
-
+    
     if(!isNew) {
     const { data, error } = await supabase
       .from('itinerary_gallery')
@@ -1281,6 +1281,14 @@ export default function CreatePage() {
         const isValid = await form.trigger()
         if (isValid) {
           await handleFinalSubmit(data)
+          // if(ItineraryId) {
+          //   await supabase
+          //     .from('itinerary_gallery')
+          //     .insert({
+          //         itinerary_id: ItineraryId,
+          //         gallery_id: galleryUUID
+          //       })
+          // }
         } else {
           // Get specific validation errors
           const errors = form.formState.errors
@@ -1903,6 +1911,7 @@ export default function CreatePage() {
                     </div>
                     )}
                   </div>
+                  {galleryUUID}
 
                   <div className="flex justify-end gap-2 pt-10 md:pt-0">
                     <Button 
@@ -1958,6 +1967,7 @@ export default function CreatePage() {
         setIsOpen={setShowUpgradeDialog}
         onUpgrade={handleUpgradeClick}
         onSaveDraft={handleSaveDraftClick}
+        showDraftButton={true}
       />
     </FormProvider>
   )
