@@ -106,7 +106,7 @@ const ShareElement = () => {
           align="end"
         >
           <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-gray-900">Share this itinerary</h3>
+            <h3 className="text-xl ml-2 font-semibold text-gray-900">Share this itinerary</h3>
             
             {/* Copy Link Section */}
             <div className="pb-4 border-b border-gray-200">

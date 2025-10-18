@@ -11,13 +11,15 @@ interface ItineraryGridProps {
   isPrivate: boolean
   isCurrentUser: boolean
   currentUserId?: string
+  savedList?: string[]
 }
 
 export default function ItineraryGrid({ 
   itineraryData, 
   isPrivate, 
   isCurrentUser, 
-  currentUserId 
+  currentUserId,
+  savedList
 }: ItineraryGridProps) {
   const [filteredItineraryData, setFilteredItineraryData] = useState(itineraryData)
 
@@ -92,7 +94,7 @@ export default function ItineraryGrid({
               </div>
               {!isCurrentUser && currentUserId &&
                 <div className="absolute top-2 right-2">
-                  <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} color="white" />
+                  <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} color="white" savedList={savedList} />
                 </div>
               }
             </div>

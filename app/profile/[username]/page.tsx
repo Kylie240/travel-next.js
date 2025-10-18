@@ -17,14 +17,15 @@ const { username } = params;
 const supabase = createServerComponentClient({ cookies })
 const { data: { user: currentUser } } = await supabase.auth.getUser()
 const userData = await getProfileDataByUsername(username.toLowerCase())
-console.log('user', userData[0])
 const userId = userData[0]?.userId;
 let isPrivate: boolean = false;
 if (userData[0]?.isPrivate && userId !== currentUser?.id) {
 isPrivate = true
 }
-const isCurrentUser = userId == currentUser?.id;
 const itineraryData = await getItineraryDataByUserId(userId)
+const isCurrentUser = userId == currentUser?.id;
+const { data: currentUserSaves } = await supabase.from('interactions_saves').select('itinerary_id').eq('user_id', currentUser?.id) || null
+const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinerary_id) : null
 
   return (
     <div className="min-h-screen max-w-[1340px] mx-auto bg-white py-8 mb-4">
@@ -112,6 +113,7 @@ const itineraryData = await getItineraryDataByUserId(userId)
                 isPrivate={isPrivate}
                 isCurrentUser={isCurrentUser}
                 currentUserId={currentUser?.id}
+                savedList={savedList}
               />
             </div>
             

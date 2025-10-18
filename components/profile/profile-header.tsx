@@ -79,7 +79,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
               <div className="font-semibold">{userStats[0].followingCount}</div>
               <div className="text-sm">Following</div>
             </div>
-            <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push(`/profile/${user.username}`)}>
+            <div className="cursor-pointer flex flex-col items-center hover:text-gray-500" onClick={() => router.push(`/my-itineraries`)}>
               <div className="font-semibold">{userStats[0].totalItineraries}</div>
               <div className="text-sm">Trips</div>
             </div>
