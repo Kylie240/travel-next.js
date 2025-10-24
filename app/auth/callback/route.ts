@@ -1,24 +1,25 @@
-import { NextResponse } from "next/server"
-import { createServerClient } from "@supabase/ssr"
+import { NextResponse } from "next/server";
+import createClient from "@/utils/supabase/server";
 
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get("code")
+  const { searchParams, origin } = new URL(request.url);
+
+  // Extract auth code and optional redirect path
+  const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/";
 
   if (code) {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name) {
-            return request.headers.get("cookie") ?? ""
-          },
-        },
-      }
-    )
-    await supabase.auth.exchangeCodeForSession(code)
+    const supabase = await createClient();
+
+    // Exchange the auth code for a session
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (!error) {
+      // Redirect to the intended path or fallback to homepage
+      return NextResponse.redirect(`${origin}${next}`);
+    }
   }
 
-  return NextResponse.redirect(new URL("/", requestUrl.origin))
+  // Redirect to error page if code is missing or exchange fails
+  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
 }

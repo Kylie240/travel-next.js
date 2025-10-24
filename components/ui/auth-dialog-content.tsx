@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import { createClientComponentClient, Session } from "@supabase/auth-helpers-nextjs"
 import { toast } from "sonner"
 import Image from "next/image"
+import { createClient as createClient2 } from "@supabase/supabase-js"
 
 const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),

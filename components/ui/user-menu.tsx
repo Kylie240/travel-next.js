@@ -11,40 +11,46 @@ import { getUserProfileById } from "@/lib/actions/user.actions"
 import { FaUserAlt } from "react-icons/fa"
 import { listenToAvatarUpdates } from "@/lib/utils/avatar-events"
 import Image from "next/image"
+import useUser from "@/hooks/useUser"
 
 export function UserMenu() {
   const supabase = createClientComponentClient()
   const router = useRouter()
   const { toast } = useToast()
-  const [user, setUser] = useState<any>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const { loading, error, user } = useUser()
 
+  // Fetch user profile when user ID is present
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      if (user?.id) {
-        const userProfile = await getUserProfileById(user.id)
-        setUserProfile(userProfile)
-        console.log("userProfile", userProfile)
-      } else {
-        router.push('/')
+    const fetchUserProfile = async () => {
+      if (!user?.id) {
+        setUserProfile(null)
+        return
+      }
+
+      setProfileLoading(true)
+      setProfileError(null)
+      
+      try {
+        const profile = await getUserProfileById(user.id)
+        setUserProfile(profile)
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error)
+        setProfileError(error instanceof Error ? error.message : "Failed to fetch profile")
+      } finally {
+        setProfileLoading(false)
       }
     }
-    getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [router, supabase.auth])
+    fetchUserProfile()
+  }, [user?.id])
 
   // Listen for avatar updates
   useEffect(() => {
+    console.log("user", user)
     const unsubscribe = listenToAvatarUpdates((event) => {
       const { userId, avatarUrl } = event.detail
       // Only update if it's for the current user
@@ -78,10 +84,12 @@ export function UserMenu() {
       <DropdownMenu.Trigger asChild>
         <button className="flex cursor-pointer items-center space-x-2 rounded-full bg-white/90 p-1.5 hover:bg-white/100 transition-colors">
           <div className="relative h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-            {userProfile?.avatar && userProfile.avatar !== "" ? (
+            {profileLoading ? (
+              <div className="h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+            ) : userProfile?.avatar && userProfile.avatar !== "" ? (
               <Image 
                 src={userProfile.avatar}
-                alt={user.user_metadata.username || "User avatar"} 
+                alt={userProfile.name || user?.user_metadata?.username || "User avatar"} 
                 fill
                 className="h-full w-full object-cover"
               />
@@ -106,7 +114,13 @@ export function UserMenu() {
           sideOffset={5}
         >
           <div className="px-4 py-2 text-sm font-medium text-gray-900 border-b border-gray-100">
-            {userProfile?.name}
+            {profileLoading ? (
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+            ) : profileError ? (
+              <span className="text-red-500 text-xs">Error loading profile</span>
+            ) : (
+              userProfile?.name || user?.user_metadata?.name || "User"
+            )}
           </div>
 
           <div className="py-2">

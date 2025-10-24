@@ -12,7 +12,7 @@ import { NavbarSearch } from "@/components/ui/navbar-search"
 import { LocaleMenu } from "@/components/ui/locale-menu"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { User } from "@supabase/supabase-js"
-import createClient from "@/utils/supabase/client"
+import { createClient } from "@/utils/supabase/client"
 
 const publicNavigation = [
   { name: "Explore", href: "/explore" },
@@ -28,8 +28,7 @@ export default function Navbar() {
   const [isMobile, setIsMobile] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = createClientComponentClient()
-  const supabase2 = createClient()
+  const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const isExplorePage = pathname === "/explore"
   const isLandingPage = pathname === "/"
@@ -38,8 +37,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase2.auth.getUser()
-      console.log(user)
+      const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
     }
     getUser()
@@ -143,7 +141,7 @@ export default function Navbar() {
                 <Search className="h-5 w-5" />
               </Button>
             )} */}
-
+            
             {/* User menu or auth buttons */}
             {user ? (
               <UserMenu />

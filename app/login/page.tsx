@@ -1,289 +1,111 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { X } from "lucide-react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { useRouter, useSearchParams } from "next/navigation"
-import { createClientComponentClient, Session } from "@supabase/auth-helpers-nextjs"
-import { toast } from "sonner"
-import Image from "next/image"
-import Link from "next/link"
+import { useState } from "react";
 
-const signUpSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
-  email: z.string().email("Please enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be less than 20 characters").refine(s => !s.includes(' '), 'No spaces allowed'),
-})
+import { useSearchParams } from "next/navigation";
 
-const signInSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  password: z.string().min(1, "Password is required"),
-})
-
-type SignUpFormData = z.infer<typeof signUpSchema>
-type SignInFormData = z.infer<typeof signInSchema>
-type AuthFormData = SignUpFormData | SignInFormData
+import createClient from "@/utils/supabase/client";
+import { Button } from "@/components/ui/button";
+import { LoaderCircle, CircleAlert } from 'lucide-react';
 
 export default function LoginPage() {
-  const searchParams = useSearchParams()
-  const [isSignUp, setIsSignUp] = useState(searchParams.get('mode') === 'signup')
-  const [authError, setAuthError] = useState("")
-  const router = useRouter()
-  const supabase = createClientComponentClient()
-  const [confirmPassword, setConfirmPassword] = useState("")
-  
-  
-  const signUpForm = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema)
-  })
-  
-  const signInForm = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema)
-  })
-  
-  const currentForm = isSignUp ? signUpForm : signInForm
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = currentForm
+  const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const setSessionCookie = async (session: Session) => {
-    const token = await supabase.auth.getSession();
-    document.cookie = `sb-access-token=${session?.access_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
-    document.cookie = `sb-refresh-token=${session?.refresh_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
-  }
+  const supabase = createClient();
 
-  const onSubmit = async (data: AuthFormData) => {
-    const { email, password } = data
-    const name = 'name' in data ? data.name : undefined
-    const username = 'username' in data ? data.username : undefined
-    setAuthError("")
-    try {
-      if (isSignUp) {
-        const { error, data: { user } } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              name,
-              username
-            }
-          }
-        })
-        if (error) {
-          setAuthError(error.message)
-          return
-        } else {
-          await supabase.from('users').insert({
-            id: user.id,
-            name: name,
-            username: username.toLowerCase(),
-            email: email,
-            avatar: "",
-            location: "",
-            bio: "",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          await supabase.from('users_settings').insert({
-            user_id: user.id,
-            is_private: false,
-            email_notifications: true
-          })
-        }
-        signUpForm.reset()
-        signInForm.reset()
-        toast.success("Account created successfully")
-        router.push("/account-settings?tab=Profile")
-      } else {
-        const { error, data: userCredential } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        if (error) {
-          setAuthError(error.message)
-          return
-        }
-        setSessionCookie(userCredential.session)
-        signUpForm.reset()
-        signInForm.reset()
-        toast.success("Successfully signed in")
-        // Use window.location for full page reload to ensure state is refreshed
-        window.location.href = "/"
-      }
-    } catch (error: any) {
-      setAuthError(error.message)
-    }
-  }
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
 
-  const handleGoogleSignIn = async () => {
-    setAuthError("") // Clear any previous errors
+  const loginWithGoogle = async () => {
+    setIsGoogleLoading(true);
+    setError(null);
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      })
-      if (error) {
-        setAuthError(error.message)
-        return
-      }
-    } catch (error: any) {
-      setAuthError(error.message)
-    }
-  }
+          redirectTo: `${window.location.origin}/auth/callback${
+            next ? `?next=${encodeURIComponent(next)}` : ""
+          }`,
+        },
+      });
 
-  const handleForgotPassword = async (email: string) => {
-    const supabase = createClientComponentClient()
-    console.log(email)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`
-    })
-    if (error) {
-      setAuthError(error.message)
-      return
+      if (error) {
+        throw error;
+      } else {
+        console.log('success');
+      }
+    } catch (error) {
+      setError("There was an error logging in with Google. Please try again.");
+      console.error("Error loging in with Google:", error);
+      setIsGoogleLoading(false);
     }
-    toast.success("Password reset email sent")
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <div className="flex-1 flex flex-col p-6 max-w-[450px] mx-auto w-full">
-
-        <div className="flex-1 flex flex-col mt-8 md:mt-12 lg:mt-16">
-          <h1 className="text-2xl text-center font-bold mb-2">
-            Welcome{isSignUp ? " " : " back"} to Journli
-          </h1>
-          <p className="text-sm text-gray-500 text-center mb-6">
-            {isSignUp 
-              ? "Join now to start creating"
-              : "Sign in to access your account"
-            }
-          </p>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {isSignUp && (
-              <>
-                <div>
-                  <label className="pl-1 block text-sm font-medium mb-1">Name</label>
-                  <Input
-                    type="text"
-                    placeholder="Name"
-                    {...(isSignUp ? signUpForm.register("name") : {})}
-                    className={isSignUp && signUpForm.formState.errors.name ? "border-red-500" : ""}
-                  />
-                  {isSignUp && signUpForm.formState.errors.name && (
-                    <p className="mt-1 text-xs text-red-500">{signUpForm.formState.errors.name.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="pl-1 block text-sm font-medium mb-1">Username</label>
-                  <Input
-                    type="text"
-                    placeholder="Username"
-                    {...(isSignUp ? signUpForm.register("username") : {})}
-                    className={isSignUp && signUpForm.formState.errors.username ? "border-red-500" : ""}
-                  />
-                  {isSignUp && signUpForm.formState.errors.username && (
-                    <p className="mt-1 text-xs text-red-500">{signUpForm.formState.errors.username.message}</p>
-                  )}
-                </div>
-              </>
-            )}
-            <div>
-              <label className="pl-1 block text-sm font-medium mb-1">Email</label>
-              <Input
-                type="email"
-                placeholder="Email"
-                {...(isSignUp ? signUpForm.register("email") : signInForm.register("email"))}
-                className={(isSignUp ? signUpForm.formState.errors.email : signInForm.formState.errors.email) ? "border-red-500" : ""}
-              />
-              {(isSignUp ? signUpForm.formState.errors.email : signInForm.formState.errors.email) && (
-                <p className="mt-1 text-xs text-red-500">{(isSignUp ? signUpForm.formState.errors.email : signInForm.formState.errors.email)?.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="pl-1 block text-sm font-medium mb-1">Password</label>
-              <Input
-                type="password"
-                placeholder="Password"
-                {...(isSignUp ? signUpForm.register("password") : signInForm.register("password"))}
-                className={(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password) ? "border-red-500" : ""}
-              />
-              {(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password) && (
-                <p className="mt-1 text-xs text-red-500">{(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password)?.message}</p>
-              )}
-            </div>
-            {isSignUp && (
-              <div>
-                <label className="pl-1 block text-sm font-medium mb-1">Confirm Password</label>
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={signUpForm.formState.errors.password ? "border-red-500" : ""}
-                />
-                {confirmPassword !== (isSignUp ? signUpForm.watch("password") : signInForm.watch("password")) && (
-                  <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
-                )}
-              </div>
-            )}
-            {authError && (
-              <p className="text-sm text-red-500">{authError}</p>
-            )}
-            {!isSignUp && (
-              <a className="text-sm mt-2 text-blue-500 hover:underline cursor-pointer" onClick={() => handleForgotPassword(signInForm.watch("email"))}>Forgot password?</a>
-            )}
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isSubmitting || (isSignUp && confirmPassword !== signUpForm.watch("password"))}
-            >
-              {isSignUp ? "Sign Up" : "Sign In"}
-            </Button>
-          </form>
-
-          <div className="relative my-4 flex justify-center text-sm">
-            <span className="bg-white font-bold px-2 text-gray-500">OR</span>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full flex items-center gap-2"
-            onClick={handleGoogleSignIn}
-          >
-            <Image src="/images/google-oauth.png" alt="Google" width={20} height={20} className="object-contain" /> Continue with Google
-          </Button>
-
-          <div className="mt-6 text-center text-sm">
-            <span className="text-gray-700">
-              {isSignUp ? "Already have an account? " : "Don't have an account? "}
-            </span>
-            <button
-              type="button"
-              className="text-blue-500 hover:underline"
-              onClick={() => {
-                setAuthError("")
-                setIsSignUp(!isSignUp)
-                signUpForm.reset()
-                signInForm.reset()
-                setConfirmPassword("")
-              }}
-            >
-              {isSignUp ? "Sign in" : "Sign up"}
-            </button>
-          </div>
-          <div className="flex justify-center mt-4">
-            <span className="text-gray-500 text-xs text-center">By continuing, you agree to Journli's <a href="/legal/terms" target="_blank" className="underline">Terms of Service</a> and acknowledge that you have read our <a href="/legal/privacy" target="_blank" className="underline">Privacy Policy</a></span>
-          </div>
-        </div>
+    <div className="max-w-md mx-auto py-12">
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-semibold">Welcome back</h1>
+        <p className="mt-2 text-muted-foreground">
+          Login to your account to continue
+        </p>
       </div>
+
+      {error && (
+        <div className="rounded-md border px-4 py-3">
+          <p className="text-sm">
+            <CircleAlert
+              className="me-3 -mt-0.5 inline-flex text-red-500"
+              size={16}
+              aria-hidden="true"
+            />
+            {error}
+          </p>
+        </div>
+      )}
+
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={loginWithGoogle}
+        disabled={isGoogleLoading}
+      >
+        {isGoogleLoading ? (
+          <LoaderCircle className="animate-spin size-5" />
+        ) : (
+          <GoogleIcon />
+        )}
+        <span className="ml-2">Login with Google</span>
+      </Button>
     </div>
-  )
+  );
 }
 
+const GoogleIcon = () => (
+  <svg
+    aria-hidden="true"
+    focusable="false"
+    role="img"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 48 48"
+    className="size-5"
+  >
+    <path
+      fill="#fbc02d"
+      d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20 s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
+    />
+    <path
+      fill="#e53935"
+      d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039 l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
+    />
+    <path
+      fill="#4caf50"
+      d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"
+    />
+    <path
+      fill="#1565c0"
+      d="M43.611,20.083L43.595,20L42,20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571 c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
+    />
+  </svg>
+);
