@@ -44,19 +44,17 @@ export default async function NavbarServer() {
             {user ? (
               <UserMenu />
             ) : (
-              <div className="items-center gap-2">
-                {/* Desktop auth */}
+              
                 <div className="hidden md:block">
-                  <AuthDialog>
+                  <Link href="/login?mode=login">
                     <Button 
                       variant="ghost" 
                       className="text-gray-700 hover:text-black"
                     >
                       Sign In
                     </Button>
-                  </AuthDialog>
+                  </Link>
                 </div>
-              </div>
             )}
 
             {/* Mobile menu button and mobile auth */}

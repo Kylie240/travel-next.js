@@ -7,8 +7,9 @@ import { Followers } from "@/types/followers";
 import { UserData } from "../types";
 import { ProfileData } from "@/types/profileData";
 import createClient from "@/utils/supabase/server";
+import { createClient as createAdminClient } from "@/utils/supabase/server-admin"
 
-export const getUserDataById = async (userId: string) => {
+export const getUserDataById = async () => {
     const supabase = await createClient()
     const {
         data: { user },
@@ -20,7 +21,7 @@ export const getUserDataById = async (userId: string) => {
         const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('id', user.id)
         .single();
 
         if (userError) {
@@ -49,7 +50,7 @@ export const getUserProfileById = async (userId: string) => {
       return data
 }
 
-export const getUserStatsById = async (userId: string) => {
+export const getUserStatsById = async () => {
     const supabase = await createClient()
     const {
         data: { user },
@@ -58,7 +59,7 @@ export const getUserStatsById = async (userId: string) => {
       if (!user) throw new Error("Not authenticated")
         
         const { data, error } = await supabase
-        .rpc("get_user_stats", { p_user_id: userId }) as { 
+        .rpc("get_user_stats", { p_user_id: user.id }) as { 
             data: UserStats | null, 
             error: Error | null 
         };
@@ -263,12 +264,7 @@ export const removeBlockedUser = async (userId: string, blockedUserId: string) =
 
 //profile methods
 export const getUserByUsername = async (username: string) => {
-    // const supabase = await createClient()
-    // const {
-    //     data: { user },
-    //   } = await supabase.auth.getUser()
-    
-    //   if (!user) throw new Error("Not authenticated")
+    const supabase = await createClient()
 
         const { data, error } = await supabase
         .from('users')
@@ -284,12 +280,7 @@ export const getUserByUsername = async (username: string) => {
 }
 
 export const getProfileDataByUsername = async (username: string) => {
-    // const supabase = await createClient()
-    // const {
-    //     data: { user },
-    //   } = await supabase.auth.getUser()
-    
-    //   if (!user) throw new Error("Not authenticated")
+    const supabase = await createClient()
         
         const { data, error } = await supabase
         .rpc("get_user_profile", { 
@@ -330,7 +321,7 @@ export const getProfileDataById = async (profileId: string, userId: string) => {
         return data;
 }
 
-export const getUserSettingsById = async (userId: string) => {
+export const getUserSettingsById = async () => {
     const supabase = await createClient()
     const {
         data: { user },
@@ -341,7 +332,7 @@ export const getUserSettingsById = async (userId: string) => {
         const { data, error } = await supabase
         .from('users_settings')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .single();
 
         if (error) {
@@ -436,12 +427,12 @@ export const setNotificationData = async (
 }
 
 export const deleteAccount = async (userId: string) => {
-    const supabase = await createClient()
-    const {
-        data: { user },
-      } = await supabase.auth.getUser()
-    
-      if (!user) throw new Error("Not authenticated")
+    const supabase = await createAdminClient()
+
+        const { error: authError } = await supabase.auth.admin.deleteUser(userId)
+        if (authError) {
+            throw new Error(`Failed to delete account: ${authError.message}`);
+        }
         
         const { data, error } = await supabase
         .from('users')
@@ -472,6 +463,6 @@ export const setUserAvatar = async (userId: string, avatar: string) => {
     if (error) {
         throw new Error(error.message);
     }
-    
+
     return data;
 }

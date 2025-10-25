@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { AuthDialog } from '@/components/ui/auth-dialog'
 import { Button } from '@/components/ui/button'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import createClient from '@/utils/supabase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -13,7 +13,7 @@ const ActionButtons = () => {
   const [currentUser, setCurrentUser] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
 
   useEffect(() => {
     // Get initial user state

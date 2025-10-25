@@ -13,12 +13,12 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/')
-  }
-  const userData = await getUserDataById(user.id)
-  const userStats = await getUserStatsById(user.id)
-  const userSettings = await getUserSettingsById(user.id)
+  // if (!user) {
+  //   redirect('/')
+  // }
+  const userData = await getUserDataById()
+  const userStats = await getUserStatsById()
+  const userSettings = await getUserSettingsById()
 
   return (
     <SettingsContent 

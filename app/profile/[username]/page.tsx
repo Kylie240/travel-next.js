@@ -11,10 +11,12 @@ import FollowButton from "@/app/itinerary/[id]/follow-button";
 import ShareProfileButton from "./share-profile";
 import ProfileMenuButton from "./profile-menu-button";
 import ItineraryGrid from "./itinerary-grid";
+import createClient from "@/utils/supabase/server";
 
 export default async function UserProfilePage({ params }: { params: { username: string } }) {
 const { username } = params;
-const supabase = createServerComponentClient({ cookies })
+// const supabase = createServerComponentClient({ cookies })
+const supabase = await createClient()
 const { data: { user: currentUser } } = await supabase.auth.getUser()
 const userData = await getProfileDataByUsername(username.toLowerCase())
 const userId = userData[0]?.userId;

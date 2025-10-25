@@ -27,15 +27,24 @@ export default async function updateSession(request: NextRequest) {
     }
   );
 
-  // Fetch the current authenticated user
+  // Fetch the current authenticated user and refresh session if needed
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Refresh the session to ensure it's up to date
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const path = request.nextUrl.pathname;
 
-  // Redirect unauthenticated users to login, except for auth routes
-  if (!user && path.startsWith('/auth')) {
+  // Define protected routes that require authentication
+  const protectedRoutes = ['/create', '/my-itineraries', '/saves', '/account-settings'];
+  const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route));
+
+  // Redirect unauthenticated users from protected routes to login
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set("next", path);

@@ -23,6 +23,9 @@ export default function useUser() {
         if (session) {
           setSession(session);
           setUser(session.user);
+        } else {
+          setSession(null);
+          setUser(null);
         }
       } catch (error) {
         setError(error as AuthError);
@@ -30,7 +33,26 @@ export default function useUser() {
         setLoading(false);
       }
     }
+    
     fetchUser();
+
+    // Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          setSession(session);
+          setUser(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
   return { loading, error, session, user };

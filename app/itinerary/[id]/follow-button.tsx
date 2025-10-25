@@ -62,7 +62,7 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
 
   // If user is not logged in, show login prompt
   if (!userId) {
-    if (isMobile) {
+    if (true) {
       return (
         <Button 
           className="w-full"

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { deleteItinerary, getItinerarySummaries, updateItineraryStatus } from "@/lib/actions/itinerary.actions"
 import Link from "next/link"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import createClient from "@/utils/supabase/client"
 import { useEffect, useState } from "react"
 import { User, Session } from "@supabase/supabase-js"
 import { ItineraryStatusEnum, ItineraryStatusEnumString } from "@/enums/itineraryStatusEnum"
@@ -18,7 +18,7 @@ import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 
 export default function MyItinerariesPage() {
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const [itinerarySummaries, setItinerarySummaries] = useState<ItinerarySummary[] | null>(null)
   const [loading, setLoading] = useState(true)

@@ -1,11 +1,11 @@
 "use client"
 
 import { X, Upload } from "lucide-react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { toast } from "sonner"
 import { useState } from "react"
 import { v4 as uuidv4 } from 'uuid'
 import Image from "next/image"
+import createClient from "@/utils/supabase/client"
 
 interface ImageUploadProps {
   value?: string
@@ -25,7 +25,7 @@ export function ImageUpload({
   folder
 }: ImageUploadProps) {
   const [uploadingImage, setUploadingImage] = useState(false)
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {

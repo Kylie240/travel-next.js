@@ -19,11 +19,10 @@ import { toast } from "sonner"
 import { FollowersDialog } from "@/components/ui/followers-dialog"
 import { Followers } from "@/types/followers"
 import { UserSettings } from "@/types/profileData copy"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { FaUserLarge } from "react-icons/fa6";
-import { createClient } from "@/utils/supabase/client"
+import createClient from "@/utils/supabase/client"
 import { supabase } from "@/utils/supabase/superbase-client"
-import { dispatchAvatarUpdate } from "@/lib/utils/avatar-events"
+import { dispatchAvatarUpdate, dispatchProfileUpdate } from "@/lib/utils/avatar-events"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -39,10 +38,17 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [ _, setUserData] = useState<UserData>(userData)
   const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
   const [updatedContentData, setUpdatedContentData] = useState<UserData>(userData)
+  // Separate form state for inputs - doesn't update profile until saved
+  const [formData, setFormData] = useState({
+    name: userData.name,
+    username: userData.username,
+    bio: userData.bio,
+    location: userData.location
+  })
   const [isItinerarySharing, setIsItinerarySharing] = useState(false)
   const [isPrivateProfile, setIsPrivateProfile] = useState(userSettings.is_private)
   const [isEmailNotifications, setIsEmailNotifications] = useState(userSettings.email_notifications)
-  const [formError, setFormError] = useState("")
+  const [formError, setFormError] = useState("")  
   const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
   const [showBlockedUsers, setShowBlockedUsers] = useState(false)
@@ -72,12 +78,12 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         case "Profile":
           const profileResult = await setProfileData(
             userData.id, 
-            { name: updatedUserData.name, 
-              username: updatedUserData.username.toLowerCase(), 
-              bio: updatedUserData.bio, 
-              location: updatedUserData.location,
-              email: updatedUserData.email,
-              avatar: updatedUserData.avatar,
+            { name: formData.name, 
+              username: formData.username.toLowerCase(), 
+              bio: formData.bio, 
+              location: formData.location,
+              email: userData.email, // Keep original email
+              avatar: updatedUserData.avatar, // Keep avatar from separate state
             })
           
           if ('code' in profileResult) {
@@ -88,6 +94,24 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             setFormError(profileResult.message || "Failed to update profile")
             return
           }
+          
+          // Only update the profile state after successful save
+          setUpdatedUserData({ 
+            ...updatedUserData, 
+            name: formData.name,
+            username: formData.username.toLowerCase(),
+            bio: formData.bio,
+            location: formData.location
+          })
+          
+          // Dispatch profile update event to notify other components
+          dispatchProfileUpdate(userData.id, {
+            name: formData.name,
+            username: formData.username.toLowerCase(),
+            bio: formData.bio,
+            location: formData.location
+          })
+          
           toast.success("Profile updated successfully")
           router.refresh()
           break
@@ -151,7 +175,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       toast.error("Passwords do not match")
       return
     }
-    const supabase = createClientComponentClient()
+    const supabase = createClient()
     const { data, error } = await supabase.auth.updateUser({
       password: newPassword
     })
@@ -168,9 +192,11 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const handleDeleteAccount = async () => {
     if (confirm('Are you sure you want to delete your account? This action is permanent and cannot be undone.')) {
       try {
+          // await supabase.auth.admin.deleteUser(userData.id)
           await deleteAccount(userData.id)
-          toast.success('Account deleted')
-          router.refresh()
+          supabase.auth.signOut()
+          toast.success('Account deleted successfully')
+          router.push('/')
       } catch (error) {
           toast.error('Failed to delete account')
       }
@@ -183,7 +209,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
 
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
     try {
       setUploadingAvatar(true)
       const MAX_FILE_SIZE = 2 * 1024 * 1024;
@@ -299,30 +325,30 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Name</label>
             <Input
               type="text"
-              defaultValue={updatedUserData.name}
+              value={formData.name}
               placeholder="Enter your name"
               className="rounded-xl"
-              onChange={(e) => setUpdatedUserData({ ...userData, name: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
           <div>
             <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Username</label>
             <Input
               type="text"
-              defaultValue={updatedUserData.username}
+              value={formData.username}
               placeholder="Enter your username"
               className="rounded-xl"
-              onChange={(e) => setUpdatedUserData({ ...updatedUserData, username: e.target.value.toLowerCase() })}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase() })}
             />
           </div>
           <div>
-            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">About</label>
+            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Bio</label>
             <textarea
               className="w-full p-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-travel-900 min-h-[100px]"
-              defaultValue={updatedUserData.bio}
+              value={formData.bio}
               placeholder="Tell us about yourself"
               maxLength={250}
-              onChange={(e) => setUpdatedUserData({ ...updatedUserData, bio: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
               />
           </div>
           <div>

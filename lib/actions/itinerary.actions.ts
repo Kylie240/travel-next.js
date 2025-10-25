@@ -3,10 +3,10 @@
 import { cookies } from "next/headers";
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { CreateItinerary } from "@/types/createItinerary";
-import { supabase } from "@/utils/supabase/superbase-client";
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
 import { ItinerarySummary } from "@/types/ItinerarySummary";
 import { SavedItinerary } from "@/types/savedItinerary";
+import createClient from "@/utils/supabase/server";
 
 export const getItineraries = async (options?: GetItineraryOptions) => {
     const page = options?.pagination?.page || 1;
@@ -98,6 +98,7 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
 }
 
 export const getItineraryDataByUserId = async (userId: string) => {
+    const supabase = await createClient()
     const { data, error } = await supabase
     .rpc("get_profile_itineraries", { p_creator_id: userId }) as { 
         data: ItinerarySummary[] | null, 
@@ -113,34 +114,16 @@ export const getItineraryDataByUserId = async (userId: string) => {
 export const createItinerary = async (itinerary: CreateItinerary) => {
     itinerary.days.forEach((x, i) => x.id = i + 1)
     // Mey need to check if the user is authenticated
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-
-        const { data: { user } } = await supabase.auth.getUser();
-        const userId = user?.id;
-
-        if (!userId) {
-            throw new Error("User ID not found");
-        }
-
-        const { data: existingUser, error: userError } = await supabase.auth.getUser();
-
-        if (userError) {
-            throw new Error('Failed to verify user');
-        }
-
-        if (!existingUser) {
-            //return to homepage
-        }
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
 
         const { data, error } = await supabase.rpc("create_itinerary", {
             p_itinerary: itinerary,
-            p_creator_id: userId,
+            p_creator_id: user.id,
         });
 
         if (error && error.message == "Maximum number of itineraries reached.") {
@@ -148,52 +131,28 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
         } else if (error) throw new Error(error.message);
 
         return data;
-    } catch (error) {
-        throw new Error(`Failed to create itinerary: ${error instanceof Error ? error.message : String(error)}`);
-    }
 }
 
 export const updateItinerary = async (id: string, itinerary: CreateItinerary) => {
-     // Mey need to check if the user is authenticated
-     const token = cookies().get("sb-access-token");
-     if (!token) {
-         throw new Error("Not authenticated");
-        }
-        
-        try {
-            const supabase = createServerActionClient({ cookies });
-            
-            const { data: { user } } = await supabase.auth.getUser();
-            const userId = user?.id;
-            
-            if (!userId) {
-                throw new Error("User ID not found");
-            }
-            
-        const { data: existingUser, error: userError } = await supabase.auth.getUser();
-
-        if (userError) {
-            throw new Error('Failed to verify user');
-        }
-        
-        if (!existingUser) {
-            throw new Error('Please login and try again');
-        }
+     const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
         const { data, error } = await supabase.rpc("update_itinerary", {
             p_itinerary: itinerary,
-            p_creator_id: userId,
+            p_creator_id: user.id,
             p_itinerary_id: id,
         });
 
         if (error) throw new Error(error.message);
 
         return { success: true };
-    } catch (error) {
-        throw new Error(`Failed to update itinerary: ${error instanceof Error ? error.message : String(error)}`);
-    }
 }
 
 export const getItinerarySummaries = async (userId?: string) => {
+    const supabase = await createClient()
     const { data, error } = await supabase
     .rpc("get_my_itinieraries", { p_creator_id: userId }) as { 
         data: ItinerarySummary[] | null, 
@@ -207,18 +166,12 @@ export const getItinerarySummaries = async (userId?: string) => {
 }
 
 export const updateItineraryStatus = async (itineraryId: string, status: number, creatorId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            throw new Error("Not authenticated");
-        }
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
 
     const { data, error } = await supabase.rpc("update_itinerary_status", {
         p_creator_id: creatorId,
@@ -231,40 +184,27 @@ export const updateItineraryStatus = async (itineraryId: string, status: number,
     } else if (error) throw new Error(error.message);
     
     return { success: true };
-    } catch (error) {
-        throw new Error(`Failed to update itinerary status: ${error instanceof Error ? error.message : String(error)}`);
-    }
 }
 
 export const getItineraryById = async (itineraryId: string) => {
-    try {
-        const supabase = createServerActionClient({ cookies });
+    const supabase = await createClient()
 
-        const { data, error } = await supabase.rpc("get_itinerary", {
-        p_itinerary_id: itineraryId,
-        });
+    const { data, error } = await supabase.rpc("get_itinerary", {
+    p_itinerary_id: itineraryId,
+    });
 
-        if (error) throw new Error(error.message);
-        
-        return data;
-    } catch (error) {
-        throw new Error(`Failed to retrieve itinerary: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    if (error) throw new Error(error.message);
+    
+    return data;
 }
 
 export const deleteItinerary = async (itineraryId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-        
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            throw new Error("Not authenticated");
-        }
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
 
         const { error: itineraryError } = await supabase
         .from('itineraries')
@@ -289,13 +229,15 @@ export const deleteItinerary = async (itineraryId: string) => {
         // .eq('itinerary_id', itineraryId);
 
         return { success: true };
-    } catch (error) {
-        throw new Error(`Failed to delete itinerary: ${error instanceof Error ? error.message : String(error)}`);
-    }
 }
 
 export const incrementItineraryViewCount = async (itineraryId: string) => {
-    const supabase = createServerActionClient({ cookies });
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
     
     const { data, error } = await supabase
     .rpc("increment_itinerary_view", { p_itinerary_id: itineraryId });
@@ -306,8 +248,12 @@ export const incrementItineraryViewCount = async (itineraryId: string) => {
 }
 
 export const getSavesByUserId = async (userId: string, creatorId: string = null) => {
-    try {
-        const supabase = createServerActionClient({ cookies });
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
         
         const { data, error } = await supabase
         .rpc("get_saved_itineraries", { p_user_id: userId, p_creator_id: creatorId }) as { 
@@ -320,45 +266,32 @@ export const getSavesByUserId = async (userId: string, creatorId: string = null)
         } 
 
         return data;
-    } catch (error) {
-        throw new Error(`Failed to get saved itineraries: ${error instanceof Error ? error.message : String(error)}`);
-    }
 }
 
 export const getSavesByCreatorId = async (userId: string, creatorId: string = null) => {
-    try {
-        const supabase = createServerActionClient({ cookies });
+    const supabase = await createClient()   
         
-        const { data, error } = await supabase
-        .rpc("get_saved_itinerary_ids", { p_current_user_id: userId, p_creator_id: creatorId }) as { 
-            data: string[] | null, 
-            error: Error | null 
-        };
+    const { data, error } = await supabase
+    .rpc("get_saved_itinerary_ids", { p_current_user_id: userId, p_creator_id: creatorId }) as { 
+        data: string[] | null, 
+        error: Error | null 
+    };
 
-        if (error) {
-            throw new Error(error.message);
-        } 
+    if (error) {
+        throw new Error(error.message);
+    } 
 
-        return data;
-    } catch (error) {
-        throw new Error(`Failed to get saved itineraries: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    return data;
 }
 
 //Interactions
 export const LikeItinerary = async (itineraryId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-        
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            throw new Error("Not authenticated");
-        }
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
 
         const { error: itineraryError } = await supabase
         .from('interactions_likes')
@@ -372,24 +305,15 @@ export const LikeItinerary = async (itineraryId: string) => {
         }
 
         return { success: true };
-    } catch (error) {
-        throw new Error(`Failed to bookmark itinerary: ${error instanceof Error ? error.message : String(error)}`);
-    }
 }
 
 export const UnlikeItinerary = async (itineraryId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-        
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            throw new Error("Not authenticated");
-        }
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
 
         const { error: itineraryError } = await supabase
         .from('interactions_likes')
@@ -402,24 +326,15 @@ export const UnlikeItinerary = async (itineraryId: string) => {
         }
 
         return { success: true };
-    } catch (error) {
-        throw new Error(`Failed to unlike itinerary: ${error instanceof Error ? error.message : String(error)}`);
-    }
 }
 
 export const SaveItinerary = async (itineraryId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-        
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            throw new Error("Not authenticated");
-        }
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
 
         const { error: itineraryError } = await supabase
         .from('interactions_saves')
@@ -436,30 +351,15 @@ export const SaveItinerary = async (itineraryId: string) => {
         }
 
         return { success: true };
-    } catch (error) {
-        throw new Error(
-            `Failed to save itinerary: ${
-                error instanceof Error
-                ? error.message
-                : JSON.stringify(error, null, 2)
-            }`
-        );
-    }
 }
 
 export const UnsaveItinerary = async (itineraryId: string) => {
-    const token = cookies().get("sb-access-token");
-    if (!token) {
-        throw new Error("Not authenticated");
-    }
-
-    try {
-        const supabase = createServerActionClient({ cookies });
-        
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            throw new Error("Not authenticated");
-        }
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
 
         const { error: itineraryError } = await supabase
         .from('interactions_saves')
@@ -472,7 +372,4 @@ export const UnsaveItinerary = async (itineraryId: string) => {
         }
 
         return { success: true };
-    } catch (error) {
-        throw new Error(`Failed to unsave itinerary: ${error instanceof Error ? error.message : String(error)}`);
-    }
 }

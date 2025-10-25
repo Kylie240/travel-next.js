@@ -149,7 +149,7 @@ export default function Navbar() {
               <UserMenu />
             ) : (
               <div className="items-center gap-2">
-                {!isMobile ? (
+                {false ? (
                   <AuthDialog 
                     isOpen={isAuthOpen} 
                     setIsOpen={setIsAuthOpen} 

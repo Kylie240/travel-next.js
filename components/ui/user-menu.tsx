@@ -5,16 +5,16 @@ import { ChevronDown, LogOut, Settings, PenSquare, User, ChevronUp, Info, Globe,
 import { useRouter } from "next/navigation"
 import { useToast } from "./use-toast"
 import { useState, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { CiPassport1 } from "react-icons/ci";
 import { getUserProfileById } from "@/lib/actions/user.actions"
 import { FaUserAlt } from "react-icons/fa"
-import { listenToAvatarUpdates } from "@/lib/utils/avatar-events"
+import { listenToAvatarUpdates, listenToProfileUpdates } from "@/lib/utils/avatar-events"
 import Image from "next/image"
 import useUser from "@/hooks/useUser"
+import createClient from "@/utils/supabase/client"
 
 export function UserMenu() {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const router = useRouter()
   const { toast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
@@ -23,35 +23,37 @@ export function UserMenu() {
   const [profileError, setProfileError] = useState<string | null>(null)
   const { loading, error, user } = useUser()
 
-  // Fetch user profile when user ID is present
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user?.id) {
-        setUserProfile(null)
-        return
-      }
-
-      setProfileLoading(true)
-      setProfileError(null)
-      
-      try {
-        const profile = await getUserProfileById(user.id)
-        setUserProfile(profile)
-      } catch (error) {
-        console.error("Failed to fetch user profile:", error)
-        setProfileError(error instanceof Error ? error.message : "Failed to fetch profile")
-      } finally {
-        setProfileLoading(false)
-      }
+  // Function to fetch user profile
+  const fetchUserProfile = async () => {
+    if (!user?.id) {
+      setUserProfile(null)
+      setProfileLoading(false)
+      return
     }
 
+    setProfileLoading(true)
+    setProfileError(null)
+    
+    try {
+      const profile = await getUserProfileById(user.id)
+      setUserProfile(profile)
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error)
+      setProfileError(error instanceof Error ? error.message : "Failed to fetch profile")
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
+  // Fetch user profile when user ID is present
+  useEffect(() => {
     fetchUserProfile()
   }, [user?.id])
 
   // Listen for avatar updates
   useEffect(() => {
     console.log("user", user)
-    const unsubscribe = listenToAvatarUpdates((event) => {
+    const unsubscribeAvatar = listenToAvatarUpdates((event) => {
       const { userId, avatarUrl } = event.detail
       // Only update if it's for the current user
       if (user?.id === userId) {
@@ -59,16 +61,37 @@ export function UserMenu() {
       }
     })
 
-    return unsubscribe
+    return unsubscribeAvatar
+  }, [user?.id])
+
+  // Listen for profile updates
+  useEffect(() => {
+    const unsubscribeProfile = listenToProfileUpdates((event) => {
+      const { userId } = event.detail
+      // Only refetch if it's for the current user
+      if (user?.id === userId) {
+        fetchUserProfile()
+      }
+    })
+
+    return unsubscribeProfile
   }, [user?.id])
 
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut()
+      // Clear local state immediately
+      setUserProfile(null)
+      setProfileError(null)
+      setProfileLoading(false)
+      setIsOpen(false)
+      
       toast({
         title: "Signed out successfully",
         description: "Come back soon!",
       })
+      
+      router.push('/')
     } catch (error: any) {
       toast({
         title: "Error signing out",
@@ -76,7 +99,6 @@ export function UserMenu() {
         variant: "destructive",
       })
     }
-    router.push('/')
   }
 
   return (

@@ -36,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
 import { createItinerary, getItineraryById, updateItinerary } from "@/lib/actions/itinerary.actions"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import createClient from "@/utils/supabase/client"
 import { CreateItinerary } from "@/types/createItinerary"
 import { Day } from "@/types/Day"
 import { Note } from "@/types/Note"
@@ -158,7 +158,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: {
       .filter(d => d.showAccommodation && d.accommodation?.name)
       .map(d => ({
         name: d.accommodation?.name,
-        type: d.accommodation?.type,
+        type: d.accommodation?.whytype,
         location: d.accommodation?.location
       }))
       .filter((acc, index, self) => 
@@ -831,7 +831,7 @@ export default function CreatePage() {
   const ItineraryId = useSearchParams().get('itineraryId')
   const [itineraryStatus, setItineraryStatus] = useState<number>(ItineraryStatusEnum.draft)
   const searchParams = useSearchParams()
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -1911,7 +1911,6 @@ export default function CreatePage() {
                     </div>
                     )}
                   </div>
-                  {galleryUUID}
 
                   <div className="flex justify-end gap-2 pt-10 md:pt-0">
                     <Button 

@@ -9,13 +9,13 @@ import { Input } from "@/components/ui/input"
 import { Session, User } from "@supabase/supabase-js"
 import { getSavesByUserId, UnsaveItinerary } from "@/lib/actions/itinerary.actions"
 import { SavedItinerary } from "@/types/savedItinerary"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { toast } from "sonner"
 import BookmarkElement from "../../components/ui/bookmark-element"
+import createClient from "@/utils/supabase/client"
 
 export default function SavesPage() { 
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [saves, setSaves] = useState<SavedItinerary[] | null>(null)
