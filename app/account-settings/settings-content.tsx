@@ -38,12 +38,30 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [ _, setUserData] = useState<UserData>(userData)
   const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
   const [updatedContentData, setUpdatedContentData] = useState<UserData>(userData)
+  // Helper function to extract username from full URL
+  const extractUsername = (url: string) => {
+    if (!url) return ""
+    if (url.includes("facebook.com/")) return url.replace("https://www.facebook.com/", "").replace("https://facebook.com/", "")
+    if (url.includes("instagram.com/")) return url.replace("https://www.instagram.com/", "").replace("https://instagram.com/", "")
+    if (url.includes("twitter.com/")) return url.replace("https://www.twitter.com/", "").replace("https://twitter.com/", "")
+    if (url.includes("pinterest.com/")) return url.replace("https://www.pinterest.com/", "").replace("https://pinterest.com/", "")
+    if (url.includes("tiktok.com/")) return url.replace("https://www.tiktok.com/@", "").replace("https://tiktok.com/@", "")
+    if (url.includes("youtube.com/")) return url.replace("https://www.youtube.com/", "").replace("https://youtube.com/", "")
+    return url
+  }
+
   // Separate form state for inputs - doesn't update profile until saved
   const [formData, setFormData] = useState({
     name: userData.name,
     username: userData.username,
     bio: userData.bio,
-    location: userData.location
+    location: userData.location,
+    facebook: extractUsername(userData.facebook || ""),
+    instagram: extractUsername(userData.instagram || ""),
+    twitter: extractUsername(userData.twitter || ""),
+    pinterest: extractUsername(userData.pinterest || ""),
+    tiktok: extractUsername(userData.tiktok || ""),
+    youtube: extractUsername(userData.youtube || "")
   })
   const [isItinerarySharing, setIsItinerarySharing] = useState(false)
   const [isPrivateProfile, setIsPrivateProfile] = useState(userSettings.is_private)
@@ -76,6 +94,20 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     try {
       switch (sectionTitle) {
         case "Profile":
+          // Helper function to build full URL from username
+          const buildSocialUrl = (platform: string, username: string) => {
+            if (!username || username.trim() === "") return ""
+            const baseUrls: Record<string, string> = {
+              facebook: "https://www.facebook.com/",
+              instagram: "https://www.instagram.com/",
+              twitter: "https://www.twitter.com/",
+              pinterest: "https://www.pinterest.com/",
+              tiktok: "https://www.tiktok.com/@",
+              youtube: "https://www.youtube.com/@"
+            }
+            return `${baseUrls[platform] || ""}${username.trim()}`
+          }
+
           const profileResult = await setProfileData(
             userData.id, 
             { name: formData.name, 
@@ -84,6 +116,12 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               location: formData.location,
               email: userData.email, // Keep original email
               avatar: updatedUserData.avatar, // Keep avatar from separate state
+              facebook: buildSocialUrl("facebook", formData.facebook),
+              instagram: buildSocialUrl("instagram", formData.instagram),
+              twitter: buildSocialUrl("twitter", formData.twitter),
+              pinterest: buildSocialUrl("pinterest", formData.pinterest),
+              tiktok: buildSocialUrl("tiktok", formData.tiktok),
+              youtube: buildSocialUrl("youtube", formData.youtube)
             })
           
           if ('code' in profileResult) {
@@ -321,25 +359,27 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               <Button variant="outline" className="w-[90px] text-sm" onClick={() => handleRemoveAvatar()} disabled={uploadingAvatar}>Remove</Button>
             </div>
           </div>
-          <div>
-            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Name</label>
-            <Input
-              type="text"
-              value={formData.name}
-              placeholder="Enter your name"
-              className="rounded-xl"
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Username</label>
-            <Input
-              type="text"
-              value={formData.username}
-              placeholder="Enter your username"
-              className="rounded-xl"
-              onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase() })}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Name</label>
+              <Input
+                type="text"
+                value={formData.name}
+                placeholder="Enter your name"
+                className="rounded-xl"
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Username</label>
+              <Input
+                type="text"
+                value={formData.username}
+                placeholder="Enter your username"
+                className="rounded-xl"
+                onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase() })}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Bio</label>
@@ -384,15 +424,97 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             </Select>
           </div> */}
           <div>
-            <label className="block text-md font-semibold pl-2 mb-2">Location</label>
-            <Input
-              type="text"
-              defaultValue={updatedUserData.location}
-              placeholder="Where are you based?"
-              className="rounded-xl"
-              onChange={(e) => setUpdatedUserData({ ...updatedUserData, location: e.target.value })}
-            />
+            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Location</label>
+              <Input
+                type="text"
+                defaultValue={updatedUserData.location}
+                placeholder="Where are you based?"
+                className="rounded-xl"
+                onChange={(e) => setUpdatedUserData({ ...updatedUserData, location: e.target.value })}
+              />
           </div>
+          <label className="block text-md font-semibold pl-2 mt-2">Social Links</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Facebook</label>
+              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ width: '205px' }}>https://www.facebook.com/</span>
+                <input
+                  type="text"
+                  value={formData.facebook}
+                  placeholder="username"
+                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Instagram</label>
+              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.instagram.com/</span>
+                <input
+                  type="text"
+                  value={formData.instagram}
+                  placeholder="username"
+                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Twitter</label>
+              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.twitter.com/</span>
+                <input
+                  type="text"
+                  value={formData.twitter}
+                  placeholder="username"
+                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Pinterest</label>
+              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.pinterest.com/</span>
+                <input
+                  type="text"
+                  value={formData.pinterest}
+                  placeholder="username"
+                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  onChange={(e) => setFormData({ ...formData, pinterest: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Tiktok</label>
+              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.tiktok.com/@</span>
+                <input
+                  type="text"
+                  value={formData.tiktok}
+                  placeholder="username"
+                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Youtube</label>
+              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.youtube.com/@</span>
+                <input
+                  type="text"
+                  value={formData.youtube}
+                  placeholder="username"
+                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
           {formError && (
             <p className="text-sm text-red-600 mb-2">{formError}</p>
           )}
@@ -680,7 +802,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           </div>
 
           {/* Right Column: Settings Content */}
-          <div className="hidden lg:block col-span-2 p-2 md:p-0 h-full bg-white md:rounded-xl lg:shadow-sm md:p-6 overflow-y-auto">
+          <div className="hidden lg:block pb-24 pd:mb-0 col-span-2 p-2 h-full bg-white md:rounded-xl lg:shadow-sm md:p-6 overflow-y-auto">
             <div className="space-y-6">
               <div >
                 <h3 className="text-xl font-semibold mb-6">{activeSection}</h3>

@@ -34,7 +34,7 @@ export function SettingsSidebar({ isOpen, onClose, title, children }: SettingsSi
             </Dialog.Title>
           </div>
           
-          <div className="flex-1 overflow-y-auto pb-10 px-4">
+          <div className="flex-1 overflow-y-auto pb-24 md:pb-10 px-4">
             {children}
           </div>
         </Dialog.Content>

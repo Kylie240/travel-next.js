@@ -2,16 +2,18 @@ import { Button } from "@/components/ui/button";
 import { getItineraryDataByUserId } from "@/lib/actions/itinerary.actions";
 import { getProfileDataByUsername } from "@/lib/actions/user.actions";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { PenSquare } from "lucide-react";
+import { Facebook, Instagram, PenSquare, Twitter } from "lucide-react";
+import { FaPinterestP } from "react-icons/fa6";
 import Image from "next/image";
 import Link from "next/link";
 import { cookies } from 'next/headers'
-import { FaUserLarge } from "react-icons/fa6";
+import { FaTiktok, FaUserLarge, FaXTwitter } from "react-icons/fa6";
 import FollowButton from "@/app/itinerary/[id]/follow-button";
 import ShareProfileButton from "./share-profile";
 import ProfileMenuButton from "./profile-menu-button";
 import ItineraryGrid from "./itinerary-grid";
 import createClient from "@/utils/supabase/server";
+import { AiOutlineYoutube } from "react-icons/ai";
 
 export default async function UserProfilePage({ params }: { params: { username: string } }) {
 const { username } = params;
@@ -86,6 +88,39 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
                         </p>
                       </div>
                     )}
+                    {/* Social Links */}
+                    <div className="flex gap-3 mt-2">
+                      {userData[0].facebook && (
+                      <Link href={`${userData[0].facebook}`} target="_blank">
+                        <Facebook className="h-6 w-6" />
+                      </Link>
+                      )}
+                      {userData[0].instagram && (
+                      <Link href={`${userData[0].instagram}`} target="_blank">
+                        <Instagram className="h-6 w-6" />
+                      </Link>
+                      )}
+                      {userData[0].twitter && (
+                      <Link href={`${userData[0].twitter}`} target="_blank">
+                        <FaXTwitter className="h-6 w-6" />
+                      </Link>
+                      )}
+                      {userData[0].pinterest && (
+                      <Link href={`${userData[0].pinterest}`} target="_blank">
+                        <FaPinterestP className="h-6 w-6" />
+                      </Link>
+                      )}
+                      {userData[0].tiktok && (
+                      <Link href={`${userData[0].tiktok}`} target="_blank">
+                        <FaTiktok className="h-6 w-6" />
+                      </Link>
+                      )}
+                      {userData[0].youtube && (
+                      <Link href={`${userData[0].youtube}`} target="_blank">
+                        <AiOutlineYoutube className="h-6 w-6" />
+                      </Link>
+                      )}
+                    </div>
                 </div>
               </div>
             </div>

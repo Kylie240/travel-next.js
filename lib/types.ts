@@ -12,6 +12,12 @@ export interface UserData {
   updatedAt: string
   bio: string
   website: string
+  facebook?: string
+  instagram?: string
+  twitter?: string
+  pinterest?: string
+  tiktok?: string
+  youtube?: string
   stats: {
     trips: number
     followers: number

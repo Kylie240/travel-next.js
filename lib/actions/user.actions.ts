@@ -283,7 +283,7 @@ export const getProfileDataByUsername = async (username: string) => {
     const supabase = await createClient()
         
         const { data, error } = await supabase
-        .rpc("get_user_profile", { 
+        .rpc("get_user_profile_by_username", { 
             p_profile_username: username,
         }) as { 
         data: ProfileData | null, 
@@ -352,6 +352,12 @@ export const setProfileData = async (
         location?: string,
         email?: string,
         avatar?: string,
+        facebook?: string,
+        instagram?: string,
+        twitter?: string,
+        pinterest?: string,
+        tiktok?: string,
+        youtube?: string,
         }
     ) => {
     const supabase = await createClient()
