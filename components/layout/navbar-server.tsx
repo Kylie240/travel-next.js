@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { AuthDialog } from "@/components/ui/auth-dialog"
 import { UserMenu } from "@/components/ui/user-menu"
 import { NavbarClient } from "./navbar-client"
@@ -41,21 +40,7 @@ export default async function NavbarServer() {
 
           <div className="flex items-center md:space-x-4">
             {/* User menu or auth buttons */}
-            {user ? (
-              <UserMenu />
-            ) : (
-              
-                <div className="hidden md:block">
-                  <Link href="/login?mode=login">
-                    <Button 
-                      variant="ghost" 
-                      className="text-gray-700 hover:text-black"
-                    >
-                      Sign In
-                    </Button>
-                  </Link>
-                </div>
-            )}
+            <UserMenu />
 
             {/* Mobile menu button and mobile auth */}
             <NavbarClient user={user} />

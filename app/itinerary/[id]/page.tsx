@@ -1,16 +1,14 @@
 import { Calendar, MapPin, DollarSign } from "lucide-react"
 import Image from "next/image"
 import { Itinerary } from "@/types/itinerary"
-import BookmarkElement from "../../../components/ui/bookmark-element"
 import ScheduleSection from "./schedule-section"
 import NoteSection from "./note-section"
 import ShareElement from "./share-element"
 import { getItineraryById } from "@/lib/actions/itinerary.actions"
 import { itineraryTagsMap } from "@/lib/constants/tags"
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import EditElement from "../edit-element"
-import LikeElement from "./like-element"
+import { InteractionButtons } from "./interaction-buttons"
 import { Button } from "@/components/ui/button"
 import FollowButton from "./follow-button"
 import { collectAllPhotos } from "@/lib/utils/photos"
@@ -20,9 +18,10 @@ import { FiEdit } from "react-icons/fi"
 import { redirect } from "next/navigation"
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
 import BioSection from "./bio-section"
+import createClient from "@/utils/supabase/server"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const currentUserId = user?.id
   const paramsValue = await params;
@@ -105,10 +104,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                   </Link>
                 ) : (
-                  <div className="flex gap-2">
-                    <LikeElement itineraryId={itinerary.id} currentUserId={currentUserId}/>  
-                    <BookmarkElement color="black" itineraryId={itinerary.id} currentUserId={currentUserId} />
-                  </div>
+                  <InteractionButtons itineraryId={itinerary.id} />
                 )}
                 {itinerary.status === ItineraryStatusEnum.published && 
                   <ShareElement />
@@ -211,12 +207,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <div className="w-full justify-between hidden lg:flex">
                 <h2 className="text-2xl md:text-2xl font-semibold mb-2">Trip Overview</h2>
                 <div className="flex gap-2">
-                  {currentUserId && !canEdit &&
-                    <div className="flex gap-2">
-                      <LikeElement itineraryId={itinerary.id} currentUserId={currentUserId}/>  
-                      <BookmarkElement color="black" itineraryId={itinerary.id} currentUserId={currentUserId} />
-                    </div>
-                  }
+                  {!canEdit && <InteractionButtons itineraryId={itinerary.id} />}
                   {canEdit &&
                     <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
                       <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
