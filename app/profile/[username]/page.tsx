@@ -60,7 +60,7 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
                       <div className="flex gap-2 mt-2">
                         <div className="grid grid-cols-2 gap-2">
                           {isCurrentUser ? (
-                          <Link href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
+                          <Link href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
                               <Button className="w-full">Edit Profile</Button>
                           </Link>
                           ) : (

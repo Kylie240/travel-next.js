@@ -157,7 +157,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   </Link>
                 </div>
                 {canEdit ? (
-                  <Link className="min-w-[100px] md:w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
+                  <Link className="min-w-[100px] md:w-1/2" href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
                     <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
                       Edit Profile
                     </Button>
@@ -278,7 +278,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     </Link>
                     {canEdit ?
                     (
-                      <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Edit Profile')}`}>
+                      <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
                         <Button className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
                           Edit Profile
                         </Button>

@@ -56,7 +56,7 @@ export default function MyItinerariesPage() {
 
     const getUserPlan = async () => {
       const { data } = await supabase.from('users_settings').select('plan').eq('user_id', user?.id).single()
-      console.log("data", data)
+      console.log("data plan", data.plan)
       setUserPlan(data?.plan || "free")
     }
     getUserPlan()

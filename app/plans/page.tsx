@@ -183,7 +183,7 @@ export default async function PlansPage() {
               
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Sell premium itineraries directly on Journli</span>
+                <span className="text-gray-700">Sell premium itineraries</span>
               </div>
 
               <div className="flex items-start gap-3">

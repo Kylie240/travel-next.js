@@ -1,9 +1,10 @@
 import Link from "next/link"
-import { Facebook, Twitter, Instagram } from "lucide-react"
+import { Facebook, Instagram } from "lucide-react"
 import { FaTiktok, FaPinterest } from "react-icons/fa6"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import NewsletterForm from "./newsletter-forn"
+import { FaXTwitter } from "react-icons/fa6";
 
 const navigation = {
   main: [
@@ -21,7 +22,7 @@ const navigation = {
     {
       name: "Twitter",
       href: "https://twitter.com/journli_travels",
-      icon: Twitter,
+      icon: FaXTwitter,
     },
     {
       name: "Instagram",

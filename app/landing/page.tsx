@@ -29,7 +29,7 @@ export default function LandingPage() {
             Welcome To Your New <br className="hidden md:block" /> Travel Journal
             </h1>
             <p className="text-xl sm:text-2xl lg:text-3xl text-center mb-8 max-w-2xl">
-              Trip planning made easy
+              Easily share your travel journeys with friends and followers
             </p>
             <div className="gap-4 mt-8">
                 <ActionButtons />
@@ -38,7 +38,7 @@ export default function LandingPage() {
         </div>
       </div>
       {/* Features Section */}
-      <div className="py-20 px-8">
+      <div className="py-20 px-12">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center justify-center mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl px-6 font-bold text-center mb-2">
@@ -52,7 +52,7 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row gap-8 w-full">
               <div className="relative w-full md:w-1/2 aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
                 <Image 
-                  src="/images/create1.png"
+                  src="/images/Plan.png"
                   alt="Plan It"
                   fill
                   className="object-cover hover:scale-105 transition-transform duration-500"
@@ -62,22 +62,22 @@ export default function LandingPage() {
 
               <div className="flex flex-col items-start justify-center w-full md:w-1/2 px-4 md:px-0">
                 <div className="flex md:flex-col gap-4 md:gap-0 items-end md:items-start">
-                  <div className="bg-cyan-700 p-4 rounded-lg mb-4 shadow-md">
+                  <div className="bg-cyan-700 p-3 rounded-lg mb-4 shadow-md">
                     <Map className="w-6 h-6 md:w-8 md:h-8 text-white" />
                   </div>
                   <h3 className="text-2xl md:text-3xl font-semibold mb-4">Plan It</h3>
                 </div>
                 <p className="text-gray-600 text-base md:text-lg">
-                  With our Day-by-day itinerary builder, you can easily plan your trip and add activities, notes, and travel details.
+                  We provide a simple and easy to use interface to plan and share your journies. Our platform is designed to be user-friendly and breaks down travel planning into three simple steps.
                 </p>
               </div>
             </div>
 
             {/* Create It Section */}
-            <div className="flex flex-col md:flex-row-reverse gap-8 md:px-[8rem] w-full">
+            <div className="flex flex-col md:flex-row-reverse gap-8 w-full">
               <div className="relative w-full md:w-1/2 aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
                 <Image 
-                  src="/images/days.png"
+                  src="/images/Create.png"
                   alt="Create It"
                   fill
                   className="object-cover hover:scale-105 transition-transform duration-500"
@@ -88,13 +88,13 @@ export default function LandingPage() {
               <div className="flex flex-col items-start justify-center w-full md:w-1/2 px-4 md:px-0">
               <div className="flex md:flex-col gap-4 md:gap-0 items-end md:items-start">
 
-                <div className="bg-cyan-700 p-4 rounded-lg mb-4 shadow-md">
+                <div className="bg-cyan-700 p-3 rounded-lg mb-4 shadow-md">
                   <TbWriting className="w-6 h-6 md:w-8 md:h-8 text-white" />
                 </div>
                 <h3 className="text-2xl md:text-3xl font-semibold mb-4">Create It</h3>
               </div>
                 <p className="text-gray-600 text-base md:text-lg">
-                  Turn your plans into a complete travel itinerary with our easy-to-use builder. Our Intuitive builder gives you everything you need to bring your trip to life.
+                  Turn your plans into a complete travel itinerary with our easy-to-use itinerary builder. With our Day-by-day scheduler, you can quickly plan your trip and add activities, notes, photos, and more.
                 </p>
               </div>
             </div>
@@ -103,7 +103,7 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row gap-8 w-full">
               <div className="relative w-full md:w-1/2 aspect-video md:aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
                 <Image 
-                  src="/images/share.png"
+                  src="/images/Share.png"
                   alt="Share It"
                   fill
                   className="object-cover hover:scale-105 transition-transform duration-500"
@@ -113,13 +113,13 @@ export default function LandingPage() {
 
               <div className="flex flex-col items-start justify-center w-full md:w-1/2 px-4 md:px-0">
               <div className="flex md:flex-col gap-4 md:gap-0 items-end md:items-start">
-                <div className="bg-cyan-700 p-4 rounded-lg mb-4 shadow-md">
+                <div className="bg-cyan-700 p-3 rounded-lg mb-4 shadow-md">
                   <Send className="w-6 h-6 md:w-8 md:h-8 text-white" />
                 </div>
                 <h3 className="text-2xl md:text-3xl font-semibold mb-4">Share It</h3>
               </div>
                 <p className="text-gray-600 text-base md:text-lg">
-                  Travel is better together! Send your itinerary to friends or followers with a single link. No sign-up needed for viewing.
+                  Travel is better together! Our multi-platform sharing feature allows you to share your itinerary whth friends or followers in a single click. No sign-up needed for viewing content, allowing you to share your plans with anyone.
                 </p>
               </div>
             </div>

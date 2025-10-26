@@ -33,7 +33,7 @@ interface SettingsContentProps {
 }
 
 export function SettingsContent({ initialUser, userData, userStats, searchParams, userSettings }: SettingsContentProps) {
-  const [activeSection, setActiveSection] = useState(searchParams?.tab || "Edit Profile")
+  const [activeSection, setActiveSection] = useState(searchParams?.tab || "Profile")
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false)
   const [ _, setUserData] = useState<UserData>(userData)
   const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
@@ -116,7 +116,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           router.refresh()
           break
 
-        case "Content Visibility":
+        case "Visibility":
           const contentResult = await setContentData(
             userData.id,
             {
@@ -285,7 +285,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
 
   const settingsSections = [
     {
-      title: "Edit Profile",
+      title: "Profile",
       description: "Edit your public profile information",
       content: (
         <div className="space-y-6">
@@ -492,7 +492,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         </div>
       )
     },{
-      title: "Content Visibility",
+      title: "Visibility",
       description: "Edit your public profile information",
       content: (
         <div className="space-y-10">
@@ -526,7 +526,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           )}
           <Button 
             className="mt-4" 
-            onClick={() => handleSaveChanges('Content Visibility')}
+            onClick={() => handleSaveChanges('Visibility')}
             disabled={isSaving}
           >
             {isSaving ? 'Saving...' : 'Save Changes'}

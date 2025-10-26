@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { Share, Copy, Mail, MessageCircle, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import * as Popover from '@radix-ui/react-popover'
-import { FaFacebook, FaTwitter, FaWhatsapp } from 'react-icons/fa'
+import { FaFacebook, FaWhatsapp } from 'react-icons/fa'
+import { FaXTwitter } from "react-icons/fa6";
 
 const ShareElement = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -182,7 +183,7 @@ const ShareElement = () => {
                 className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-lg transition-colors"
               >
                 <div className="p-3 bg-gray-100 rounded-full">
-                  <FaTwitter size={24} className="text-blue-400" />
+                  <FaXTwitter size={24} className="text-blue-400" />
                 </div>
                 <span className="text-xs font-medium text-gray-700">Twitter</span>
               </button>
