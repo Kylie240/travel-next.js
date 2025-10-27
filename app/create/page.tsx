@@ -158,7 +158,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: {
       .filter(d => d.showAccommodation && d.accommodation?.name)
       .map(d => ({
         name: d.accommodation?.name,
-        type: d.accommodation?.whytype,
+        type: d.accommodation?.type,
         location: d.accommodation?.location
       }))
       .filter((acc, index, self) => 

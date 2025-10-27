@@ -9,6 +9,7 @@ import { SavedItinerary } from "@/types/savedItinerary";
 import createClient from "@/utils/supabase/server";
 
 export const getItineraries = async (options?: GetItineraryOptions) => {
+    const supabase = await createClient()
     const page = options?.pagination?.page || 1;
     const pageSize = options?.pagination?.pageSize || 10;
     const firstItemIndex = (page - 1) * pageSize;

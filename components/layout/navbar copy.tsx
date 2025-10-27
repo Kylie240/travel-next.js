@@ -10,9 +10,8 @@ import { AuthDialog } from "@/components/ui/auth-dialog"
 import { UserMenu } from "@/components/ui/user-menu"
 import { NavbarSearch } from "@/components/ui/navbar-search"
 import { LocaleMenu } from "@/components/ui/locale-menu"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { User } from "@supabase/supabase-js"
-import { createClient } from "@/utils/supabase/client"
+import createClient from "@/utils/supabase/client"
 
 const publicNavigation = [
   { name: "Explore", href: "/explore" },
