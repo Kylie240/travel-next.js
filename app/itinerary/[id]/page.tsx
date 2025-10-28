@@ -34,9 +34,14 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     day.activities.map(activity => activity.type).filter(Boolean)
   );
   const photos = collectAllPhotos(itinerary);
-  const { data: userPlan } = await supabase.from('users_settings').select('plan').eq('user_id', currentUserId).single()
-  console.log("userPlan", userPlan)
-  const paidUser = userPlan.plan != "free";
+  
+  // Only fetch user plan if logged in
+  let paidUser = false;
+  if (currentUserId) {
+    const { data: userPlan } = await supabase.from('users_settings').select('plan').eq('user_id', currentUserId).single()
+    paidUser = userPlan?.plan != "free";
+  }
+  
   const canEdit = currentUserId === itinerary.creatorId;
 
   if (isPrivate && currentUserId !== itinerary.creatorId) {

@@ -124,14 +124,16 @@ export default function PhotoGallery({
             </Button>
           </>
         )}
-        <Image
-          src={currentPhoto.url}
-          alt={currentPhoto.title}
-          width={1200}
-          height={800}
-          className="object-contain max-w-full max-h-full rounded-lg"
-          priority
-        />
+        <div className="w-full h-full"> 
+          <Image
+            src={currentPhoto.url}
+            alt={currentPhoto.title}
+            width={screen.width}
+            height={800}
+            className="object-contain max-w-full max-h-full rounded-lg"
+            priority
+          />
+         </div>
         
         {/* Photo info */}
         {/* <div className="absolute bottom-0 left-0 right-0 bg-white/90 text-gray-800 p-4 border-t border-gray-200">

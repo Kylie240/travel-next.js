@@ -29,7 +29,7 @@ const ItineraryGallery = ({ photos }: { photos: PhotoItem[] }) => {
             <PhotoGallery photos={photos} isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
         )}
     </div>
-    <div className="lg:hidden bg-gray-800/60 px-3 py-2 rounded-lg cursor-pointer relative w-full h-full hover:bg-gray-800/50 text-white/80 hover:text-white/90 flex justify-center items-center curstor-pointer">
+    <div onClick={() => setIsGalleryOpen(true)} className="lg:hidden bg-gray-800/60 px-3 py-2 rounded-lg cursor-pointer relative w-full h-full hover:bg-gray-800/50 text-white/80 hover:text-white/90 flex justify-center items-center">
       <span className="lg:hidden gap-1 flex font-thin items-center">
         {photos.length} <Images size={14} strokeWidth={2} />
       </span>
