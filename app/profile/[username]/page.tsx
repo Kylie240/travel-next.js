@@ -14,6 +14,7 @@ import ProfileMenuButton from "./profile-menu-button";
 import ItineraryGrid from "./itinerary-grid";
 import createClient from "@/utils/supabase/server";
 import { AiOutlineYoutube } from "react-icons/ai";
+import { redirect } from "next/navigation";
 
 export default async function UserProfilePage({ params }: { params: { username: string } }) {
 const { username } = params;
@@ -21,6 +22,9 @@ const { username } = params;
 const supabase = await createClient()
 const { data: { user: currentUser } } = await supabase.auth.getUser()
 const userData = await getProfileDataByUsername(username.toLowerCase())
+if (!userData || !userData[0]?.userId) {
+  redirect('/not-found')
+}
 const userId = userData[0]?.userId;
 let isPrivate: boolean = false;
 if (userData[0]?.isPrivate && userId !== currentUser?.id) {

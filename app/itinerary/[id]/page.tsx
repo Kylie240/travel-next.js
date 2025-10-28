@@ -42,7 +42,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   if (isPrivate && currentUserId !== itinerary.creatorId) {
     redirect("/not-authorized");
   }
-  
+  const activityCount = itinerary.days.reduce((acc, day) => acc + day.activities.length, 0);
+  const accommodationCount = itinerary.days.reduce((acc, day) => acc + (day.accommodation ? 1 : 0), 0);
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
@@ -62,7 +63,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <div className="container px-0 mx-0 lg:mx-auto">
                 <div className="flex flex-col text-white m-2 p-6 md:p-8 md:mb-4 md:ml-4 relative">
                     <h1 className="max-w-[100%] lg:max-w-[80%] text-left leading-[30px] md:leading-[40px] mt-2 md:mt-0 text-3xl xl:text-4xl font-bold lg:mb-4 mr-0 md:mr-6 lg:mr-0">{itinerary.title}</h1>
-                    <div className="w-full flex justify-between items-center">
+                    <div className="w-full mt-1 flex justify-between items-center">
                       <div className="flex items-center gap-1 flex-wrap sm:gap-4 md:gap-6 text-sm">
                         <div className="flex items-center">
                           <Calendar className="h-5 w-5 mr-1 sm:mr-2" />
@@ -80,8 +81,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                         }
                       </div>
                       <div>
-                        {photos?.length > 2 && 
-                          <div className="lg:hidden rounded-md h-[45px] w-[65px]">
+                        {photos?.length > 1 && 
+                          <div className="lg:hidden rounded-md">
                             <ItineraryGallery photos={photos} />
                           </div>
                         }
@@ -96,7 +97,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         {/* Mobile Items List */}
         <div className="flex mt-4 flex-col h-full lg:hidden justify-between px-4 md:pt-4">
           <div className="mb-2">
-            <div className="flex w-full justify-between items-center mb-2">
+            <div className="flex w-full justify-between items-center mb-1">
               <h2 className="text-xl flex items-center font-semibold">Trip Overview</h2>
               <div className="flex gap-2">
                 {canEdit ? (
@@ -111,7 +112,23 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 }
               </div>
             </div>
-              <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex mb-2 px-1 justify-between">
+              <div className="flex py-1 pr-3 gap-2 justify-center items-center">
+                {itinerary.duration}
+                <p>Days</p>
+              </div>
+              <p className="mt-1">|</p>
+              <div className="flex py-1 px-3 gap-2 justify-center items-center">
+                {accommodationCount}
+                <p>Accommodations</p>
+              </div>
+              <p className="mt-1">|</p>
+              <div className="flex py-1 pl-3 gap-2 justify-center items-center">
+                {activityCount}
+                <p>Activies</p>
+              </div>
+            </div>
+              <div className="flex flex-wrap gap-2 mb-3">
                 {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
                     <span
                       key={tag}
