@@ -93,6 +93,7 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
                       </div>
                     )}
                     {/* Social Links */}
+                    {!isPrivate && (
                     <div className="flex gap-3 mt-2">
                       {userData[0].facebook && (
                       <Link href={`${userData[0].facebook}`} target="_blank">
@@ -125,6 +126,7 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
                       </Link>
                       )}
                     </div>
+                    )}
                 </div>
               </div>
             </div>

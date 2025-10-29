@@ -11,16 +11,21 @@ const ShareElement = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [canUseNativeShare, setCanUseNativeShare] = useState(false)
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const [currentUrl, setCurrentUrl] = useState('')
 
   useEffect(() => {
-    // Check if native share is available (typically on mobile devices)
-    setCanUseNativeShare(
-      typeof navigator !== 'undefined' && 
-      navigator.share !== undefined &&
-      window.innerWidth < 1028
-    )
-  }, [ window.innerWidth ])
+    // Set current URL only on client side
+    if (typeof window !== 'undefined') {
+      setCurrentUrl(window.location.href)
+      
+      // Check if native share is available (typically on mobile devices)
+      setCanUseNativeShare(
+        typeof navigator !== 'undefined' && 
+        navigator.share !== undefined &&
+        window.innerWidth < 1028
+      )
+    }
+  }, [])
 
   const handleNativeShare = async () => {
     try {

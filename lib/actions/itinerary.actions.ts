@@ -189,9 +189,9 @@ export const updateItineraryStatus = async (itineraryId: string, status: number,
 
 export const getItineraryById = async (itineraryId: string) => {
     const supabase = await createClient()
-
+    
     const { data, error } = await supabase.rpc("get_itinerary", {
-    p_itinerary_id: itineraryId,
+        p_itinerary_id: itineraryId,
     });
 
     if (error) throw new Error(error.message);

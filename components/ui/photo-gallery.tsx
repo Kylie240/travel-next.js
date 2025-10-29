@@ -82,26 +82,36 @@ export default function PhotoGallery({
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-white flex items-center justify-center"
+      className="fixed inset-0 z-[100] flex items-center justify-center max-h-screen"
       onKeyDown={handleKeyDown}
       tabIndex={-1}
     >
+      {/* Backdrop overlay */}
+      <div 
+        className="absolute inset-0 bg-white"
+        onClick={onClose}
+      />
+      
       {/* Close button */}
       <Button
         variant="ghost"
         size="icon"
         className="absolute top-20 right-4 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
       >
         <X className="h-6 w-6" />
       </Button>
 
       {/* Main image */}
       <div 
-        className="relative max-w-[90vw] max-h-[90vh] mx-4"
+        className="relative max-w-[80vw] max-h-[70vh] mx-4 z-10"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Navigation buttons */}
         {photos.length > 1 && (
@@ -110,7 +120,10 @@ export default function PhotoGallery({
               variant="ghost"
               size="icon"
               className="absolute left-4 top-1/2 transform hidden md:block -translate-y-1/2 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
-              onClick={goToPrevious}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevious();
+              }}
             >
               <ChevronLeft className="h-8 w-8" />
             </Button>
@@ -118,19 +131,21 @@ export default function PhotoGallery({
               variant="ghost"
               size="icon"
               className="absolute right-4 top-1/2 transform hidden md:block -translate-y-1/2 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
-              onClick={goToNext}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNext();
+              }}
             >
               <ChevronRight className="h-8 w-8" />
             </Button>
           </>
         )}
-        <div className="w-full h-full"> 
+        <div className="w-[80vw] h-[80vh] flex items-center justify-center"> 
           <Image
             src={currentPhoto.url}
             alt={currentPhoto.title}
-            width={screen.width}
-            height={800}
-            className="object-contain max-w-full max-h-full rounded-lg"
+            fill
+            className="object-contain w-full h-full rounded-lg"
             priority
           />
          </div>
@@ -154,11 +169,17 @@ export default function PhotoGallery({
 
       {/* Thumbnail strip */}
       {photos.length > 1 && (
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex gap-2 max-w-[80vw] overflow-x-auto pb-2">
+        <div 
+          className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex gap-2 max-w-[80vw] overflow-x-auto pb-2 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
           {photos.map((photo, index) => (
             <button
               key={photo.id}
-              onClick={() => setCurrentIndex(index)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentIndex(index);
+              }}
               className={`relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 ${
                 index === currentIndex ? 'ring-2 ring-gray-700' : 'opacity-70 hover:opacity-100'
               }`}

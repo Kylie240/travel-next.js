@@ -12,7 +12,7 @@ import { MdOutlineHotel } from "react-icons/md";
 const formatTime = (time: string | null | undefined) => {
   if (!time) return '';
   const [hours, minutes] = time.split(':').map(Number)
-  const formattedHours = hours % 12 || 12
+  const formattedHours = hours
   return `${formattedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 }
 import { Day } from "@/types/Day"
@@ -31,7 +31,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
   
   // Check if description is long enough to need truncation (roughly 4 lines worth of text)
   const needsDescriptionTruncation = day.description && day.description.length > 200
-  
+
   // Check if day has any expandable content beyond title and location
   const hasExpandableContent = 
     (day.description && day.description.trim().length > 0) ||
@@ -121,69 +121,89 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                 </button>
               )}
             </div>
-            {day.activities.map((activity, index) => (
-              <div key={activity.id || index} className="relative mb-2">
-                {activity?.type && 
-                  <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity.time ? '14px' : '7px'}` }}>
-                    {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
-                      <div className="w-5 h-5">
-                        {React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)}
-                      </div>
-                    )}
-                    <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity.time)}</p>
-                  </div>
-                }
-                <motion.div
-                  key={activity.id || index}
-                  initial={false}
-                  className="bg-white rounded-xl p-4 shadow-md"
-                >
-                  <div 
-                    className="flex items-center justify-between cursor-pointer"
-                    onClick={() => toggleActivity(index)}
-                  >
-                    <div className="flex-1">
-                      <h3 className="text-md lg:text-lg font-medium leading-5">{activity.title}</h3>
-                    </div>
-                    <motion.button 
-                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                      animate={{ rotate: expandedActivities.has(index) ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="w-5 h-5 text-gray-500" />
-                    </motion.button>
-                  </div>
-                  
-                  {expandedActivities.has(index) && (
-                  <div className="mt-4">
-                    {activity.description && (
-                      <p className="text-gray-600 mb-3">{activity.description}</p>
-                    )}
-                    {activity.location && (
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        <span>{activity.location}</span>
-                      </div>
-                    )}
-                    {activity.duration && (
-                      <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration} minutes</p>
-                    )}
-                    {activity.link && (
-                      <div className="flex mt-4 w-full items-center text-sm cursor-pointer hover:bg-gray-100/50 text-gray-500 border p-2 rounded-xl shadow-md"
-                      onClick={() => {
-                        window.open(activity.link, '_blank');
-                      }}>
-                        <div className="rounded-lg bg-gray-800 p-2">
-                          <FiArrowUpRight size={20} strokeWidth={4} className="text-white" />
+            {day.activities.map((activity, index) => {
+              // Check if activity has any additional information beyond title
+              const hasAdditionalInfo = !!(
+                activity.description ||
+                activity.location ||
+                activity.duration ||
+                activity.link
+              )
+
+              return (
+                <div key={activity.id || index} className="relative mb-2">
+                  {activity?.type && 
+                    <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity?.time && activity?.time !== '' ? '14px' : '14px'}` }}>
+                      {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
+                        <div className="w-5 h-5">
+                          {React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)}
                         </div>
-                        <span className="ml-2">Activity Link</span>
+                      )}
+                      <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity?.time)}</p>
+                    </div>
+                  }
+                  <motion.div
+                    key={activity.id || index}
+                    initial={false}
+                    className={`bg-white rounded-xl p-4 ${hasAdditionalInfo ? 'shadow-md' : ''}`}
+                  >
+                    {hasAdditionalInfo ? (
+                      <>
+                        <div 
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => toggleActivity(index)}
+                        >
+                          <div className="flex-1">
+                            <h3 className="text-md lg:text-lg font-medium leading-5">{activity.title}</h3>
+                          </div>
+                          <motion.button 
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            animate={{ rotate: expandedActivities.has(index) ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <ChevronDown className="w-5 h-5 text-gray-500" />
+                          </motion.button>
+                        </div>
+                        
+                        {expandedActivities.has(index) && (
+                        <div className="mt-4">
+                          {activity.description && (
+                            <p className="text-gray-600 mb-3">{activity.description}</p>
+                          )}
+                          {activity.location && (
+                            <div className="flex items-center text-sm text-gray-500">
+                              <MapPin className="w-4 h-4 mr-1" />
+                              <span>{activity.location}</span>
+                            </div>
+                          )}
+                          {activity.duration && (
+                            <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration} minutes</p>
+                          )}
+                          {activity.link && (
+                            <div className="flex mt-4 w-full items-center text-sm cursor-pointer hover:bg-gray-100/50 text-gray-500 border p-2 rounded-xl shadow-md"
+                            onClick={() => {
+                              window.open(activity.link, '_blank');
+                            }}>
+                              <div className="rounded-lg bg-gray-800 p-2">
+                                <FiArrowUpRight size={20} strokeWidth={4} className="text-white" />
+                              </div>
+                              <span className="ml-2">Activity Link</span>
+                            </div>
+                          )}
+                        </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-between h-[52px]">
+                        <div className="flex-1">
+                          <h3 className="text-md lg:text-lg font-medium leading-5">{activity.title}</h3>
+                        </div>
                       </div>
                     )}
-                  </div>
-                  )}
-                </motion.div>
-              </div>
-            ))}
+                  </motion.div>
+                </div>
+              )
+            })}
             
             {day.accommodation?.name && (
             <>

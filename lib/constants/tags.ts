@@ -26,7 +26,7 @@ export const activityTagsMap = [
   { id:17, name: "Nightlife", icon: MdOutlineNightlife },
   { id:18, name: "Performance", icon: Drama },
   { id:19, name: "Workout", icon: Dumbbell },
-  { id:20, name: "Accommodation", icon: HotelIcon },
+  { id:21, name: "Accommodation", icon: HotelIcon },
 ]
 
 export const itineraryTagsMap = [
