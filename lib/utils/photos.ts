@@ -82,5 +82,6 @@ export function collectAllPhotos(itinerary: Itinerary): PhotoItem[] {
     }
   });
 
+  console.log("photos", photos)
   return photos;
 }

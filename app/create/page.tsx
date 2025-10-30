@@ -1499,9 +1499,9 @@ export default function CreatePage() {
             <div className="h-full">
               {currentStep === 0 && (
                 <div className="space-y-4 mx-4 sm:mx-6 py-4 mb-2 md:mb-8">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Welcome to the Itinerary Creator</h1>
-                  <p className="pb-4 text-md sm:text-lg lg:text-xl text-gray-500">We made creating an itinerary easy for you. Just fill in the details and we'll take care of the rest.</p>
-                  <div className="space-y-10">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Itinerary Builder</h1>
+                  <p className="pb-4 text-md sm:text-lg lg:text-xl text-gray-500">Creating an itinerary has never been easier, just fill in the details and we'll take care of the rest.</p>
+                  <div className="space-y-6">
                     <div className="flex gap-4 md:gap-6">
                       <p className="text-xl md:text-2xl font-semibold w-[20px]">1</p>
                       <div className="w-full sm:mr-2">
@@ -1656,7 +1656,7 @@ export default function CreatePage() {
                 <div className="h-full">
                   <div className="flex flex-col h-full justify-between">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-xl md:font-semibold p-2">Day Planning</h2>
+                      <h2 className="text-xl md:font-semibold p-2">Day Scheduler</h2>
                     </div>
 
                     <DndContext

@@ -96,7 +96,7 @@ export default function PhotoGallery({
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-20 right-4 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
+        className="absolute top-6 right-4 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
@@ -119,7 +119,7 @@ export default function PhotoGallery({
             <Button
               variant="ghost"
               size="icon"
-              className="absolute left-4 top-1/2 transform hidden md:block -translate-y-1/2 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-[110] text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 goToPrevious();
@@ -130,7 +130,7 @@ export default function PhotoGallery({
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-4 top-1/2 transform hidden md:block -translate-y-1/2 z-60 text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-[110] text-gray-700 hover:bg-gray-100 bg-white/80 border border-gray-200 shadow-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 goToNext();
@@ -140,15 +140,15 @@ export default function PhotoGallery({
             </Button>
           </>
         )}
-        <div className="w-[80vw] h-[80vh] flex items-center justify-center"> 
+        <div className="relative w-[80vw] max-w-[1200px] max-h-[70vh] aspect-[3/5] md:aspect-[16/9] lg:aspect-[3/2] flex justify-center">
           <Image
             src={currentPhoto.url}
             alt={currentPhoto.title}
             fill
-            className="object-contain w-full h-full rounded-lg"
+            className="object-cover w-full h-full rounded-lg"
             priority
           />
-         </div>
+        </div>
         
         {/* Photo info */}
         {/* <div className="absolute bottom-0 left-0 right-0 bg-white/90 text-gray-800 p-4 border-t border-gray-200">
@@ -170,7 +170,7 @@ export default function PhotoGallery({
       {/* Thumbnail strip */}
       {photos.length > 1 && (
         <div 
-          className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex gap-2 max-w-[80vw] overflow-x-auto pb-2 z-10"
+          className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 max-w-[80vw] overflow-x-auto pb-2 z-10"
           onClick={(e) => e.stopPropagation()}
         >
           {photos.map((photo, index) => (

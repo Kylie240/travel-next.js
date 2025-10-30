@@ -52,7 +52,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
   return (
    <div>
       <div className={`relative border-black border-l-[.12rem] pl-4 mr-2 ${isActive ? 'pb-4' : ''}`}>
-        <div className="absolute -left-[.83rem] bg-white py-4">
+        <div className={`absolute -left-[.83rem] bg-white py-4 ${day.id === 1 ? 'pt-[1.2rem]' : 'top-4'}`}>
           <button 
             onClick={() => hasExpandableContent && onToggle()} 
             className={`bg-transparent border-none p-0 ${day.id !== 1 ? 'top-2' : ''} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`}
@@ -74,7 +74,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           </div>  
         }
         <button 
-          className={`w-full relative inset-x-3 h-[120px] md:h-[150px] top-4 p-8 flex items-center rounded-2xl overflow-hidden ${(day.image !== null && day.image !== '') ? 'shadow-lg' : ''} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
+          className={`w-full relative inset-x-3 top-4 flex items-center rounded-2xl overflow-hidden ${(day.image !== null && day.image !== '') ? 'shadow-lg p-8 h-[120px] md:h-[150px]' : 'px-8 h-[100px] md:h-[120px]'} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
           onClick={() => hasExpandableContent && onToggle()}
           disabled={!hasExpandableContent}
           style={{
