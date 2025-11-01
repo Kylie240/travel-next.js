@@ -29,7 +29,7 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
   
   useEffect(() => {
     const key = `viewed-${itineraryId}`;
-    if (!sessionStorage.getItem(key) && isCreator) {
+    if (!sessionStorage.getItem(key) && !isCreator) {
       incrementItineraryViewCount(itineraryId);
       sessionStorage.setItem(key, "true");
     }

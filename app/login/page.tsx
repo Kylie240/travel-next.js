@@ -139,7 +139,6 @@ export default function LoginPage() {
 
   const handleForgotPassword = async (email: string) => {
     const supabase = createClient()
-    console.log(email)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback`
     })

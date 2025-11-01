@@ -296,14 +296,14 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   <p className=" px-2">{creator.bio}</p>
                   <div className="flex gap-2 w-full mt-2">
                     <Link href={`/profile/${creator.username}`} className="w-1/2">
-                      <Button variant="outline" className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-100">
+                      <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
                         View Profile
                       </Button>
                     </Link>
                     {canEdit ?
                     (
                       <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
-                        <Button className="cursor-pointer border rounded-xl flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+                        <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
                           Edit Profile
                         </Button>
                       </Link>

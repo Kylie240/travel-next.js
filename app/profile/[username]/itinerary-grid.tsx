@@ -61,7 +61,7 @@ export default function ItineraryGrid({
             </div>
           </div>
         ) : (
-          filteredItineraryData?.map((itinerary) => ( 
+          filteredItineraryData?.map((itinerary, index) => ( 
             <div 
               key={itinerary.id}
               className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
@@ -73,11 +73,12 @@ export default function ItineraryGrid({
                   alt={itinerary.title}
                   fill
                   className="object-cover"
+                  priority={index < 4}
                 />
                 <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
               </div>
               <div className="p-4 sm:m-1 md:m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-                <p className="text-sm flex flex-wrap items-center gap-1 mt-1 opacity-90">
+                <p className="text-sm flex items-start gap-1 mt-1 opacity-90 line-clamp-1">
                   <MapPin size={14} /> {itinerary.countries.map((country) => country).join(" · ")}
                 </p>
                 <p className="sm:font-medium leading-[18px] sm:leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>

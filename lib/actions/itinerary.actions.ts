@@ -234,11 +234,6 @@ export const deleteItinerary = async (itineraryId: string) => {
 
 export const incrementItineraryViewCount = async (itineraryId: string) => {
     const supabase = await createClient()
-    const {
-        data: { user },
-      } = await supabase.auth.getUser()
-    
-      if (!user) throw new Error("Not authenticated")
     
     const { data, error } = await supabase
     .rpc("increment_itinerary_view", { p_itinerary_id: itineraryId });

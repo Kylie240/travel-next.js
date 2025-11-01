@@ -49,6 +49,7 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
                         fill
                         className="object-cover rounded-full cursor-pointer"
                         style={{ width: '100%', height: '100%' }}
+                        priority
                       />
                     </div>
                   ) : (

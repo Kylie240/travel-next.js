@@ -138,7 +138,6 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
 
   const handleForgotPassword = async (email: string) => {
     const supabase = createClientComponentClient()
-    console.log(email)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback`
     })
