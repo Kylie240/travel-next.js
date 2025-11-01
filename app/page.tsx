@@ -9,6 +9,7 @@ import { CountryCard } from "@/components/ui/country-card"
 import { CategoryCard } from "@/components/ui/category-card"
 import { useRouter } from "next/navigation"
 import LandingPage from "./landing/page"
+import Head from "next/head"
 
 // Sample data for featured itineraries
 const multiCountryItineraries = [
@@ -423,7 +424,16 @@ export default function Home() {
   }
 
   return (
-    // <div className="flex flex-col">
+    <>
+      <Head>
+          <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <LandingPage />
+    </>
+  );
+}
+
+// <div className="flex flex-col">
     //   {/* Hero Section */}
     //   <section className="relative max-w-screen md:max-w-none min-h-[700px] md:min-h-[600px] flex items-center mb-32 md:mb-16 justify-center px-4 sm:px-6 lg:px-8">
     //     {/* Background Image */}
@@ -564,6 +574,3 @@ export default function Home() {
     //     />
     //   </section>
     // </div>
-    <LandingPage />
-  );
-}

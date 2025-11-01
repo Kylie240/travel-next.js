@@ -68,8 +68,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <div className="container px-0 mx-0 lg:mx-auto">
                 <div className="flex flex-col text-white m-2 p-6 md:p-8 md:mb-4 md:ml-4 relative">
                     <h1 className="max-w-[100%] lg:max-w-[80%] text-left leading-[30px] md:leading-[40px] mt-2 md:mt-0 text-3xl xl:text-4xl font-bold lg:mb-4 mr-0 md:mr-6 lg:mr-0">{itinerary.title}</h1>
-                    <div className="w-full mt-1 flex justify-between items-center">
-                      <div className="flex items-center flex-wrap gap-4 md:gap-6 text-sm">
+                    <div className="w-full mt-1 flex justify-between items-center gap-2">
+                      <div className="flex items-center flex-wrap gap-x-4 md:gap-x-6 text-sm">
                         <div className="items-center hidden sm:flex">
                           <Calendar className="h-5 w-5 mr-1 sm:mr-2" />
                           {itinerary.duration} {itinerary.duration > 1 ? 'days' : 'day'}
@@ -117,7 +117,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                 }
               </div>
             </div>
-            <div className="flex justify-center w-full px-4">
+            <div className="flex justify-center w-full text-sm sm:text-base px-2 sm:px-4">
               <div className="flex mb-2 px-1 justify-between sm:hidden w-full max-w-[500px]">
                 <div className="flex py-1 pr-3 gap-2 justify-center items-center">
                   {itinerary.duration}

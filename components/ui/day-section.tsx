@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
-import { Circle, MapPin, ChevronDown, Link, Hotel, Caravan } from "lucide-react"
+import { Circle, MapPin, ChevronDown, Link, Hotel, Caravan, Clock } from "lucide-react"
 import { motion } from "framer-motion"
 import { activityTagsMap } from "@/lib/constants/tags"
 import { FiArrowUpRight } from "react-icons/fi";
@@ -16,6 +16,8 @@ const formatTime = (time: string | null | undefined) => {
   return `${formattedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 }
 import { Day } from "@/types/Day"
+import { GoDash } from 'react-icons/go'
+import { countries } from '@/lib/constants/countries'
 
 export interface DaySectionProps {
   day: Day;
@@ -74,7 +76,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           </div>  
         }
         <button 
-          className={`w-full relative inset-x-3 top-4 flex items-center rounded-2xl overflow-hidden ${(day.image !== null && day.image !== '') ? 'shadow-lg p-8 h-[120px] md:h-[150px]' : 'px-8 h-[100px] md:h-[120px]'} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
+          className={`w-full relative inset-x-3 top-4 flex items-center rounded-2xl overflow-hidden ${(day.image !== null && day.image !== '') ? 'shadow-lg p-8 h-[120px] md:h-[150px]' : 'px-8 h-[80px] md:h-[100px]'} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
           onClick={() => hasExpandableContent && onToggle()}
           disabled={!hasExpandableContent}
           style={{
@@ -89,7 +91,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           }
         </button>
         <button 
-          className={`absolute top-[60px] md:top-[70px] left-[60px] z-[4] text-left bg-transparent border-none ${day.image ? 'text-white' : 'text-gray-700'} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
+          className={`absolute left-[60px] z-[4] text-left bg-transparent border-none ${day.image ? 'text-white top-[60px] md:top-[70px] ' : 'text-gray-700 top-[50px] md:top-[60px] '} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
           onClick={() => hasExpandableContent && onToggle()}
           disabled={!hasExpandableContent}
         >
@@ -132,7 +134,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
 
               return (
                 <div key={activity.id || index} className="relative mb-2">
-                  {activity?.type && 
+                  {activity?.type ? (
                     <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity?.time && activity?.time !== '' ? '14px' : '14px'}` }}>
                       {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
                         <div className="w-5 h-5">
@@ -141,7 +143,17 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                       )}
                       <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity?.time)}</p>
                     </div>
-                  }
+                  ) : (
+                    <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-63px', top: `${activity?.time && activity?.time !== '' ? '25px' : '25px'}` }}>
+                      <div className="w-5 h-5">
+                        {activity?.time && activity?.time !== '' ? (
+                          <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity?.time)}</p>
+                        ) : (
+                          <GoDash size={16} strokeWidth={2} className="text-gray-500" />
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <motion.div
                     key={activity.id || index}
                     initial={false}
@@ -155,6 +167,12 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                         >
                           <div className="flex-1">
                             <h3 className="text-md lg:text-lg font-medium leading-5">{activity.title}</h3>
+                            {activity.location && (
+                              <div className="flex items-center text-sm text-gray-500">
+                                {/* <MapPin className="w-4 h-4 mr-1" /> */}
+                                <span>{activity.location}</span>
+                              </div>
+                            )}
                           </div>
                           <motion.button 
                             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -170,14 +188,11 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                           {activity.description && (
                             <p className="text-gray-600 mb-3">{activity.description}</p>
                           )}
-                          {activity.location && (
-                            <div className="flex items-center text-sm text-gray-500">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              <span>{activity.location}</span>
-                            </div>
-                          )}
                           {activity.duration && (
-                            <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration} minutes</p>
+                            <div className="flex items-center gap-2">
+                              <Clock size={16} strokeWidth={2} className="text-gray-500" />
+                              <p className="text-sm text-gray-500 mt-1">Duration: {activity.duration} minutes</p>
+                            </div>
                           )}
                           {activity.link && (
                             <div className="flex mt-4 w-full items-center text-sm cursor-pointer hover:bg-gray-100/50 text-gray-500 border p-2 rounded-xl shadow-md"
@@ -233,7 +248,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                   <p className="text-gray-600 text-md font-medium leading-5">{day.accommodation.name}</p>
                   {day.accommodation.location && (
                     <div className="flex items-center text-sm text-gray-500 mt-2">
-                      <MapPin className="w-4 h-4 mr-1" />
+                      {/* <MapPin className="w-4 h-4 mr-1" /> */}
                       <span>{day.accommodation.location}</span>
                     </div>
                   )}

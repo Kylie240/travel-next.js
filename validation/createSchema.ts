@@ -9,7 +9,6 @@ export const createSchema = z.object({
     mainImage: z.string().url("Must be a valid URL"),
     detailedOverview: z.string().nullable().optional(),
     duration: z.number().min(1, "Length must be at least 1 day"),
-    countries: z.array(z.string()).min(1, "At least one country is required"),
     cities: z.array(z.object({
       city: z.string(),
       country: z.string(),

@@ -12,4 +12,5 @@ export const activitySchema = z.object({
     photos: z.array(z.string()).nullable().optional(),
     price: z.number().nullable().optional(),
     showActivity: z.boolean().optional(),
+    location: z.string().nullable().optional(),
   })
