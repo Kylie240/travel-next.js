@@ -216,18 +216,16 @@ export const deleteItinerary = async (itineraryId: string) => {
             throw itineraryError;
         }
 
-        const { data: galleryUUID } = await supabase
-        .from('itinerary_gallery')
-        .select('gallery_id')
-        .eq('itinerary_id', itineraryId)
-        .maybeSingle();
+        // await deleteFolderRecursively(user.id, itineraryId);
+        const { error: galleryError } = await supabase
+        .from('gallery_removal')
+        .insert({
+            itinerary_id: itineraryId,
+        });
 
-        //logic for deleting
-
-        // const { error: galleryError } = await supabase
-        // .from('itinerary_gallery')
-        // .delete()
-        // .eq('itinerary_id', itineraryId);
+        if (galleryError) {
+            throw galleryError;
+        }
 
         return { success: true };
 }
@@ -369,3 +367,41 @@ export const UnsaveItinerary = async (itineraryId: string) => {
 
         return { success: true };
 }
+
+async function deleteFolderRecursively(userId: string, itineraryId: string) {
+    const supabase = await createClient()
+    const bucket = "itinerary-images";
+  const galleryPath = `${userId}/${itineraryId}/`;
+
+  // Helper to delete all files in a folder
+  async function deleteAllInFolder(path) {
+    const { data: files, error } = await supabase.storage.from(bucket).list(path, { limit: 100 });
+    if (error) throw error;
+
+    if (!files || files.length === 0) return;
+
+    const filePaths = files.map((f) => `${path}${f.name}`);
+    await supabase.storage.from(bucket).remove(filePaths);
+  }
+
+  try {
+    // 1️⃣ Delete files directly inside gallery folder (just in case)
+    await deleteAllInFolder(galleryPath);
+
+    // 2️⃣ Delete all files inside main/
+    await deleteAllInFolder(`${galleryPath}main/`);
+
+    // 3️⃣ Delete all files inside each days/day# folder
+    const { data: daysFolders } = await supabase.storage.from(bucket).list(`${galleryPath}days/`, { limit: 100 });
+
+    if (daysFolders && daysFolders.length > 0) {
+      for (const dayFolder of daysFolders) {
+        await deleteAllInFolder(`${galleryPath}days/${dayFolder.name}/`);
+      }
+    }
+
+    console.log(`✅ Deleted gallery ${galleryPath} successfully.`);
+  } catch (err) {
+    console.error("Error deleting gallery:", err.message);
+  }
+  }

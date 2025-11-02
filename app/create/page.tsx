@@ -83,14 +83,14 @@ const INITIAL_DAY: Day = {
   }
 };
 
-function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: { 
+function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: { 
   day: any; // Temporarily use any to fix type issues
   index: number;
   form: ReturnType<typeof useForm<FormData>>;
   onRemoveDay: (index: number) => void;
   disabled: boolean;
   userId: string;
-  galleryUUID: string;
+  itineraryId: string;
 }) {
   const {
     attributes,
@@ -234,21 +234,21 @@ function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: {
               </div>
               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
                 <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Country*</Label>
-                <Select
+                  <Select
                   value={form.watch(`days.${index}.countryName`) || ''}
-                  onValueChange={(value: string) => {
-                    form.setValue(`days.${index}.countryName`, value, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                      shouldTouch: true
-                    });
+                    onValueChange={(value: string) => {
+                        form.setValue(`days.${index}.countryName`, value, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                          shouldTouch: true
+                        });
                     setCountrySearch(prev => ({ ...prev, [index]: '' }));
-                  }}
+                    }}
                   required
-                >
-                  <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Select a country" />
-                  </SelectTrigger>
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
                     <div className="p-2 sticky top-0 bg-white border-b z-10">
                       <Input
@@ -301,8 +301,8 @@ function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: {
                                 {selectedFiltered.map((country) => (
                                   <SelectItem key={country.code} value={country.name}>
                                     {country.name}
-                                  </SelectItem>
-                                ))}
+                        </SelectItem>
+                      ))}
                                 <div className="py-2"></div>
                               </>
                             )}
@@ -315,8 +315,8 @@ function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: {
                         );
                       })()}
                     </div>
-                  </SelectContent>
-                </Select>
+                    </SelectContent>
+                  </Select>
                 {form.formState.errors.days?.[index]?.countryName && (
                   <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.countryName?.message}</p>
                 )}
@@ -348,7 +348,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: {
                 onRemove={() => form.setValue(`days.${index}.image`, "")}
                 disabled={form.formState.isSubmitting}
                 bucket="itinerary-images"
-                folder={`${userId}/${galleryUUID}/days/${index}`}
+                folder={`${userId}/${itineraryId}/days/${index}`}
               />
             </div>
 
@@ -770,23 +770,28 @@ function SortableDay({ day, index, form, onRemoveDay, userId, galleryUUID }: {
 
 export default function CreatePage() {
   const router = useRouter()
-  const ItineraryId = useSearchParams().get('itineraryId')
-  const [itineraryStatus, setItineraryStatus] = useState<number>(ItineraryStatusEnum.draft)
   const searchParams = useSearchParams()
+  const initialItineraryId = searchParams.get('itineraryId')
+  const [ItineraryId, setItineraryId] = useState<string | null>(initialItineraryId)
+  const [itineraryStatus, setItineraryStatus] = useState<number>(ItineraryStatusEnum.draft)
   const supabase = createClient()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [itineraryLoading, setItineraryLoading] = useState(false)
   const [itineraryTags, _] = useState<Array<{id: number; name: string; icon: any}>>(itineraryTagsMap)
-  const [galleryUUID, setGalleryUUID] = useState(null)
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
   const [pendingItineraryData, setPendingItineraryData] = useState<any>(null)
   const countriesList = countries;
 
+  // Generate itinerary ID if one doesn't exist
   useEffect(() => {
-    fetchGalleryUUID()
-  }, [supabase, ItineraryId])
+    if (!initialItineraryId) {
+      const newItineraryId = uuidv4()
+      setItineraryId(newItineraryId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run once on mount to generate ID if needed
 
   useEffect(() => {
     const getUser = async () => {
@@ -832,40 +837,6 @@ export default function CreatePage() {
     }
   })
 
-  
-  const fetchGalleryUUID = async () => {
-    if (ItineraryId) {  
-    const { data, error } = await supabase
-      .from('itinerary_gallery')
-      .select('*')
-      .eq('itinerary_id', ItineraryId)
-      .maybeSingle()
-      if (error) {
-        throw error
-      }
-      if (!data) {
-        createGalleryUUID(false)
-      } else {
-        setGalleryUUID(data.gallery_uuid)
-      }
-    } else {
-      createGalleryUUID()
-    }
-  }
-
-  const createGalleryUUID = async (isNew: boolean = true) => {
-    setGalleryUUID(uuidv4())
-    
-    if(!isNew) {
-    const { data, error } = await supabase
-      .from('itinerary_gallery')
-      .insert({
-          itinerary_id: ItineraryId,
-          gallery_uuid: uuidv4()
-        })
-    }
-  }
-
   const { fields: countryFields, append: appendCountry, remove: removeCountry } = useFieldArray({
     control: form.control,
     name: "countries" as const
@@ -910,7 +881,9 @@ export default function CreatePage() {
   useEffect(() => {
     const init = async () => {
       const itineraryId = searchParams.get('itineraryId')
-      if (itineraryId) {
+      // Only try to load if the ID existed in the original URL params (not newly generated)
+      // If initialItineraryId was null, we generated the ID, so don't try to load it
+      if (itineraryId && initialItineraryId) {
         try {
           setItineraryLoading(true)
           const itinerary = await getItineraryById(itineraryId) as CreateItinerary;
@@ -955,7 +928,7 @@ export default function CreatePage() {
       }
     }
     init()
-  }, [searchParams, form])
+  }, [searchParams, form, initialItineraryId])
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1074,6 +1047,7 @@ export default function CreatePage() {
   const buildItineraryData = () => {
       const formData = form.getValues();
     return {
+        id: ItineraryId,
         status: formData.status as number,
         title: formData.title,
         shortDescription: formData.shortDescription,
@@ -1125,9 +1099,10 @@ export default function CreatePage() {
     try {
       const itineraryData = buildItineraryData();
       // Force status to draft
+      itineraryData.id = ItineraryId;
       itineraryData.status = ItineraryStatusEnum.draft;
       
-      if (ItineraryId) {
+      if (initialItineraryId) {
         await updateItinerary(ItineraryId, itineraryData);
       } else {
         await createItinerary(itineraryData);
@@ -1219,14 +1194,6 @@ export default function CreatePage() {
         const isValid = await form.trigger()
         if (isValid) {
           await handleFinalSubmit(data)
-          // if(ItineraryId) {
-          //   await supabase
-          //     .from('itinerary_gallery')
-          //     .insert({
-          //         itinerary_id: ItineraryId,
-          //         gallery_id: galleryUUID
-          //       })
-          // }
         } else {
           // Get specific validation errors
           const errors = form.formState.errors
@@ -1307,22 +1274,16 @@ export default function CreatePage() {
       const formData = form.getValues()
       const itineraryData: CreateItinerary = {
         ...formData,
+        id: ItineraryId,
         status: itineraryStatus === ItineraryStatusEnum.archived ? ItineraryStatusEnum.archived : ItineraryStatusEnum.draft
       }
 
       let response = null;
-      if (ItineraryId) {
+      console.log(itineraryData)
+      if (initialItineraryId) {
         response = await updateItinerary(ItineraryId, itineraryData)
       } else {
         response = await createItinerary(itineraryData)
-        if(response) {
-          await supabase
-            .from('itinerary_gallery')
-            .insert({
-                itinerary_id: response,
-                gallery_id: galleryUUID
-              })
-        }
       }
       
       if (response) {
@@ -1525,7 +1486,7 @@ export default function CreatePage() {
                       onRemove={() => form.setValue("mainImage", "")}
                       disabled={form.formState.isSubmitting}
                       bucket="itinerary-images"
-                      folder={`${user?.id}/${galleryUUID}/main`}
+                      folder={`${user?.id}/${ItineraryId}/main`}
                     />
                     {form.formState.errors.mainImage && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.mainImage.message}</p>
@@ -1624,7 +1585,7 @@ export default function CreatePage() {
                               onRemoveDay={handleRemoveDay}
                               disabled={form.formState.isSubmitting}
                               userId={user?.id}
-                              galleryUUID={galleryUUID}
+                              itineraryId={ItineraryId}
                             />
                           ))}
                         </Accordion>

@@ -5,6 +5,7 @@ import { Note } from "./Note";
 type City = { city: string, country: string};
 
 export type CreateItinerary = {
+    id: string;
     status: number;
     title: string;
     shortDescription: string;
