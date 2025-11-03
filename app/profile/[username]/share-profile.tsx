@@ -9,7 +9,7 @@ import { FaFacebook, FaWhatsapp } from 'react-icons/fa'
 import { FaXTwitter } from "react-icons/fa6";
 
 
-const ShareProfileButton = () => {
+const ShareProfileButton = ({ username }: { username: string }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [canUseNativeShare, setCanUseNativeShare] = useState(false)
@@ -41,7 +41,7 @@ const ShareProfileButton = () => {
   }
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(currentUrl)
+    navigator.clipboard.writeText(`https://www.journli.com/profile/${username}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

@@ -4,7 +4,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { ChevronDown, LogOut, Settings, PenSquare, User, ChevronUp, Info, Globe, Bookmark, UserCircle } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useToast } from "./use-toast"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { CiPassport1 } from "react-icons/ci";
 import { getUserProfileById } from "@/lib/actions/user.actions"
 import { FaUserAlt } from "react-icons/fa"
@@ -26,11 +26,20 @@ export function UserMenu() {
   const [profileError, setProfileError] = useState<string | null>(null)
   const { loading, error, user } = useUser()
 
+  // Track the last fetched user ID to prevent unnecessary refetches
+  const lastFetchedUserIdRef = useRef<string | null>(null)
+
   // Function to fetch user profile
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async (force = false) => {
     if (!user?.id) {
       setUserProfile(null)
       setProfileLoading(false)
+      lastFetchedUserIdRef.current = null
+      return
+    }
+
+    // Skip if we already fetched for this user ID and not forcing
+    if (!force && lastFetchedUserIdRef.current === user.id) {
       return
     }
 
@@ -40,18 +49,20 @@ export function UserMenu() {
     try {
       const profile = await getUserProfileById(user.id)
       setUserProfile(profile)
+      lastFetchedUserIdRef.current = user.id
     } catch (error) {
       console.error("Failed to fetch user profile:", error)
       setProfileError(error instanceof Error ? error.message : "Failed to fetch profile")
+      lastFetchedUserIdRef.current = null // Reset on error so we can retry
     } finally {
       setProfileLoading(false)
     }
-  }
+  }, [user?.id]) // Only depend on user?.id to prevent unnecessary function recreations
 
-  // Fetch user profile when user ID is present
+  // Fetch user profile when user ID is present or changes
   useEffect(() => {
     fetchUserProfile()
-  }, [user?.id])
+  }, [fetchUserProfile])
 
   // Listen for avatar updates
   useEffect(() => {
@@ -73,12 +84,12 @@ export function UserMenu() {
       const { userId } = event.detail
       // Only refetch if it's for the current user
       if (user?.id === userId) {
-        fetchUserProfile()
+        fetchUserProfile(true) // Force refetch on profile update
       }
     })
 
     return unsubscribeProfile
-  }, [user?.id])
+  }, [user?.id, fetchUserProfile])
 
   const handleSignOut = async () => {
     try {

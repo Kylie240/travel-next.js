@@ -634,7 +634,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               </span>
             </div>
           </div>
-          <div>
+          <div className="hidden">
             <label className="block text-md font-semibold mb-2">Blocked Users</label>
             <p className="text-sm text-gray-600 mb-4">
               Block users from viewing your profile and itineraries.

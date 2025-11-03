@@ -41,7 +41,7 @@ export default function LandingPage() {
       <div className="py-20 px-12">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center justify-center mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl px-6 font-bold text-center mb-2">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl px-8 sm:px-6 font-bold text-center mb-2">
               Plan smarter. Travel better. Share the journey.
             </h2>
             <p className="text-gray-600 text-sm md:text-lg px-4 text-center">Journli Makes Creating and Sharing Travel Plans a Breeze</p>

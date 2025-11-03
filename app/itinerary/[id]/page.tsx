@@ -26,6 +26,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const currentUserId = user?.id
   const paramsValue = await params;
   const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
+  console.log("itinerary", itinerary)
   const creator = itinerary.creator;
   const isPrivate = itinerary.creator?.isPrivate;
   const countries = itinerary.days.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index);
@@ -49,6 +50,40 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   }
   const activityCount = itinerary.days.reduce((acc, day) => acc + day.activities.length, 0);
   const accommodationCount = itinerary.days.reduce((acc, day) => acc + (day.accommodation ? 1 : 0), 0);
+
+  // Fetch initial interaction states if user is logged in
+  let initialIsLiked = undefined;
+  let initialIsSaved = undefined;
+  let initialIsFollowing = undefined;
+  
+  if (currentUserId) {
+    // Check if user has liked the itinerary
+    const { data: likeData } = await supabase
+      .from('interactions_likes')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .eq('itinerary_id', itinerary.id)
+      .maybeSingle();
+    initialIsLiked = !!likeData;
+
+    // Check if user has saved the itinerary
+    const { data: saveData } = await supabase
+      .from('interactions_saves')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .eq('itinerary_id', itinerary.id)
+      .maybeSingle();
+    initialIsSaved = !!saveData;
+
+    // Check if user is following the creator
+    const { data: followData } = await supabase
+      .from('users_following')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .eq('following_id', itinerary.creatorId)
+      .maybeSingle();
+    initialIsFollowing = !!followData;
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
@@ -109,11 +144,15 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
                     <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                   </Link>
-                ) : (
-                  <InteractionButtons itineraryId={itinerary.id} />
+                ) : ( 
+                  <InteractionButtons 
+                    itineraryId={itinerary.id} 
+                    initialIsLiked={initialIsLiked}
+                    initialIsSaved={initialIsSaved}
+                  />
                 )}
                 {itinerary.status === ItineraryStatusEnum.published && 
-                  <ShareElement />
+                  <ShareElement id={itinerary.id} smallButton={false} />
                 }
               </div>
             </div>
@@ -188,7 +227,11 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   </Link>
                   ) : (
                     <div className="min-w-[100px] md:w-1/2">
-                      <FollowButton creatorId={creator.userId} userId={currentUserId} />
+                      <FollowButton 
+                        creatorId={itinerary.creatorId} 
+                        userId={currentUserId || ""} 
+                        initialIsFollowing={initialIsFollowing}
+                      />
                     </div>
                   )}
               </div>
@@ -231,14 +274,20 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <div className="w-full justify-between hidden lg:flex">
                 <h2 className="text-2xl md:text-2xl font-semibold mb-2">Trip Overview</h2>
                 <div className="flex gap-2">
-                  {!canEdit && <InteractionButtons itineraryId={itinerary.id} />}
+                  {!canEdit && (
+                    <InteractionButtons 
+                      itineraryId={itinerary.id} 
+                      initialIsLiked={initialIsLiked}
+                      initialIsSaved={initialIsSaved}
+                    />
+                  )}
                   {canEdit &&
                     <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
                       <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                     </Link>
                   }
                   {itinerary.status === ItineraryStatusEnum.published && 
-                    <ShareElement />
+                    <ShareElement id={itinerary.id} smallButton={false} />
                   }
                 </div>
               </div>
@@ -309,7 +358,11 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                       </Link>
                     ) : (
                       <div className="w-1/2">
-                        <FollowButton creatorId={creator.userId} userId={currentUserId} />
+                        <FollowButton 
+                          creatorId={itinerary.creatorId} 
+                          userId={currentUserId || ""} 
+                          initialIsFollowing={initialIsFollowing}
+                        />
                       </div>
                     )}
                   </div>

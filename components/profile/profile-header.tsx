@@ -1,12 +1,12 @@
 "use client"
 
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Camera, Share, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FollowersDialog } from "@/components/ui/followers-dialog"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { UserData } from "@/lib/types"
 import { UserStats } from "@/types/userStats"
 import { getFollowersById } from "@/lib/actions/user.actions"
@@ -28,6 +28,42 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
   const [followers, setFollowers] = useState<Followers[]>([])
   const [following, setFollowing] = useState<Followers[]>([])
   const router = useRouter()
+  const pathname = usePathname()
+  const hasRefreshedRef = useRef(false)
+  const lastPathnameRef = useRef<string | null>(null)
+
+  // Refresh stats when navigating back to account-settings page
+  useEffect(() => {
+    // Only refresh on account-settings page
+    if (pathname === '/account-settings') {
+      // Check if we've navigated from a different page back to account-settings
+      const navigatedBack = lastPathnameRef.current !== null && 
+                            lastPathnameRef.current !== pathname &&
+                            pathname === '/account-settings'
+      
+      // Refresh if we navigated back, or on first mount after initial load
+      if (navigatedBack || (!hasRefreshedRef.current && document.visibilityState === 'visible')) {
+        // Small delay to ensure navigation is complete
+        const timeoutId = setTimeout(() => {
+          router.refresh()
+          hasRefreshedRef.current = true
+        }, 100)
+
+        lastPathnameRef.current = pathname
+        
+        return () => {
+          clearTimeout(timeoutId)
+        }
+      } else {
+        // Update last pathname
+        lastPathnameRef.current = pathname
+      }
+    } else {
+      // Reset the refresh flag when navigating away
+      hasRefreshedRef.current = false
+      lastPathnameRef.current = pathname
+    }
+  }, [pathname, router])
 
   const handleFollowers = async ( open: boolean ) => {
     const followers = await getFollowersById(user?.id)
@@ -90,7 +126,7 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
           </div>
           <div className="grid grid-cols-2 justify-center gap-2">
             <Button variant="outline" onClick={() => router.push(`/profile/${user.username}`)}>View Profile</Button>
-            <ShareProfileButton />
+            <ShareProfileButton username={user.username} />
           </div>
         </div>
       </div>

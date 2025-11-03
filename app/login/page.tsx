@@ -69,7 +69,7 @@ export default function LoginPage() {
           options: {
             data: {
               name,
-              username
+              username,
             }
           }
         })

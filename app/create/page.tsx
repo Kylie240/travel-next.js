@@ -437,14 +437,59 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                                 />
                               </div>
                               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Duration <span className="text-gray-500 text-xs sm:text-sm">(minutes)</span></Label>
-                                <Input
-                                  type="number"
-                                  {...form.register(`days.${index}.activities.${activityIndex}.duration`, {
-                                    setValueAs: (value) => value === "" ? null : Number.isNaN(parseInt(value, 10)) ? null : parseInt(value, 10)
-                                  })}
-                                  className="rounded-xl"
-                                />
+                                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Duration</Label>
+                                <div className="flex gap-2 items-center w-full">
+                                  <div className="relative flex-1 flex flex-col gap-1">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      value={(() => {
+                                        const totalMinutes = form.watch(`days.${index}.activities.${activityIndex}.duration`);
+                                        return totalMinutes !== null && totalMinutes !== undefined 
+                                          ? Math.floor(totalMinutes / 60).toString() 
+                                          : '';
+                                      })()}
+                                      onChange={(e) => {
+                                        const hours = parseInt(e.target.value) || 0;
+                                        const currentMinutes = form.watch(`days.${index}.activities.${activityIndex}.duration`) || 0;
+                                        const existingMinutes = currentMinutes % 60;
+                                        const totalMinutes = (hours * 60) + existingMinutes;
+                                        form.setValue(`days.${index}.activities.${activityIndex}.duration`, totalMinutes || null, {
+                                          shouldValidate: true,
+                                          shouldDirty: true
+                                        });
+                                      }}
+                                      className="rounded-xl"
+                                    />
+                                    <span className="absolute top-[12px] right-[30px] text-xs text-gray-500 text-center">HR</span>
+                                  </div>
+                                  <div className="relative flex-1 flex flex-col gap-1">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      max="59"
+                                      value={(() => {
+                                        const totalMinutes = form.watch(`days.${index}.activities.${activityIndex}.duration`);
+                                        return totalMinutes !== null && totalMinutes !== undefined 
+                                          ? (totalMinutes % 60).toString() 
+                                          : '';
+                                      })()}
+                                      onChange={(e) => {
+                                        const minutes = parseInt(e.target.value) || 0;
+                                        const clampedMinutes = Math.min(59, Math.max(0, minutes));
+                                        const currentMinutes = form.watch(`days.${index}.activities.${activityIndex}.duration`) || 0;
+                                        const existingHours = Math.floor(currentMinutes / 60);
+                                        const totalMinutes = (existingHours * 60) + clampedMinutes;
+                                        form.setValue(`days.${index}.activities.${activityIndex}.duration`, totalMinutes || null, {
+                                          shouldValidate: true,
+                                          shouldDirty: true
+                                        });
+                                      }}
+                                      className="rounded-xl"
+                                    />
+                                    <span className="absolute top-[12px] right-[30px] text-xs text-gray-500 text-center">MIN</span>
+                                  </div>
+                                </div>
                               </div>
                                 <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
                                   <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Type</Label>
@@ -1397,7 +1442,7 @@ export default function CreatePage() {
               {currentStep === 0 && (
                 <div className="space-y-4 mx-4 sm:mx-6 py-4 mb-2 md:mb-8">
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Itinerary Builder</h1>
-                  <p className="pb-4 text-md sm:text-lg lg:text-xl text-gray-500">Creating an itinerary has never been easier, just fill in the details and we'll take care of the rest.</p>
+                  <p className="pb-4 text-md sm:text-lg lg:text-xl text-gray-500">Creating an itinerary has never been easier, just fill in the details and we'll take care of the rest. Save your itinerary as a draft or publish it to share with the world.</p>
                   <div className="space-y-6">
                     <div className="flex gap-4 md:gap-6">
                       <p className="text-xl md:text-2xl font-medium w-[20px]">1</p>
@@ -1658,7 +1703,7 @@ export default function CreatePage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-lg font-thin sm:mb-1 md:mb-2 ml-1">Estimated Expense</h2>
-                    <p className="text-xs sm:text-sm p-1 sm:p-0">Help other travelers budget their trip. Not sure? Select a budget range instead</p>
+                    <p className="text-xs sm:text-sm p-1 sm:p-0">Help other travelers budget their trip</p>
                       <Input
                         {...form.register('budget', {
                           setValueAs: (value) => value === "" ? null : Number.isNaN(parseInt(value)) ? null : parseInt(value)

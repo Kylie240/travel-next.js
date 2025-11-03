@@ -8,18 +8,29 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/";
 
-  if (code) {
-    const supabase = await createClient();
-
-    // Exchange the auth code for a session
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (!error) {
-      // Redirect to the intended path or fallback to homepage
-      return NextResponse.redirect(`${origin}${next}`);
-    }
+  if (!code) {
+    return NextResponse.redirect(`${origin}/auth/auth-code-error`);
   }
 
-  // Redirect to error page if code is missing or exchange fails
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+  const supabase = await createClient();
+
+  // Exchange code for session (OAuth or email)
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error) {
+    return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+  }
+
+  // Fetch the logged-in user after session exchange
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // If the user exists but hasn’t confirmed their email yet
+  if (user && !user.email_confirmed_at) {
+    return NextResponse.redirect(`${origin}/auth/confirm-email`);
+  }
+
+  // Otherwise, continue to intended destination
+  return NextResponse.redirect(`${origin}${next}`);
 }

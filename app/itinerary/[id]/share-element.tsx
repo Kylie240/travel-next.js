@@ -7,7 +7,7 @@ import * as Popover from '@radix-ui/react-popover'
 import { FaFacebook, FaWhatsapp } from 'react-icons/fa'
 import { FaXTwitter } from "react-icons/fa6";
 
-const ShareElement = () => {
+const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: boolean }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [canUseNativeShare, setCanUseNativeShare] = useState(false)
@@ -44,7 +44,7 @@ const ShareElement = () => {
   }
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(currentUrl)
+    navigator.clipboard.writeText(`https://www.journli.com/itinerary/${id}`)
     setCopied(true)
     toast.success('Link copied to clipboard')
     setTimeout(() => setCopied(false), 2000)
@@ -89,8 +89,12 @@ const ShareElement = () => {
   if (canUseNativeShare) {
     return (
       <button 
-        onClick={handleNativeShare}
-        className="cursor-pointer hover:bg-gray-100 h-10 w-10 rounded-lg p-2 flex items-center justify-center"
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleNativeShare()
+        }}
+        className={`${smallButton ? 'h-4 w-4 ' : 'h-10 w-10 p-2 hover:bg-gray-100'} cursor-pointer rounded-lg flex items-center justify-center`}
       >
         <Share size={24} />
       </button>
@@ -101,7 +105,14 @@ const ShareElement = () => {
   return (
     <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
       <Popover.Trigger asChild>
-        <button className="cursor-pointer hover:bg-gray-100 h-10 w-10 rounded-lg p-2 flex items-center justify-center">
+        <button 
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setIsOpen(true)
+          }}
+          className={`${smallButton ? 'h-4 w-4' : 'h-10 w-10 hover:bg-gray-100 p-2'} cursor-pointer rounded-lg flex items-center justify-center`}
+        >
           <Share size={24} />
         </button>
       </Popover.Trigger>

@@ -75,7 +75,7 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
                               <FollowButton creatorId={userId} userId={currentUser?.id || null} />
                             </div>
                           )}
-                          <ShareProfileButton />
+                          <ShareProfileButton username={userData[0].username} />
                         </div>
                         {/* {!isCurrentUser && currentUser && (
                           <ProfileMenuButton creatorId={userId} userId={currentUser?.id || null} />
@@ -222,8 +222,9 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
                       </div>
                       <div className="p-4 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
                         <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
-                        <p className="text-sm flex items-center gap-1 mt-1 opacity-90">
-                          {itinerary.countries.map((country) => country).join(" · ")}
+                        <p className="text-sm flex items-center gap-1 mt-1 opacity-90 overflow-hidden">
+                          <MapPin size={14} className="flex-shrink-0" />
+                          <span className="truncate">{itinerary.countries.map((country) => country).join(" · ")}</span>
                         </p>
                         <p className="text-sm mt-2">{itinerary.likes} likes</p>
                         <div className="absolute bottom-0 right-0">

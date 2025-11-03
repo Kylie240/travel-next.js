@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation" 
 import { Input } from "@/components/ui/input"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
+import ShareElement from "../itinerary/[id]/share-element"
 
 export default function MyItinerariesPage() {
   const router = useRouter()
@@ -89,32 +90,6 @@ export default function MyItinerariesPage() {
       window.innerWidth < 768
     )
   }, [])
-
-  const handleShare = async (e: React.MouseEvent, itinerary: ItinerarySummary) => {
-    e.stopPropagation()
-    const shareUrl = `${window.location.origin}/itinerary/${itinerary.id}`
-    
-    if (canUseNativeShare) {
-      try {
-        await navigator.share({
-          title: itinerary.title,
-          text: 'Check out this travel itinerary!',
-          url: shareUrl,
-        })
-      } catch (error) {
-        // User cancelled or share failed
-        if (error instanceof Error && error.name !== 'AbortError') {
-          // Fallback to copying link
-          navigator.clipboard.writeText(shareUrl)
-          toast.success('Copied to clipboard')
-        }
-      }
-    } else {
-      // Desktop: just copy to clipboard
-      navigator.clipboard.writeText(shareUrl)
-      toast.success('Copied to clipboard')
-    }
-  }
 
   const handleSearch = (searchTerm: string) => {
     setSearchTerm(searchTerm)
@@ -350,9 +325,14 @@ export default function MyItinerariesPage() {
                       </div>
                       {itinerary.status == ItineraryStatusEnum.published && (
                         <button 
-                          onClick={(e) => handleShare(e, itinerary)}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }}
                           className="p-2 absolute top-8 mt-6 right-4 rounded-full bg-white/40 hover:bg-white/60 transition-colors">
-                          <Share className="h-4 w-4 text-black" />
+                          {itinerary.status === ItineraryStatusEnum.published && 
+                            <ShareElement id={itinerary.id} smallButton={true} />
+                          }
                         </button>
                       )}
                     </div>

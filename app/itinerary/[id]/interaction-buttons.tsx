@@ -5,7 +5,15 @@ import createClient from "@/utils/supabase/client"
 import LikeElement from "./like-element"
 import BookmarkElement from "@/components/ui/bookmark-element"
 
-export function InteractionButtons({ itineraryId }: { itineraryId: string }) {
+export function InteractionButtons({ 
+  itineraryId, 
+  initialIsLiked, 
+  initialIsSaved 
+}: { 
+  itineraryId: string
+  initialIsLiked?: boolean
+  initialIsSaved?: boolean
+}) {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -36,8 +44,17 @@ export function InteractionButtons({ itineraryId }: { itineraryId: string }) {
 
   return (
     <div className="flex gap-2">
-      <LikeElement itineraryId={itineraryId} currentUserId={currentUserId || ""} />  
-      <BookmarkElement color="black" itineraryId={itineraryId} currentUserId={currentUserId || ""} />
+      <LikeElement 
+        itineraryId={itineraryId} 
+        currentUserId={currentUserId || ""} 
+        initialIsLiked={initialIsLiked}
+      />  
+      <BookmarkElement 
+        color="black" 
+        itineraryId={itineraryId} 
+        currentUserId={currentUserId || ""} 
+        initialIsSaved={initialIsSaved}
+      />
     </div>
   )
 }

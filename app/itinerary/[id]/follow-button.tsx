@@ -8,9 +8,17 @@ import { supabase } from '@/utils/supabase/superbase-client'
 import { AuthDialog } from '@/components/ui/auth-dialog'
 import { useRouter } from 'next/navigation'
 
-const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string }) => {
-  const [isFollowing, setIsFollowing] = useState(false)
-  const [loading, setLoading] = useState(true)
+const FollowButton = ({ 
+  creatorId, 
+  userId, 
+  initialIsFollowing 
+}: { 
+  creatorId: string
+  userId: string
+  initialIsFollowing?: boolean
+}) => {
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing || false)
+  const [loading, setLoading] = useState(initialIsFollowing === undefined)
   const [isOpen, setIsOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
@@ -23,8 +31,21 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
         setLoading(false)
         return
       }
-      const isFollowing = await supabase.from('users_following').select('*').eq('user_id', userId).eq('following_id', creatorId).single()
-      setIsFollowing(isFollowing.data?.following_id)
+      // If initialIsFollowing was provided, use it and skip database check
+      if (initialIsFollowing !== undefined && initialIsFollowing !== null) {
+        console.log("initialIsFollowing", initialIsFollowing)
+        setIsFollowing(initialIsFollowing)
+        setLoading(false)
+        return
+      }
+      const { data, error } = await supabase
+        .from('users_following')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('following_id', creatorId)
+        .maybeSingle()
+      setIsFollowing(!!data)
+      console.log("data", data, !!data, userId, creatorId)
       setLoading(false)
     }
     checkFollow()
@@ -39,7 +60,7 @@ const FollowButton = ({ creatorId, userId }: { creatorId: string, userId: string
 
       return () => window.removeEventListener('resize', checkMobile)
     }
-  }, [creatorId, userId])
+  }, [creatorId, userId, initialIsFollowing])
 
   const toggleFollow = async (isFollow: boolean) => {
     if (!userId) {

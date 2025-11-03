@@ -6,19 +6,16 @@ import { SaveItinerary, UnsaveItinerary } from '@/lib/actions/itinerary.actions'
 import { supabase } from '@/utils/supabase/superbase-client'
 
 const BookmarkElement = ({ itineraryId, currentUserId, color, initialIsSaved, savedList, onUnsave }: { itineraryId: string, currentUserId: string, color?: string, initialIsSaved?: boolean, savedList?: string[], onUnsave?: (itineraryId: string) => void }) => {
-  const [isSaved, setIsSaved] = useState(false) // Default to false, will be updated by useEffect
+  const [isSaved, setIsSaved] = useState(initialIsSaved || false) // Use initialIsSaved if provided
 
   useEffect(() => {
       const checkSaved = async () => {
-        console.log('BookmarkElement useEffect:', { currentUserId, itineraryId, initialIsSaved, savedList })
         if (!currentUserId) {
-          console.log('No currentUserId, skipping bookmark check')
           return
         }
         
         // If initialIsSaved is provided, use it and skip database check
         if (initialIsSaved !== undefined) {
-          console.log('Using initialIsSaved:', initialIsSaved)
           setIsSaved(initialIsSaved)
           return
         }
@@ -26,19 +23,15 @@ const BookmarkElement = ({ itineraryId, currentUserId, color, initialIsSaved, sa
         // If savedList is provided, check if itineraryId is in the list
         if (savedList && Array.isArray(savedList)) {
           const isInSavedList = savedList.includes(itineraryId)
-          console.log('Checking savedList:', { itineraryId, savedList, isInSavedList })
           setIsSaved(isInSavedList)
           return
         }
         
         // Otherwise, check the database
-        console.log('Checking database for save status...')
         const { data, error } = await supabase.from('interactions_saves').select('*').eq('user_id', currentUserId).eq('itinerary_id', itineraryId).maybeSingle()
         if (error) {
-          console.log('Error checking save status:', error)
           return
         }
-        console.log('Save status data:', { currentUserId, itineraryId, data })
         setIsSaved(!!data)
       }
       checkSaved()

@@ -5,18 +5,31 @@ import { supabase } from '@/utils/supabase/superbase-client'
 import React, { useEffect, useState } from 'react'
 import { FaRegStar, FaStar } from "react-icons/fa6"
 
-const LikeElement = ({ itineraryId, currentUserId }: { itineraryId: string, currentUserId: string }) => {
-  const [isLiked, setIsLiked] = useState(false)
+const LikeElement = ({ 
+  itineraryId, 
+  currentUserId, 
+  initialIsLiked 
+}: { 
+  itineraryId: string
+  currentUserId: string
+  initialIsLiked?: boolean
+}) => {
+  const [isLiked, setIsLiked] = useState(initialIsLiked || false)
   
     useEffect(() => {
         const checkLike = async () => {
           if (!currentUserId) return // Don't check if user is not logged in
+          // If initialIsLiked was provided, use it and skip database check
+          if (initialIsLiked !== undefined) {
+            setIsLiked(initialIsLiked)
+            return
+          }
           const { data, error } = await supabase.from('interactions_likes').select('*').eq('user_id', currentUserId).eq('itinerary_id', itineraryId).maybeSingle()
           if (error) console.log('Error checking like status')
           setIsLiked(!!data)
         }
         checkLike()
-      }, [itineraryId, currentUserId])
+      }, [itineraryId, currentUserId, initialIsLiked])
 
   const handleLike = (e) => {
     e.stopPropagation();

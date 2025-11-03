@@ -66,6 +66,17 @@ const ActionButtons = () => {
       ) : (
       <div className="flex flex-col sm:flex-row gap-4">
         <Button variant="outline" size="default" 
+          onClick={() => router.push('/login?mode=login')}
+          className="px-8 text-lg h-10 md:h-12 py-4 md:text-xl border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
+          Log In
+        </Button>
+        <Button size="default"
+          onClick={() => router.push('/login?mode=signup')} 
+          className="bg-gray-900 flex items-center text-white px-8 text-lg h-10 md:h-12 py-4 md:text-xl"
+        >
+          Sign Up
+        </Button>
+        {/* <Button variant="outline" size="default" 
           onClick={() => handleAuthClick(false)}
           className="px-8 text-lg h-10 md:h-12 py-4 md:text-xl border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
           Log In
@@ -80,7 +91,7 @@ const ActionButtons = () => {
           <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={isSignUp} setIsSignUp={setIsSignUp}>
             <></>
           </AuthDialog>
-        )}
+        )} */}
       </div>
       )}
       {/* Mobile version */}
