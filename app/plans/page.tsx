@@ -33,7 +33,7 @@ export default async function PlansPage() {
                 <Sparkles className="w-6 h-6 text-cyan-600" />
                 <h2 className="text-2xl font-bold text-gray-900">Free Plan</h2>
               </div>
-              <p className="text-gray-600">Perfect for getting started with travel planning</p>
+              <p className="text-gray-600">Perfect for the casual traveler and occasional trip planner</p>
             </div>
 
             <div className="mb-8">
@@ -97,7 +97,7 @@ export default async function PlansPage() {
                 <Sparkles className="w-6 h-6 text-cyan-600" />
                 <h2 className="text-2xl font-bold text-gray-900">Standard</h2>
               </div>
-              <p className="text-gray-600">Ideal for frequent travelers who want more tools and customizability</p>
+              <p className="text-gray-600">Ideal for frequent travelers who want more features</p>
             </div>
 
             <div className="mb-8">
@@ -108,7 +108,7 @@ export default async function PlansPage() {
             </div>
 
             <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
-              Get Standard
+              Coming Soon
             </Button>
 
             <div className="space-y-4">
@@ -134,10 +134,15 @@ export default async function PlansPage() {
                 <span className="text-gray-700">Collaborative editing</span>
               </div>
 
-              <div className="flex items-start gap-3">
+              {/* <div className="flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">Monetization capabilities</span>
+              </div> */}
+
+              {/* <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-700">Insights and analytics</span>
-              </div>
+              </div> */}
 
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -169,22 +174,17 @@ export default async function PlansPage() {
 
             <div className="mb-8">
               <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold text-gray-900">$20</span>
+                <span className="text-5xl font-bold text-gray-900">$16</span>
                 <span className="text-gray-600">/month</span>
               </div>
             </div>
 
             <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
-              Get Premium
+              Coming Soon
             </Button>
 
             <div className="space-y-4 opacity-75">
-              <h3 className="font-semibold text-gray-900 mb-4">Everything in Paid, plus:</h3>
-              
-              <div className="flex items-start gap-3">
-                <Lock className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Sell premium itineraries</span>
-              </div>
+              <h3 className="font-semibold text-gray-900 mb-4">Everything in Standard, plus:</h3>
 
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
@@ -199,6 +199,11 @@ export default async function PlansPage() {
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-700">Explore Page boost</span>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <Lock className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">Monetization capabilities</span>
               </div>
 
               <div className="flex items-start gap-3">
@@ -235,7 +240,7 @@ export default async function PlansPage() {
                     <td className="py-4 px-6 font-medium text-gray-900">Monthly Price</td>
                     <td className="py-4 px-6 text-center text-gray-700">$0</td>
                     <td className="py-4 px-6 text-center text-gray-700">$8</td>
-                    <td className="py-4 px-6 text-center text-gray-700">$20</td>
+                    <td className="py-4 px-6 text-center text-gray-700">$16</td>
                   </tr>
 
                   {/* Core Features */}
