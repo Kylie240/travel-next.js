@@ -12,7 +12,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <div className="w-full flex justify-center items-center">
-        <div className="relative h-[calc(100vh-64px)] max-h-screen w-screen max-w-[1800px] px-2 md:px-8 md:rounded-3xl overflow-hidden">
+        <div className="relative h-[calc(100vh-64px)] max-h-screen w-screen max-w-[1800px] px-8 md:rounded-3xl overflow-hidden">
           <div className="absolute inset-0">
             <Image
               src="/images/boat-photo2.jpg"
@@ -24,12 +24,12 @@ export default function LandingPage() {
             <div className="absolute inset-0 bg-black/40" />
           </div>
           
-          <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4">
+          <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4 md:px-6">
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-center mb-6">
             Welcome To Your New <br className="hidden md:block" /> Travel Journal
             </h1>
-            <p className="text-xl sm:text-2xl lg:text-3xl text-center mb-8 max-w-2xl">
-              Easily share your travel journeys with friends and followers
+            <p className="text-xl sm:text-2xl lg:text-3xl text-center font-light mb-8 mx-2 max-w-[500px]">
+              Easily create and share your travel experiences with others
             </p>
             <div className="gap-4 mt-8">
                 <ActionButtons />
@@ -42,9 +42,9 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center justify-center mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl px-8 sm:px-6 font-bold text-center mb-2">
-              Plan smarter. Travel better. Share the journey.
+              Where travelers inspire travelers
             </h2>
-            <p className="text-gray-600 text-sm md:text-lg px-4 text-center">Journli Makes Creating and Sharing Travel Plans a Breeze</p>
+            <p className="text-gray-600 text-sm md:text-lg px-4 text-center">...and for the stories that don't fit in a post</p>
           </div>
           
           <div className="flex flex-col items-center justify-center space-y-16 md:space-y-32">
@@ -68,7 +68,7 @@ export default function LandingPage() {
                   <h3 className="text-2xl md:text-3xl font-semibold mb-4">Plan It</h3>
                 </div>
                 <p className="text-gray-600 text-base md:text-lg">
-                  We provide a simple and easy to use interface to plan and share your journies. Our platform is designed to be user-friendly and breaks down travel planning into three simple steps.
+                  We provide a simple and easy to use interface to plan and share your itineraries. Our platform is designed to be user-friendly and breaks down travel planning into three simple steps.
                 </p>
               </div>
             </div>
@@ -119,7 +119,7 @@ export default function LandingPage() {
                 <h3 className="text-2xl md:text-3xl font-semibold mb-4">Share It</h3>
               </div>
                 <p className="text-gray-600 text-base md:text-lg">
-                  Travel is better together! Our multi-platform sharing feature allows you to share your itinerary whth friends or followers in a single click. No sign-up needed for viewing content, allowing you to share your plans with anyone.
+                  Our multi-platform sharing feature allows you to share your itinerary whth friends or followers in a single click. No sign-up needed for viewing content, allowing you to share your plans with anyone.
                 </p>
               </div>
             </div>
@@ -131,10 +131,10 @@ export default function LandingPage() {
       <div className="py-20 px-4 bg-gray-900">
         <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
           <h2 className="text-2xl md:text-3xl text-white md:text-4xl font-bold mb-6">
-            Start Planning Your Journey
+            Start Sharing Your Journey For Free
           </h2>
           <p className="text-md md:text-lg text-white mb-8 px-8">
-            Sign up to start creating and sharing your travel experiences with fellow adventurers.
+            Sign up to start creating and sharing your stories,<br /> or learn more about Journli by clicking the button below.
           </p>
           <Link href="/about">
             <Button className="px-6 text-md md:font-large md:h-12 md:py-4 md:px-8 md:text-xl text-black cursor-pointer border bg-white flex justify-center items-center p-2 hover:bg-gray-100">

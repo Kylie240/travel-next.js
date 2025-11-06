@@ -57,7 +57,7 @@ export const itineraryTagsMap = [
   { id:25, name :"Multi-Country", icon: LuTicketsPlane }, 
   { id:26, name :"Action Packed", icon: Music }, 
   { id:27, name :"Family Oriented", icon: FaPeopleGroup },
-  { id:28, name :"LGBTQ+", icon: TbHeartHandshake },
+  { id:28, name :"LGBTQ+ Friendly", icon: TbHeartHandshake },
   { id:29, name :"Accessible", icon: FaWheelchairMove },
   { id:30, name :"Off The Grid", icon: MdOutlineNordicWalking },
   { id:31, name :"Camping", icon: TentTree },

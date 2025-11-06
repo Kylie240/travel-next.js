@@ -178,7 +178,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                 <div className="flex-1 text-left">
                   <div className="flex items-center justify-between">
                     {form.watch(`days.${index}.title`) ? (
-                      <h3 className="text-lg flex items-center font-semibold"> <span className="hidden md:flex md:ml-2 mr-2">Day :{index + 1}</span> {form.watch(`days.${index}.title`)} </h3>
+                      <h3 className="text-lg flex items-center font-semibold"> {form.watch(`days.${index}.title`)} </h3>
                     ) : (
                       <h3 className="text-lg font-semibold md:ml-2">Day {index + 1}</h3>
                     )}
@@ -1180,7 +1180,7 @@ export default function CreatePage() {
   const handleSaveItinerary = async () => {
     try {
       if (!user) {
-        toast.error('Please sign in to save your itinerary')
+        toast.error('Please log in to save your itinerary')
         router.push('/login')
         return
       }
@@ -1209,7 +1209,7 @@ export default function CreatePage() {
       }
     } catch (error) {
       if (error instanceof Error && error.message === 'Unauthorized') {
-        toast.error('Session expired. Please sign in again.')
+        toast.error('Session expired. Please log in again.')
         router.push('/')
         throw error
       } else if (error instanceof Error && error.message.includes('Maximum number of itineraries reached.')) {
@@ -1311,7 +1311,7 @@ export default function CreatePage() {
     setIsSubmitting(true)
     try {
       if (!user) {
-        toast.error('Please sign in to save your itinerary')
+        toast.error('Please log in to save your itinerary')
         router.push('/')
         return
       }
@@ -1399,7 +1399,7 @@ export default function CreatePage() {
       <BlackBanner
         icon={<PenSquare className="w-4 h-4" />}
         subtitle="Create an Itinerary"
-        title="Sign in to Start Creating"
+        title="Log in to Start Creating"
         description="Join our community to create and share your travel experiences with fellow adventurers."
       />
     )
@@ -1448,7 +1448,7 @@ export default function CreatePage() {
                       <p className="text-xl md:text-2xl font-medium w-[20px]">1</p>
                       <div className="w-full sm:mr-2">
                         <p className="text-xl md:text-2xl font-medium">Start with the basics</p>
-                        <p className="text-md md:text-lg lg:text-xl text-gray-500">Add general information about your trip, like the duration add description.</p>
+                        <p className="text-md md:text-lg lg:text-xl text-gray-500">Add general information about your trip, like the duration and description.</p>
                       </div>
                       <div className="w-[50px] h-[50px]">
                         <PencilRuler className="w-full h-full" />
@@ -1459,7 +1459,7 @@ export default function CreatePage() {
                       <p className="text-xl md:text-2xl font-medium w-[20px]">2</p>
                       <div className="w-full sm:mr-2">
                         <p className="text-xl md:text-2xl font-medium">Create the schedule</p>
-                        <p className="text-md md:text-lg lg:text-xl text-gray-500">Include important day to day details, like the activities and accommodations.</p>
+                        <p className="text-md md:text-lg lg:text-xl text-gray-500">Use the day scheduler to include as much information about daily activities as you want.</p>
                       </div>
                       <div className="w-[50px] h-[50px]">
                         <CalendarPlus className="w-full h-full" />
@@ -1470,7 +1470,7 @@ export default function CreatePage() {
                       <p className="text-xl md:text-2xl font-medium w-[20px]">3</p>
                       <div className="w-full sm:mr-2">
                         <p className="text-xl md:text-2xl font-medium">Add the final details</p>
-                        <p className="text-md md:text-lg lg:text-xl text-gray-500">Help other travelers budget for this trip, and add any categories and notes.</p>
+                        <p className="text-md md:text-lg lg:text-xl text-gray-500">Help other travelers budget for this trip, provide special notes, and categorize your itinerary.</p>
                       </div>
                       <div className="w-[50px] h-[50px]">
                         <Flag className="w-full h-full" />
@@ -1594,7 +1594,9 @@ export default function CreatePage() {
                       className="text-red hover:bg-red-500 hover:text-white"
                       disabled={form.formState.isSubmitting}
                       onClick={(e) => {
-                        router.push('/my-itineraries')
+                        if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
+                          router.push('/my-itineraries')
+                        }
                       }}
                     >
                       <X className="sm:hidden"/>
@@ -1667,6 +1669,14 @@ export default function CreatePage() {
                         <ChevronLeft className="sm:hidden" />
                       </Button>
                       <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={saveDraft}
+                        disabled={form.formState.isSubmitting}
+                      >
+                        {itineraryStatus === ItineraryStatusEnum.published ? 'Draft' : 'Save'}
+                      </Button>
+                      <Button 
                         type="button"
                         onClick={(e) => {
                           e.preventDefault()
@@ -1688,7 +1698,9 @@ export default function CreatePage() {
                         className="text-red hover:bg-red-500 hover:text-white"
                         disabled={form.formState.isSubmitting}
                         onClick={(e) => {
-                          router.push('/my-itineraries')
+                          if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
+                            router.push('/my-itineraries')
+                          }
                         }}
                       >
                         <X className="sm:hidden"/>
@@ -1733,7 +1745,7 @@ export default function CreatePage() {
                               disabled={form.formState.isSubmitting}
                             >
                               <category.icon className="w-5 h-5 text-gray-700" />
-                              <span className="text-gray-900 font-medium">{category.name}</span>
+                              <span className="text-gray-900 font-medium leading-none">{category.name}</span>
                             </button>
                           </label>
                         )
@@ -1899,7 +1911,9 @@ export default function CreatePage() {
                       className="text-red hover:bg-red-500 hover:text-white"
                       disabled={form.formState.isSubmitting}
                       onClick={(e) => {
-                        router.push('/my-itineraries')
+                        if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
+                          router.push('/my-itineraries')
+                        }
                       }}
                     >
                       <X className="sm:hidden"/>

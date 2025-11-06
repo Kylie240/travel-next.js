@@ -74,7 +74,7 @@ export function NavbarClient({ user }: NavbarClientProps) {
             className="text-gray-700 hover:text-black"
             onClick={() => router.push('/login?mode=login')}
           >
-            Sign In
+            Log In
           </Button>
         </div>
       )}

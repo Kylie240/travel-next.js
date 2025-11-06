@@ -230,7 +230,7 @@ export function UserMenu() {
             variant="ghost" 
             className="text-gray-700 hover:text-black"
           >
-            Sign In
+            Log In
           </Button>
         </Link>
       </div>

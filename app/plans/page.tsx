@@ -54,7 +54,7 @@ export default async function PlansPage() {
               
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">20 public itineraries</span>
+                <span className="text-gray-700">20 shareable itineraries</span>
               </div>
 
               <div className="flex items-start gap-3">
@@ -250,50 +250,25 @@ export default async function PlansPage() {
                     </td>
                   </tr>
                   <tr>
-                    <td className="py-4 px-6 text-gray-700">Number of Itineraries</td>
+                    <td className="py-4 px-6 text-gray-700">Public Itineraries</td>
                     <td className="py-4 px-6 text-center text-gray-700">Up to 20</td>
                     <td className="py-4 px-6 text-center text-gray-700">Unlimited</td>
                     <td className="py-4 px-6 text-center text-gray-700">Unlimited</td>
                   </tr>
                   <tr>
-                    <td className="py-4 px-6 text-gray-700">Day-by-day Planning</td>
+                    <td className="py-4 px-6 text-gray-700">Itinerary Builder</td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 px-6 text-gray-700">Activities & Notes</td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 px-6 text-gray-700">Accommodations</td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                  </tr>
-
-                  {/* Sharing & Social */}
-                  <tr className="bg-gray-50">
-                    <td colSpan={4} className="py-3 px-6 font-semibold text-sm text-gray-700 uppercase">
-                      Sharing & Social
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 px-6 text-gray-700">Share Itineraries</td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                    <td className="py-4 px-6 text-gray-700">Photo Gallery</td>
+                    <td className="py-4 px-6 text-center">Limited</td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 px-6 text-gray-700">Save & Bookmark</td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 px-6 text-gray-700">Follow Travelers</td>
+                    <td className="py-4 px-6 text-gray-700">Save Itineraries</td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
@@ -310,13 +285,6 @@ export default async function PlansPage() {
                     <td className="py-4 px-6 text-center text-sm text-gray-500">Coming Soon</td>
                     <td className="py-4 px-6 text-center text-sm text-gray-500">Coming Soon</td>
                   </tr>
-
-                  {/* Advanced Features */}
-                  <tr className="bg-gray-50">
-                    <td colSpan={4} className="py-3 px-6 font-semibold text-sm text-gray-700 uppercase">
-                      Advanced Features
-                    </td>
-                  </tr>
                   <tr>
                     <td className="py-4 px-6 text-gray-700">Content Visibility Controls</td>
                     <td className="py-4 px-6 text-center text-gray-400">Limited</td>
@@ -324,13 +292,7 @@ export default async function PlansPage() {
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 px-6 text-gray-700">PDF Export</td>
-                    <td className="py-4 px-6 text-center text-gray-400">—</td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                    <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 px-6 text-gray-700">Photo Gallery</td>
+                    <td className="py-4 px-6 text-gray-700">Offline Access</td>
                     <td className="py-4 px-6 text-center text-gray-400">—</td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
@@ -341,12 +303,12 @@ export default async function PlansPage() {
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                   </tr>
-                  <tr>
+                  {/* <tr>
                     <td className="py-4 px-6 text-gray-700">Insights & Analytics</td>
                     <td className="py-4 px-6 text-center text-gray-400">—</td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                  </tr>
+                  </tr> */}
                   <tr>
                     <td className="py-4 px-6 text-gray-700">Custom Themes & Templates</td>
                     <td className="py-4 px-6 text-center text-gray-400">—</td>
@@ -361,13 +323,7 @@ export default async function PlansPage() {
                     </td>
                   </tr>
                   <tr>
-                    <td className="py-4 px-6 text-gray-700">Sell Premium Itineraries</td>
-                    <td className="py-4 px-6 text-center text-gray-400">—</td>
-                    <td className="py-4 px-6 text-center text-gray-400">—</td>
-                    <td className="py-4 px-6 text-center"><Lock className="w-5 h-5 text-purple-600 mx-auto" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 px-6 text-gray-700">Advanced Analytics Dashboard</td>
+                    <td className="py-4 px-6 text-gray-700">Analytics Dashboard</td>
                     <td className="py-4 px-6 text-center text-gray-400">—</td>
                     <td className="py-4 px-6 text-center text-gray-400">—</td>
                     <td className="py-4 px-6 text-center"><Lock className="w-5 h-5 text-purple-600 mx-auto" /></td>

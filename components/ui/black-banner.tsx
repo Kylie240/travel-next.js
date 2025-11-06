@@ -52,7 +52,7 @@ export function BlackBanner({ icon = <MapPin className="w-4 h-4" />, subtitle, t
                 setIsAuthOpen(true)
               }}
             >
-              Sign In
+              Log In
             </Button>
           </AuthDialog>
         ) : (
@@ -61,7 +61,7 @@ export function BlackBanner({ icon = <MapPin className="w-4 h-4" />, subtitle, t
             className="bg-white text-black hover:bg-gray-100"
             onClick={() => router.push('/login?mode=login')}
           >
-            Sign In
+            Log In
           </Button>
         )}
       </div>

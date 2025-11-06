@@ -11,7 +11,7 @@ const AboutPage = () => {
         {/* Header Section */}
         <div className="text-center mb-6 md:mb-10 lg:mb-16">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">Journli</h1>
-          <p className="text-md md:text-lg lg:text-xl text-gray-600">Revolutionizing the way travelers plan and share their adventures</p>
+          <p className="text-md md:text-lg lg:text-xl text-gray-600">Where travelers inspire travelers</p>
         </div>
 
         {/* Our Story Section */}
@@ -24,9 +24,23 @@ const AboutPage = () => {
               itineraries.
             </p>
             <p>
-              Our platform was built by travelers, for travelers, with the mission of making travel planning 
-              collaborative, intuitive, and enjoyable. We believe that every journey tells a story, and every 
+              Our platform was built by a traveler, for travelers, with the mission of making travel sharing 
+              simple, intuitive, and enjoyable. We believe that every journey tells a story, and every 
               traveler has unique insights worth sharing.
+            </p>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="mb-16">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 mb-2 md:mb-6">How It Works</h2>
+          <div className="prose prose-lg text-gray-600 text-sm sm:text-md md:text-ld">
+            <p className="mb-4">
+              Our itinerary builder breaks down creating an itinerary into easy to follow steps, where you can provide as little or as much detail as you want.
+              Once you're done creating your itinerary, you can publish it to share with others via link.
+            </p>
+            <p className="mb-4">
+              <a href="https://www.journli.com/profile/kylie" target='_blank' className="text-blue-600 hover:text-blue-800">Click here</a> to view a sample of what your profile and itineraries will look like.
             </p>
           </div>
         </section>
@@ -35,7 +49,7 @@ const AboutPage = () => {
         <section className="mb-16">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 mb-2 md:mb-6">Coming Soon</h2>
           <p className="text-gray-600 mb-6 text-sm md:text-md">While we are currently in beta, we are working on the following features to make your travel planning experience even better:</p>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid sm:grid-cols-2 gap-6">
             <div className="border border-gray-500 border-1 p-6 rounded-lg">
               <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><GoPeople /> Collaborative Editing</h3>
               <p className="text-gray-600 text-sm md:text-md">

@@ -70,7 +70,7 @@ export default function Footer() {
               Journli
             </Link>
             <p className="mt-2 text-sm text-gray-400">
-              Discover the world, one itinerary at a time
+              Where travelers inspire travelers
             </p>
           </div>
 

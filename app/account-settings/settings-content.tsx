@@ -606,7 +606,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             <label className="block text-md font-semibold mb-2">Delete Account</label>
             <p className="text-sm text-gray-600 mb-4">
             Deleting your account means that your account will no longer be available. 
-            You will not be able to sign in and your profile will not be accessible. 
+            You will not be able to log in and your profile will not be accessible. 
             Any reviews, photos, and tips that you have contributed may continue to be displayed on the site.
             </p>
             <a className="underline cursor-pointer hover:text-red-600" onClick={() => handleDeleteAccount()}>Delete</a>

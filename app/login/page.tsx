@@ -160,7 +160,7 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500 text-center mb-6">
             {isSignUp 
               ? "Join now to start creating"
-              : "Sign in to access your account"
+              : "Log in to access your account"
             }
           </p>
 
@@ -243,7 +243,7 @@ export default function LoginPage() {
               className="w-full"
               disabled={isSubmitting || (isSignUp && confirmPassword !== signUpForm.watch("password"))}
             >
-              {isSignUp ? "Sign Up" : "Sign In"}
+              {isSignUp ? "Sign Up" : "Log In"}
             </Button>
           </form>
 
@@ -275,7 +275,7 @@ export default function LoginPage() {
                 setConfirmPassword("")
               }}
             >
-              {isSignUp ? "Sign in" : "Sign up"}
+              {isSignUp ? "Log in" : "Sign up"}
             </button>
           </div>
           <div className="flex justify-center mt-4">

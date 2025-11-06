@@ -162,7 +162,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         <Dialog.Description className="sm:mt-2 text-sm text-gray-500 text-center">
           {isSignUp 
             ? "Join now to start creating"
-            : "Sign in to access your account"
+            : "Log in to access your account"
           }
         </Dialog.Description>
 
@@ -245,7 +245,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             className="w-full"
             disabled={isSubmitting || (isSignUp && confirmPassword !== signUpForm.watch("password"))}
           >
-            {isSignUp ? "Sign Up" : "Sign In"}
+            {isSignUp ? "Sign Up" : "Log In"}
           </Button>
         </form>
 
@@ -277,7 +277,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
               setConfirmPassword("")
             }}
           >
-            {isSignUp ? "Sign in" : "Sign up"}
+            {isSignUp ? "Log in" : "Sign up"}
           </button>
         </div>
         <div className="flex justify-center mt-2">
