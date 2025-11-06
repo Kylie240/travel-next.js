@@ -343,7 +343,7 @@ searchParams
               <div className="flex justify-center mt-4 gap-4">
                 <Link href="/">
                   <Button variant="outline">
-                    Go Home
+                    Return Home
                   </Button>
                 </Link>
                 <Link href="/about">

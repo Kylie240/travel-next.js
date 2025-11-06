@@ -36,7 +36,7 @@ import { FaLocationPinLock } from "react-icons/fa6";
                 </Button>
                 <Link href="/">
                   <Button variant="outline">
-                    Go Home
+                    Return Home
                   </Button>
                 </Link>
               </div>

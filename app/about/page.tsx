@@ -83,16 +83,8 @@ const AboutPage = () => {
           <div className="prose prose-lg text-gray-600 mb-6 text-sm sm:text-md">
             <p>
               We love hearing from our community! Whether you have suggestions, questions, or just want to share 
-              your travel stories, we're here to listen.
+              your travel stories, we're here to listen. You can provide feedback <a href="/share-feedback" className="text-blue-600 hover:text-blue-800">here</a> or email us at <a href="mailto:info@journli.com" className="text-blue-600 hover:text-blue-800">info@journli.com</a>.
             </p>
-          </div>
-          <div className="space-y-4 text-sm md:text-md">
-            <div className="flex items-center">
-              <span className="font-medium text-gray-900 w-24">Email:</span>
-              <a href="mailto:contact@journli.com" className="text-blue-600 hover:text-blue-800">
-                info@journli.com
-              </a>
-            </div>
           </div>
         </section>
       </div>

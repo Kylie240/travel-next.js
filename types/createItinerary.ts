@@ -1,5 +1,4 @@
 import { Day } from "./Day";
-import { ItineraryStatus } from "./itineraryStatus";
 import { Note } from "./Note";
 
 type City = { city: string, country: string};

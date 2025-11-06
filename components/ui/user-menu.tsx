@@ -1,7 +1,7 @@
 "use client"
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { ChevronDown, LogOut, Settings, PenSquare, User, ChevronUp, Info, Globe, Bookmark, UserCircle } from "lucide-react"
+import { ChevronDown, LogOut, Settings, PenSquare, User, ChevronUp, Info, Globe, Bookmark, UserCircle, MessageSquare } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useToast } from "./use-toast"
 import { useState, useEffect, useCallback, useRef } from "react"
@@ -211,6 +211,17 @@ export function UserMenu() {
               </DropdownMenu.Item>
 
               <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
+
+              <DropdownMenu.Item
+                className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                onClick={() => {
+                  router.push('/share-feedback')
+                  setIsOpen(false)
+                }}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Share Feedback
+              </DropdownMenu.Item>
 
               <DropdownMenu.Item
                 className="flex items-center px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
