@@ -90,7 +90,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
       {/* Hero Section */}
       <div className="flex flex-col min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-4 md:gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
         <div className="w-full lg:h-full rounded-3xl shadow-xl">
-          <div className="flex-1 h-[400px] sm:h-[450px] md:h-[520px] relative rounded-3xl overflow-hidden">
+          <div className="flex-1 h-[450px] sm:h-[500px] md:h-[520px] relative rounded-3xl overflow-hidden">
             <Image
               src={itinerary.mainImage}
               alt={itinerary.title}
@@ -101,21 +101,21 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
             <div className="absolute inset-0 flex items-end md:items-end">
               <div className="container px-0 mx-0 lg:mx-auto">
-                <div className="flex flex-col text-white m-2 p-6 md:p-8 md:mb-4 md:ml-4 relative">
-                    <h1 className="max-w-[100%] lg:max-w-[80%] text-left leading-[30px] md:leading-[40px] mt-2 md:mt-0 text-3xl xl:text-4xl font-bold lg:mb-4 mr-0 md:mr-6 lg:mr-0">{itinerary.title}</h1>
+                <div className="flex flex-col text-white mx-2 p-4 sm:p-6 md:p-6 md:mb-4 md:ml-4 relative">
+                    <h1 className="max-w-[100%] pr-12 lg:max-w-[80%] text-left leading-[30px] md:leading-[40px] mt-2 md:mt-0 text-3xl xl:text-4xl font-bold lg:mb-4 mr-0 md:mr-6 lg:mr-0">{itinerary.title}</h1>
                     <div className="w-full mt-1 flex justify-between items-center gap-2">
-                      <div className="flex items-center flex-wrap gap-x-4 md:gap-x-6 text-sm">
+                      <div className="flex items-center flex-wrap gap-x-2 sm:gap-x-4 md:gap-x-6 text-sm">
                         <div className="items-center hidden sm:flex">
-                          <Calendar className="h-5 w-5 mr-1 sm:mr-2" />
+                          <Calendar className="h-[16px] w-[16px] mr-[2px]" />
                           {itinerary.duration} {itinerary.duration > 1 ? 'days' : 'day'}
                         </div>
                         <div className="flex items-center">
-                          <MapPin className="h-5 w-5 mr-2" />
+                          <MapPin className="h-[16px] w-[16px] mr-[2px]" />
                           {countries.length > 0 ? countries.map((country: any) => country).join(' · ') : ''}
                         </div>
                         {itinerary?.budget && 
                           <div className="flex items-center">
-                            <DollarSign className="h-5 w-5 mr-1" />
+                            <DollarSign className="h-[16px] w-[16px] mr-[2px]" />
                             {itinerary?.budget}/person
                           </div>
                         }
@@ -157,7 +157,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               </div>
             </div>
             <div className="flex justify-center w-full text-sm sm:text-base px-2 sm:px-4">
-              <div className="flex mb-2 px-1 justify-between sm:hidden w-full max-w-[500px]">
+              {/* <div className="flex mb-2 px-1 justify-between sm:hidden w-full max-w-[500px]">
                 <div className="flex py-1 pr-3 gap-2 justify-center items-center">
                   {itinerary.duration}
                   <p>Day{itinerary.duration == 1 ? '' : 's'}</p>
@@ -172,7 +172,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                   {activityCount}
                   <p>Activit{activityCount == 1 ? 'y' : 'ies'}</p>
                 </div>
-              </div>
+              </div> */}
             </div>
               <div className="flex flex-wrap gap-2 mb-3">
                 {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (

@@ -62,7 +62,7 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
   return (
     <div className="lg:col-span-2 relative">
       <div className="flex flex-col justify-between items-center mb-6">
-        <h2 ref={headerRef} className="text-xl md:text-2xl w-full text-left font-semibold">Itinerary Schedule</h2>
+        <h2 ref={headerRef} className="text-xl md:text-2xl w-full text-center font-semibold">Itinerary</h2>
         <div className="sticky w-full top-20 z-50 flex flex-col items-end gap-2">
           <button 
             onClick={activeDays.length > 0 ? closeAllDays : openAllDays} 

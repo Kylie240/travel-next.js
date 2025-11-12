@@ -1,10 +1,12 @@
 import { Mountain, Utensils, Building, Palmtree, Camera, Ship, Wine, Heart, Music, TentTree, Palette, ShoppingBag, Dumbbell, Drama, Trees, BaggageClaim, Car, Presentation, HandPlatter, Caravan, Coins, HeartHandshake, RollerCoaster, Handshake, HandHeart, ChefHat, Briefcase, Backpack, BookMarked, Church, Skull, Sprout, Sailboat, CalendarFold, Syringe, Sparkles, HotelIcon } from "lucide-react"
-import { FaCity, FaHandSparkles, FaPeopleGroup, FaPersonWalkingLuggage, FaWheelchair, FaWheelchairMove } from "react-icons/fa6";
+import { FaCity, FaHandSparkles, FaPeopleGroup, FaPersonWalkingLuggage, FaWheelchairMove } from "react-icons/fa6";
 import { PiFarm } from "react-icons/pi";
 import { BiSpa } from "react-icons/bi";
-import { LuAmphora, LuBinoculars, LuBriefcaseMedical, LuCookingPot, LuTicketsPlane } from "react-icons/lu";
+import { LuAmphora, LuBinoculars, LuCookingPot } from "react-icons/lu";
 import { MdOutlineNightlife, MdOutlineNordicWalking } from "react-icons/md";
 import { TbHeartHandshake, TbYoga } from "react-icons/tb";
+import { MdDirectionsBike } from "react-icons/md";
+
 
 export const activityTagsMap = [
   { id:1, name: "Outdoor", icon: TentTree },
@@ -26,6 +28,7 @@ export const activityTagsMap = [
   { id:17, name: "Nightlife", icon: MdOutlineNightlife },
   { id:18, name: "Performance", icon: Drama },
   { id:19, name: "Workout", icon: Dumbbell },
+  { id:20, name: "Excursion", icon: MdDirectionsBike },
   { id:21, name: "Accommodation", icon: HotelIcon },
 ]
 
@@ -54,7 +57,6 @@ export const itineraryTagsMap = [
   { id:22, name :"Road Trip", icon: Caravan }, 
   { id:23, name :"Volunteering", icon: Handshake }, 
   { id:24, name :"Adventure", icon: RollerCoaster }, 
-  { id:25, name :"Multi-Country", icon: LuTicketsPlane }, 
   { id:26, name :"Action Packed", icon: Music }, 
   { id:27, name :"Family Oriented", icon: FaPeopleGroup },
   { id:28, name :"LGBTQ+ Friendly", icon: TbHeartHandshake },

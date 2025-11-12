@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input, Textarea } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload, ChevronLeft, ChevronRight, CalendarPlus, PencilRuler, Flag } from "lucide-react"
+import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload, ChevronLeft, ChevronRight, CalendarPlus, PencilRuler, Flag, Loader2 } from "lucide-react"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
 import { useForm, useFieldArray, FormProvider } from "react-hook-form"
@@ -83,7 +83,7 @@ const INITIAL_DAY: Day = {
   }
 };
 
-function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: { 
+function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disabled }: { 
   day: any; // Temporarily use any to fix type issues
   index: number;
   form: ReturnType<typeof useForm<FormData>>;
@@ -201,7 +201,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                     }
                   }}
                   className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                  disabled={form.formState.isSubmitting}
+                  disabled={disabled}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -219,6 +219,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                   {...form.register(`days.${index}.cityName`)}
                   className="rounded-xl"
                   placeholder="Tokyo"
+                  disabled={disabled}
                 />
                 {form.formState.errors.days?.[index]?.cityName && (
                   <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.cityName?.message}</p>
@@ -229,7 +230,8 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                 <Input
                   {...form.register(`days.${index}.provinceName`)}
                   className="rounded-xl"
-                  placeholder="" 
+                  placeholder=""
+                  disabled={disabled}
                 />
               </div>
               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
@@ -245,6 +247,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                     setCountrySearch(prev => ({ ...prev, [index]: '' }));
                     }}
                   required
+                  disabled={disabled}
                   >
                     <SelectTrigger className="rounded-xl">
                       <SelectValue placeholder="Select a country" />
@@ -258,6 +261,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                         className="rounded-xl"
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => e.stopPropagation()}
+                        disabled={disabled}
                       />
                     </div>
                     <div className="overflow-y-auto max-h-[250px]">
@@ -329,6 +333,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                 {...form.register(`days.${index}.title`)}
                 className="rounded-xl"
                 placeholder="Tokyo Exploration"
+                disabled={disabled}
               />
               {form.formState.errors.days?.[index]?.title && (
                 <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.title?.message}</p>
@@ -346,7 +351,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                 value={form.watch(`days.${index}.image`)}
                 onChange={(url) => form.setValue(`days.${index}.image`, url)}
                 onRemove={() => form.setValue(`days.${index}.image`, "")}
-                disabled={form.formState.isSubmitting}
+                disabled={disabled}
                 bucket="itinerary-images"
                 folder={`${userId}/${itineraryId}/days/${index}`}
               />
@@ -359,6 +364,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                 placeholder="Discover the highlights of Tokyo's most famous districts"
                 className="rounded-xl"
                 rows={6}
+                disabled={disabled}
               />
               {form.formState.errors.days?.[index]?.description && (
                 <p className="text-red-500 text-sm mt-1">{form.formState.errors.days[index]?.description?.message}</p>
@@ -385,6 +391,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                     duration: null
                   })}
                   className="rounded-xl"
+                  disabled={disabled}
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Activity
@@ -410,7 +417,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                                   }
                                 }}
                                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                disabled={form.formState.isSubmitting}
+                                disabled={disabled}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -434,6 +441,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                                     }
                                   })}
                                   className="rounded-xl w-auto sm:w-full"
+                                  disabled={disabled}
                                 />
                               </div>
                               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
@@ -460,6 +468,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                                         });
                                       }}
                                       className="rounded-xl"
+                                      disabled={disabled}
                                     />
                                     <span className="absolute top-[12px] right-[30px] text-xs text-gray-500 text-center">HR</span>
                                   </div>
@@ -486,6 +495,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                                         });
                                       }}
                                       className="rounded-xl"
+                                      disabled={disabled}
                                     />
                                     <span className="absolute top-[12px] right-[30px] text-xs text-gray-500 text-center">MIN</span>
                                   </div>
@@ -503,6 +513,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                                         shouldTouch: true
                                       });
                                     }}
+                                    disabled={disabled}
                                   >
                                     <SelectTrigger className="rounded-xl">
                                       <SelectValue placeholder="Select a type">
@@ -538,6 +549,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                                 {...form.register(`days.${index}.activities.${activityIndex}.title`)}
                                 placeholder="Activity title"
                                 className="rounded-xl"
+                                disabled={disabled}
                               />
                               {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.title && (
                                 <p className="text-red-500 text-sm mt-1">
@@ -555,7 +567,8 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                               <textarea
                                 {...form.register(`days.${index}.activities.${activityIndex}.description`)}
                                 placeholder="Activity description"
-                                className="w-full p-2 border rounded-xl min-h-[100px]"
+                                className="w-full p-2 border rounded-xl min-h-[100px] text-base sm:text-sm"
+                                disabled={disabled}
                               />
                               {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.description && (
                                 <p className="text-red-500 text-sm mt-1">
@@ -569,6 +582,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                                 {...form.register(`days.${index}.activities.${activityIndex}.location`)}
                                 placeholder="Location"
                                 className="rounded-xl"
+                                disabled={disabled}
                               />
                               {form.formState.errors.days?.[index]?.activities?.[activityIndex]?.location && (
                                 <p className="text-red-500 text-sm mt-1">
@@ -582,6 +596,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                                 {...form.register(`days.${index}.activities.${activityIndex}.link`)}
                                 placeholder="Add booking link, or a link to a website with more information"
                                 className="rounded-xl"
+                                disabled={disabled}
                               />
                               {(form.formState.errors.days?.[index]?.activities?.[activityIndex]?.link 
                                 && form.watch(`days.${index}.activities.${activityIndex}.link`) !== '') && (
@@ -611,6 +626,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                     duration: null
                   })}
                   className="rounded-xl mt-2"
+                  disabled={disabled}
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Activity
@@ -647,6 +663,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                     }
                   }}
                   className={`rounded-xl ${form.watch(`days.${index}.showAccommodation`) ? 'bg-gray-100' : ''}`}
+                  disabled={disabled}
                 >
                   {form.watch(`days.${index}.showAccommodation`) ? 
                     <div className="flex items-center gap-2">
@@ -692,6 +709,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                               }
                             }
                           }}
+                          disabled={disabled}
                         >
                           <SelectTrigger className="rounded-xl">
                             <SelectValue placeholder="Select an accommodation">
@@ -716,12 +734,14 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                           {...form.register(`days.${index}.accommodation.name`)}
                           placeholder="Accommodation name"
                           className="rounded-xl"
+                          disabled={disabled}
                         />
                         <Select
                           value={form.watch(`days.${index}.accommodation.type`) || ''}
                           onValueChange={(value: string) => {
                             form.setValue(`days.${index}.accommodation.type`, value);
                           }}
+                          disabled={disabled}
                         >
                           <SelectTrigger className="rounded-xl">
                             <SelectValue placeholder="Select a type" />
@@ -740,6 +760,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                           {...form.register(`days.${index}.accommodation.location`)}
                           placeholder="Location"
                           className="rounded-xl"
+                          disabled={disabled}
                         />
                       </div>
                       <div>
@@ -747,6 +768,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                           {...form.register(`days.${index}.accommodation.link`)}
                           placeholder="Add booking link, or a link to a website with more information"
                           className="rounded-xl"
+                          disabled={disabled}
                         />
                         {form.formState.errors.days?.[index]?.accommodation?.link && (
                           <p className="text-red-500 text-sm mt-1">
@@ -762,6 +784,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                             size="sm"
                             onClick={() => setShowNewAccommodation(false)}
                             className="rounded-xl"
+                            disabled={disabled}
                           >
                             Back to List
                           </Button>
@@ -779,6 +802,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                             }
                           }}
                           className="rounded-xl"
+                          disabled={disabled}
                         >
                           Save
                         </Button>
@@ -797,6 +821,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId }: {
                             setShowNewAccommodation(false);
                           }}
                           className="rounded-xl"
+                          disabled={disabled}
                         >
                           Cancel
                         </Button>
@@ -1026,6 +1051,7 @@ export default function CreatePage() {
   }
 
   const handleFinalSubmit = async (data: z.infer<typeof createSchema>) => {
+    setIsSubmitting(true);
     try {
       // Clean up and validate days
       const nonEmptyDays = data.days.map((day, index) => {
@@ -1086,7 +1112,9 @@ export default function CreatePage() {
       if (error instanceof Error && !error.message.includes('Maximum number of itineraries reached.')) {
       toast.error('Error submitting form')
     }
-  }
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const buildItineraryData = () => {
@@ -1141,6 +1169,7 @@ export default function CreatePage() {
   };
 
   const saveItineraryAsDraft = async () => {
+    setIsSubmitting(true);
     try {
       const itineraryData = buildItineraryData();
       // Force status to draft
@@ -1158,6 +1187,8 @@ export default function CreatePage() {
       // If it fails, just show a generic error
       toast.error('Failed to save draft');
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1178,6 +1209,7 @@ export default function CreatePage() {
   };
 
   const handleSaveItinerary = async () => {
+    setIsSubmitting(true);
     try {
       if (!user) {
         toast.error('Please log in to save your itinerary')
@@ -1221,6 +1253,8 @@ export default function CreatePage() {
         toast.error('Error saving itinerary')
         throw error
       }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -1324,7 +1358,6 @@ export default function CreatePage() {
       }
 
       let response = null;
-      console.log(itineraryData)
       if (initialItineraryId) {
         response = await updateItinerary(ItineraryId, itineraryData)
       } else {
@@ -1405,6 +1438,8 @@ export default function CreatePage() {
     )
   }
 
+  const isFormDisabled = isSubmitting || form.formState.isSubmitting;
+
   return (
     <FormProvider {...form}> 
       <form 
@@ -1412,10 +1447,19 @@ export default function CreatePage() {
           e.preventDefault()
           onSubmit(e)
         }} 
-        className="min-h-screen bg-gray-50 py-4 md:py-8"
+        className="min-h-screen bg-gray-50 py-4 md:py-8 relative"
         noValidate
       >
-        <div className="md:container mx-auto md:px-4 md:max-w-4xl">
+        {/* Loading Overlay */}
+        {isFormDisabled && (
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 shadow-xl flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-black" />
+              <p className="text-lg font-medium">Saving itinerary...</p>
+            </div>
+          </div>
+        )}
+        <div className={`md:container mx-auto md:px-4 md:max-w-4xl ${isFormDisabled ? 'pointer-events-none opacity-75' : ''}`}>
           <div className="bg-white md:rounded-2xl min-h-screen md:min-h-0 p-4 md:p-12 md:shadow">
             {currentStep !== 0 && <div className="flex justify-between items-center py-4 mb-2 md:mb-8">
               <h1 className="text-xl md:text-2xl font-semibold">{!ItineraryId ? "Create New" : "Edit"} Itinerary</h1>
@@ -1441,16 +1485,16 @@ export default function CreatePage() {
             <div className="h-full">
               {currentStep === 0 && (
                 <div className="space-y-4 mx-4 sm:mx-6 py-4 mb-2 md:mb-8">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Itinerary Builder</h1>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold">Itinerary Builder</h1>
                   <p className="pb-4 text-md sm:text-lg lg:text-xl text-gray-500">Creating an itinerary has never been easier, just fill in the details and we'll take care of the rest. Save your itinerary as a draft or publish it to share with the world.</p>
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     <div className="flex gap-4 md:gap-6">
                       <p className="text-xl md:text-2xl font-medium w-[20px]">1</p>
                       <div className="w-full sm:mr-2">
                         <p className="text-xl md:text-2xl font-medium">Start with the basics</p>
                         <p className="text-md md:text-lg lg:text-xl text-gray-500">Add general information about your trip, like the duration and description.</p>
                       </div>
-                      <div className="w-[50px] h-[50px]">
+                      <div className="w-[40px] h-[40px]">
                         <PencilRuler className="w-full h-full" />
                       </div>
                     </div>
@@ -1461,7 +1505,7 @@ export default function CreatePage() {
                         <p className="text-xl md:text-2xl font-medium">Create the schedule</p>
                         <p className="text-md md:text-lg lg:text-xl text-gray-500">Use the day scheduler to include as much information about daily activities as you want.</p>
                       </div>
-                      <div className="w-[50px] h-[50px]">
+                      <div className="w-[40px] h-[40px]">
                         <CalendarPlus className="w-full h-full" />
                       </div>
                     </div>
@@ -1472,12 +1516,12 @@ export default function CreatePage() {
                         <p className="text-xl md:text-2xl font-medium">Add the final details</p>
                         <p className="text-md md:text-lg lg:text-xl text-gray-500">Help other travelers budget for this trip, provide special notes, and categorize your itinerary.</p>
                       </div>
-                      <div className="w-[50px] h-[50px]">
+                      <div className="w-[40px] h-[40px]">
                         <Flag className="w-full h-full" />
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-center mx-10 pt-6">
+                  <div className="flex justify-center mx-10 pt-4">
                     <Button className="w-full md:w-[300px]" onClick={() => setCurrentStep(1)}>Get Started</Button>
                   </div>
                 </div>
@@ -1492,7 +1536,7 @@ export default function CreatePage() {
                       {...form.register("title")}
                       placeholder="Japanese Cultural Journey"
                       className="rounded-xl"
-                      disabled={form.formState.isSubmitting}
+                      disabled={isFormDisabled}
                     />
                     {form.formState.errors.title && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.title.message}</p>
@@ -1510,8 +1554,8 @@ export default function CreatePage() {
                       id="shortDescription"
                       {...form.register("shortDescription")}
                       placeholder="Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun."
-                      className="w-full text-sm md:text-md p-2 border rounded-xl h-[150px] md:h-[100px]"
-                      disabled={form.formState.isSubmitting}
+                      className="w-full text-base sm:text-sm md:text-md p-2 border rounded-xl h-[150px] md:h-[100px]"
+                      disabled={isFormDisabled}
                     />
                     {form.formState.errors.shortDescription && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.shortDescription.message}</p>
@@ -1529,7 +1573,7 @@ export default function CreatePage() {
                       value={form.watch("mainImage")}
                       onChange={(url) => form.setValue("mainImage", url)}
                       onRemove={() => form.setValue("mainImage", "")}
-                      disabled={form.formState.isSubmitting}
+                      disabled={isFormDisabled}
                       bucket="itinerary-images"
                       folder={`${user?.id}/${ItineraryId}/main`}
                     />
@@ -1544,8 +1588,8 @@ export default function CreatePage() {
                       id="detailedOverview"
                       {...form.register("detailedOverview")}
                       placeholder="This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours."
-                      className="w-full text-sm md:text-md p-2 border rounded-xl min-h-[210px] md:min-h-[150px]"
-                      disabled={form.formState.isSubmitting}
+                      className="w-full text-base sm:text-sm md:text-md p-2 border rounded-xl min-h-[210px] md:min-h-[150px]"
+                      disabled={isFormDisabled}
                     />
                   </div>
 
@@ -1558,7 +1602,7 @@ export default function CreatePage() {
                       {...form.register("duration", { valueAsNumber: true })}
                       className="rounded-xl"
                       onChange={handleDurationChange}
-                      disabled={form.formState.isSubmitting}
+                      disabled={isFormDisabled}
                     />
                     {form.formState.errors.duration && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.duration.message}</p>
@@ -1567,8 +1611,8 @@ export default function CreatePage() {
 
                   <div className="flex justify-end gap-2 pt-10 md:pt-0">
                     {ItineraryId && 
-                      <Button type="button" variant="outline" onClick={saveDraft} disabled={form.formState.isSubmitting}>
-                        {itineraryStatus === ItineraryStatusEnum.published ? 'Draft' : 'Save'}
+                      <Button type="button" variant="outline" onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft} disabled={isFormDisabled}>
+                        {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
                       </Button>
                     }
 
@@ -1579,7 +1623,7 @@ export default function CreatePage() {
                         setCurrentStep(2)
                         scrollToTop()
                       }}
-                      disabled={form.formState.isSubmitting}
+                      disabled={isFormDisabled}
                     >
                       <ChevronRight className="sm:hidden"/>
                         <p className="hidden sm:flex">
@@ -1592,7 +1636,7 @@ export default function CreatePage() {
                       variant="outline"
                       color="crimson"
                       className="text-red hover:bg-red-500 hover:text-white"
-                      disabled={form.formState.isSubmitting}
+                      disabled={isFormDisabled}
                       onClick={(e) => {
                         if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
                           router.push('/my-itineraries')
@@ -1630,7 +1674,7 @@ export default function CreatePage() {
                               index={index}
                               form={form}
                               onRemoveDay={handleRemoveDay}
-                              disabled={form.formState.isSubmitting}
+                              disabled={isFormDisabled}
                               userId={user?.id}
                               itineraryId={ItineraryId}
                             />
@@ -1663,7 +1707,7 @@ export default function CreatePage() {
                           setCurrentStep(1)
                           scrollToTop()
                         }}
-                        disabled={form.formState.isSubmitting}
+                        disabled={isFormDisabled}
                       >
                         <span className="hidden sm:block">Back</span>
                         <ChevronLeft className="sm:hidden" />
@@ -1671,10 +1715,10 @@ export default function CreatePage() {
                       <Button 
                         type="button" 
                         variant="outline" 
-                        onClick={saveDraft}
-                        disabled={form.formState.isSubmitting}
+                        onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft}
+                        disabled={isFormDisabled}
                       >
-                        {itineraryStatus === ItineraryStatusEnum.published ? 'Draft' : 'Save'}
+                        {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
                       </Button>
                       <Button 
                         type="button"
@@ -1683,7 +1727,7 @@ export default function CreatePage() {
                           setCurrentStep(3)
                           scrollToTop()
                         }}
-                        disabled={form.formState.isSubmitting}
+                        disabled={isFormDisabled}
                       >
                         <ChevronRight className="sm:hidden"/>
                         <p className="hidden sm:flex">
@@ -1696,7 +1740,7 @@ export default function CreatePage() {
                         variant="outline"
                         color="crimson"
                         className="text-red hover:bg-red-500 hover:text-white"
-                        disabled={form.formState.isSubmitting}
+                        disabled={isFormDisabled}
                         onClick={(e) => {
                           if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
                             router.push('/my-itineraries')
@@ -1728,7 +1772,7 @@ export default function CreatePage() {
 
                   <div>
                     <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 5)</span></h2>
-                    <div className="md:grid-cols-4 grid grid-cols-2 sm:grid-cols-3 gap-1 md:gap-3 w-full">
+                    <div className="md:grid-cols-4 grid grid-cols-2 sm:grid-cols-3 gap-3 w-full">
                       {itineraryTags.map((category) => {
                         const currentTags = form.watch('itineraryTags') || []
                         const isSelected = currentTags.includes(category.id)
@@ -1742,10 +1786,10 @@ export default function CreatePage() {
                                 toggleCategory(category.id);
                               }}
                               className={`flex justify-center items-center gap-2 px-4 py-3 sm:py-4 md:gap-2 md:py-5 rounded-xl border hover:border-black transition-all duration-200 w-full group ${isSelected ? "ring-1 ring-black border-black border-3 bg-gray-100" : "border-gray-200 border-1 bg-white"}`}
-                              disabled={form.formState.isSubmitting}
+                              disabled={isFormDisabled}
                             >
                               <category.icon className="w-5 h-5 text-gray-700" />
-                              <span className="text-gray-900 font-medium leading-none">{category.name}</span>
+                              <span className="text-gray-900 leading-none">{category.name}</span>
                             </button>
                           </label>
                         )
@@ -1771,7 +1815,7 @@ export default function CreatePage() {
                             appendNote({ id: newNoteId, title: '', content: '', expanded: true })
                           }}
                           className="flex items-center gap-2"
-                          disabled={form.formState.isSubmitting}
+                          disabled={isFormDisabled}
                         >
                           <Plus className="h-4 w-4" />
                           Add Note
@@ -1800,7 +1844,7 @@ export default function CreatePage() {
                                         variant="ghost"
                                         size="sm"
                                         className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                                        disabled={form.formState.isSubmitting}
+                                        disabled={isFormDisabled}
                                       >
                                         {form.watch(`notes.${index}.expanded`) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                       </Button>
@@ -1815,7 +1859,7 @@ export default function CreatePage() {
                                           }
                                         }}
                                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                        disabled={form.formState.isSubmitting}
+                                        disabled={isFormDisabled}
                                       >
                                         <Trash2 className="h-4 w-4" />
                                       </Button>
@@ -1828,7 +1872,7 @@ export default function CreatePage() {
                                     {...form.register(`notes.${index}.title`)}
                                     placeholder="Note title"
                                     className="mb-2 rounded-xl"
-                                    disabled={form.formState.isSubmitting}
+                                    disabled={isFormDisabled}
                                   />
                                   {form.formState.errors.notes?.[index]?.title && (
                                     <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.title?.message}</p>
@@ -1837,8 +1881,8 @@ export default function CreatePage() {
                                   <textarea
                                     {...form.register(`notes.${index}.content`)}
                                     placeholder="Write your note here..."
-                                    className="w-full min-h-[100px] p-2 border rounded-xl"
-                                    disabled={form.formState.isSubmitting}
+                                    className="w-full min-h-[100px] p-2 border rounded-xl text-base sm:text-sm"
+                                    disabled={isFormDisabled}
                                   />
                                   {form.formState.errors.notes?.[index]?.content && (
                                     <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes[index]?.content?.message}</p>
@@ -1867,7 +1911,7 @@ export default function CreatePage() {
                           const newNoteId = (noteFields.length + 1);
                           appendNote({ id: newNoteId, title: '', content: '', expanded: true });
                         }}
-                        disabled={form.formState.isSubmitting}
+                        disabled={isFormDisabled}
                       >
                         <Plus className="h-4 w-4 mr-1" />
                         Add Note
@@ -1892,15 +1936,15 @@ export default function CreatePage() {
                     <Button 
                       type="button" 
                       variant="outline" 
-                      onClick={saveDraft}
-                      disabled={form.formState.isSubmitting}
+                      onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft}
+                      disabled={isFormDisabled}
                     >
-                      {itineraryStatus === ItineraryStatusEnum.published ? 'Draft' : 'Save'}
+                      {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
                     </Button>
                     <Button 
                       type="submit"
                       className="bg-black text-white hover:bg-gray-800"
-                      disabled={form.formState.isSubmitting}
+                      disabled={isFormDisabled}
                     >
                       {itineraryStatus === ItineraryStatusEnum.draft ? "Publish" : "Update"}
                     </Button>
@@ -1909,7 +1953,7 @@ export default function CreatePage() {
                       variant="outline"
                       color="crimson"
                       className="text-red hover:bg-red-500 hover:text-white"
-                      disabled={form.formState.isSubmitting}
+                      disabled={isFormDisabled}
                       onClick={(e) => {
                         if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
                           router.push('/my-itineraries')

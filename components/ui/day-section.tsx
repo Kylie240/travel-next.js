@@ -61,22 +61,22 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
             disabled={!hasExpandableContent}
           >
             {day.id === 1 && !isActive ? (
-              <MapPin strokeWidth={2} size={25} className="-left-[2px] relative"/>
+              <MapPin strokeWidth={2} size={25} className="relative"/>
             ) : day.id === 1 && isActive ? (
-              <MapPin fill="currentColor" size={25} className="-left-[2px] relative"/>
+              <MapPin fill="currentColor" size={25} className="relative"/>
             ) : isActive ? (
-              <Circle fill="currentColor" size={18} className="left-[2px] relative" />
+              <Circle fill="currentColor" size={18} className="left-[4px] relative" />
             ) : (
-              <Circle strokeWidth={3} size={18} className="left-[2px] relative" />
+              <Circle strokeWidth={3} size={18} className="left-[4px] relative" />
             )}
           </button>
         </div>
         {duration === day.id &&
           <div className="absolute -left-[.40rem] bottom-0 w-[10px] h-[.12rem] bg-black">
-          </div>  
+          </div>
         }
         <button 
-          className={`w-full relative inset-x-3 top-4 flex items-center rounded-2xl overflow-hidden ${(day.image !== null && day.image !== '') ? 'shadow-lg p-8 h-[120px] md:h-[150px]' : 'px-8 h-[80px] md:h-[100px]'} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
+          className={`w-full relative inset-x-3 top-4 flex items-center rounded-2xl overflow-hidden transition-all duration-300 ${(day.image !== null && day.image !== '') ? `shadow-lg p-8 ${isActive ? 'h-[180px] md:h-[220px]' : 'h-[100px] md:h-[130px]'}` : 'px-8 h-[80px] md:h-[100px]'} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
           onClick={() => hasExpandableContent && onToggle()}
           disabled={!hasExpandableContent}
           style={{
@@ -86,17 +86,13 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
             backgroundRepeat: 'no-repeat',
           }}
         >
+          <div className={`${day.image ? 'text-white' : 'text-gray-700 pt-2'} z-[5] text-left`}>
+            <h2 className={`text-xl md:text-2xl leading-5 ${day.image ? 'font-bold' : 'font-semibold'}`}>{day.title}</h2>
+            <p className={`text-xs md:text-sm lg:text-[16px] text-whte/80 ${day.image ? 'font-normal' : 'font-thin'}`}>{day.cityName}, {day.countryName}</p>
+          </div>
           {day.image && 
             <div className="absolute z-0 inset-0 bg-black/30"></div>
           }
-        </button>
-        <button 
-          className={`absolute left-[60px] z-[4] text-left bg-transparent border-none ${day.image ? 'text-white top-[60px] md:top-[70px] ' : 'text-gray-700 top-[50px] md:top-[60px] '} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
-          onClick={() => hasExpandableContent && onToggle()}
-          disabled={!hasExpandableContent}
-        >
-          <h2 className={`text-xl md:text-2xl leading-5 ${day.image ? 'font-bold' : 'font-semibold'}`}>{day.title}</h2>
-          <p className={`text-xs md:text-sm lg:text-[16px] text-whte/80 ${day.image ? 'font-normal' : 'font-thin'}`}>{day.cityName}, {day.countryName}</p>
         </button>
         <motion.div
           initial={false}
