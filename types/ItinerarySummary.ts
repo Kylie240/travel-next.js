@@ -9,4 +9,6 @@ export type ItinerarySummary = {
     shortDescription?: string;
     daysCount?: number;
     countries?: string[];
+    viewPermission: number;
+    editPermission: number;
   };

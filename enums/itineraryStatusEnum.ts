@@ -15,3 +15,14 @@ export const ItineraryStatusEnumString = {
     4: "Restricted",
     5: "Deleted",
 }
+
+export const viewPermissionEnum = {
+    public: 1,
+    creator: 2,
+    restricted: 3,
+}
+
+export const editPermissionEnum = {
+    creator: 1,
+    collaborators: 2,
+}

@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, Bookmark, Share, Search, Star } from "lucide-react"
+import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, Bookmark, Share, Search, Star, Settings, LockIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { deleteItinerary, getItinerarySummaries, updateItineraryStatus } from "@/lib/actions/itinerary.actions"
@@ -9,13 +9,14 @@ import Link from "next/link"
 import createClient from "@/utils/supabase/client"
 import { useEffect, useState } from "react"
 import { User, Session } from "@supabase/supabase-js"
-import { ItineraryStatusEnum, ItineraryStatusEnumString } from "@/enums/itineraryStatusEnum"
+import { ItineraryStatusEnum, ItineraryStatusEnumString, viewPermissionEnum } from "@/enums/itineraryStatusEnum"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation" 
 import { Input } from "@/components/ui/input"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 import ShareElement from "../itinerary/[id]/share-element"
+import { FaLock } from "react-icons/fa6"
 
 export default function MyItinerariesPage() {
   const router = useRouter()
@@ -218,13 +219,16 @@ export default function MyItinerariesPage() {
                       <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                       
                       {/* Status Badge */}
-                      {itinerary.status !== ItineraryStatusEnum.published && (
-                        <div className="absolute top-5 left-5">
-                          <span className={`px-3 py-2 rounded-full text-sm md:text-md font-semibold capitalize bg-gray-700/80 text-white`}>
+                      <div className="absolute top-5 left-5">
+                        {itinerary.status !== ItineraryStatusEnum.published && (
+                          <span className={`px-3 py-2 gap-1.5 flex rounded-full text-sm md:text-md font-semibold capitalize bg-gray-700/80 text-white`}>
                             {ItineraryStatusEnumString[itinerary.status]}
+                            {itinerary.status !== ItineraryStatusEnum.archived && itinerary.viewPermission != viewPermissionEnum.public && (
+                              <FaLock className="h-4 w-4 p-[1px] text-white" />
+                            )}
                           </span>
-                        </div>
-                      )}
+                        )}
+                      </div>
   
                       {/* Actions Menu */}
                       <div className="absolute top-4 right-4">
@@ -259,20 +263,18 @@ export default function MyItinerariesPage() {
                                 <DropdownMenu.Item
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                  onClick={async (event) => {
-                                      event.stopPropagation()
-                                      if (confirm('Are you sure you want to publish this itinerary?')) {
-                                          try {
-                                              await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.published, user?.id)
-                                              toast.success('Itinerary published successfully')
-                                              refreshItineraries()
-                                          } catch (error) {
-                                            if (error.message.includes("Maximum number of itineraries reached")) {
-                                              setShowUpgradeDialog(true);
-                                            } else {
-                                              toast.error('Failed to publish itinerary')
-                                            }
-                                          }
+                                    event.stopPropagation()
+                                    try {
+                                        await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.published, user?.id)
+                                        toast.success('Itinerary published successfully')
+                                        refreshItineraries()
+                                    } catch (error) {
+                                      if (error.message.includes("Maximum number of itineraries reached")) {
+                                        setShowUpgradeDialog(true);
+                                      } else {
+                                        toast.error('Failed to publish itinerary')
                                       }
+                                    }
                                   }}
                               >
                                 <div className="flex">
@@ -285,21 +287,33 @@ export default function MyItinerariesPage() {
                                 <DropdownMenu.Item
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                  onClick={async (event) => {
-                                      event.stopPropagation()
-                                      if (confirm('Are you sure you want to archive this itinerary? This will hide it from your profile and other users will not be able to see it. You can always publish it again later.')) {
-                                          try {
-                                              await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.archived, user?.id)
-                                              toast.success('Itinerary archived successfully')
-                                              refreshItineraries()
-                                          } catch (error) {
-                                            toast.error('Failed to archive itinerary')
-                                          }
-                                      }
+                                    event.stopPropagation()
+                                        try {
+                                            await updateItineraryStatus(itinerary.id, ItineraryStatusEnum.archived, user?.id)
+                                            toast.success('Itinerary archived successfully')
+                                            refreshItineraries()
+                                        } catch (error) {
+                                          toast.error('Failed to archive itinerary')
+                                        }
                                   }}
                               >
                                 <div className="flex">
                                   <Archive className="mr-2 h-4 w-4" />
                                     Archive
+                                </div>
+                              </DropdownMenu.Item>
+                              )}
+                              {userPlan != "free" && itinerary.status != ItineraryStatusEnum.archived && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  router.push(`/itinerary-settings/${itinerary.id}`)
+                                }}
+                              >
+                                <div className="flex">
+                                  <Settings className="mr-2 h-4 w-4" />
+                                  Settings
                                 </div>
                               </DropdownMenu.Item>
                               )}

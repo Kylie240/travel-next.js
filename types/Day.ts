@@ -13,4 +13,5 @@ export type Day = {
     activities?: Activity[],
     showAccommodation: boolean,
     accommodation?: Accommodation,
+    date?: string,
 }

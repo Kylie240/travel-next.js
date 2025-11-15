@@ -33,6 +33,7 @@ import { activityTagsMap, itineraryTagsMap } from "@/lib/constants/tags"
 import { createSchema } from "@/validation/createSchema"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
 import { createItinerary, getItineraryById, updateItinerary } from "@/lib/actions/itinerary.actions"
@@ -83,7 +84,7 @@ const INITIAL_DAY: Day = {
   }
 };
 
-function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disabled }: { 
+function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disabled, enableDates }: { 
   day: any; // Temporarily use any to fix type issues
   index: number;
   form: ReturnType<typeof useForm<FormData>>;
@@ -91,6 +92,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
   disabled: boolean;
   userId: string;
   itineraryId: string;
+  enableDates: boolean;
 }) {
   const {
     attributes,
@@ -213,6 +215,17 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
         <AccordionContent>
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {enableDates && (
+                <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
+                  <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Date</Label>
+                  <Input
+                    type="date"
+                    {...form.register(`days.${index}.date`)}
+                    className="rounded-xl"
+                    disabled={disabled}
+                  />
+                </div>
+              )}
               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
                 <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">City*</Label>
                 <Input
@@ -852,6 +865,7 @@ export default function CreatePage() {
   const [itineraryTags, _] = useState<Array<{id: number; name: string; icon: any}>>(itineraryTagsMap)
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
   const [pendingItineraryData, setPendingItineraryData] = useState<any>(null)
+  const [enableDates, setEnableDates] = useState(false)
   const countriesList = countries;
 
   // Generate itinerary ID if one doesn't exist
@@ -1354,7 +1368,7 @@ export default function CreatePage() {
       const itineraryData: CreateItinerary = {
         ...formData,
         id: ItineraryId,
-        status: itineraryStatus === ItineraryStatusEnum.archived ? ItineraryStatusEnum.archived : ItineraryStatusEnum.draft
+        status: ItineraryStatusEnum.draft
       }
 
       let response = null;
@@ -1610,7 +1624,7 @@ export default function CreatePage() {
                   </div>
 
                   <div className="flex justify-end gap-2 pt-10 md:pt-0">
-                    {ItineraryId && 
+                    {ItineraryId && itineraryStatus !== ItineraryStatusEnum.archived && 
                       <Button type="button" variant="outline" onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft} disabled={isFormDisabled}>
                         {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
                       </Button>
@@ -1655,6 +1669,14 @@ export default function CreatePage() {
                   <div className="flex flex-col h-full justify-between">
                     <div className="flex justify-between items-center">
                       <h2 className="text-xl md:font-semibold p-2">Day Scheduler</h2>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="enable-dates" className="text-sm">Add Specific Dates</Label>
+                        <Switch
+                          id="enable-dates"
+                          checked={enableDates}
+                          onCheckedChange={setEnableDates}
+                        />
+                      </div>
                     </div>
 
                     <DndContext
@@ -1677,6 +1699,7 @@ export default function CreatePage() {
                               disabled={isFormDisabled}
                               userId={user?.id}
                               itineraryId={ItineraryId}
+                              enableDates={enableDates}
                             />
                           ))}
                         </Accordion>
@@ -1712,14 +1735,16 @@ export default function CreatePage() {
                         <span className="hidden sm:block">Back</span>
                         <ChevronLeft className="sm:hidden" />
                       </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft}
-                        disabled={isFormDisabled}
-                      >
-                        {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
-                      </Button>
+                      {itineraryStatus !== ItineraryStatusEnum.archived && (
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft}
+                          disabled={isFormDisabled}
+                        >
+                          {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
+                        </Button>
+                      )}
                       <Button 
                         type="button"
                         onClick={(e) => {
@@ -1946,7 +1971,7 @@ export default function CreatePage() {
                       className="bg-black text-white hover:bg-gray-800"
                       disabled={isFormDisabled}
                     >
-                      {itineraryStatus === ItineraryStatusEnum.draft ? "Publish" : "Update"}
+                      {itineraryStatus === ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived ? "Publish" : "Update"}
                     </Button>
                     <Button 
                       type="button"

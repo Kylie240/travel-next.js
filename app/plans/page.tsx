@@ -102,7 +102,7 @@ export default async function PlansPage() {
 
             <div className="mb-8">
               <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold text-gray-900">$8</span>
+                <span className="text-5xl font-bold text-gray-900">$6</span>
                 <span className="text-gray-600">/month</span>
               </div>
             </div>
@@ -174,7 +174,7 @@ export default async function PlansPage() {
 
             <div className="mb-8">
               <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold text-gray-900">$16</span>
+                <span className="text-5xl font-bold text-gray-900">$14</span>
                 <span className="text-gray-600">/month</span>
               </div>
             </div>
@@ -239,8 +239,8 @@ export default async function PlansPage() {
                   <tr>
                     <td className="py-4 px-6 font-medium text-gray-900">Monthly Price</td>
                     <td className="py-4 px-6 text-center text-gray-700">$0</td>
-                    <td className="py-4 px-6 text-center text-gray-700">$8</td>
-                    <td className="py-4 px-6 text-center text-gray-700">$16</td>
+                    <td className="py-4 px-6 text-center text-gray-700">$6</td>
+                    <td className="py-4 px-6 text-center text-gray-700">$14</td>
                   </tr>
 
                   {/* Core Features */}
