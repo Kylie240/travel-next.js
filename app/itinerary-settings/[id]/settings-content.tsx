@@ -35,15 +35,15 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
   const [loadingFollowers, setLoadingFollowers] = useState(false)
 
   // Initialize state from itinerary (if permissions are stored)
-  useEffect(() => {
-    const getItineraryPermissions = async (permissions: ItineraryPermissions) => {
-      setViewPermission(permissions.viewPermission)
-      setEditPermission(permissions.editPermission)
-      setAllowedViewers(permissions.allowedViewers)
-      setAllowedEditors(permissions.allowedEditors)
-    }
-    getItineraryPermissions()
-  }, [itinerary])
+  // useEffect(() => {
+  //   const getItineraryPermissions = async (permissions: ItineraryPermissions) => {
+  //     setViewPermission(permissions.viewPermission)
+  //     setEditPermission(permissions.editPermission)
+  //     setAllowedViewers(permissions.allowedViewers)
+  //     setAllowedEditors(permissions.allowedEditors)
+  //   }
+  //   getItineraryPermissions()
+  // }, [itinerary])
 
   // Fetch followers when "specific users" is selected for view permission or "collaborators" for edit permission
   useEffect(() => {
@@ -75,8 +75,8 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
       await updateItineraryPermissions(
         itinerary.id,
         {
-          viewPermission,
-          editPermission,
+          viewPermission: viewPermission as 'public' | 'private' | 'restricted',
+          editPermission: editPermission as 'collaborators' | 'creator',
           allowedViewers,
           allowedEditors
         }

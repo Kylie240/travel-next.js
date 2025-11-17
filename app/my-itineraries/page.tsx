@@ -50,27 +50,62 @@ export default function MyItinerariesPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
+        
+        if (user) {
+          // Fetch user plan
+          try {
+            const { data } = await supabase.from('users_settings').select('plan').eq('user_id', user.id).single()
+            setUserPlan(data?.plan || "free")
+          } catch (error) {
+            console.error("Error fetching user plan:", error)
+            setUserPlan("free")
+          }
+          
+          // Fetch itineraries immediately when user is available
+          try {
+            const userItineraries = await getItinerarySummaries(user.id)
+            setItinerarySummaries(userItineraries as ItinerarySummary[])
+            setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
+          } catch (error) {
+            console.error("Error fetching itineraries:", error)
+            toast.error('Failed to load itineraries')
+          } finally {
+            setLoading(false)
+          }
+        } else {
+          setLoading(false)
+        }
       } catch (error) {
+        console.error("Error getting user:", error)
         setLoading(false)
       }
     }
     getUser()
 
-    const getUserPlan = async () => {
-      const { data } = await supabase.from('users_settings').select('plan').eq('user_id', user?.id).single()
-      console.log("data plan", data.plan)
-      setUserPlan(data?.plan || "free")
-    }
-    getUserPlan()
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
       const currentUser = session?.user ?? null
       setUser(currentUser)
       if (currentUser) {
-        const userItineraries = await getItinerarySummaries(currentUser.id)
-        setItinerarySummaries(userItineraries as ItinerarySummary[])
-        setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
-        setLoading(false)
+        // Fetch user plan
+        try {
+          const { data } = await supabase.from('users_settings').select('plan').eq('user_id', currentUser.id).single()
+          setUserPlan(data?.plan || "free")
+        } catch (error) {
+          console.error("Error fetching user plan:", error)
+          setUserPlan("free")
+        }
+        
+        // Fetch itineraries
+        try {
+          const userItineraries = await getItinerarySummaries(currentUser.id)
+          setItinerarySummaries(userItineraries as ItinerarySummary[])
+          setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
+        } catch (error) {
+          console.error("Error fetching itineraries:", error)
+          toast.error('Failed to load itineraries')
+        } finally {
+          setLoading(false)
+        }
       } else {
         setItinerarySummaries(null)
         setFilteredItinerarySummaries(null)
@@ -81,7 +116,7 @@ export default function MyItinerariesPage() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase, user?.id ])
+  }, [supabase])
 
   useEffect(() => {
     // Check if native share is available (typically on mobile devices)
