@@ -18,6 +18,7 @@ const formatTime = (time: string | null | undefined) => {
 import { Day } from "@/types/Day"
 import { GoDash } from 'react-icons/go'
 import { countries } from '@/lib/constants/countries'
+import { formatDateToText } from '@/lib/utils/date'
 
 export interface DaySectionProps {
   day: Day;
@@ -87,6 +88,9 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           }}
         >
           <div className={`${day.image ? 'text-white' : 'text-gray-700 pt-2'} z-[5] text-left`}>
+            {day.date && (
+              <p className="text-xs md:text-sm lg:text-[16px] text-white/80 font-normal">{formatDateToText(day.date)}</p>
+            )}
             <h2 className={`text-xl md:text-2xl leading-5 ${day.image ? 'font-bold' : 'font-semibold'}`}>{day.title}</h2>
             <p className={`text-xs md:text-sm lg:text-[16px] text-whte/80 ${day.image ? 'font-normal' : 'font-thin'}`}>{day.cityName}, {day.countryName}</p>
           </div>

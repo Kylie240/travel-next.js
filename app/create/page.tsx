@@ -74,6 +74,7 @@ const INITIAL_DAY: Day = {
   description: '',
   activities: [],
   image: '',
+  date: null,
   notes: '',
   showAccommodation: false,
   accommodation: {
@@ -186,7 +187,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                     )}
                   </div>
                   {form.watch(`days.${index}.cityName`) && (
-                    <p className="text-sm text-gray-600 md:ml-2">
+                    <p className="text-sm text-gray-600">
                       {form.watch(`days.${index}.cityName`)}, {form.watch(`days.${index}.countryName`)}
                     </p>
                   )}
@@ -962,6 +963,20 @@ export default function CreatePage() {
     form.setValue('days', updatedDays)
   }
 
+  // Handle enableDates change - clear dates when disabled
+  const handleEnableDatesChange = (checked: boolean) => {
+    setEnableDates(checked)
+    if (!checked) {
+      // Clear all date fields from all days
+      dayFields.forEach((_, index) => {
+        form.setValue(`days.${index}.date`, undefined, {
+          shouldValidate: false,
+          shouldDirty: true
+        })
+      })
+    }
+  }
+
   useEffect(() => {
     const init = async () => {
       const itineraryId = searchParams.get('itineraryId')
@@ -971,6 +986,7 @@ export default function CreatePage() {
         try {
           setItineraryLoading(true)
           const itinerary = await getItineraryById(itineraryId) as CreateItinerary;
+          console.log(itinerary)
           setItineraryStatus(itinerary.status)
           
           // Extract unique countries and cities from days
@@ -1002,6 +1018,12 @@ export default function CreatePage() {
             ...day,
             showAccommodation: !!(day.accommodation && day.accommodation.name)
           }));
+
+          // Check if any day has a date and enable dates if so
+          const hasDates = itinerary.days.some(day => day.date && day.date !== null && day.date !== '');
+          if (hasDates) {
+            setEnableDates(true);
+          }
 
           form.reset(itinerary);
         } catch (error) {
@@ -1146,7 +1168,7 @@ export default function CreatePage() {
           city: city.city,
           country: city.country
         })),
-        days: formData.days.map(day => {
+        days: formData.days.map((day, dayIndex) => {
           const activities = (day.activities || []).map(activity => ({
             id: activity.id,
             time: activity.time || null,
@@ -1161,13 +1183,22 @@ export default function CreatePage() {
             location: activity.location || null
           } as Activity));
 
+          // Explicitly get the date value from the form
+          const dayDate = form.getValues(`days.${dayIndex}.date`);
+          const dateValue = (dayDate && dayDate !== '' && dayDate !== undefined) ? dayDate : null;
+
           return {
-            ...day,
             id: day.id,
             cityName: day.cityName || '',
             countryName: day.countryName || '',
             title: day.title || '',
+            description: day.description || '',
+            notes: day.notes || '',
+            image: day.image || '',
             showAccommodation: day.showAccommodation || false,
+            accommodation: day.accommodation || undefined,
+            provinceName: day.provinceName || undefined,
+            date: dateValue,
             activities
           } as Day;
         }),
@@ -1189,7 +1220,7 @@ export default function CreatePage() {
       // Force status to draft
       itineraryData.id = ItineraryId;
       itineraryData.status = ItineraryStatusEnum.draft;
-      
+
       if (initialItineraryId) {
         await updateItinerary(ItineraryId, itineraryData);
       } else {
@@ -1674,7 +1705,7 @@ export default function CreatePage() {
                         <Switch
                           id="enable-dates"
                           checked={enableDates}
-                          onCheckedChange={setEnableDates}
+                          onCheckedChange={handleEnableDatesChange}
                         />
                       </div>
                     </div>

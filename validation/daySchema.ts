@@ -14,4 +14,5 @@ export const daySchema = z.object({
     activities: z.array(activitySchema).optional(),
     showAccommodation: z.boolean().optional(),
     accommodation: accommodationSchema.optional(),
+    date: z.string().nullable().optional(),
   })

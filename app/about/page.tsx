@@ -3,6 +3,7 @@ import { Globe2 } from 'lucide-react'
 import { IoDocumentOutline } from "react-icons/io5";
 import { GoPeople } from "react-icons/go";
 import { GrAppsRounded } from "react-icons/gr";
+import { CiCalendarDate } from 'react-icons/ci';
 
 const AboutPage = () => {
   return (
@@ -40,7 +41,7 @@ const AboutPage = () => {
               Once you're done creating your itinerary, you can publish it to share with others via link.
             </p>
             <p className="mb-4">
-              <a href="https://www.journli.com/profile/kylie" target='_blank' className="text-blue-600 hover:text-blue-800">Click here</a> to view a sample of what your profile and itineraries will look like.
+              <a href="https://www.journli.com/profile/journli" target='_blank' className="text-blue-600 hover:text-blue-800">Click here</a> to view a sample of what your profile and itineraries will look like.
             </p>
           </div>
         </section>
@@ -78,13 +79,29 @@ const AboutPage = () => {
         </section>
 
         {/* Contact Section */}
-        <section>
+        <section className="mb-16">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 mb-2 md:mb-6">Get in Touch</h2>
           <div className="prose prose-lg text-gray-600 mb-6 text-sm sm:text-md">
             <p>
               We love hearing from our community! Whether you have suggestions, questions, or just want to share 
               your travel stories, we're here to listen. You can provide feedback <a href="/share-feedback" className="text-blue-600 hover:text-blue-800">here</a> or email us at <a href="mailto:info@journli.com" className="text-blue-600 hover:text-blue-800">info@journli.com</a>.
             </p>
+          </div>
+        </section>
+        
+        <section className="mb-16">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 mb-2 md:mb-6">Newest Features</h2>
+          <p className="text-gray-600 mb-6 text-sm md:text-md">Check out the newest features added to Journli:</p>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div className="border border-gray-500 border-1 p-6 rounded-lg">
+              <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><CiCalendarDate />Travel Dates</h3>
+              <p className="text-gray-600 text-sm md:text-md">
+                Optional date fields for each day of your itinerary.
+              </p>
+              <p className="text-gray-400 text-xs mt-1 md:text-md flex items-center">
+                  Added November 28, 2025
+                </p>
+            </div>
           </div>
         </section>
       </div>

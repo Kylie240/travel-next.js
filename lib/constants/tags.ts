@@ -1,12 +1,13 @@
-import { Mountain, Utensils, Building, Palmtree, Camera, Ship, Wine, Heart, Music, TentTree, Palette, ShoppingBag, Dumbbell, Drama, Trees, BaggageClaim, Car, Presentation, HandPlatter, Caravan, Coins, HeartHandshake, RollerCoaster, Handshake, HandHeart, ChefHat, Briefcase, Backpack, BookMarked, Church, Skull, Sprout, Sailboat, CalendarFold, Syringe, Sparkles, HotelIcon } from "lucide-react"
-import { FaCity, FaHandSparkles, FaPeopleGroup, FaPersonWalkingLuggage, FaWheelchairMove } from "react-icons/fa6";
+import { Utensils, Building, Palmtree, Camera, Ship, Wine, Heart, Music, TentTree, Palette, ShoppingBag, Dumbbell, Drama, Trees, BaggageClaim, Car, Presentation, HandPlatter, Caravan, Coins, HeartHandshake, RollerCoaster, Handshake, HandHeart, ChefHat, Briefcase, Backpack, BookMarked, Church, Skull, Sprout, Sailboat, CalendarFold, Syringe, Sparkles, HotelIcon } from "lucide-react"
+import { FaCity, FaMountainCity, FaPeopleGroup, FaPersonWalkingLuggage, FaWheelchairMove } from "react-icons/fa6";
 import { PiFarm } from "react-icons/pi";
 import { BiSpa } from "react-icons/bi";
 import { LuAmphora, LuBinoculars, LuCookingPot } from "react-icons/lu";
 import { MdOutlineNightlife, MdOutlineNordicWalking } from "react-icons/md";
-import { TbHeartHandshake, TbYoga } from "react-icons/tb";
+import { TbHeartHandshake, TbHotelService, TbYoga } from "react-icons/tb";
 import { MdDirectionsBike } from "react-icons/md";
-
+import { RiCalendarEventLine } from "react-icons/ri";
+import { CiCalendarDate } from "react-icons/ci";
 
 export const activityTagsMap = [
   { id:1, name: "Outdoor", icon: TentTree },
@@ -57,12 +58,18 @@ export const itineraryTagsMap = [
   { id:22, name :"Road Trip", icon: Caravan }, 
   { id:23, name :"Volunteering", icon: Handshake }, 
   { id:24, name :"Adventure", icon: RollerCoaster }, 
+  { id:25, name :"Event Travel", icon: RiCalendarEventLine }, 
   { id:26, name :"Action Packed", icon: Music }, 
   { id:27, name :"Family Oriented", icon: FaPeopleGroup },
   { id:28, name :"LGBTQ+ Friendly", icon: TbHeartHandshake },
   { id:29, name :"Accessible", icon: FaWheelchairMove },
   { id:30, name :"Off The Grid", icon: MdOutlineNordicWalking },
   { id:31, name :"Camping", icon: TentTree },
+  { id:32, name :"Nature", icon: TentTree },
+  { id:33, name :"Wildlife", icon: TentTree },
+  { id:34, name :"All-Inclusive Stay", icon: TbHotelService },
+  { id:35, name :"Day Trip", icon: CiCalendarDate },
+  { id:36, name :"Multi-City", icon: FaMountainCity },
   ]
 
   export const travelerTypesMap = [
