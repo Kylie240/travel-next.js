@@ -17,12 +17,21 @@ const ShareProfileButton = ({ username }: { username: string }) => {
 
   useEffect(() => {
     // Check if native share is available (typically on mobile devices)
-    setCanUseNativeShare(
-      typeof navigator !== 'undefined' && 
-      navigator.share !== undefined &&
-      window.innerWidth < 1028
-    )
-  }, [ window.innerWidth ])
+    if (typeof window !== 'undefined') {
+      const checkNativeShare = () => {
+        setCanUseNativeShare(
+          typeof navigator !== 'undefined' && 
+          navigator.share !== undefined &&
+          window.innerWidth < 1028
+        )
+      }
+      
+      checkNativeShare()
+      
+      window.addEventListener('resize', checkNativeShare)
+      return () => window.removeEventListener('resize', checkNativeShare)
+    }
+  }, [])
 
   const handleNativeShare = async () => {
     try {

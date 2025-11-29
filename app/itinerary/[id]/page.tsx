@@ -14,7 +14,7 @@ import ItineraryGallery from "./itinerary-gallery"
 import Link from "next/link"
 import { FiEdit } from "react-icons/fi"
 import { redirect } from "next/navigation"
-import { ItineraryStatusEnum, viewPermissionEnum } from "@/enums/itineraryStatusEnum"
+import { ItineraryStatusEnum, viewPermissionEnum, editPermissionEnum } from "@/enums/itineraryStatusEnum"
 import BioSection from "./bio-section"
 import createClient from "@/utils/supabase/server"
 
@@ -31,10 +31,10 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const photos = collectAllPhotos(itinerary);
   
   // Check view permissions
-  // First, get the itinerary's view permission from the database
+  // First, get the itinerary's view permission and edit permission from the database
   const { data: itineraryData } = await supabase
     .from('itineraries')
-    .select('view_permission, creator_id')
+    .select('view_permission, edit_permission, creator_id')
     .eq('id', paramsValue.id)
     .single()
 
@@ -82,7 +82,40 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     paidUser = userPlan?.plan != "free";
   }
   
-  const canEdit = currentUserId === itinerary.creatorId;
+  // Check edit permissions
+  let canEdit = false;
+  if (currentUserId && itineraryData) {
+    const editPermission = typeof itineraryData.edit_permission === 'string'
+      ? parseInt(itineraryData.edit_permission)
+      : itineraryData.edit_permission
+    
+    // If editPermission is 1 (creator only), only creator can edit
+    if (editPermission === editPermissionEnum.creator) {
+      canEdit = currentUserId === itinerary.creatorId;
+    }
+    // If editPermission is 2 (collaborators), check if user is creator or in permission_edit table
+    else if (editPermission === editPermissionEnum.collaborators) {
+      const isCreator = currentUserId === itinerary.creatorId;
+      
+      if (isCreator) {
+        canEdit = true;
+      } else {
+        // Check if user is in permission_edit table
+        const { data: editPermissionData } = await supabase
+          .from('permission_edit')
+          .select('user_id')
+          .eq('itinerary_id', paramsValue.id)
+          .eq('user_id', currentUserId)
+          .maybeSingle()
+        
+        canEdit = !!editPermissionData;
+      }
+    }
+    // Default: only creator can edit (fallback)
+    else {
+      canEdit = currentUserId === itinerary.creatorId;
+    }
+  }
 
   if (isPrivate && currentUserId !== itinerary.creatorId) {
     redirect("/not-authorized");
@@ -258,7 +291,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                     </Button>
                   </Link>
                 </div>
-                {canEdit ? (
+                {currentUserId === itinerary.creatorId ? (
                   <Link className="min-w-[100px] md:w-1/2" href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
                     <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
                       Edit Profile
@@ -313,7 +346,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <div className="w-full justify-between hidden lg:flex">
                 <h2 className="text-2xl md:text-2xl font-semibold mb-2">Trip Overview</h2>
                 <div className="flex gap-2">
-                  {!canEdit && (
+                  {currentUserId !== itinerary.creatorId && (
                     <InteractionButtons 
                       itineraryId={itinerary.id} 
                       initialIsLiked={initialIsLiked}
@@ -388,7 +421,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                         View Profile
                       </Button>
                     </Link>
-                    {canEdit ?
+                    {currentUserId === itinerary.creatorId ?
                     (
                       <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
                         <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">

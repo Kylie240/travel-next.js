@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { MapPin, Star } from "lucide-react"
 import BookmarkElement from "@/components/ui/bookmark-element"
@@ -21,6 +22,7 @@ export default function ItineraryGrid({
   currentUserId,
   savedList
 }: ItineraryGridProps) {
+  const router = useRouter()
   const [filteredItineraryData, setFilteredItineraryData] = useState(itineraryData)
 
   const handleSearch = (filteredData: any[]) => {
@@ -65,7 +67,7 @@ export default function ItineraryGrid({
             <div 
               key={itinerary.id}
               className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
-              onClick={() => window.location.href = `/itinerary/${itinerary.id}`}
+              onClick={() => router.push(`/itinerary/${itinerary.id}`)}
             >
               <div className="relative aspect-[2/3]">
                 <Image

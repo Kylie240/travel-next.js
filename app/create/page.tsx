@@ -1222,15 +1222,17 @@ export default function CreatePage() {
       itineraryData.status = ItineraryStatusEnum.draft;
 
       if (initialItineraryId) {
-        await updateItinerary(ItineraryId, itineraryData);
+        const result = await updateItinerary(ItineraryId, itineraryData);
+        console.log('Draft save result:', result);
       } else {
         await createItinerary(itineraryData);
       }
       toast.success('Itinerary saved as draft');
       return true;
     } catch (error) {
-      // If it fails, just show a generic error
-      toast.error('Failed to save draft');
+      console.error('Error saving draft:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save draft';
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsSubmitting(false);
@@ -1266,10 +1268,15 @@ export default function CreatePage() {
       
       try {
         let response = null;
-        console.log(itineraryData)
+        console.log('Saving itinerary data:', itineraryData)
         if (ItineraryId) {
           response = await updateItinerary(ItineraryId, itineraryData)
-          toast.success('Itinerary updated successfully')
+          console.log('Update response:', response);
+          if (response && response.success) {
+            toast.success('Itinerary updated successfully')
+          } else {
+            throw new Error('Update returned no success confirmation')
+          }
         } else {
           response = await createItinerary(itineraryData)
           toast.success('Itinerary created successfully')
@@ -1281,7 +1288,8 @@ export default function CreatePage() {
         } else if (error instanceof Error && error.message.includes('Maximum number of itineraries reached.')) {
           throw error;
         } else {
-        throw new Error('Failed to save itinerary');
+          console.error('Error saving itinerary:', error);
+          throw error;
         }
       }
     } catch (error) {
@@ -1294,8 +1302,12 @@ export default function CreatePage() {
         setPendingItineraryData(buildItineraryData());
         setShowUpgradeDialog(true);
         // Don't throw - dialog handles the flow
+      } else if (error instanceof Error && error.message.includes('not authorized')) {
+        toast.error(error.message)
+        throw error
       } else {
-        toast.error('Error saving itinerary')
+        console.error('Error saving itinerary:', error);
+        toast.error(error instanceof Error ? error.message : 'Error saving itinerary')
         throw error
       }
     } finally {
@@ -1405,6 +1417,7 @@ export default function CreatePage() {
       let response = null;
       if (initialItineraryId) {
         response = await updateItinerary(ItineraryId, itineraryData)
+        console.log('Update response:', response);
       } else {
         response = await createItinerary(itineraryData)
       }
@@ -1416,6 +1429,7 @@ export default function CreatePage() {
         throw new Error('Failed to save itinerary')
       }
     } catch (error) {
+      console.error('Error in saveDraft:', error);
       toast.error('Error saving itinerary')
     } finally {
       setIsSubmitting(false)

@@ -141,15 +141,16 @@ export const updateItinerary = async (id: string, itinerary: CreateItinerary) =>
       } = await supabase.auth.getUser()
     
       if (!user) throw new Error("Not authenticated")
-        const { data, error } = await supabase.rpc("update_itinerary", {
-            p_itinerary: itinerary,
-            p_creator_id: user.id,
-            p_itinerary_id: id,
-        });
+        console.log("itinerary", itinerary)
+      const { error } = await supabase.rpc("update_itinerary", {
+          p_itinerary: itinerary,
+          p_user_id: user.id,
+          p_itinerary_id: id,
+      });
 
-        if (error) throw new Error(error.message);
+      if (error) throw new Error(error.message);
 
-        return { success: true };
+      return { success: true };
 }
 
 export const getItinerarySummaries = async (userId?: string) => {
