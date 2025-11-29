@@ -34,7 +34,10 @@ export function SettingsSidebar({ isOpen, onClose, title, children }: SettingsSi
             </Dialog.Title>
           </div>
           
-          <div className="flex-1 overflow-y-auto pb-24 md:pb-10 px-4">
+          <div 
+            className="flex-1 overflow-y-auto pb-32 md:pb-10 px-4"
+            style={{ paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))' }}
+          >
             {children}
           </div>
         </Dialog.Content>

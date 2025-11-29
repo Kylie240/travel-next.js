@@ -7,48 +7,94 @@ import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@
 import { Itinerary } from "@/types/itinerary"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { updateItineraryPermissions } from "@/lib/actions/itinerary.actions"
+import { updateItineraryPermissions, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
 import { getFollowersById } from "@/lib/actions/user.actions"
 import { Followers } from "@/types/followers"
-import { ArrowLeft, Save, Eye, Edit, Loader2 } from "lucide-react"
+import { viewPermissionEnum, editPermissionEnum } from "@/enums/itineraryStatusEnum"
+import { ArrowLeft, Save, Eye, Edit, Loader2, Search } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { FaUserLarge } from "react-icons/fa6"
-import { ItineraryPermissions } from "@/types/ItineraryPermissions"
+import { Input } from "@/components/ui/input"
 
 interface ItinerarySettingsContentProps {
   itinerary: Itinerary;
   userId: string;
 }
 
-type ViewPermission = 'public' | 'private' | 'specific';
-type EditPermission = 'creator-only' | 'collaborators';
+type ViewPermission = 'public' | 'creator' | 'restricted';
+type EditPermission = 'creator' | 'collaborators';
 
 export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySettingsContentProps) {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [viewPermission, setViewPermission] = useState<ViewPermission>('public')
-  const [editPermission, setEditPermission] = useState<EditPermission>('creator-only')
+  const [editPermission, setEditPermission] = useState<EditPermission>('creator')
   const [allowedViewers, setAllowedViewers] = useState<string[]>([])
   const [allowedEditors, setAllowedEditors] = useState<string[]>([])
   const [followers, setFollowers] = useState<Followers[]>([])
   const [loadingFollowers, setLoadingFollowers] = useState(false)
+  const [viewerSearchTerm, setViewerSearchTerm] = useState('')
+  const [editorSearchTerm, setEditorSearchTerm] = useState('')
+  const [loadingPermissions, setLoadingPermissions] = useState(true)
 
-  // Initialize state from itinerary (if permissions are stored)
-  // useEffect(() => {
-  //   const getItineraryPermissions = async (permissions: ItineraryPermissions) => {
-  //     setViewPermission(permissions.viewPermission)
-  //     setEditPermission(permissions.editPermission)
-  //     setAllowedViewers(permissions.allowedViewers)
-  //     setAllowedEditors(permissions.allowedEditors)
-  //   }
-  //   getItineraryPermissions()
-  // }, [itinerary])
+  // Fetch permissions when component mounts
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        setLoadingPermissions(true)
+        // Note: getItineraryPermissionsById has an unused permissions parameter, but we pass empty object
+        const permissions = await getItineraryPermissionsById(itinerary.id, {} as any)
+        
+        if (permissions) {
+          // Map the permissions to the component state
+          // Handle both string numbers and actual strings
+          const viewPerm = typeof permissions.viewPermission === 'string' 
+            ? parseInt(permissions.viewPermission) 
+            : permissions.viewPermission
+          const editPerm = typeof permissions.editPermission === 'string'
+            ? parseInt(permissions.editPermission)
+            : permissions.editPermission
+          
+          // Map viewPermission: 1 = public, 2 = creator, 3 = restricted
+          if (viewPerm === viewPermissionEnum.public) {
+            setViewPermission('public')
+          } else if (viewPerm === viewPermissionEnum.creator) {
+            setViewPermission('creator')
+          } else if (viewPerm === viewPermissionEnum.restricted) {
+            setViewPermission('restricted')
+          }
+          
+          // Map editPermission: 1 = creator, 2 = collaborators
+          if (editPerm === editPermissionEnum.creator) {
+            setEditPermission('creator')
+          } else if (editPerm === editPermissionEnum.collaborators) {
+            setEditPermission('collaborators')
+          }
+          
+          // Set allowed viewers and editors
+          if (permissions.allowedViewers && Array.isArray(permissions.allowedViewers)) {
+            setAllowedViewers(permissions.allowedViewers)
+          }
+          if (permissions.allowedEditors && Array.isArray(permissions.allowedEditors)) {
+            setAllowedEditors(permissions.allowedEditors)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching permissions:', error)
+        // Don't show error toast as permissions might not exist yet
+      } finally {
+        setLoadingPermissions(false)
+      }
+    }
+    
+    fetchPermissions()
+  }, [itinerary.id])
 
-  // Fetch followers when "specific users" is selected for view permission or "collaborators" for edit permission
+  // Fetch followers when "restricted users" is selected for view permission or "collaborators" for edit permission
   useEffect(() => {
     const fetchFollowers = async () => {
-      const shouldFetch = (viewPermission === 'specific' || editPermission === 'collaborators') && 
+      const shouldFetch = (viewPermission === 'restricted' || editPermission === 'collaborators') && 
                          followers.length === 0 && 
                          !loadingFollowers
       
@@ -111,10 +157,10 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6">
-          <Link href={`/itinerary/${itinerary.id}`}>
+          <Link href={`/my-itineraries`}>
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Itinerary
+              My Itineraries
             </Button>
           </Link>
           <div className="flex items-center gap-4 mb-4">
@@ -161,17 +207,29 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
                     <SelectItem value="private">
                       Private - Only you can view
                     </SelectItem>
-                    <SelectItem value="specific">
+                    <SelectItem value="restricted">
                       Restricted - Only selected users
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {viewPermission === 'specific' && (
-                <div className="space-y-3 pt-4 border-t">
+              {viewPermission === 'restricted' && (
+                <div className="space-y-3 pt-4">
                   <Label className="text-base font-medium">Select Users Who Can View</Label>
-                  <p>Must be </p>
+                  
+                  {followers.length > 0 && (
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Search by name or username..."
+                        value={viewerSearchTerm}
+                        onChange={(e) => setViewerSearchTerm(e.target.value)}
+                        className="pl-10 rounded-xl"
+                      />
+                    </div>
+                  )}
                   
                   {loadingFollowers ? (
                     <div className="flex items-center justify-center py-8">
@@ -182,44 +240,59 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
                     <div className="text-center py-8 text-gray-500">
                       <p>No followers found. Share your profile to get followers!</p>
                     </div>
-                  ) : (
-                    <div className="max-h-[400px] overflow-y-auto border rounded-lg p-4 space-y-2">
-                      {followers.map((follower) => (
-                        <div
-                          key={follower.userId}
-                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
-                          onClick={() => handleToggleViewer(follower.userId)}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={allowedViewers.includes(follower.userId)}
-                            onChange={() => handleToggleViewer(follower.userId)}
-                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <div className="relative w-10 h-10 flex-shrink-0">
-                            {follower.userAvatar && follower.userAvatar !== "" ? (
-                              <Image
-                                src={follower.userAvatar}
-                                alt={follower.userName}
-                                fill
-                                className="object-cover rounded-full"
-                                sizes="40px"
+                  ) : (() => {
+                    const filteredFollowers = followers.filter(follower => {
+                      if (!viewerSearchTerm) return true
+                      const searchLower = viewerSearchTerm.toLowerCase()
+                      return follower.userName.toLowerCase().includes(searchLower) ||
+                             follower.userUsername.toLowerCase().includes(searchLower)
+                    })
+                    
+                    return (
+                      <div className="max-h-[400px] overflow-y-auto border rounded-lg p-4 space-y-2">
+                        {filteredFollowers.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <p>No users found matching "{viewerSearchTerm}"</p>
+                          </div>
+                        ) : (
+                          filteredFollowers.map((follower) => (
+                            <div
+                              key={follower.userId}
+                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
+                              onClick={() => handleToggleViewer(follower.userId)}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={allowedViewers.includes(follower.userId)}
+                                onChange={() => handleToggleViewer(follower.userId)}
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                                onClick={(e) => e.stopPropagation()}
                               />
-                            ) : (
-                              <div className="relative w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                <FaUserLarge className="h-6 w-6 text-gray-300" />
+                              <div className="relative w-10 h-10 flex-shrink-0">
+                                {follower.userAvatar && follower.userAvatar !== "" ? (
+                                  <Image
+                                    src={follower.userAvatar}
+                                    alt={follower.userName}
+                                    fill
+                                    className="object-cover rounded-full"
+                                    sizes="40px"
+                                  />
+                                ) : (
+                                  <div className="relative w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                    <FaUserLarge className="h-6 w-6 text-gray-300" />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{follower.userName}</p>
-                            <p className="text-sm text-gray-600 truncate">@{follower.userUsername}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{follower.userName}</p>
+                                <p className="text-sm text-gray-600 truncate">@{follower.userUsername}</p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )
+                  })()}
 
                   {allowedViewers.length > 0 && (
                     <div className="mt-4">
@@ -271,7 +344,7 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="creator-only">
+                    <SelectItem value="creator">
                       Creator Only - Only you can edit
                     </SelectItem>
                     <SelectItem value="collaborators">
@@ -282,8 +355,21 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
               </div>
 
               {editPermission === 'collaborators' && (
-                <div className="space-y-3 pt-4 border-t">
+                <div className="space-y-3 pt-4">
                   <Label className="text-base font-medium">Select Users Who Can Edit</Label>
+                  
+                  {followers.length > 0 && (
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Search by name or username..."
+                        value={editorSearchTerm}
+                        onChange={(e) => setEditorSearchTerm(e.target.value)}
+                        className="pl-10 rounded-xl"
+                      />
+                    </div>
+                  )}
                   
                   {loadingFollowers ? (
                     <div className="flex items-center justify-center py-8">
@@ -294,44 +380,59 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
                     <div className="text-center py-8 text-gray-500">
                       <p>No followers found. Share your profile to get followers!</p>
                     </div>
-                  ) : (
-                    <div className="max-h-[400px] overflow-y-auto border rounded-lg p-4 space-y-2">
-                      {followers.map((follower) => (
-                        <div
-                          key={follower.userId}
-                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
-                          onClick={() => handleToggleEditor(follower.userId)}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={allowedEditors.includes(follower.userId)}
-                            onChange={() => handleToggleEditor(follower.userId)}
-                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <div className="relative w-10 h-10 flex-shrink-0">
-                            {follower.userAvatar && follower.userAvatar !== "" ? (
-                              <Image
-                                src={follower.userAvatar}
-                                alt={follower.userName}
-                                fill
-                                className="object-cover rounded-full"
-                                sizes="40px"
+                  ) : (() => {
+                    const filteredFollowers = followers.filter(follower => {
+                      if (!editorSearchTerm) return true
+                      const searchLower = editorSearchTerm.toLowerCase()
+                      return follower.userName.toLowerCase().includes(searchLower) ||
+                             follower.userUsername.toLowerCase().includes(searchLower)
+                    })
+                    
+                    return (
+                      <div className="max-h-[400px] overflow-y-auto border rounded-lg p-4 space-y-2">
+                        {filteredFollowers.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <p>No users found matching "{editorSearchTerm}"</p>
+                          </div>
+                        ) : (
+                          filteredFollowers.map((follower) => (
+                            <div
+                              key={follower.userId}
+                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
+                              onClick={() => handleToggleEditor(follower.userId)}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={allowedEditors.includes(follower.userId)}
+                                onChange={() => handleToggleEditor(follower.userId)}
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                                onClick={(e) => e.stopPropagation()}
                               />
-                            ) : (
-                              <div className="relative w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                <FaUserLarge className="h-6 w-6 text-gray-300" />
+                              <div className="relative w-10 h-10 flex-shrink-0">
+                                {follower.userAvatar && follower.userAvatar !== "" ? (
+                                  <Image
+                                    src={follower.userAvatar}
+                                    alt={follower.userName}
+                                    fill
+                                    className="object-cover rounded-full"
+                                    sizes="40px"
+                                  />
+                                ) : (
+                                  <div className="relative w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                    <FaUserLarge className="h-6 w-6 text-gray-300" />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{follower.userName}</p>
-                            <p className="text-sm text-gray-600 truncate">@{follower.userUsername}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{follower.userName}</p>
+                                <p className="text-sm text-gray-600 truncate">@{follower.userUsername}</p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )
+                  })()}
 
                   {allowedEditors.length > 0 && (
                     <div className="mt-4">
@@ -384,7 +485,6 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" />
                   Save Changes
                 </>
               )}

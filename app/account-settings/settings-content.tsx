@@ -443,7 +443,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   type="text"
                   value={formData.facebook}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
                   onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
                 />
               </div>
@@ -456,7 +456,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   type="text"
                   value={formData.instagram}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
                   onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
                 />
               </div>
@@ -469,7 +469,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   type="text"
                   value={formData.twitter}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
                   onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
                 />
               </div>
@@ -482,7 +482,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   type="text"
                   value={formData.pinterest}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
                   onChange={(e) => setFormData({ ...formData, pinterest: e.target.value })}
                 />
               </div>
@@ -495,7 +495,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   type="text"
                   value={formData.tiktok}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
                   onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
                 />
               </div>
@@ -508,7 +508,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   type="text"
                   value={formData.youtube}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-sm focus:outline-none bg-transparent"
+                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
                   onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
                 />
               </div>

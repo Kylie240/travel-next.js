@@ -275,17 +275,17 @@ export const getSavesByUserId = async (userId: string, creatorId: string = null)
     
       if (!user) throw new Error("Not authenticated")
         
-        const { data, error } = await supabase
-        .rpc("get_saved_itineraries", { p_user_id: userId, p_creator_id: creatorId }) as { 
-            data: SavedItinerary[] | null, 
-            error: Error | null 
-        };
+      const { data, error } = await supabase
+      .rpc("get_saved_itineraries", { p_user_id: userId, p_creator_id: creatorId }) as { 
+          data: SavedItinerary[] | null, 
+          error: Error | null 
+      };
 
-        if (error) {
-            throw new Error(error.message);
-        } 
+      if (error) {
+          throw new Error(error.message);
+      } 
 
-        return data;
+      return data;
 }
 
 export const getSavesByCreatorId = async (userId: string, creatorId: string = null) => {
@@ -439,6 +439,41 @@ export interface ItineraryPermissions {
   allowedEditors?: string[];
 }
 
+export const getItineraryPermissionsById = async (
+  itineraryId: string,
+  permissions: ItineraryPermissions
+) => {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) throw new Error("Not authenticated")
+
+  // First verify the user is the creator
+  const { data: itinerary, error: fetchError } = await supabase
+    .from('itineraries')
+    .select('creator_id')
+    .eq('id', itineraryId)
+    .single()
+
+  if (fetchError) throw new Error("Itinerary not found")
+  if (itinerary.creator_id !== user.id) throw new Error("You are not authorized to update this itinerary")
+
+  const { data, error } = await supabase.rpc(
+    "get_itinerary_permissions",
+    { p_itinerary_id: itineraryId }
+  );
+
+  if (error) {
+    console.error("Failed to fetch permissions:", error);
+    return null;
+  }
+
+  console.log("data", data)
+  return data as ItineraryPermissions;
+}
+
 export const updateItineraryPermissions = async (
   itineraryId: string,
   permissions: ItineraryPermissions
@@ -458,47 +493,22 @@ export const updateItineraryPermissions = async (
     .single()
 
   if (fetchError) throw new Error("Itinerary not found")
-  if (itinerary.creator_id !== user.id) throw new Error("Unauthorized")
+  if (itinerary.creator_id !== user.id) throw new Error("You are not authorized to update this itinerary")
 
-  // Update the itinerary with permission settings
-  // Note: This assumes you have columns for these permissions in your database
-  // You may need to add: view_permission, edit_permission, allowed_viewers, allowed_editors
-  // For now, we'll store this in a JSONB column or create a separate permissions table
-  const { error: updateError } = await supabase
-    .from('itineraries')
-    .update({
-      // If you have a permissions JSONB column:
-      permissions: {
-        view: permissions.viewPermission,
-        edit: permissions.editPermission,
-        allowed_viewers: permissions.allowedViewers || [],
-        allowed_editors: permissions.allowedEditors || [],
-      },
-      // Or if you have separate columns, uncomment these:
-      // view_permission: permissions.viewPermission,
-      // edit_permission: permissions.editPermission,
-      // allowed_viewers: permissions.allowedViewers || [],
-      // allowed_editors: permissions.allowedEditors || [],
-    })
-    .eq('id', itineraryId)
-
-  if (updateError) {
-    // If columns don't exist, we'll just log and return success for now
-    // The UI will work, but permissions won't be persisted until DB schema is updated
-    console.warn("Permission update not persisted - database schema may need updating:", updateError.message)
-    // For now, we can update the status based on view permission
-    if (permissions.viewPermission === 'private') {
-      await supabase
-        .from('itineraries')
-        .update({ status: ItineraryStatusEnum.draft })
-        .eq('id', itineraryId)
-    } else if (permissions.viewPermission === 'public') {
-      await supabase
-        .from('itineraries')
-        .update({ status: ItineraryStatusEnum.published })
-        .eq('id', itineraryId)
+    console.log("permissions", permissions)
+  const { error } = await supabase.rpc(
+    "update_itinerary_permissions",
+    {
+      p_user_id: user.id,
+      p_itinerary_id: itineraryId,
+      p_permissions: permissions,
     }
+  );
+
+  if (error) {
+    console.error("RPC Error:", error);
+    throw new Error(error.message);
   }
 
-  return { success: true }
+  return { success: true };
 }
