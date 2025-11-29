@@ -1,16 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { getItineraryDataByUserId } from "@/lib/actions/itinerary.actions";
 import { getProfileDataByUsername } from "@/lib/actions/user.actions";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Facebook, Instagram, PenSquare, Twitter } from "lucide-react";
 import { FaPinterestP } from "react-icons/fa6";
 import Image from "next/image";
 import Link from "next/link";
-import { cookies } from 'next/headers'
 import { FaTiktok, FaUserLarge, FaXTwitter } from "react-icons/fa6";
 import FollowButton from "@/app/itinerary/[id]/follow-button";
 import ShareProfileButton from "./share-profile";
-import ProfileMenuButton from "./profile-menu-button";
 import ItineraryGrid from "./itinerary-grid";
 import createClient from "@/utils/supabase/server";
 import { AiOutlineYoutube } from "react-icons/ai";
@@ -30,7 +27,7 @@ let isPrivate: boolean = false;
 if (userData[0]?.isPrivate && userId !== currentUser?.id) {
 isPrivate = true
 }
-const itineraryData = await getItineraryDataByUserId(userId)
+const itineraryData = await getItineraryDataByUserId(userId, currentUser?.id || null)
 const isCurrentUser = userId == currentUser?.id;
 const { data: currentUserSaves } = await supabase.from('interactions_saves').select('itinerary_id').eq('user_id', currentUser?.id) || null
 const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinerary_id) : null

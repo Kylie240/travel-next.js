@@ -6,8 +6,6 @@ import NoteSection from "./note-section"
 import ShareElement from "./share-element"
 import { getItineraryById } from "@/lib/actions/itinerary.actions"
 import { itineraryTagsMap } from "@/lib/constants/tags"
-import { cookies } from 'next/headers'
-import EditElement from "../edit-element"
 import { InteractionButtons } from "./interaction-buttons"
 import { Button } from "@/components/ui/button"
 import FollowButton from "./follow-button"
@@ -16,7 +14,7 @@ import ItineraryGallery from "./itinerary-gallery"
 import Link from "next/link"
 import { FiEdit } from "react-icons/fi"
 import { redirect } from "next/navigation"
-import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
+import { ItineraryStatusEnum, viewPermissionEnum } from "@/enums/itineraryStatusEnum"
 import BioSection from "./bio-section"
 import createClient from "@/utils/supabase/server"
 
@@ -30,11 +28,52 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const creator = itinerary.creator;
   const isPrivate = itinerary.creator?.isPrivate;
   const countries = itinerary.days.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index);
-  const cities = itinerary.days.map(day => day.cityName).filter((value, index, self) => self.indexOf(value) === index);
-  const activityTags = itinerary.days.flatMap(day =>
-    day.activities.map(activity => activity.type).filter(Boolean)
-  );
   const photos = collectAllPhotos(itinerary);
+  
+  // Check view permissions
+  // First, get the itinerary's view permission from the database
+  const { data: itineraryData } = await supabase
+    .from('itineraries')
+    .select('view_permission, creator_id')
+    .eq('id', paramsValue.id)
+    .single()
+
+  if (itineraryData) {
+    const viewPermission = typeof itineraryData.view_permission === 'string' 
+      ? parseInt(itineraryData.view_permission) 
+      : itineraryData.view_permission
+
+    // If viewPermission is 2 (creator only), check if user is the creator
+    if (viewPermission === viewPermissionEnum.creator) {
+      if (!currentUserId || currentUserId !== itineraryData.creator_id) {
+        redirect("/not-authorized");
+      }
+    }
+    
+    // If viewPermission is 3 (restricted), check if user is in permission_view table
+    if (viewPermission === viewPermissionEnum.restricted) {
+      if (!currentUserId) {
+        redirect("/not-authorized");
+      }
+      
+      // Check if user is in permission_view table for this itinerary
+      const { data: permissionData } = await supabase
+        .from('permission_view')
+        .select('user_id')
+        .eq('itinerary_id', paramsValue.id)
+        .eq('user_id', currentUserId)
+        .maybeSingle()
+
+      // Also check if user is the creator (creators should always have access)
+      const isCreator = currentUserId === itineraryData.creator_id
+      
+      if (!isCreator && !permissionData) {
+        redirect("/not-authorized");
+      }
+    }
+    
+    // If viewPermission is 1 (public), allow access - no check needed
+  }
   
   // Only fetch user plan if logged in
   let paidUser = false;

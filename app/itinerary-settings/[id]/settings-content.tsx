@@ -16,6 +16,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { FaUserLarge } from "react-icons/fa6"
 import { Input } from "@/components/ui/input"
+import createClient from "@/utils/supabase/client"
 
 interface ItinerarySettingsContentProps {
   itinerary: Itinerary;
@@ -27,6 +28,7 @@ type EditPermission = 'creator' | 'collaborators';
 
 export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySettingsContentProps) {
   const router = useRouter()
+  const supabase = createClient()
   const [isSaving, setIsSaving] = useState(false)
   const [viewPermission, setViewPermission] = useState<ViewPermission>('public')
   const [editPermission, setEditPermission] = useState<EditPermission>('creator')
@@ -37,6 +39,28 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
   const [viewerSearchTerm, setViewerSearchTerm] = useState('')
   const [editorSearchTerm, setEditorSearchTerm] = useState('')
   const [loadingPermissions, setLoadingPermissions] = useState(true)
+
+  // Monitor authentication state and redirect if user logs out
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/')
+      }
+    }
+
+    checkAuth()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        router.push('/')
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [router, supabase])
 
   // Fetch permissions when component mounts
   useEffect(() => {

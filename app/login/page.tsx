@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X } from "lucide-react"
+import { X, Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -37,6 +37,8 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   
   
   const signUpForm = useForm<SignUpFormData>({
@@ -207,12 +209,22 @@ export default function LoginPage() {
             </div>
             <div>
               <label className="pl-1 block text-sm font-medium mb-1">Password</label>
-              <Input
-                type="password"
-                placeholder="Password"
-                {...(isSignUp ? signUpForm.register("password") : signInForm.register("password"))}
-                className={(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password) ? "border-red-500" : ""}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  {...(isSignUp ? signUpForm.register("password") : signInForm.register("password"))}
+                  className={`pr-10 ${(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password) ? "border-red-500" : ""}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password) && (
                 <p className="mt-1 text-xs text-red-500">{(isSignUp ? signUpForm.formState.errors.password : signInForm.formState.errors.password)?.message}</p>
               )}
@@ -220,13 +232,23 @@ export default function LoginPage() {
             {isSignUp && (
               <div>
                 <label className="pl-1 block text-sm font-medium mb-1">Confirm Password</label>
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={signUpForm.formState.errors.password ? "border-red-500" : ""}
-                />
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={`pr-10 ${signUpForm.formState.errors.password ? "border-red-500" : ""}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 {confirmPassword !== (isSignUp ? signUpForm.watch("password") : signInForm.watch("password")) && (
                   <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
                 )}

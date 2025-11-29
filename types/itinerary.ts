@@ -26,5 +26,7 @@ export type Itinerary = {
     likes?: number;
     quickFilter?: string;
     creatorId?: string;
+    viewPermission: number;
+    editPermission: number;
     creator?: any; //create new type
 }

@@ -98,10 +98,10 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
     }
 }
 
-export const getItineraryDataByUserId = async (userId: string) => {
+export const getItineraryDataByUserId = async (userId: string, currentUserId: string) => {
     const supabase = await createClient()
     const { data, error } = await supabase
-    .rpc("get_profile_itineraries", { p_creator_id: userId }) as { 
+    .rpc("get_profile_itineraries", { p_creator_id: userId, p_current_user_id: currentUserId }) as { 
         data: ItinerarySummary[] | null, 
         error: Error | null };
 

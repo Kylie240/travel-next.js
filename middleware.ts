@@ -13,5 +13,6 @@ export const config = {
     '/create/:path*',
     '/saves/:path*',
     '/account-settings/:path*',
+    '/itinerary-settings/:path*',
   ],
 };
