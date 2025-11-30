@@ -110,11 +110,18 @@ const ActionButtons = () => {
   return (
     <div className="w-full"> 
       {currentUser ? (
-        <Link href="/create">
-          <Button size="default" className="px-6 text-md md:h-12 md:py-4 md:px-8 md:text-xl cursor-pointer border bg-transparent flex justify-center items-center w-full p-2 hover:text-black hover:bg-gray-100">
-            Start Creating
-          </Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/my-itineraries">
+            <Button variant="outline" size="default" className="px-8 text-lg h-10 md:h-12 py-4 md:text-xl border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
+              My Itineraries
+            </Button>
+          </Link>
+          <Link href="/create">
+            <Button size="default" className="bg-gray-900 flex items-center text-white px-8 text-lg h-10 md:h-12 py-4 md:text-xl">
+              Start Creating
+            </Button>
+          </Link>
+        </div>
       ) : (
       <div className="flex flex-col sm:flex-row gap-4">
         <Button variant="outline" size="default" 
