@@ -162,7 +162,7 @@ export const getItinerarySummaries = async (userId?: string) => {
       if (!user) throw new Error("Not authenticated")
     
     const { data, error } = await supabase
-    .rpc("get_my_itineraries", { p_user_id: userId }) as { 
+    .rpc("get_my_itineraries", { p_user_id: user.id }) as { 
         data: ItinerarySummary[] | null, 
         error: Error | null };
 

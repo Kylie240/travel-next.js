@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, Bookmark, Share, Search, Star, Settings, LockIcon } from "lucide-react"
+import { MoreVertical, Edit, Trash2, PenSquare, Eye, Archive, Loader2, Bookmark, Share, Search, Star, Settings, LockIcon, FileDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { deleteItinerary, getItinerarySummaries, updateItineraryStatus } from "@/lib/actions/itinerary.actions"
@@ -16,7 +16,8 @@ import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 import ShareElement from "../itinerary/[id]/share-element"
-import { FaLock } from "react-icons/fa6"
+import { FaLock, FaRegHeart } from "react-icons/fa6"
+import { exportItineraryToPDF } from "@/lib/utils/pdf-export"
 
 export default function MyItinerariesPage() {
   const router = useRouter()
@@ -46,77 +47,104 @@ export default function MyItinerariesPage() {
   }
 
   useEffect(() => {
+    let mounted = true
+
     const getUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
+        if (!mounted) return
+        
         setUser(user)
         
         if (user) {
           // Fetch user plan
           try {
             const { data } = await supabase.from('users_settings').select('plan').eq('user_id', user.id).single()
+            if (!mounted) return
             setUserPlan(data?.plan || "free")
           } catch (error) {
             console.error("Error fetching user plan:", error)
+            if (!mounted) return
             setUserPlan("free")
           }
           
           // Fetch itineraries immediately when user is available
           try {
             const userItineraries = await getItinerarySummaries(user.id)
+            if (!mounted) return
+            console.log("userItineraries", userItineraries)
             setItinerarySummaries(userItineraries as ItinerarySummary[])
             setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
           } catch (error) {
             console.error("Error fetching itineraries:", error)
+            if (!mounted) return
             toast.error('Failed to load itineraries')
           } finally {
-            setLoading(false)
+            if (mounted) {
+              setLoading(false)
+            }
           }
         } else {
-          setLoading(false)
+          if (mounted) {
+            setLoading(false)
+          }
         }
       } catch (error) {
         console.error("Error getting user:", error)
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
+      if (!mounted) return
+      
       const currentUser = session?.user ?? null
       setUser(currentUser)
       if (currentUser) {
         // Fetch user plan
         try {
           const { data } = await supabase.from('users_settings').select('plan').eq('user_id', currentUser.id).single()
+          if (!mounted) return
           setUserPlan(data?.plan || "free")
         } catch (error) {
           console.error("Error fetching user plan:", error)
+          if (!mounted) return
           setUserPlan("free")
         }
         
         // Fetch itineraries
         try {
           const userItineraries = await getItinerarySummaries(currentUser.id)
+          if (!mounted) return
+          console.log("userItineraries", userItineraries)
           setItinerarySummaries(userItineraries as ItinerarySummary[])
           setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
         } catch (error) {
           console.error("Error fetching itineraries:", error)
+          if (!mounted) return
           toast.error('Failed to load itineraries')
         } finally {
-          setLoading(false)
+          if (mounted) {
+            setLoading(false)
+          }
         }
       } else {
-        setItinerarySummaries(null)
-        setFilteredItinerarySummaries(null)
-        setLoading(false)
+        if (mounted) {
+          setItinerarySummaries(null)
+          setFilteredItinerarySummaries(null)
+          setLoading(false)
+        }
       }
     })
 
     return () => {
+      mounted = false
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     // Check if native share is available (typically on mobile devices)
@@ -352,6 +380,32 @@ export default function MyItinerariesPage() {
                                 </div>
                               </DropdownMenu.Item>
                               )}
+                              {(() => {
+                                // Check if plan is greater than 1 (numeric) or not "free" (string)
+                                const planNum = typeof userPlan === 'string' && !isNaN(parseInt(userPlan)) ? parseInt(userPlan) : null;
+                                const hasAccess = (planNum !== null && planNum > 1) || (typeof userPlan === 'string' && userPlan !== 'free' && userPlan !== '1');
+                                return hasAccess && itinerary.status === ItineraryStatusEnum.published && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={async (event) => {
+                                      event.stopPropagation()
+                                      try {
+                                        toast.loading('Generating PDF...', { id: 'pdf-export' })
+                                        await exportItineraryToPDF(itinerary.id)
+                                        toast.success('PDF exported successfully', { id: 'pdf-export' })
+                                      } catch (error) {
+                                        console.error('Error exporting PDF:', error)
+                                        toast.error('Failed to export PDF', { id: 'pdf-export' })
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex">
+                                      <FileDown className="mr-2 h-4 w-4" />
+                                      Export
+                                    </div>
+                                  </DropdownMenu.Item>
+                                )
+                              })()}
                               <DropdownMenu.Item
                                   className="flex items-center px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
                                   onClick={async (event) => {
@@ -394,15 +448,15 @@ export default function MyItinerariesPage() {
                           <div className="flex gap-3 mt-2">
                             <div className="flex gap-1 items-center">
                               <Eye className="h-4 w-4"/>
-                              <p className="text-sm">{itinerary.views}</p>
+                              <p className="text-sm">{itinerary.views || 0}</p>
                             </div>
                             <div className="flex relative items-center">
-                              <Star className="h-5 w-5 pb-1 pr-1"/>
-                              <p className="text-sm">{itinerary.likes}</p>
+                              <FaRegHeart className="h-5 w-5 pr-1"/>
+                              <p className="text-sm">{itinerary.likes || 0}</p>
                             </div>
-                            <div className="flex relative items-center">
-                              <Bookmark className="h-5 w-5 pb-1"/>
-                              <p className="text-sm">{itinerary.saves}</p>
+                            <div className="flex relative items-center gap-1">
+                              <Bookmark className="h-4 w-4"/>
+                              <p className="text-sm">{itinerary.saves || 0}</p>
                             </div>
                           </div>
                         )}

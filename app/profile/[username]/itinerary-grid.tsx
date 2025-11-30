@@ -6,6 +6,7 @@ import Image from "next/image"
 import { MapPin, Star } from "lucide-react"
 import BookmarkElement from "@/components/ui/bookmark-element"
 import SearchItineraries from "./search-itineraries"
+import { FaRegHeart } from "react-icons/fa6"
 
 interface ItineraryGridProps {
   itineraryData: any[]
@@ -85,10 +86,10 @@ export default function ItineraryGrid({
                   <span className="truncate">{itinerary.countries.map((country) => country).join(" · ")}</span>
                 </p>
                 <p className="sm:font-medium leading-[18px] sm:leading-6 text-lg sm:text-2xl max-h-[180px] line-clamp-4 overflow-hidden">{itinerary.title}</p>
-                <div className="flex mt-1 justify-between items-end">
+                <div className="flex mt-2 justify-between items-end">
                   <div>
                     <div className="flex relative items-center">
-                      <Star className="h-5 w-5 pb-1 pr-1"/>
+                      <FaRegHeart className="h-5 w-5 pr-1"/>
                       <p className="text-sm">{itinerary.likes}</p>
                     </div>
                   </div>

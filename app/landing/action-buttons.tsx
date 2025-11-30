@@ -10,41 +10,88 @@ import { useRouter } from 'next/navigation'
 const ActionButtons = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
-  const [currentUser, setCurrentUser] = useState(false)
+  const [currentUser, setCurrentUser] = useState<boolean | null>(null) // null = loading, true/false = auth state
   const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
-    // Get initial user state
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setCurrentUser(!!user)
-    }
-    
-    getUser()
+    let mounted = true
+    let subscription: { unsubscribe: () => void } | null = null
+    let timeoutId: NodeJS.Timeout | null = null
 
     // Check if mobile
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
+      if (mounted) {
+        setIsMobile(window.innerWidth < 768)
+      }
     }
     checkMobile()
     window.addEventListener('resize', checkMobile)
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setCurrentUser(!!session?.user)
-      if (event === 'SIGNED_IN') {
-        router.refresh()
+    // Set up auth state listener first - this fires immediately with current session
+    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) {
+        setCurrentUser(!!session?.user)
+        if (event === 'SIGNED_IN') {
+          router.refresh()
+        }
       }
     })
+    subscription = authSubscription
 
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe()
-      window.removeEventListener('resize', checkMobile)
+    // Also check session directly as a backup
+    const checkAuth = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError) {
+          console.error('Error getting session:', sessionError)
+          if (mounted) {
+            setCurrentUser(false)
+          }
+          return
+        }
+
+        if (mounted) {
+          setCurrentUser(!!session?.user)
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error)
+        // If everything fails, default to not logged in
+        if (mounted) {
+          setCurrentUser(false)
+        }
+      }
     }
-  }, [supabase, router])
+
+    checkAuth()
+
+    // Fallback timeout - if we still haven't set the state after 2 seconds, default to false
+    timeoutId = setTimeout(() => {
+      if (mounted) {
+        setCurrentUser((prev) => {
+          if (prev === null) {
+            console.warn('Auth check timeout, defaulting to not logged in')
+            return false
+          }
+          return prev
+        })
+      }
+    }, 2000)
+
+    // Cleanup on unmount
+    return () => {
+      mounted = false
+      if (subscription) {
+        subscription.unsubscribe()
+      }
+      window.removeEventListener('resize', checkMobile)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+  }, [])
 
   const handleAuthClick = (signUp: boolean) => {
     if (isMobile) {
@@ -53,6 +100,11 @@ const ActionButtons = () => {
       setIsSignUp(signUp)
       setIsOpen(true)
     }
+  }
+
+  // Show nothing while loading to prevent flash of wrong buttons
+  if (currentUser === null) {
+    return <div className="w-full h-12" /> // Placeholder to prevent layout shift
   }
 
   return (

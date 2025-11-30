@@ -3,7 +3,7 @@
 import { LikeItinerary, UnlikeItinerary } from '@/lib/actions/itinerary.actions'
 import { supabase } from '@/utils/supabase/superbase-client'
 import React, { useEffect, useState } from 'react'
-import { FaRegStar, FaStar } from "react-icons/fa6"
+import { FaHeart, FaRegHeart, FaRegStar, FaStar } from "react-icons/fa6"
 
 const LikeElement = ({ 
   itineraryId, 
@@ -50,12 +50,12 @@ const LikeElement = ({
   return (
     <>
       {isLiked ? (
-        <FaStar size={35}
+        <FaHeart size={35}
             className="transition-colors cursor-pointer h-10 w-10 p-2 fill-black text-black hover:bg-gray-100 rounded-lg"
             onClick={handleLike}
         />
       ) : (
-        <FaRegStar size={35}
+        <FaRegHeart size={35}
             className="transition-colors cursor-pointer h-10 w-10 p-2 text-black hover:bg-gray-100 rounded-lg"
             onClick={handleLike}
         />
