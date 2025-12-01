@@ -1,29 +1,25 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import createClient from "@/utils/supabase/client"
-import LikeElement from "./like-element"
-import BookmarkElement from "@/components/ui/bookmark-element"
-import { FileDown } from "lucide-react"
-import { exportItineraryToPDF } from "@/lib/utils/pdf-export"
-import { toast } from "sonner"
-import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
+import React, { useState, useEffect } from 'react'
+import { FileDown } from 'lucide-react'
+import { toast } from 'sonner'
+import { exportItineraryToPDF } from '@/lib/utils/pdf-export'
+import { ItineraryStatusEnum } from '@/enums/itineraryStatusEnum'
+import createClient from '@/utils/supabase/client'
 
-export function InteractionButtons({ 
+const PdfExportElement = ({ 
   itineraryId, 
-  initialIsLiked, 
-  initialIsSaved,
-  itineraryStatus 
+  itineraryStatus,
+  smallButton = false 
 }: { 
   itineraryId: string
-  initialIsLiked?: boolean
-  initialIsSaved?: boolean
   itineraryStatus?: number
-}) {
+  smallButton?: boolean 
+}) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
-  const [loading, setLoading] = useState(true)
   const [userPlan, setUserPlan] = useState<string | null>(null)
   const [hasPdfAccess, setHasPdfAccess] = useState(false)
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
@@ -46,6 +42,8 @@ export function InteractionButtons({
         const planNum = typeof plan === 'string' && !isNaN(parseInt(plan)) ? parseInt(plan) : null
         const hasAccess = (planNum !== null && planNum > 1) || (typeof plan === 'string' && plan !== 'free' && plan !== '1')
         setHasPdfAccess(hasAccess && itineraryStatus === ItineraryStatusEnum.published && plan !== "free")
+      } else {
+        setHasPdfAccess(false)
       }
       
       setLoading(false)
@@ -68,7 +66,7 @@ export function InteractionButtons({
             setUserPlan(plan)
             const planNum = typeof plan === 'string' && !isNaN(parseInt(plan)) ? parseInt(plan) : null
             const hasAccess = (planNum !== null && planNum > 1) || (typeof plan === 'string' && plan !== 'free' && plan !== '1')
-            setHasPdfAccess(hasAccess && itineraryStatus === ItineraryStatusEnum.published)
+            setHasPdfAccess(hasAccess && itineraryStatus === ItineraryStatusEnum.published && plan !== "free")
           })
       } else {
         setUserPlan(null)
@@ -82,7 +80,13 @@ export function InteractionButtons({
   }, [supabase, itineraryStatus])
 
   const handlePdfExport = async (e: React.MouseEvent) => {
+    e.preventDefault()
     e.stopPropagation()
+    
+    if (!hasPdfAccess) {
+      return
+    }
+    
     try {
       toast.loading('Generating PDF...', { id: 'pdf-export' })
       await exportItineraryToPDF(itineraryId)
@@ -93,31 +97,20 @@ export function InteractionButtons({
     }
   }
 
-  // Don't show buttons if no user
-  if (!loading && !currentUserId) {
+  // Don't show button if user doesn't have access
+  if (loading || !hasPdfAccess) {
     return null
   }
 
   return (
-    <div className="flex gap-2">
-      <LikeElement 
-        itineraryId={itineraryId} 
-        currentUserId={currentUserId || ""} 
-        initialIsLiked={initialIsLiked}
-      />  
-      <BookmarkElement 
-        color="black" 
-        itineraryId={itineraryId} 
-        currentUserId={currentUserId || ""} 
-        initialIsSaved={initialIsSaved}
-      />
-      {hasPdfAccess && (
-        <FileDown 
-          size={35}
-          className="transition-colors cursor-pointer h-10 w-10 p-2 text-black hover:bg-gray-100 rounded-lg"
-          onClick={handlePdfExport}
-        />
-      )}
-    </div>
+    <button 
+      onClick={handlePdfExport}
+      className={`${smallButton ? 'h-4 w-4' : 'h-10 w-10 hover:bg-gray-100 p-2'} cursor-pointer rounded-lg flex items-center justify-center transition-colors`}
+    >
+      <FileDown size={24} />
+    </button>
   )
 }
+
+export default PdfExportElement
+

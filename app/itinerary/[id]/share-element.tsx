@@ -5,7 +5,7 @@ import { Share, Copy, Mail, MessageCircle, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import * as Popover from '@radix-ui/react-popover'
 import { FaFacebook, FaWhatsapp } from 'react-icons/fa'
-import { FaXTwitter } from "react-icons/fa6";
+import { FaRegShareFromSquare, FaXTwitter } from "react-icons/fa6";
 
 const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: boolean }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -96,7 +96,7 @@ const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: bo
         }}
         className={`${smallButton ? 'h-4 w-4 ' : 'h-10 w-10 p-2 hover:bg-gray-100'} cursor-pointer rounded-lg flex items-center justify-center`}
       >
-        <Share size={24} />
+        <FaRegShareFromSquare size={24} />
       </button>
     )
   }
@@ -113,7 +113,7 @@ const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: bo
           }}
           className={`${smallButton ? 'h-4 w-4' : 'h-10 w-10 hover:bg-gray-100 p-2'} cursor-pointer rounded-lg flex items-center justify-center`}
         >
-          <Share size={24} />
+          <FaRegShareFromSquare size={24} />
         </button>
       </Popover.Trigger>
       <Popover.Portal>

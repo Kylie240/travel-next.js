@@ -58,7 +58,7 @@ const AboutPage = () => {
               </p>
             </div>
             <div className="border border-gray-500 border-1 p-6 rounded-lg">
-              <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><Globe2 strokeWidth={1} /> Explore Page</h3>
+              <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><Globe2 strokeWidth={1} width={20} height={20} /> Explore Page</h3>
               <p className="text-gray-600 text-sm md:text-md">
                 Explore itineraries from other travelers and get inspired.
               </p>
@@ -94,7 +94,7 @@ const AboutPage = () => {
           <p className="text-gray-600 mb-6 text-sm md:text-md">Check out the newest features added to Journli:</p>
           <div className="grid sm:grid-cols-2 gap-6">
             <div className="border border-gray-500 border-1 p-6 rounded-lg">
-              <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><CiCalendarDate />Travel Dates</h3>
+              <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><CiCalendarDate className="w-6 h-6" />Travel Dates</h3>
               <p className="text-gray-600 text-sm md:text-md">
                 Optional date fields for each day of your itinerary.
               </p>

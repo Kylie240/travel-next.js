@@ -17,6 +17,7 @@ import { redirect } from "next/navigation"
 import { ItineraryStatusEnum, viewPermissionEnum, editPermissionEnum } from "@/enums/itineraryStatusEnum"
 import BioSection from "./bio-section"
 import createClient from "@/utils/supabase/server"
+import PdfExportElement from "./pdf-export-element"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const supabase = await createClient()
@@ -213,14 +214,18 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
               <h2 className="text-xl flex items-center font-semibold">Trip Overview</h2>
               <div className="flex gap-2">
                 {canEdit ? (
+                  <div className="flex gap-2">
                   <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
                     <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                   </Link>
+                  <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                  </div>
                 ) : ( 
                   <InteractionButtons 
                     itineraryId={itinerary.id} 
                     initialIsLiked={initialIsLiked}
                     initialIsSaved={initialIsSaved}
+                    itineraryStatus={itinerary.status}
                   />
                 )}
                 {itinerary.status === ItineraryStatusEnum.published && 
@@ -351,6 +356,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
                       itineraryId={itinerary.id} 
                       initialIsLiked={initialIsLiked}
                       initialIsSaved={initialIsSaved}
+                      itineraryStatus={itinerary.status}
                     />
                   )}
                   {canEdit &&

@@ -48,65 +48,24 @@ export default function MyItinerariesPage() {
 
   useEffect(() => {
     let mounted = true
+    let initialLoadComplete = false
 
-    const getUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!mounted) return
-        
-        setUser(user)
-        
-        if (user) {
-          // Fetch user plan
-          try {
-            const { data } = await supabase.from('users_settings').select('plan').eq('user_id', user.id).single()
-            if (!mounted) return
-            setUserPlan(data?.plan || "free")
-          } catch (error) {
-            console.error("Error fetching user plan:", error)
-            if (!mounted) return
-            setUserPlan("free")
-          }
-          
-          // Fetch itineraries immediately when user is available
-          try {
-            const userItineraries = await getItinerarySummaries(user.id)
-            if (!mounted) return
-            console.log("userItineraries", userItineraries)
-            setItinerarySummaries(userItineraries as ItinerarySummary[])
-            setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
-          } catch (error) {
-            console.error("Error fetching itineraries:", error)
-            if (!mounted) return
-            toast.error('Failed to load itineraries')
-          } finally {
-            if (mounted) {
-              setLoading(false)
-            }
-          }
-        } else {
-          if (mounted) {
-            setLoading(false)
-          }
-        }
-      } catch (error) {
-        console.error("Error getting user:", error)
-        if (mounted) {
-          setLoading(false)
-        }
+    // Safety timeout to ensure loading never gets stuck (especially on mobile)
+    const timeoutId = setTimeout(() => {
+      if (mounted && !initialLoadComplete) {
+        console.warn("Loading timeout reached, forcing loading state to false")
+        setLoading(false)
+        initialLoadComplete = true
       }
-    }
-    getUser()
+    }, 10000) // 10 second timeout
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
+    const fetchUserData = async (user: User | null) => {
       if (!mounted) return
       
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      if (currentUser) {
+      if (user) {
         // Fetch user plan
         try {
-          const { data } = await supabase.from('users_settings').select('plan').eq('user_id', currentUser.id).single()
+          const { data } = await supabase.from('users_settings').select('plan').eq('user_id', user.id).single()
           if (!mounted) return
           setUserPlan(data?.plan || "free")
         } catch (error) {
@@ -117,7 +76,7 @@ export default function MyItinerariesPage() {
         
         // Fetch itineraries
         try {
-          const userItineraries = await getItinerarySummaries(currentUser.id)
+          const userItineraries = await getItinerarySummaries(user.id)
           if (!mounted) return
           console.log("userItineraries", userItineraries)
           setItinerarySummaries(userItineraries as ItinerarySummary[])
@@ -126,22 +85,57 @@ export default function MyItinerariesPage() {
           console.error("Error fetching itineraries:", error)
           if (!mounted) return
           toast.error('Failed to load itineraries')
-        } finally {
-          if (mounted) {
-            setLoading(false)
-          }
         }
       } else {
         if (mounted) {
           setItinerarySummaries(null)
           setFilteredItinerarySummaries(null)
-          setLoading(false)
         }
+      }
+      
+      // Always set loading to false after data fetch attempt
+      if (mounted) {
+        setLoading(false)
+        initialLoadComplete = true
+        clearTimeout(timeoutId)
+      }
+    }
+
+    const getUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!mounted) return
+        
+        setUser(user)
+        await fetchUserData(user)
+      } catch (error) {
+        console.error("Error getting user:", error)
+        if (mounted) {
+          setLoading(false)
+          initialLoadComplete = true
+          clearTimeout(timeoutId)
+        }
+      }
+    }
+    
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
+      if (!mounted) return
+      
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      
+      // Only fetch data on auth state change if initial load is complete
+      // This prevents race conditions on page refresh
+      if (initialLoadComplete) {
+        await fetchUserData(currentUser)
       }
     })
 
     return () => {
       mounted = false
+      clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])
