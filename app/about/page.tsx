@@ -1,5 +1,5 @@
 import React from 'react'
-import { Globe2 } from 'lucide-react'
+import { Globe2, UserIcon } from 'lucide-react'
 import { IoDocumentOutline } from "react-icons/io5";
 import { GoPeople } from "react-icons/go";
 import { GrAppsRounded } from "react-icons/gr";
@@ -100,6 +100,15 @@ const AboutPage = () => {
               </p>
               <p className="text-gray-400 text-xs mt-1 md:text-md flex items-center">
                   Added November 28, 2025
+                </p>
+            </div>
+            <div className="border border-gray-500 border-1 p-6 rounded-lg">
+              <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><UserIcon className="w-5 h-5" />Search Page</h3>
+              <p className="text-gray-600 text-sm md:text-md">
+                Search for other users by name or username.
+              </p>
+              <p className="text-gray-400 text-xs mt-1 md:text-md flex items-center">
+                  Added December 2, 2025
                 </p>
             </div>
           </div>

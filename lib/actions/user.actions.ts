@@ -472,3 +472,43 @@ export const setUserAvatar = async (userId: string, avatar: string) => {
 
     return data;
 }
+
+export const searchUsers = async (searchQuery: string, currentUserId?: string) => {
+    const supabase = await createClient()
+    
+    if (!searchQuery || searchQuery.trim() === '') {
+        return []
+    }
+
+    const query = searchQuery.toLowerCase().trim()
+    
+    // Search users by name or username
+    const { data, error } = await supabase
+        .from('users')
+        .select('id, name, username, avatar, bio')
+        .or(`name.ilike.%${query}%,username.ilike.%${query}%`)
+        .limit(50)
+
+    if (error) {
+        throw new Error(error.message)
+    }
+
+    // Get following status for each user if currentUserId is provided
+    if (currentUserId && data) {
+        const userIds = data.map(user => user.id)
+        const { data: followingData } = await supabase
+            .from('users_following')
+            .select('following_id')
+            .eq('user_id', currentUserId)
+            .in('following_id', userIds)
+
+        const followingIds = new Set(followingData?.map(f => f.following_id) || [])
+
+        return data.map(user => ({
+            ...user,
+            isFollowing: followingIds.has(user.id)
+        }))
+    }
+
+    return data || []
+}
