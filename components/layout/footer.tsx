@@ -16,27 +16,27 @@ const navigation = {
   social: [
     {
       name: "Facebook",
-      href: "https://www.facebook.com/journli_travels",
+      href: "https://www.facebook.com/journlitravels",
       icon: Facebook,
     },
     {
       name: "Twitter",
-      href: "https://twitter.com/journli_travels",
+      href: "https://twitter.com/journlitravels",
       icon: FaXTwitter,
     },
     {
       name: "Instagram",
-      href: "https://www.instagram.com/journli_travels",
+      href: "https://www.instagram.com/journlitravels",
       icon: Instagram,
     },
     {
       name: "Tiktok",
-      href: "https://www.tiktok.com/@journli_travels",
+      href: "https://www.tiktok.com/@journlitravels",
       icon: FaTiktok,
     },
     {
       name: "Pinterest",
-      href: "https://www.pinterest.com/journli_travels",
+      href: "https://www.pinterest.com/journlitravels",
       icon: FaPinterest,
     },
   ],
