@@ -82,10 +82,10 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
             <div className="flex mt-4 flex-col h-full lg:hidden justify-between px-4 md:pt-4">
               <div className="mb-2">
                 <div className="flex w-full justify-between items-center mb-1">
-                  <h2 className="text-xl flex items-center font-semibold">Trip Overview</h2>
-                  <div className="flex gap-2">
+                  <h2 className="text-xl flex items-center font-semibold">Overview</h2>
+                  <div className="flex">
                     {canEdit ? (
-                      <div className="flex gap-2">
+                      <div className="flex">
                       <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
                         <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                       </Link>
@@ -220,8 +220,8 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
               <div className="lg:col-span-2 flex flex-col gap-4 md:gap-8">
                 <div className="flex flex-col lg:mb-0">
                   <div className="w-full justify-between hidden lg:flex">
-                    <h2 className="text-2xl md:text-2xl font-semibold mb-2">Trip Overview</h2>
-                    <div className="flex gap-2">
+                    <h2 className="text-2xl md:text-2xl font-semibold mb-2">Overview</h2>
+                    <div className="flex">
                       {currentUserId !== itinerary.creatorId && (
                         <InteractionButtons 
                           itineraryId={itinerary.id} 
@@ -232,7 +232,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                       )}
                       {canEdit &&
                         <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
-                          <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
+                          <FiEdit size={35} className={`transition-colors cursor-pointer h-8 w-8 text-black hover:bg-gray-100 rounded-lg p-1`}/>
                         </Link>
                       }
                       {itinerary.status === ItineraryStatusEnum.published && 

@@ -856,7 +856,7 @@ export default function CreatePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialItineraryId = searchParams.get('itineraryId')
-  const [ItineraryId, setItineraryId] = useState<string | null>(initialItineraryId)
+  const [itineraryId, setItineraryId] = useState<string | null>(initialItineraryId)
   const [itineraryStatus, setItineraryStatus] = useState<number>(ItineraryStatusEnum.draft)
   const supabase = createClient()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -871,7 +871,7 @@ export default function CreatePage() {
 
   // Generate itinerary ID if one doesn't exist
   useEffect(() => {
-    if (!initialItineraryId) {
+    if (!itineraryId) {
       const newItineraryId = uuidv4()
       setItineraryId(newItineraryId)
     }
@@ -899,7 +899,7 @@ export default function CreatePage() {
     }
   }, [supabase])
   
-  const [currentStep, setCurrentStep] = useState(ItineraryId ? 1 : 0)
+  const [currentStep, setCurrentStep] = useState(itineraryId ? 1 : 0)
 
   const form = useForm<FormData>({
     resolver: zodResolver(createSchema),
@@ -1156,7 +1156,7 @@ export default function CreatePage() {
   const buildItineraryData = () => {
       const formData = form.getValues();
     return {
-        id: ItineraryId,
+        id: itineraryId,
         status: formData.status as number,
         title: formData.title,
         shortDescription: formData.shortDescription,
@@ -1218,11 +1218,11 @@ export default function CreatePage() {
     try {
       const itineraryData = buildItineraryData();
       // Force status to draft
-      itineraryData.id = ItineraryId;
+      itineraryData.id = itineraryId;
       itineraryData.status = ItineraryStatusEnum.draft;
 
       if (initialItineraryId) {
-        const result = await updateItinerary(ItineraryId, itineraryData);
+        const result = await updateItinerary(itineraryId, itineraryData);
         console.log('Draft save result:', result);
       } else {
         await createItinerary(itineraryData);
@@ -1269,8 +1269,8 @@ export default function CreatePage() {
       try {
         let response = null;
         console.log('Saving itinerary data:', itineraryData)
-        if (ItineraryId) {
-          response = await updateItinerary(ItineraryId, itineraryData)
+        if (initialItineraryId) {
+          response = await updateItinerary(itineraryId, itineraryData)
           console.log('Update response:', response);
           if (response && response.success) {
             toast.success('Itinerary updated successfully')
@@ -1410,13 +1410,13 @@ export default function CreatePage() {
       const formData = form.getValues()
       const itineraryData: CreateItinerary = {
         ...formData,
-        id: ItineraryId,
+        id: itineraryId,
         status: ItineraryStatusEnum.draft
       }
 
       let response = null;
       if (initialItineraryId) {
-        response = await updateItinerary(ItineraryId, itineraryData)
+        response = await updateItinerary(itineraryId, itineraryData)
         console.log('Update response:', response);
       } else {
         response = await createItinerary(itineraryData)
@@ -1521,7 +1521,7 @@ export default function CreatePage() {
         <div className={`md:container mx-auto md:px-4 md:max-w-4xl ${isFormDisabled ? 'pointer-events-none opacity-75' : ''}`}>
           <div className="bg-white md:rounded-2xl min-h-screen md:min-h-0 p-4 md:p-12 md:shadow">
             {currentStep !== 0 && <div className="flex justify-between items-center py-4 mb-2 md:mb-8">
-              <h1 className="text-xl md:text-2xl font-semibold">{!ItineraryId ? "Create New" : "Edit"} Itinerary</h1>
+              <h1 className="text-xl md:text-2xl font-semibold">{initialItineraryId ? "Edit" : "Create New"} Itinerary</h1>
               <div className="flex gap-2">
                 {[1, 2, 3].map(step => (
                   <div onClick={() => setCurrentStep(step)}
@@ -1634,7 +1634,7 @@ export default function CreatePage() {
                       onRemove={() => form.setValue("mainImage", "")}
                       disabled={isFormDisabled}
                       bucket="itinerary-images"
-                      folder={`${user?.id}/${ItineraryId}/main`}
+                      folder={`${user?.id}/${itineraryId}/main`}
                     />
                     {form.formState.errors.mainImage && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.mainImage.message}</p>
@@ -1669,7 +1669,7 @@ export default function CreatePage() {
                   </div>
 
                   <div className="flex justify-end gap-2 pt-10 md:pt-0">
-                    {ItineraryId && itineraryStatus !== ItineraryStatusEnum.archived && 
+                    {itineraryId && itineraryStatus !== ItineraryStatusEnum.archived && 
                       <Button type="button" variant="outline" onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft} disabled={isFormDisabled}>
                         {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
                       </Button>
@@ -1743,7 +1743,7 @@ export default function CreatePage() {
                               onRemoveDay={handleRemoveDay}
                               disabled={isFormDisabled}
                               userId={user?.id}
-                              itineraryId={ItineraryId}
+                              itineraryId={itineraryId}
                               enableDates={enableDates}
                             />
                           ))}

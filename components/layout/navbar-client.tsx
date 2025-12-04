@@ -10,9 +10,12 @@ import { User } from "@supabase/supabase-js"
 
 const publicNavigation = [
   { name: "Explore", href: "/explore" },
-  { name: "Search", href: "/search" },
   { name: "Plans", href: "/plans" },
   { name: "About", href: "/about" },
+]
+
+const authenticatedNavigation = [
+  { name: "Search", href: "/search" },
 ]
 
 interface NavbarClientProps {
@@ -20,6 +23,10 @@ interface NavbarClientProps {
 }
 
 export function NavbarClient({ user }: NavbarClientProps) {
+  // Combine public navigation with authenticated navigation if user is logged in
+  const navigation = user 
+    ? [...publicNavigation, ...authenticatedNavigation]
+    : publicNavigation
   const [isOpen, setIsOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
@@ -107,7 +114,7 @@ export function NavbarClient({ user }: NavbarClientProps) {
             className="md:hidden absolute top-16 left-0 right-0 bg-white border-b shadow-lg"
           >
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {publicNavigation.map((item) => (
+              {navigation.map((item) => (
                 <a
                   key={item.name}
                   href={item.href}

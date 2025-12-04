@@ -59,7 +59,7 @@ const BookmarkElement = ({ itineraryId, currentUserId, color, initialIsSaved, sa
   return (
     <button
       onClick={handleBookmark}
-      className={`${color == 'black' ? 'p-2 h-10 w-10 hover:bg-gray-100' : 'h-10 w-10 sm:h-12 sm:w-12 md:h-10 md:w-10'} transition-colors cursor-pointer rounded-lg flex items-center justify-center`}
+      className={`${color == 'black' ? 'p-2 h-8 w8 hover:bg-gray-100' : 'h-8 w-8 sm:h-12 sm:w-12 md:h-10 md:w-10'} transition-colors cursor-pointer rounded-lg flex items-center justify-center`}
     >
       <Bookmark className={`${
         isSaved

@@ -51,12 +51,12 @@ const LikeElement = ({
     <>
       {isLiked ? (
         <FaHeart size={35}
-            className="transition-colors cursor-pointer h-10 w-10 p-2 fill-black text-black hover:bg-gray-100 rounded-lg"
+            className="transition-colors cursor-pointer h-8 w-8 p-2 fill-black text-black hover:bg-gray-100 rounded-lg"
             onClick={handleLike}
         />
       ) : (
         <FaRegHeart size={35}
-            className="transition-colors cursor-pointer h-10 w-10 p-2 text-black hover:bg-gray-100 rounded-lg"
+            className="transition-colors cursor-pointer h-8 w-8 p-2 text-black hover:bg-gray-100 rounded-lg"
             onClick={handleLike}
         />
       )}

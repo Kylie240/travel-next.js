@@ -14,5 +14,6 @@ export const config = {
     '/saves/:path*',
     '/account-settings/:path*',
     '/itinerary-settings/:path*',
+    '/search/:path*',
   ],
 };

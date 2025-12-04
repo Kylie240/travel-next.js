@@ -6,14 +6,22 @@ import createClient from "@/utils/supabase/server"
 
 const publicNavigation = [
   { name: "Explore", href: "/explore" },
-  { name: "Search", href: "/search" },
   { name: "Plans", href: "/plans" },
   { name: "About", href: "/about" },
+]
+
+const authenticatedNavigation = [
+  { name: "Search", href: "/search" },
 ]
 
 export default async function NavbarServer() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  
+  // Combine public navigation with authenticated navigation if user is logged in
+  const navigation = user 
+    ? [...publicNavigation, ...authenticatedNavigation]
+    : publicNavigation
   
   return (
     <nav className="fixed top-0 left-0 right-0 w-full z-[50] transition-all duration-200 bg-white/80 backdrop-blur-md">
@@ -27,7 +35,7 @@ export default async function NavbarServer() {
               </span>
             </Link>
             <div className="hidden md:ml-6 md:flex md:space-x-8">
-              {publicNavigation.map((item) => (
+              {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
