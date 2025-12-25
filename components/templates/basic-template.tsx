@@ -232,7 +232,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                       )}
                       {canEdit &&
                         <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
-                          <FiEdit size={35} className={`transition-colors cursor-pointer h-8 w-8 text-black hover:bg-gray-100 rounded-lg p-1`}/>
+                          <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                         </Link>
                       }
                       {itinerary.status === ItineraryStatusEnum.published && 

@@ -94,7 +94,7 @@ const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: bo
           e.stopPropagation()
           handleNativeShare()
         }}
-        className={`${smallButton ? 'h-4 w-4 ' : 'h-10 w-10 p-2 hover:bg-gray-100'} cursor-pointer rounded-lg flex items-center justify-center`}
+        className={`${smallButton ? 'h-4 w-4 ' : 'h-10 w-10 p-1 hover:bg-gray-100'} cursor-pointer rounded-lg flex items-center justify-center`}
       >
         <FaRegShareFromSquare size={24} />
       </button>
@@ -111,7 +111,7 @@ const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: bo
             e.stopPropagation()
             setIsOpen(true)
           }}
-          className={`${smallButton ? 'h-4 w-4' : 'h-10 w-10 hover:bg-gray-100 p-2'} cursor-pointer rounded-lg flex items-center justify-center`}
+          className={`${smallButton ? 'h-4 w-4' : 'h-10 w-10 hover:bg-gray-100 p-1'} cursor-pointer rounded-lg flex items-center justify-center`}
         >
           <FaRegShareFromSquare size={24} />
         </button>

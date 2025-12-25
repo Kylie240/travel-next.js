@@ -8,6 +8,7 @@ import { TbHeartHandshake, TbHotelService, TbYoga } from "react-icons/tb";
 import { MdDirectionsBike } from "react-icons/md";
 import { RiCalendarEventLine } from "react-icons/ri";
 import { CiCalendarDate } from "react-icons/ci";
+import { LiaRingSolid } from "react-icons/lia";
 
 export const activityTagsMap = [
   { id:1, name: "Outdoor", icon: TentTree },
@@ -70,6 +71,8 @@ export const itineraryTagsMap = [
   { id:34, name :"All-Inclusive Stay", icon: TbHotelService },
   { id:35, name :"Day Trip", icon: CiCalendarDate },
   { id:36, name :"Multi-City", icon: FaMountainCity },
+  { id:37, name :"Wedding", icon: LiaRingSolid },
+  { id:38, name :"Historical", icon: LuAmphora },
   ]
 
   export const travelerTypesMap = [
