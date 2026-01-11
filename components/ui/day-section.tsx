@@ -136,11 +136,15 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                 <div key={activity.id || index} className="relative mb-2">
                   {activity?.type ? (
                     <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity?.time && activity?.time !== '' ? '14px' : '14px'}` }}>
-                      {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
-                        <div className="w-5 h-5">
-                          {React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)}
-                        </div>
-                      )}
+                      {(() => {
+                        const tag = activityTagsMap.find(t => t.id === activity.type);
+                        const IconComponent = tag?.icon;
+                        return IconComponent ? (
+                          <div className="w-5 h-5">
+                            <IconComponent />
+                          </div>
+                        ) : null;
+                      })()}
                       <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity?.time)}</p>
                     </div>
                   ) : (

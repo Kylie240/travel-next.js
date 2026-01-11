@@ -5,7 +5,7 @@ import { Bookmark } from "lucide-react"
 import { SaveItinerary, UnsaveItinerary } from '@/lib/actions/itinerary.actions'
 import { supabase } from '@/utils/supabase/superbase-client'
 
-const BookmarkElement = ({ itineraryId, currentUserId, color, initialIsSaved, savedList, onUnsave }: { itineraryId: string, currentUserId: string, color?: string, initialIsSaved?: boolean, savedList?: string[], onUnsave?: (itineraryId: string) => void }) => {
+const BookmarkElement = ({ itineraryId, currentUserId, color, initialIsSaved, savedList, onUnsave, backgroundColor }: { itineraryId: string, currentUserId: string, color?: string, initialIsSaved?: boolean, savedList?: string[], onUnsave?: (itineraryId: string) => void, backgroundColor?: string }) => {
   const [isSaved, setIsSaved] = useState(initialIsSaved || false) // Use initialIsSaved if provided
 
   useEffect(() => {

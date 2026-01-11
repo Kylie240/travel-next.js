@@ -5,16 +5,23 @@ import { redirect } from "next/navigation"
 import createClient from "@/utils/supabase/server"
 import BasicTemplate from "@/components/templates/basic-template"
 import { editPermissionEnum, viewPermissionEnum } from "@/enums/itineraryStatusEnum"
+import TestTemplate from "@/components/templates/test-template"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const currentUserId = user?.id
   const paramsValue = await params;
-  const itinerary = await getItineraryById(paramsValue.id) as Itinerary;
+  const itinerary = await getItineraryById(paramsValue.id) as Itinerary | null;
+  
+  // Redirect if itinerary or creator data is missing
+  if (!itinerary || !itinerary.creator) {
+    return redirect("/not-found");
+  }
+  
   const creator = itinerary.creator;
   const isPrivate = itinerary.creator?.isPrivate;
-  const countries = itinerary.days.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index);
+  const countries = itinerary.days?.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index) || [];
   const photos = collectAllPhotos(itinerary);
   
   // Check view permissions
@@ -33,14 +40,14 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     // If viewPermission is 2 (creator only), check if user is the creator
     if (viewPermission === viewPermissionEnum.creator) {
       if (!currentUserId || currentUserId !== itineraryData.creator_id) {
-        redirect("/not-authorized");
+        return redirect("/not-authorized");
       }
     }
     
     // If viewPermission is 3 (restricted), check if user is in permission_view table
     if (viewPermission === viewPermissionEnum.restricted) {
       if (!currentUserId) {
-        redirect("/not-authorized");
+        return redirect("/not-authorized");
       }
       
       // Check if user is in permission_view table for this itinerary
@@ -55,7 +62,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
       const isCreator = currentUserId === itineraryData.creator_id
       
       if (!isCreator && !permissionData) {
-        redirect("/not-authorized");
+        return redirect("/not-authorized");
       }
     }
     
@@ -105,7 +112,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   }
 
   if (isPrivate && currentUserId !== itinerary.creatorId) {
-    redirect("/not-authorized");
+    return redirect("/not-authorized");
   }
 
   // Fetch initial interaction states if user is logged in
@@ -141,6 +148,21 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
       .maybeSingle();
     initialIsFollowing = !!followData;
   }
+
+  // return (
+  //   <TestTemplate 
+  //     itinerary={itinerary} 
+  //     countries={countries} 
+  //     photos={photos} 
+  //     canEdit={canEdit} 
+  //     paidUser={paidUser} 
+  //     initialIsLiked={initialIsLiked} 
+  //     initialIsSaved={initialIsSaved} 
+  //     initialIsFollowing={initialIsFollowing}
+  //     creator={creator} 
+  //     currentUserId={currentUserId} 
+  //   />
+  // )
 
   return (
     <BasicTemplate 

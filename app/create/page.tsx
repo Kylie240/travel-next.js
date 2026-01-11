@@ -542,15 +542,17 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                                           Clear selection
                                         </SelectItem>
                                       )}
-                                      {activityTags.map(tag => (
-                                        <SelectItem key={tag.id} value={tag.id.toString()} className="cursor-pointer">
-                                          <div className="flex items-center gap-2">
-                                          {activityTagsMap.find(tag => tag.id === activity.type)?.icon && (
-                                            React.createElement(activityTagsMap.find(tag => tag.id === activity.type)!.icon)
-                                          )} {tag.name}
-                                          </div>
-                                        </SelectItem>
-                                      ))}
+                                      {activityTags.map(tag => {
+                                        const tagData = activityTagsMap.find(t => t.id === tag.id);
+                                        const IconComponent = tagData?.icon;
+                                        return (
+                                          <SelectItem key={tag.id} value={tag.id.toString()} className="cursor-pointer">
+                                            <div className="flex items-center gap-2">
+                                              {IconComponent && <IconComponent />} {tag.name}
+                                            </div>
+                                          </SelectItem>
+                                        );
+                                      })}
                                     </SelectContent>
                                   </Select>
                                 </div>

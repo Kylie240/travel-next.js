@@ -31,13 +31,23 @@ export function ImageUpload({
     try {
       setUploadingImage(true)
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
       const file = event.target.files?.[0];
       const fileExt = file?.name.split('.').pop()?.toLowerCase()
       
       if (!file) return;
 
+      // Check file type
+      if (!ALLOWED_TYPES.includes(file.type) || !ALLOWED_EXTENSIONS.includes(fileExt || '')) {
+        toast.error("File type not accepted. Please use JPG, JPEG, PNG or WEBP.");
+        setUploadingImage(false);
+        return;
+      }
+
       if (file.size > MAX_FILE_SIZE) {
         toast.error("File size must be under 10MB");
+        setUploadingImage(false);
         return;
       }
 
@@ -113,7 +123,7 @@ export function ImageUpload({
                 <Upload className="w-4 h-4" />
                 <input
                   type="file"
-                  accept="image/*"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                   onChange={handleImageUpload}
                   className="hidden"
                   disabled={disabled || uploadingImage}

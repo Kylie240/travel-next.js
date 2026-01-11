@@ -29,19 +29,26 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
     creator: UserData
     currentUserId: string
  }) {
+    // Early return if essential data is missing
+    if (!itinerary || !creator) {
+        return null;
+    }
+
     return (
         <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
           {/* Hero Section */}
           <div className="flex flex-col min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-4 md:gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
             <div className="w-full lg:h-full rounded-3xl shadow-xl">
               <div className="flex-1 h-[450px] sm:h-[500px] md:h-[520px] relative rounded-3xl overflow-hidden">
-                <Image
-                  src={itinerary.mainImage}
-                  alt={itinerary.title}
-                  fill
-                  className="object-cover"
-                  priority
+                {itinerary.mainImage && (
+                  <Image
+                    src={itinerary.mainImage}
+                    alt={itinerary.title || "Itinerary"}
+                    fill
+                    className="object-cover"
+                    priority
                   />
+                )}
                 <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
                 <div className="absolute inset-0 flex items-end md:items-end">
                   <div className="container px-0 mx-0 lg:mx-auto">
@@ -123,14 +130,18 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                   </div> */}
                 </div>
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
-                        <span
-                          key={tag}
-                          className="flex justify-center items-center flex-wrap px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm font-medium"
-                        >
-                          {itineraryTagsMap[tag - 1].name}
-                        </span>
-                      ))}
+                    {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => {
+                        const tagData = itineraryTagsMap.find(t => t.id === tag);
+                        if (!tagData) return null;
+                        return (
+                          <span
+                            key={tag}
+                            className="flex justify-center items-center flex-wrap px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm font-medium"
+                          >
+                            {tagData.name}
+                          </span>
+                        );
+                      })}
                   </div>
                   <p className="text-sm md:text-md">
                     {itinerary.shortDescription}
@@ -140,15 +151,17 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                 <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
                 <div className="flex flex-wrap w-full justify-between">
                   <div>
-                    <Link href={`/profile/${creator.username}`} className="min-w-[100px] md:w-full cursor-pointer">
+                    <Link href={`/profile/${creator.username || ''}`} className="min-w-[100px] md:w-full cursor-pointer">
                       <div className="flex items-center gap-2 px-1">
-                        <div className="relative h-12 w-12 rounded-full overflow-hidden">
-                          <Image
-                            src={creator.avatar}
-                            alt={creator.name}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
+                          {creator.avatar && (
+                            <Image
+                              src={creator.avatar}
+                              alt={creator.name || "Creator"}
+                              fill
+                              className="object-cover"
+                            />
+                          )}
                         </div>
                         <div>
                           <div className="flex flex-col">
@@ -241,14 +254,18 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                     </div>
                   </div>
                   <div className="hidden flex-wrap gap-2 mb-2 lg:flex">
-                    {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
-                        <span
-                          key={tag}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
-                        >
-                          {itineraryTagsMap[tag - 1].name}
-                        </span>
-                      ))}
+                    {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => {
+                        const tagData = itineraryTagsMap.find(t => t.id === tag);
+                        if (!tagData) return null;
+                        return (
+                          <span
+                            key={tag}
+                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
+                          >
+                            {tagData.name}
+                          </span>
+                        );
+                      })}
                   </div>
                   {itinerary?.detailedOverview && 
                   <>
@@ -271,15 +288,17 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
               <div className="hidden lg:block">
                 <div className="sticky top-24">
                   <div className=" px-4 pt-6 pb-4 border rounded-2xl">
-                    <Link href={`/profile/${creator.username}`} className="cursor-pointer">
+                    <Link href={`/profile/${creator.username || ''}`} className="cursor-pointer">
                       <div className="flex items-center gap-4 px-1">
-                        <div className="relative h-12 w-12 rounded-full overflow-hidden">
-                          <Image
-                            src={creator.avatar}
-                            alt={creator.name}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
+                          {creator.avatar && (
+                            <Image
+                              src={creator.avatar}
+                              alt={creator.name || "Creator"}
+                              fill
+                              className="object-cover"
+                            />
+                          )}
                         </div>
                         <div>
                           <div className="flex flex-col">
@@ -318,7 +337,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                     </div>
                   </div>
                   {/* Creator Notes */}
-                  {itinerary?.notes.length > 0 &&
+                  {itinerary?.notes && itinerary.notes.length > 0 &&
                   <>
                     <p className="text-lg text-center font-medium mt-8">Useful Trip Notes</p>
                     <div className="px-1 w-full">

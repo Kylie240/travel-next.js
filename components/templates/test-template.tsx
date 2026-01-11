@@ -10,7 +10,7 @@ import { itineraryTagsMap } from "@/lib/constants/tags";
 import { UserData } from "@/lib/types";
 import { PhotoItem } from "@/lib/utils/photos";
 import { Itinerary } from "@/types/itinerary";
-import { Calendar, DollarSign, MapPin } from "lucide-react";
+import { Calendar, ChevronLeft, DollarSign, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { FiEdit } from "react-icons/fi";
@@ -19,6 +19,9 @@ import FollowButton from "@/app/itinerary/[id]/follow-button";
 import BioSection from "@/app/itinerary/[id]/bio-section";
 import ScheduleSection from "@/app/itinerary/[id]/schedule-section";
 import NoteSection from "@/app/itinerary/[id]/note-section";
+import BookmarkElement from "../ui/bookmark-element";
+import { useRouter } from "next/navigation";
+import { DaySection } from "@/components/ui/day-section";
 
 export default function TestTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId }: { 
     itinerary: Itinerary, 
@@ -33,9 +36,23 @@ export default function TestTemplate({ itinerary, countries, photos, canEdit, pa
     currentUserId: string
  }) {
     const [dominantColor, setDominantColor] = useState<string>("rgba(0, 0, 0, 0.6)");
-
+    const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
+    const router = useRouter();
+    
+    // Initialize selected day to first day with image
+    useEffect(() => {
+        if (itinerary?.days && itinerary.days.length > 0) {
+            const firstDayWithImage = itinerary.days.findIndex(day => day.image);
+            if (firstDayWithImage !== -1) {
+                setSelectedDayIndex(firstDayWithImage);
+            }
+        }
+    }, [itinerary?.days]);
+    
     // Extract dominant color from image
     useEffect(() => {
+        if (!itinerary?.mainImage) return;
+        
         const extractColor = async () => {
             try {
                 const img = new window.Image();
@@ -86,25 +103,41 @@ export default function TestTemplate({ itinerary, countries, photos, canEdit, pa
         };
 
         extractColor();
-    }, [itinerary.mainImage]);
+    }, [itinerary?.mainImage]);
+
+    // Early return if essential data is missing
+    if (!itinerary || !creator) {
+        return null;
+    }
 
     return (
         <div className="min-h-screen bg-white flex flex-col items-center lg:gap-8">
           {/* Hero Section */}
           <div className="w-full h-[calc(100vh-62px)] relative">
-            <Image
-                src={itinerary.mainImage}
-                alt={itinerary.title}
-                fill
-                className="object-cover"
-                priority
-                />
-            <div className="absolute bottom-20 w-full h-[600px]">
+            {itinerary.mainImage && (
+              <Image
+                  src={itinerary.mainImage}
+                  alt={itinerary.title || "Itinerary"}
+                  fill
+                  className="object-cover"
+                  priority
+                  />
+            )}
+            <div className="flex flex-col justify-end items-center w-full h-full relative z-10">
+              <div className="flex flex-col justify-between h-full w-full p-12 md:p-16 lg:p-20">
+                <div className="flex w-full justify-between">
+                  <div className="w-10 h-10 cursor-pointer bg-white rounded-full flex items-center justify-center shadow-lg z-20 relative">
+                    <ChevronLeft size={20} onClick={() => router.push(`/profile/${creator.username}`)} />
+                  </div>
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg z-20 relative">
+                    <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} color="black" backgroundColor="none" />
+                  </div>
+                </div>
                 <div 
-                    className="mx-20 text-white rounded-3xl p-6 backdrop-blur-sm border border-white/20"
+                    className="text-white rounded-3xl p-6 backdrop-blur-sm"
                     style={{ backgroundColor: dominantColor }}
                 >
-                    <div className="flex border-b border-white/50 pb-4">
+                    <div className="flex gap-3 border-b border-white/50 pb-4">
                         <MapPin size={40} />
                         <div className="flex flex-col">
                             <h1 className="text-white text-4xl font-bold">
@@ -134,135 +167,126 @@ export default function TestTemplate({ itinerary, countries, photos, canEdit, pa
                                 </p>
                             </div>
                         </div>
-                        <p>Description</p>
-                        <p className="text-sm">
-                            {itinerary.detailedOverview}
+                        <p className="pt-1 font-semibold">Description</p>
+                        <p className="text-sm py-1">
+                            {itinerary.shortDescription}
                         </p>
                     </div>
                     <Button className="bg-white text-black w-full rounded-full mt-4">
                         View Itinerary
                     </Button>
                 </div>
+              </div>
             </div>
           </div>
-    
-          <div className="container mx-auto px-6 lg:px-[3rem] xl:px-[6rem] py-8">
-            {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-2 md:px-8">
-              {/* Left Column - Schedule */}
-              <div className="lg:col-span-2 flex flex-col gap-4 md:gap-8">
-                <div className="flex flex-col lg:mb-0">
-                  <div className="w-full justify-between hidden lg:flex">
-                    <h2 className="text-2xl md:text-2xl font-semibold mb-2">Trip Overview</h2>
-                    <div className="flex gap-2">
-                      {currentUserId !== itinerary.creatorId && (
-                        <InteractionButtons 
-                          itineraryId={itinerary.id} 
-                          initialIsLiked={initialIsLiked}
-                          initialIsSaved={initialIsSaved}
-                          itineraryStatus={itinerary.status}
-                        />
-                      )}
-                      {canEdit &&
-                        <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
-                          <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
-                        </Link>
-                      }
-                      {itinerary.status === ItineraryStatusEnum.published && 
-                        <ShareElement id={itinerary.id} smallButton={false} />
-                      }
+
+          <div className="p-8">
+            <div className="px-4 py-6 mb-8 border rounded-2xl">
+              <Link href={`/profile/${creator.username || ''}`} className="cursor-pointer">
+                <div className="flex items-center gap-4 px-1">
+                  <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
+                    {creator.avatar && (
+                      <Image
+                        src={creator.avatar}
+                        alt={creator.name || "Creator"}
+                        fill
+                        className="object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="flex justify-between w-full">
+                    <div className="flex flex-col">
+                      <p className="font-medium text-lg">{creator.name}</p>
+                      <p className="text-gray-500">@{creator.username}</p>
                     </div>
-                  </div>
-                  <div className="hidden flex-wrap gap-2 mb-2 lg:flex">
-                    {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => (
-                        <span
-                          key={tag}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
-                        >
-                          {itineraryTagsMap[tag - 1].name}
-                        </span>
-                      ))}
-                  </div>
-                  {itinerary?.detailedOverview && 
-                  <>
-                    <h2 className="text-xl lg:hidden font-semibold">Details</h2>
-                    <p className="my-4 text-sm md:text-md">
-                      {itinerary.detailedOverview}
-                    </p>
-                  </>
-                  }
-                </div>
-                <ScheduleSection 
-                  schedule={itinerary.days} 
-                  notes={itinerary.notes}
-                  itineraryId={itinerary.id}
-                  isCreator={canEdit}
-                />
-              </div>
-    
-              {/* Right Column - Details & Notes */}
-              <div className="hidden lg:block">
-                <div className="sticky top-24">
-                  <div className=" px-4 pt-6 pb-4 border rounded-2xl">
-                    <Link href={`/profile/${creator.username}`} className="cursor-pointer">
-                      <div className="flex items-center gap-4 px-1">
-                        <div className="relative h-12 w-12 rounded-full overflow-hidden">
-                          <Image
-                            src={creator.avatar}
-                            alt={creator.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div>
-                          <div className="flex flex-col">
-                            <p className="font-medium text-lg">{creator.name}</p>
-                            <p className="text-gray-500">@{creator.username}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                    <div className="mt-4 hidden lg:block space-y-2">
-                      <p className="text-lg font-semibold px-2">About the Creator</p>
-                      <p className=" px-2">{creator.bio}</p>
-                      <div className="flex gap-2 w-full mt-2">
-                        <Link href={`/profile/${creator.username}`} className="w-1/2">
-                          <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
-                            View Profile
+                    
+                    <div className="flex gap-2 mt-2">
+                      <Link href={`/profile/${creator.username}`} className="w-1/2">
+                        <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
+                          View Profile
+                        </Button>
+                      </Link>
+                      {currentUserId === itinerary.creatorId ?
+                      (
+                        <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
+                          <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+                            Edit Profile
                           </Button>
                         </Link>
-                        {currentUserId === itinerary.creatorId ?
-                        (
-                          <Link className="w-1/2" href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
-                            <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
-                              Edit Profile
-                            </Button>
-                          </Link>
-                        ) : (
-                          <div className="w-1/2">
-                            <FollowButton 
-                              creatorId={itinerary.creatorId} 
-                              userId={currentUserId || ""} 
-                              initialIsFollowing={initialIsFollowing}
-                            />
-                          </div>
-                        )}
-                      </div>
+                      ) : (
+                        <div className="w-1/2">
+                          <FollowButton 
+                            creatorId={itinerary.creatorId} 
+                            userId={currentUserId || ""} 
+                            initialIsFollowing={initialIsFollowing}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {/* Creator Notes */}
-                  {itinerary?.notes.length > 0 &&
-                  <>
-                    <p className="text-lg text-center font-medium mt-8">Useful Trip Notes</p>
-                    <div className="px-1 w-full">
-                      <NoteSection notes={itinerary.notes} />
-                    </div>
-                  </>
-                  }
                 </div>
+              </Link>
+              <div className="mt-4 space-y-2">
+                <p className="text-lg font-semibold px-2">About the Creator</p>
+                <p className="px-2">{creator.bio}</p>
               </div>
             </div>
+            <h2 className="text-2xl font-semibold">Trip Overview</h2>
+            <p className="my-4 text-sm md:text-md">
+              {itinerary.detailedOverview}
+            </p>
           </div>
+          
+          {/* Day Images Gallery */}
+          {itinerary.days && Array.isArray(itinerary.days) && itinerary.days.some(day => day.image) && (
+            <>
+              <div className="w-full p-8">
+                <h2 className="text-2xl font-semibold mb-4">Day Schedule</h2>
+                <div className="w-full overflow-x-auto no-scrollbar">
+                  <div className="flex gap-6 m-6 min-w-max">
+                    {itinerary.days.map((day, index) => {
+                      if (!day.image) return null;
+                      const isSelected = selectedDayIndex === index;
+                      return (
+                        <div
+                          key={day.id || index}
+                          onClick={() => setSelectedDayIndex(index)}
+                          className={`relative flex-shrink-0 md:w-[275px] md:h-[350px] w-[200px] h-[250px] rounded-2xl overflow-hidden transition-all cursor-pointer group ${
+                            isSelected ? 'shadow-lg shadow-black/20' : ''
+                          }`}
+                        >
+                          <Image
+                            src={day.image}
+                            alt={day.title || `Day ${index + 1}`}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                            <p className="text-2xl text-white/70">{String(index + 1).padStart(2, '0')}</p>
+                            <p className="text-md ">{day.title}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="pr-8"></div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Selected Day Schedule */}
+              {itinerary.days[selectedDayIndex] && (
+                <div className="w-full px-8 pb-8">
+                  <DaySection
+                    day={itinerary.days[selectedDayIndex]}
+                    isActive={true}
+                    onToggle={() => {}}
+                    duration={itinerary.days.length}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </div>
       )
 }
