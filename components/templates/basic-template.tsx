@@ -7,7 +7,7 @@ import { itineraryTagsMap } from "@/lib/constants/tags";
 import { UserData } from "@/lib/types";
 import { PhotoItem } from "@/lib/utils/photos";
 import { Itinerary } from "@/types/itinerary";
-import { Calendar, DollarSign, MapPin } from "lucide-react";
+import { Calendar, DollarSign, MapPin, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { FiEdit } from "react-icons/fi";
@@ -16,6 +16,7 @@ import FollowButton from "@/app/itinerary/[id]/follow-button";
 import BioSection from "@/app/itinerary/[id]/bio-section";
 import ScheduleSection from "@/app/itinerary/[id]/schedule-section";
 import NoteSection from "@/app/itinerary/[id]/note-section";
+import { FaUserLarge } from "react-icons/fa6";
 
 export default function BasicTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId }: { 
     itinerary: Itinerary, 
@@ -148,19 +149,25 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                   </p>
               </div>
               <div className="p-4 border mt-4 rounded-md">
-                <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
+                {creator.bio && creator.bio.length > 0 && (
+                  <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
+                )}
                 <div className="flex flex-wrap w-full justify-between">
                   <div>
                     <Link href={`/profile/${creator.username || ''}`} className="min-w-[100px] md:w-full cursor-pointer">
                       <div className="flex items-center gap-2 px-1">
                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
-                          {creator.avatar && (
+                          {creator.avatar && creator.avatar.length > 0 ? (
                             <Image
                               src={creator.avatar}
                               alt={creator.name || "Creator"}
                               fill
                               className="object-cover"
                             />
+                          ) : (
+                            <div className="relative h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                              <FaUserLarge className="h-10 w-10 mt-2 text-gray-300" />
+                            </div>
                           )}
                         </div>
                         <div>
@@ -233,7 +240,11 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
               <div className="lg:col-span-2 flex flex-col gap-4 md:gap-8">
                 <div className="flex flex-col lg:mb-0">
                   <div className="w-full justify-between hidden lg:flex">
-                    <h2 className="text-2xl md:text-2xl font-semibold mb-2">Overview</h2>
+                    {(itinerary.detailedOverview && itinerary.detailedOverview.length > 0 || itinerary.itineraryTags.length > 0) ? (
+                      <h2 className="text-2xl md:text-2xl font-semibold mb-2">Overview</h2>
+                    ) : (
+                      <h2 className="text-2xl md:text-2xl font-semibold mb-2"> </h2>
+                    )}
                     <div className="flex">
                       {currentUserId !== itinerary.creatorId && (
                         <InteractionButtons 
@@ -281,6 +292,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                   notes={itinerary.notes}
                   itineraryId={itinerary.id}
                   isCreator={canEdit}
+                  duration={itinerary.duration}
                 />
               </div>
     
@@ -291,13 +303,17 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                     <Link href={`/profile/${creator.username || ''}`} className="cursor-pointer">
                       <div className="flex items-center gap-4 px-1">
                         <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
-                          {creator.avatar && (
+                          {creator.avatar && creator.avatar.length > 0 ? (
                             <Image
                               src={creator.avatar}
                               alt={creator.name || "Creator"}
                               fill
                               className="object-cover"
                             />
+                          ) : (
+                            <div className="relative h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                              <FaUserLarge className="h-10 w-10 mt-2 text-gray-300" />
+                            </div>
                           )}
                         </div>
                         <div>
@@ -309,7 +325,9 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                       </div>
                     </Link>
                     <div className="mt-4 hidden lg:block space-y-2">
-                      <p className="text-lg font-semibold px-2">About the Creator</p>
+                      {creator.bio && creator.bio.length > 0 && 
+                        <p className="text-lg font-semibold px-2">About the Creator</p>
+                      }
                       <p className=" px-2">{creator.bio}</p>
                       <div className="flex gap-2 w-full mt-2">
                         <Link href={`/profile/${creator.username}`} className="w-1/2">

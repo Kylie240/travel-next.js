@@ -123,15 +123,15 @@ const ActionButtons = () => {
           </Link>
         </div>
       ) : (
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex gap-4">
         <Button variant="outline" size="default" 
           onClick={() => router.push('/login?mode=login')}
-          className="px-8 text-lg h-10 md:h-12 py-4 md:text-xl border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
+          className="px-8 text-lg h-10 md:h-12 py-4 md:text-lg border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
           Log In
         </Button>
         <Button size="default"
           onClick={() => router.push('/login?mode=signup')} 
-          className="bg-gray-900 flex items-center text-white px-8 text-lg h-10 md:h-12 py-4 md:text-xl"
+          className="bg-cyan-700 flex items-center text-white px-8 text-lg h-10 md:h-12 py-4 md:text-lg"
         >
           Sign Up
         </Button>

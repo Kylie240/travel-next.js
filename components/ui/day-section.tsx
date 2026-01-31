@@ -72,7 +72,8 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
             )}
           </button>
         </div>
-        {duration === day.id &&
+        {duration === day.id}
+        {day.id === duration &&
           <div className="absolute -left-[.40rem] bottom-0 w-[10px] h-[.12rem] bg-black">
           </div>
         }

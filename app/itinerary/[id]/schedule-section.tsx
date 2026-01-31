@@ -8,7 +8,7 @@ import { Note } from '@/types/Note'
 import NoteSection from './note-section'
 import { incrementItineraryViewCount } from '@/lib/actions/itinerary.actions'
 
-const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule: Day[], notes: Note[], itineraryId: string, isCreator: boolean }) => {
+const ScheduleSection = ({ schedule, notes, itineraryId, isCreator, duration }: { schedule: Day[], notes: Note[], itineraryId: string, isCreator: boolean, duration: number }) => {
   const [activeDays, setActiveDays] = useState<number[]>([])
   const [showScrollTop, setShowScrollTop] = useState(false)
   const headerRef = useRef<HTMLHeadingElement>(null)
@@ -98,7 +98,7 @@ const ScheduleSection = ({ schedule, notes, itineraryId, isCreator }: { schedule
                 isActive={activeDays.includes(day.id)}
                 onToggle={() => toggleDay(day.id)}
                 onClose={() => toggleDay(day.id)}
-                duration={schedule.length}
+                duration={duration}
               />
             </div>
           ))}

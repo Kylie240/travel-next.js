@@ -10,7 +10,7 @@ import { itineraryTagsMap } from "@/lib/constants/tags";
 import { UserData } from "@/lib/types";
 import { PhotoItem } from "@/lib/utils/photos";
 import { Itinerary } from "@/types/itinerary";
-import { Calendar, ChevronLeft, DollarSign, MapPin } from "lucide-react";
+import { Calendar, ChevronLeft, DollarSign, MapPin, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { FiEdit } from "react-icons/fi";
@@ -36,6 +36,7 @@ export default function TestTemplate({ itinerary, countries, photos, canEdit, pa
     currentUserId: string
  }) {
     const [dominantColor, setDominantColor] = useState<string>("rgba(0, 0, 0, 0.6)");
+    const [grayColor, setGrayColor] = useState<string>("rgba(153, 150, 150, 0.5)");
     const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
     const router = useRouter();
     
@@ -134,29 +135,29 @@ export default function TestTemplate({ itinerary, countries, photos, canEdit, pa
                   </div>
                 </div>
                 <div 
-                    className="text-white rounded-3xl p-6 backdrop-blur-sm"
+                    className="text-white rounded-xl p-6 backdrop-blur-nd"
                     style={{ backgroundColor: dominantColor }}
                 >
-                    <div className="flex gap-3 border-b border-white/50 pb-4">
-                        <MapPin size={40} />
+                    <div className="flex gap-3 align-center border-b border-white/50 pb-4">
+                        <MapPin strokeWidth={1.5} size={40} />
                         <div className="flex flex-col">
-                            <h1 className="text-white text-4xl font-bold">
+                            <h1 className="text-white text-2xl">
                                 {itinerary.title}
                             </h1>
                             {countries.length > 0 ? countries.map((country: any) => country).join(' · ') : ''}
                         </div>
                     </div>
                     <div className="flex flex-col gap-2 mt-4">
-                        <div className="flex justify-between">
+                        <div className="flex justify-between md:justify-around">
                             <div className="flex">
                                 <Calendar size={20} />
-                                <p className="text-sm">
+                                <p className="text-sm mr-1">
                                     {itinerary.duration} {itinerary.duration > 1 ? 'days' : 'day'}
                                 </p>
                             </div>
                             <div className="flex">
                                 <MapPin size={20} />
-                                <p className="text-sm">
+                                <p className="text-sm mr-1">
                                     {countries.length > 0 ? countries.map((country: any) => country).join(' · ') : ''}
                                 </p>
                             </div>
@@ -172,9 +173,11 @@ export default function TestTemplate({ itinerary, countries, photos, canEdit, pa
                             {itinerary.shortDescription}
                         </p>
                     </div>
-                    <Button className="bg-white text-black w-full rounded-full mt-4">
-                        View Itinerary
-                    </Button>
+                    <div className="w-full flex justify-center">
+                      <Button className="bg-white text-black w-full md:w-[300px] rounded-full mt-4 hover:bg-white/90">
+                          View Itinerary
+                      </Button>
+                    </div>
                 </div>
               </div>
             </div>
@@ -185,13 +188,17 @@ export default function TestTemplate({ itinerary, countries, photos, canEdit, pa
               <Link href={`/profile/${creator.username || ''}`} className="cursor-pointer">
                 <div className="flex items-center gap-4 px-1">
                   <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
-                    {creator.avatar && (
+                    {creator.avatar && creator.avatar.length > 0 ? (
                       <Image
                         src={creator.avatar}
                         alt={creator.name || "Creator"}
                         fill
                         className="object-cover"
                       />
+                    ) : (
+                      <div className="flex items-center justify-center h-full w-full">
+                        <User size={40} />
+                      </div>
                     )}
                   </div>
                   <div className="flex justify-between w-full">
@@ -226,10 +233,12 @@ export default function TestTemplate({ itinerary, countries, photos, canEdit, pa
                   </div>
                 </div>
               </Link>
-              <div className="mt-4 space-y-2">
-                <p className="text-lg font-semibold px-2">About the Creator</p>
-                <p className="px-2">{creator.bio}</p>
-              </div>
+                {creator.bio && creator.bio.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-lg font-semibold px-2">About the Creator</p>
+                  <p className="px-2">{creator.bio}</p>
+                </div>
+                )}
             </div>
             <h2 className="text-2xl font-semibold">Trip Overview</h2>
             <p className="my-4 text-sm md:text-md">
@@ -241,29 +250,20 @@ export default function TestTemplate({ itinerary, countries, photos, canEdit, pa
           {itinerary.days && Array.isArray(itinerary.days) && itinerary.days.some(day => day.image) && (
             <>
               <div className="w-full p-8">
-                <h2 className="text-2xl font-semibold mb-4">Day Schedule</h2>
+                <h2 className="text-2xl font-semibold mb-4">Select A Day</h2>
                 <div className="w-full overflow-x-auto no-scrollbar">
                   <div className="flex gap-6 m-6 min-w-max">
                     {itinerary.days.map((day, index) => {
-                      if (!day.image) return null;
                       const isSelected = selectedDayIndex === index;
                       return (
                         <div
                           key={day.id || index}
                           onClick={() => setSelectedDayIndex(index)}
-                          className={`relative flex-shrink-0 md:w-[275px] md:h-[350px] w-[200px] h-[250px] rounded-2xl overflow-hidden transition-all cursor-pointer group ${
-                            isSelected ? 'shadow-lg shadow-black/20' : ''
+                          className={`relative flex-shrink-0 w-[200px] h-[50px] rounded-xl overflow-hidden transition-all cursor-pointer group ${
+                            isSelected ? 'shadow-sm shadow-black/10 bg-gray-100' : 'bg-white'
                           }`}
                         >
-                          <Image
-                            src={day.image}
-                            alt={day.title || `Day ${index + 1}`}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                            <p className="text-2xl text-white/70">{String(index + 1).padStart(2, '0')}</p>
+                          <div className="absolute bottom-0 left-0 right-0 p-4 text-black">
                             <p className="text-md ">{day.title}</p>
                           </div>
                         </div>

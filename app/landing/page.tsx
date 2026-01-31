@@ -1,6 +1,6 @@
 "use client"
 
-import { Map, Send } from "lucide-react"
+import { Map, MapPin, Send } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { TbWriting } from "react-icons/tb"
@@ -9,9 +9,56 @@ import { Button } from "@/components/ui/button"
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white">
       {/* Hero Section */}
       <div className="w-full flex justify-center items-center">
+        <div className="w-screen max-w-[1800px] px-8 mt-10 sm:mt-16 mb-4 sm:mb-10 flex flex-col-reverse sm:flex-col lg:flex-row justify-center items-center gap-8">
+          <div className="flex flex-col items-center lg:items-start justify-center sm:px-4 md:px-6 max-w-[600px] lg:w-1/2">
+            <h1 className="text-4xl sm:text-5xl font-medium text-center lg:text-left my-8 sm:mb-8">
+              Welcome To Your New Travel Journal
+            </h1>
+            <p className="text-lg sm:text-xl lg:text-2xl text-center lg:text-left font-light mb-4 sm:mb-8 sm:mx-2">
+              Create and share your travel itineraries with friends and followers. Journli houses your experiences in one place, making it easy to share and discover new travel ideas with one link.
+            </p>
+            <div className="gap-4 sm:mt-8">
+                <ActionButtons />
+            </div>
+          </div>
+          <div className="flex relative justify-center items-center w-full lg:w-1/2 mt-0 sm:mt-8 aspect-[1/1] sm:aspect-[4/3] md:aspect-[2/1] lg:aspect-[1/1] overflow-hidden">
+            <div className="mx-0 md:mx-12 lg:mx-0 grid grid-cols-2 gap-4 sm:gap-6 lg:gap-8 rotate-12 w-full xl:w-[732px]">
+              <div className="flex flex-col gap-y-4 sm:gap-y-6 lg:gap-y-8 mt-12 sm:mt-16 lg:mt-24">
+                <div className="relative rounded-xl w-full aspect-[7/10]" style={{ backgroundImage: 'url(https://i.pinimg.com/736x/1b/3e/92/1b3e926253fe18a02d71386b006ed85c.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                </div>
+                <div className="rounded-xl overflow-hidden w-full aspect-[7/10]" style={{ backgroundImage: 'url(https://i.pinimg.com/736x/05/d9/7e/05d97eae007a5938fa3cb19f77ca0067.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                </div>
+              </div>
+              <div className="flex flex-col gap-y-4 sm:gap-y-6 lg:gap-y-8 -mt-12 sm:-mt-16 lg:-mt-24">
+                <div className="relative rounded-xl overflow-hidden w-full aspect-[7/10]" style={{ backgroundImage: 'url(https://i.pinimg.com/1200x/ea/9d/1c/ea9d1ca6252b75f5f907b1ad262f255b.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                  <div className="absolute flex justify-center items-center py-2 px-3 bg-white rounded-full z-5 bottom-2 left-2 gap-1 shadow-md shadow-black/10">
+                    <MapPin className="w-5 h-5 text-cyan-700" strokeWidth={3}/>
+                    <p className="text-md font-semibold">Thailand</p>
+                  </div>
+                </div>
+                <div className="rounded-xl overflow-hidden w-full aspect-[7/10]" style={{ backgroundImage: 'url(https://i.pinimg.com/736x/44/f4/77/44f4770e83127568b1363448729fb025.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                </div>
+              </div>
+            </div>
+            <div className="absolute z-5 bottom-[10%] left-[12%] rotate-12 flex justify-center items-center py-2 px-4 bg-white rounded-lg gap-1 shadow-md shadow-black/10">
+              <div className="flex items-start gap-3">
+                <div className="mt-1">
+                  <Image className="w-full h-full object-cover" src="https://www.journli.com/_next/image?url=https%3A%2F%2Fxmfqfdxfssaxwjfodzff.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Favatars%2F264ba7c9-7f34-4fd9-ac38-b8ec5a9a2fb9%2Fprofile-picture-1762126834984.png&w=1920&q=75" alt="kylie" width={32} height={32} className="rounded-full" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">journlitravels</p>
+                  <p className="text-sm font-regular leading-1">Share your itinerary with Journli!</p>
+                  <p className="text-xs text-gray-400">2023-04-19 Reply</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* <div className="w-full flex justify-center items-center">
         <div className="relative h-[calc(100vh-64px)] max-h-screen w-screen max-w-[1800px] px-8 md:rounded-3xl overflow-hidden">
           <div className="absolute inset-0">
             <Image
@@ -36,7 +83,7 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
       {/* Features Section */}
       <div className="py-20 px-12">
         <div className="max-w-6xl mx-auto">
