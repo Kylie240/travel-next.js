@@ -1,4 +1,4 @@
-import { Check, Lock, Sparkles } from "lucide-react"
+import { Check, Circle, Lock, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Metadata } from "next"
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default async function PlansPage() {
   const supabase = createServerComponentClient({ cookies })
   const { data: { user } } = await supabase.auth.getUser()
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
@@ -30,7 +30,7 @@ export default async function PlansPage() {
           <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-gray-200 hover:border-gray-300 transition-all">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-6 h-6 text-cyan-600" />
+                <Circle className="w-5 h-5 text-black" strokeWidth={1.5} />
                 <h2 className="text-2xl font-bold text-gray-900">Free Plan</h2>
               </div>
               <p className="text-gray-600">Perfect for the casual traveler and occasional trip planner</p>
@@ -107,9 +107,11 @@ export default async function PlansPage() {
               </div>
             </div>
 
-            <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
-              Coming Soon
-            </Button>
+            <form action="api/checkout-session" method="POST">
+              <Button className="w-full mb-8 bg-gray-400" type="submit">
+                Upgrade to Standard
+              </Button>
+            </form>
 
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900 mb-4">Everything in Free, plus:</h3>
@@ -134,25 +136,15 @@ export default async function PlansPage() {
                 <span className="text-gray-700">Collaborative editing</span>
               </div>
 
-              {/* <div className="flex items-start gap-3">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Monetization capabilities</span>
-              </div> */}
-
-              {/* <div className="flex items-start gap-3">
-                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Insights and analytics</span>
-              </div> */}
-
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-700">Custom themes and templates</span>
               </div>
 
-              {/* <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-700">Monetization capabilities</span>
-              </div> */}
+              </div>
             </div>
           </div>
 
@@ -182,6 +174,12 @@ export default async function PlansPage() {
             <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
               Coming Soon
             </Button>
+            {/* <form action="api/checkout-session" method="POST">
+              <input type="hidden" name="lookup_key" value="price_1SvjvgCFWq8paBje5goZvdZk" />
+              <Button className="w-full mb-8 bg-gray-400">
+                Upgrade to Premium
+              </Button>
+            </form> */}
 
             <div className="space-y-4 opacity-75">
               <h3 className="font-semibold text-gray-900 mb-4">Everything in Standard, plus:</h3>

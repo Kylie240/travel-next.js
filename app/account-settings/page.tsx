@@ -9,7 +9,7 @@ import createClient from "@/utils/supabase/server"
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-export default async function AccountSettingsPage({ searchParams }: { searchParams: { tab: string } }) {
+export default async function AccountSettingsPage({ searchParams }: { searchParams: { tab: string, success: string } }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -19,6 +19,7 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
   const userData = await getUserDataById()
   const userStats = await getUserStatsById()
   const userSettings = await getUserSettingsById()
+  
 
   return (
     <SettingsContent 

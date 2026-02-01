@@ -11,11 +11,11 @@ export default function LandingPage() {
   return (
     <div className="bg-white">
       {/* Hero Section */}
-      <div className="w-full flex justify-center items-center">
+      <div className="w-full flex justify-center items-center shadow-[inset_0_12px_20px_-12px_rgba(0,0,0,0.1)]">
         <div className="w-screen max-w-[1800px] px-8 mt-10 sm:mt-16 mb-4 sm:mb-10 flex flex-col-reverse sm:flex-col lg:flex-row justify-center items-center gap-8">
           <div className="flex flex-col items-center lg:items-start justify-center sm:px-4 md:px-6 max-w-[600px] lg:w-1/2">
-            <h1 className="text-4xl sm:text-5xl font-medium text-center lg:text-left my-8 sm:mb-8">
-              Welcome To Your New Travel Journal
+            <h1 className="text-4xl font-medium text-center lg:text-left my-8 sm:mb-8">
+              Welcome To Your New < br /> Travel Journal
             </h1>
             <p className="text-lg sm:text-xl lg:text-2xl text-center lg:text-left font-light mb-4 sm:mb-8 sm:mx-2">
               Create and share your travel itineraries with friends and followers. Journli houses your experiences in one place, making it easy to share and discover new travel ideas with one link.
@@ -58,32 +58,19 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
-      {/* <div className="w-full flex justify-center items-center">
-        <div className="relative h-[calc(100vh-64px)] max-h-screen w-screen max-w-[1800px] px-8 md:rounded-3xl overflow-hidden">
-          <div className="absolute inset-0">
-            <Image
-              src="/images/boat-photo2.jpg"
-              alt="Travel background"
-              fill
-              className="object-cover rotate-180"
-              priority
-            />
-            <div className="absolute inset-0 bg-black/40" />
-          </div>
-          
-          <div className="relative mt-8 z-10 h-full flex flex-col items-center justify-center text-white px-4 md:px-6">
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-center mb-6">
-            Welcome To Your New <br className="hidden md:block" /> Travel Journal
-            </h1>
-            <p className="text-xl sm:text-2xl lg:text-3xl text-center font-light mb-8 mx-2 max-w-[500px]">
-              Easily create and share your travel experiences with others
-            </p>
-            <div className="gap-4 mt-8">
-                <ActionButtons />
-            </div>
-          </div>
+
+      <div className="py-20 px-4 bg-gray-100 mt-20">
+        <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
+          <p className="text-sm text-gray-800 mb-2">Coming Soon</p>
+          <h2 className="text-2xl md:text-3xl text-cyan-700 font-bold mb-6">
+            Get Paid for Your Travel Expertise
+          </h2>
+          <p className="text-md md:text-lg text-black mb-8 px-8">
+            Soon you'll be able to monetize your travel expertise! Create detailed itineraries and sell them to fellow travelers looking for insider tips and curated experiences. Click <Link href="/plans" className="text-cyan-700 text-bold">here</Link> to learn more.
+          </p>
         </div>
-      </div> */}
+      </div>
+
       {/* Features Section */}
       <div className="py-20 px-12">
         <div className="max-w-6xl mx-auto">
@@ -174,10 +161,9 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* CTA Section */}
       <div className="py-20 px-4 bg-gray-900">
         <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl text-white md:text-4xl font-bold mb-6">
+          <h2 className="text-2xl md:text-3xl text-white font-bold mb-6">
             Start Sharing Your Journey For Free
           </h2>
           <p className="text-md md:text-lg text-white mb-8 px-8">

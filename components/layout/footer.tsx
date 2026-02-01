@@ -52,7 +52,7 @@ export default function Footer() {
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-xl sm:text-2xl text-black font-medium mb-3">Stay updated with travel inspiration</h2>
             <p className="text-gray-600">
-              Subscribe to our newsletter and get the latest travel tips, destinations, and exclusive offers.
+              Subscribe to our newsletter and get the latest updates on Journli.
             </p>
             <NewsletterForm />
             <p className="text-sm text-gray-500 sm:mt-2 md:mt-4">

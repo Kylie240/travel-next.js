@@ -110,14 +110,14 @@ const ActionButtons = () => {
   return (
     <div className="w-full"> 
       {currentUser ? (
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-row gap-4">
           <Link href="/my-itineraries">
-            <Button variant="outline" size="default" className="px-8 text-lg h-10 md:h-12 py-4 md:text-xl border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
+            <Button variant="outline" size="default" className="px-8 text-md h-10 py-4 border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
               My Itineraries
             </Button>
           </Link>
           <Link href="/create">
-            <Button size="default" className="bg-gray-900 flex items-center text-white px-8 text-lg h-10 md:h-12 py-4 md:text-xl">
+            <Button size="default" className="bg-cyan-700 flex items-center text-white px-8 text-md h-10 py-4">
               Start Creating
             </Button>
           </Link>
@@ -126,55 +126,17 @@ const ActionButtons = () => {
       <div className="flex gap-4">
         <Button variant="outline" size="default" 
           onClick={() => router.push('/login?mode=login')}
-          className="px-8 text-lg h-10 md:h-12 py-4 md:text-lg border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
+          className="px-8 text-md h-10 py-4 border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
           Log In
         </Button>
         <Button size="default"
           onClick={() => router.push('/login?mode=signup')} 
-          className="bg-cyan-700 flex items-center text-white px-8 text-lg h-10 md:h-12 py-4 md:text-lg"
+          className="bg-cyan-700 flex items-center text-white px-8 text-md h-10 py-4"
         >
           Sign Up
         </Button>
-        {/* <Button variant="outline" size="default" 
-          onClick={() => handleAuthClick(false)}
-          className="px-8 text-lg h-10 md:h-12 py-4 md:text-xl border bg-transparent flex justify-center items-center w-full hover:bg-gray-100">
-          Log In
-        </Button>
-        <Button size="default"
-          onClick={() => handleAuthClick(true)} 
-          className="bg-gray-900 flex items-center text-white px-8 text-lg h-10 md:h-12 py-4 md:text-xl"
-        >
-          Sign Up
-        </Button>
-        {!isMobile && (
-          <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={isSignUp} setIsSignUp={setIsSignUp}>
-            <></>
-          </AuthDialog>
-        )} */}
       </div>
       )}
-      {/* Mobile version */}
-      {/* <div className="bg-white md:hidden absolute bottom-0 z-10 rounded-t-2xl w-full flex flex-col justify-center items-center pt-6 pb-8 px-16 gap-4">
-        <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={isSignUp} setIsSignUp={setIsSignUp}>
-          <button 
-            onClick={() => handleAuthClick(true)} 
-            className="bg-gray-900 text-white h-[50px] w-full px-12 justify-center py-3 flex items-center gap-2 shadow-[0_15px_15px_rgba(0,0,0,0.15)] rounded-lg font-medium hover:bg-gray-900 transition"
-          >
-            Sign Up For Free
-          </button>
-        </AuthDialog>
-        <div className="flex gap-2 font-medium pb-6">
-          <span className="text-gray-900">Already have an account?</span>
-          <AuthDialog isOpen={isOpen} setIsOpen={setIsOpen} isSignUp={isSignUp} setIsSignUp={setIsSignUp}>
-            <p 
-              onClick={() => handleAuthClick(false)} 
-              className="text-cyan-600 cursor-pointer hover:text-cyan-300 transition"
-            >
-              Log in
-            </p>
-          </AuthDialog>
-        </div>
-      </div> */}
     </div>
   )
 }

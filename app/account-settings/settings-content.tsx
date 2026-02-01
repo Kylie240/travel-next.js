@@ -8,7 +8,7 @@ import { SettingsSidebar } from "@/components/ui/settings-sidebar"
 import { User as UserType } from "@supabase/supabase-js"
 import { UserData } from "@/lib/types"
 import { UserStats } from "@/types/userStats"
-import { ChevronRight } from "lucide-react"
+import { Check, ChevronRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { travelerTypesMap } from "@/lib/constants/tags"
@@ -28,12 +28,13 @@ interface SettingsContentProps {
   initialUser: UserType | null;
   userData: UserData;
   userStats: UserStats;
-  searchParams: { tab: string };
+  searchParams: { tab: string, success: string };
   userSettings: UserSettings;
 }
 
 export function SettingsContent({ initialUser, userData, userStats, searchParams, userSettings }: SettingsContentProps) {
   const [activeSection, setActiveSection] = useState(searchParams?.tab || "Profile")
+  const [success, setSuccess] = useState(searchParams?.success || false)
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false)
   const [ _, setUserData] = useState<UserData>(userData)
   const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
@@ -75,6 +76,59 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false)
   const [uploadedAvatar, setUploadedAvatar] = useState<File | null>(null)
+  const planDetails = [
+    {
+      title: "free",
+      description: "Perfect for the casual traveler and occasional trip planner",
+      features: [
+        "20 shareable itineraries",
+        "Access to day-by-day planner",
+        "Share itineraries with anyone",
+        "Save and bookmark favorites",
+        "Follow other travelers",
+        "Profile customization",
+      ]
+    },
+    {
+      title: "standard",
+      description: "Ideal for frequent travelers who want more features",
+      features: [
+        "Access to day-by-day planner",
+        "Share itineraries with anyone",
+        "Save and bookmark favorites",
+        "Follow other travelers",
+        "Profile customization",
+        "Unlimited itinerary creation",
+        "Added control over content visibility",
+        "Offline access to itineraries",
+        "Collaborative editing",
+        "Custom themes and templates",
+        "Monetization capabilities",
+      ]
+    },
+    {
+      title: "premium",
+      description: "Advanced capabilities for creators looking to monetize their content",
+      features: [
+        "Access to day-by-day planner",
+        "Share itineraries with anyone",
+        "Save and bookmark favorites",
+        "Follow other travelers",
+        "Profile customization",
+        "Unlimited itinerary creation",
+        "Added control over content visibility",
+        "Offline access to itineraries",
+        "Collaborative editing",
+        "Custom themes and templates",
+        "Monetization capabilities",
+        "Analytics dashboard",
+        "Affiliate program",
+        "Explore Page boost",
+        "Monetization capabilities",
+        "Reduced selling fee",
+      ]
+    }
+  ]
 
   const handleSectionClick = (sectionTitle: string) => {
     if (window.innerWidth < 1020) {
@@ -114,8 +168,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               username: formData.username.toLowerCase(), 
               bio: formData.bio, 
               location: formData.location,
-              email: userData.email, // Keep original email
-              avatar: updatedUserData.avatar, // Keep avatar from separate state
+              email: userData.email,
+              avatar: updatedUserData.avatar,
               facebook: buildSocialUrl("facebook", formData.facebook),
               instagram: buildSocialUrl("instagram", formData.instagram),
               twitter: buildSocialUrl("twitter", formData.twitter),
@@ -244,7 +298,6 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const handleUserAvatar = async (avatar: string) => {
     await setUserAvatar(userData.id, avatar)
   }
-
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const supabase = createClient();
@@ -700,6 +753,104 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         </div>
       )
     },
+    {
+      title: "Your Plan",
+      description: "Manage your subscription",
+      content: (
+        <div className="space-y-8">
+          <div>
+            <label className="text-sm text-gray-600 mb-8">Current plan</label>
+            <p className="block text-md font-semibold">
+              {userSettings.plan.charAt(0).toUpperCase() + userSettings.plan.slice(1)} Plan
+            </p>
+            {planDetails.find(plan => plan.title === userSettings.plan)?.description && (
+              <p className="text-sm text-gray-600">
+                {planDetails.find(plan => plan.title === userSettings.plan)?.description}
+              </p>
+            )}
+          </div>
+          {userSettings.plan !== 'free' && (
+            <div>
+              <label className="block text-md font-semibold mb-2">Subscription Status</label>
+              <p className="text-sm text-gray-600 mb-4">
+                Your {userSettings.plan === 'free' ? 'plan' : 'subscription status'} is {userSettings.plan === 'free' ? 'active' : userSettings.stripe_subscription_status}.
+              </p>
+            </div>
+          )}
+          {userSettings.stripe_subscription_status === 'active' && userSettings.plan !== 'free' && (
+            <div>
+              <label className="block text-md font-semibold mb-2">Billing Details</label>
+              <p className="text-sm text-gray-600 mb-4">
+                Your next billing date is {userSettings.stripe_subscription_created_date}. You will be charged {userSettings.plan === 'standard' ? '$5.99' : '$13.99'} per month.
+              </p>
+              <p className="text-sm text-gray-600 mb-4">
+                Your billing email is {userData.email}.
+              </p>
+            </div>
+          )}
+          <div>
+            <label className="block text-md font-semibold mb-2">Plan details</label>
+              {planDetails.find(plan => plan.title === userSettings.plan)?.features.map((feature) => (
+                <div key={feature}>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{feature}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+          { userSettings.plan !== 'premium' && (
+          <div className="mt-12">
+            <label className="block text-md font-semibold mb-2">{userSettings.plan === 'free' ? 'Upgrade and subsribe' : 'Upgrade to Premium'}</label>
+            {userSettings.plan === 'free' ? (
+              <>
+                <p className="text-sm text-gray-600 mb-4">
+                  Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, monetize your content, and more.
+                </p>
+                {userData.id === 'bb9bae46-6088-4a9f-ad81-9f81ed305958' ? (
+                <form action="api/checkout-session" method="POST">
+                  <Button className="bg-green-600" type="submit">
+                    Upgrade to Standard
+                  </Button>
+                </form>
+                ) : (
+                  <Button disabled className="bg-gray-400 cursor-not-allowed">
+                    Upgrade to Standard (Coming Soon)
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-gray-600 mb-4">
+                  Upgrading to Premium will give you access to all features and allow you to create unlimited itineraries.
+                </p>
+                <Button disabled className="bg-gray-400 cursor-not-allowed">
+                    Upgrade to Premium (Coming Soon)
+                  </Button>
+                {/* Uncomment when premium available */}
+                {/* <form action="api/checkout-session" method="POST">
+                  <Button className="bg-green-600" type="submit">
+                    Upgrade to Premium (Coming Soon)
+                  </Button>
+                </form> */}
+              </>
+            )}
+          </div>
+          )}
+          <Button variant="outline" onClick={() => router.push('/plans')}>Explore All Plans</Button>
+          { userSettings.plan !== 'free' && (
+          <div className="mt-12">
+            <label className="block text-md font-semibold mb-2">Unsubscribe</label>
+            <p className="text-sm text-gray-600 mb-4">
+              Unsubscribing from your plan means that you will no longer be able to access the features of your current plan.
+              You will still be able to access your itineraries and profile. If you have more than 20 shareable itineraries, we will automatically reduce the number of both itineraries you can create and share to 20.
+            </p>
+            <a className="underline cursor-pointer hover:text-red-600" onClick={() => handleDeleteAccount()}>Unsubscribe</a>
+          </div>
+          )}
+        </div>
+      )
+    }
     // {
     //   title: "Travel preferences",
     //   description: "Set your travel style and interests",
@@ -770,6 +921,12 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
 
   return (
     <div className="min-h-fit h-screen md:h-[calc(100vh-64px)] bg-white lg:bg-gray-50">
+      {success && (
+        <div className="flex justify-between items-center bg-green-100 border border-green-400 text-green-700 mx-12 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">Your subscription has been updated successfully!</span>
+          <Button variant="outline" onClick={() => setSuccess(false)}>Close</Button>
+        </div>
+      )}
       <div className="h-full min-h-fit">
         <div className="md:p-6 h-full grid md:grid-cols-1 lg:grid-cols-3 space-y-6 lg:space-y-0 lg:gap-6">
           {/* Left Column: Profile Header*/}
