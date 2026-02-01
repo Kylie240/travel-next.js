@@ -46,7 +46,7 @@ export default function LandingPage() {
             <div className="absolute z-5 bottom-[10%] left-[12%] rotate-12 flex justify-center items-center py-2 px-4 bg-white rounded-lg gap-1 shadow-md shadow-black/10">
               <div className="flex items-start gap-3">
                 <div className="mt-1">
-                  <Image className="w-full h-full object-cover" src="https://www.journli.com/_next/image?url=https%3A%2F%2Fxmfqfdxfssaxwjfodzff.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Favatars%2F264ba7c9-7f34-4fd9-ac38-b8ec5a9a2fb9%2Fprofile-picture-1762126834984.png&w=1920&q=75" alt="kylie" width={32} height={32} className="rounded-full" />
+                  <Image className="w-full h-full object-cover rounded-full" src="https://www.journli.com/_next/image?url=https%3A%2F%2Fxmfqfdxfssaxwjfodzff.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Favatars%2F264ba7c9-7f34-4fd9-ac38-b8ec5a9a2fb9%2Fprofile-picture-1762126834984.png&w=1920&q=75" alt="kylie" width={32} height={32} />
                 </div>
                 <div>
                   <p className="text-sm font-medium">journlitravels</p>

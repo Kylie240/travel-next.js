@@ -759,8 +759,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       content: (
         <div className="space-y-8">
           <div>
-            <label className="text-sm text-gray-600 mb-8">Current plan</label>
-            <p className="block text-md font-semibold">
+            <label className="text-sm text-gray-600">Current plan</label>
+            <p className="block text-md font-semibold mt-2">
               {userSettings.plan.charAt(0).toUpperCase() + userSettings.plan.slice(1)} Plan
             </p>
             {planDetails.find(plan => plan.title === userSettings.plan)?.description && (
@@ -768,6 +768,9 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                 {planDetails.find(plan => plan.title === userSettings.plan)?.description}
               </p>
             )}
+            {userSettings.plan !== 'free' && 
+              <a href="https://billing.stripe.com/p/login/test_dRmcN40YlfXM6UkcTKgMw00" target="_blank" className="mt-4 underline cursor-pointer hover:text-red-600">Manage your subscription</a>
+            }
           </div>
           {userSettings.plan !== 'free' && (
             <div>
@@ -781,7 +784,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             <div>
               <label className="block text-md font-semibold mb-2">Billing Details</label>
               <p className="text-sm text-gray-600 mb-4">
-                Your next billing date is {userSettings.stripe_subscription_created_date}. You will be charged {userSettings.plan === 'standard' ? '$5.99' : '$13.99'} per month.
+                Your next billing date is { userSettings.stripe_subscription_created_date ? new Date(userSettings.stripe_subscription_created_date).toLocaleDateString() : 'N/A' }. You will be charged {userSettings.plan === 'standard' ? '$5.99' : '$13.99'} per month.
               </p>
               <p className="text-sm text-gray-600 mb-4">
                 Your billing email is {userData.email}.
