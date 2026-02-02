@@ -4,6 +4,9 @@ import createClient from '@/utils/supabase/server'
 
 import { stripe } from '../../../lib/stripe'
 
+// Prevent static analysis during build
+export const dynamic = 'force-dynamic'
+
 export async function POST() {
   try {
     const headersList = await headers()

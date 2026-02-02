@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/utils/supabase/server-admin";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+// Prevent static analysis during build
+export const dynamic = 'force-dynamic'
 
 // Map Stripe price IDs to plan names
 const PRICE_TO_PLAN: Record<string, string> = {
@@ -38,7 +38,7 @@ async function updateUserSubscription(
   return data;
 }
 
-async function getUserIdFromCustomer(customerId: string): Promise<string | null> {
+async function getUserIdFromCustomer(stripe: Stripe, customerId: string): Promise<string | null> {
   // First, try to get the user ID from the customer metadata
   const customer = await stripe.customers.retrieve(customerId);
   
@@ -68,6 +68,10 @@ async function getUserIdFromCustomer(customerId: string): Promise<string | null>
 }
 
 export async function POST(request: NextRequest) {
+  // Initialize Stripe lazily (at runtime, not build time)
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
   const body = await request.text();
   const sig = request.headers.get("stripe-signature") || "";
   let event: Stripe.Event;
@@ -144,7 +148,7 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         
         const userId = subscription.metadata?.supabase_user_id || 
-                       await getUserIdFromCustomer(subscription.customer as string);
+                       await getUserIdFromCustomer(stripe, subscription.customer as string);
 
         if (!userId) {
           console.error('Could not find user for subscription:', subscription.id);
@@ -171,7 +175,7 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         
         const userId = subscription.metadata?.supabase_user_id || 
-                       await getUserIdFromCustomer(subscription.customer as string);
+                       await getUserIdFromCustomer(stripe, subscription.customer as string);
 
         if (!userId) {
           console.error('Could not find user for subscription:', subscription.id);
@@ -205,7 +209,7 @@ export async function POST(request: NextRequest) {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
         const userId = subscription.metadata?.supabase_user_id ||
-                       await getUserIdFromCustomer(invoice.customer as string);
+                       await getUserIdFromCustomer(stripe, invoice.customer as string);
 
         if (!userId) {
           console.error('Could not find user for invoice:', invoice.id);
@@ -242,7 +246,7 @@ export async function POST(request: NextRequest) {
         const subscription = await stripe.subscriptions.retrieve(failedSubscriptionId);
 
         const userId = subscription.metadata?.supabase_user_id ||
-                       await getUserIdFromCustomer(invoice.customer as string);
+                       await getUserIdFromCustomer(stripe, invoice.customer as string);
 
         if (!userId) {
           console.error('Could not find user for failed invoice:', invoice.id);

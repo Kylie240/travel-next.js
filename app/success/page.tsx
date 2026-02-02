@@ -5,6 +5,9 @@ import { stripe } from '../../lib/stripe'
 import { Button } from '@/components/ui/button'
 import { Metadata } from 'next'
 
+// Prevent static analysis during build
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Payment Successful - Journli",
   description: "Your subscription has been activated. Welcome to Journli!",
