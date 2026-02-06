@@ -1,5 +1,5 @@
 import { Itinerary } from "@/types/itinerary"
-import { getItineraryById } from "@/lib/actions/itinerary.actions"
+import { getItineraryById, getRestrictedItineraryById } from "@/lib/actions/itinerary.actions"
 import { collectAllPhotos } from "@/lib/utils/photos"
 import { redirect } from "next/navigation"
 import createClient from "@/utils/supabase/server"
@@ -12,7 +12,41 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const { data: { user } } = await supabase.auth.getUser()
   const currentUserId = user?.id
   const paramsValue = await params;
-  const itinerary = await getItineraryById(paramsValue.id) as Itinerary | null;
+  
+  // First, check if itinerary is paid and if user has access
+  const { data: itineraryMeta } = await supabase
+    .from('itineraries')
+    .select('is_paid, price_cents, creator_id, view_permission, edit_permission')
+    .eq('id', paramsValue.id)
+    .single()
+
+  // Determine if user has full access to a paid itinerary
+  let hasFullAccess = true;
+  let isRestricted = false;
+  
+  if (itineraryMeta?.is_paid) {
+    // User has full access if they are the creator
+    const isCreator = currentUserId === itineraryMeta.creator_id;
+    
+    if (!isCreator) {
+      // Check if user has purchased this itinerary (you'll need to create this table)
+      // For now, we'll check if user is in a purchases table
+      const { data: purchaseData } = await supabase
+        .from('itinerary_purchases')
+        .select('id')
+        .eq('itinerary_id', paramsValue.id)
+        .eq('user_id', currentUserId || '')
+        .maybeSingle()
+      
+      hasFullAccess = !!purchaseData;
+      isRestricted = !hasFullAccess;
+    }
+  }
+
+  // Fetch itinerary - use restricted version if user doesn't have full access to paid content
+  const itinerary = isRestricted 
+    ? await getRestrictedItineraryById(paramsValue.id) as Itinerary | null
+    : await getItineraryById(paramsValue.id) as Itinerary | null;
   
   // Redirect if itinerary or creator data is missing
   if (!itinerary || !itinerary.creator) {
@@ -24,22 +58,15 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const countries = itinerary.days?.map(day => day.countryName).filter((value, index, self) => self.indexOf(value) === index) || [];
   const photos = collectAllPhotos(itinerary);
   
-  // Check view permissions
-  // First, get the itinerary's view permission and edit permission from the database
-  const { data: itineraryData } = await supabase
-    .from('itineraries')
-    .select('view_permission, edit_permission, creator_id')
-    .eq('id', paramsValue.id)
-    .single()
-
-  if (itineraryData) {
-    const viewPermission = typeof itineraryData.view_permission === 'string' 
-      ? parseInt(itineraryData.view_permission) 
-      : itineraryData.view_permission
+  // Check view permissions using already-fetched metadata
+  if (itineraryMeta) {
+    const viewPermission = typeof itineraryMeta.view_permission === 'string' 
+      ? parseInt(itineraryMeta.view_permission) 
+      : itineraryMeta.view_permission
 
     // If viewPermission is 2 (creator only), check if user is the creator
     if (viewPermission === viewPermissionEnum.creator) {
-      if (!currentUserId || currentUserId !== itineraryData.creator_id) {
+      if (!currentUserId || currentUserId !== itineraryMeta.creator_id) {
         return redirect("/not-authorized");
       }
     }
@@ -59,7 +86,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         .maybeSingle()
 
       // Also check if user is the creator (creators should always have access)
-      const isCreator = currentUserId === itineraryData.creator_id
+      const isCreator = currentUserId === itineraryMeta.creator_id
       
       if (!isCreator && !permissionData) {
         return redirect("/not-authorized");
@@ -78,10 +105,11 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   
   // Check edit permissions
   let canEdit = false;
-  if (currentUserId && itineraryData) {
-    const editPermission = typeof itineraryData.edit_permission === 'string'
-      ? parseInt(itineraryData.edit_permission)
-      : itineraryData.edit_permission
+  if (currentUserId && itineraryMeta) {
+    console.log(itineraryMeta)
+    const editPermission = typeof itineraryMeta.edit_permission === 'string'
+      ? parseInt(itineraryMeta.edit_permission)
+      : itineraryMeta.edit_permission
     
     // If editPermission is 1 (creator only), only creator can edit
     if (editPermission === editPermissionEnum.creator) {
@@ -175,7 +203,9 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
       initialIsSaved={initialIsSaved} 
       initialIsFollowing={initialIsFollowing}
       creator={creator} 
-      currentUserId={currentUserId} 
+      currentUserId={currentUserId}
+      isRestrictedView={isRestricted}
+      priceCents={itineraryMeta?.price_cents || 0}
     />
   )
 } 

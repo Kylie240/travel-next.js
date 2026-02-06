@@ -18,6 +18,7 @@ async function updateUserSubscription(
     stripe_subscription_id: string;
     stripe_subscription_status: string;
     stripe_subscription_created_date: string;
+    stripe_subscription_ends_at?: string;
     plan: string;
   }
 ) {
@@ -139,7 +140,6 @@ export async function POST(request: NextRequest) {
           plan: plan,
         });
 
-        console.log(`Subscription created for user ${userId}: ${plan}`);
         break;
       }
 
@@ -163,6 +163,7 @@ export async function POST(request: NextRequest) {
           stripe_subscription_id: subscription.id,
           stripe_subscription_status: subscription.status,
           stripe_subscription_created_date: new Date(subscription.created * 1000).toISOString(),
+          stripe_subscription_ends_at: new Date((subscription as any).current_period_end * 1000).toISOString(),
           plan: plan,
         });
 

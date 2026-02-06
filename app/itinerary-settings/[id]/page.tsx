@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { ItinerarySettingsContent } from "./settings-content"
 import { getItineraryById } from "@/lib/actions/itinerary.actions"
+import { getUserSettingsById } from "@/lib/actions/user.actions"
 import createClient from "@/utils/supabase/server"
 import { Itinerary } from "@/types/itinerary"
 
@@ -18,7 +19,10 @@ export default async function ItinerarySettingsPage({ params }: { params: Promis
     redirect('/login')
   }
 
-  const itinerary = await getItineraryById(paramsValue.id) as Itinerary
+  const [itinerary, userSettings] = await Promise.all([
+    getItineraryById(paramsValue.id) as Promise<Itinerary>,
+    getUserSettingsById()
+  ])
 
   if (!itinerary) {
     redirect('/not-found')
@@ -29,10 +33,13 @@ export default async function ItinerarySettingsPage({ params }: { params: Promis
     redirect('/not-authorized')
   }
 
+  const userPlan = userSettings?.plan || 'free'
+
   return (
     <ItinerarySettingsContent 
       itinerary={itinerary}
       userId={user.id}
+      userPlan={userPlan}
     />
   )
 }

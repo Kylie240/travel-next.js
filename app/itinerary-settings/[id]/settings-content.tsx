@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@
 import { Itinerary } from "@/types/itinerary"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { updateItineraryPermissions, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
+import { updateItineraryPermissions, getItineraryPermissionsById, updateItineraryPricing } from "@/lib/actions/itinerary.actions"
 import { getFollowersById } from "@/lib/actions/user.actions"
 import { Followers } from "@/types/followers"
 import { viewPermissionEnum, editPermissionEnum } from "@/enums/itineraryStatusEnum"
-import { ArrowLeft, Save, Eye, Edit, Loader2, Search } from "lucide-react"
+import { ArrowLeft, Save, Eye, Edit, Loader2, Search, DollarSign } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { FaUserLarge } from "react-icons/fa6"
@@ -21,12 +21,13 @@ import createClient from "@/utils/supabase/client"
 interface ItinerarySettingsContentProps {
   itinerary: Itinerary;
   userId: string;
+  userPlan: string;
 }
 
 type ViewPermission = 'public' | 'creator' | 'restricted';
 type EditPermission = 'creator' | 'collaborators';
 
-export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySettingsContentProps) {
+export function ItinerarySettingsContent({ itinerary, userId, userPlan }: ItinerarySettingsContentProps) {
   const router = useRouter()
   const supabase = createClient()
   const [isSaving, setIsSaving] = useState(false)
@@ -39,6 +40,11 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
   const [viewerSearchTerm, setViewerSearchTerm] = useState('')
   const [editorSearchTerm, setEditorSearchTerm] = useState('')
   const [loadingPermissions, setLoadingPermissions] = useState(true)
+  
+  // Pricing state (only for standard/premium users)
+  const [isPaid, setIsPaid] = useState(false)
+  const [priceInDollars, setPriceInDollars] = useState('')
+  const canSetPricing = userPlan === 'standard' || userPlan === 'premium'
 
   // Monitor authentication state and redirect if user logs out
   useEffect(() => {
@@ -62,9 +68,9 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
     }
   }, [router, supabase])
 
-  // Fetch permissions when component mounts
+  // Fetch permissions and pricing when component mounts
   useEffect(() => {
-    const fetchPermissions = async () => {
+    const fetchPermissionsAndPricing = async () => {
       try {
         setLoadingPermissions(true)
         // Note: getItineraryPermissionsById has an unused permissions parameter, but we pass empty object
@@ -104,6 +110,20 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
             setAllowedEditors(permissions.allowedEditors)
           }
         }
+
+        // Fetch current pricing if user can set pricing
+        if (canSetPricing) {
+          const { data: pricingData } = await supabase
+            .from('itineraries')
+            .select('is_paid, price_cents')
+            .eq('id', itinerary.id)
+            .single()
+          
+          if (pricingData) {
+            setIsPaid(pricingData.is_paid || false)
+            setPriceInDollars(pricingData.price_cents ? (pricingData.price_cents / 100).toFixed(2) : '')
+          }
+        }
       } catch (error) {
         console.error('Error fetching permissions:', error)
         // Don't show error toast as permissions might not exist yet
@@ -112,8 +132,8 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
       }
     }
     
-    fetchPermissions()
-  }, [itinerary.id])
+    fetchPermissionsAndPricing()
+  }, [itinerary.id, canSetPricing, supabase])
 
   // Fetch followers when "restricted users" is selected for view permission or "collaborators" for edit permission
   useEffect(() => {
@@ -142,6 +162,7 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
   const handleSaveChanges = async () => {
     setIsSaving(true)
     try {
+      // Save permissions
       await updateItineraryPermissions(
         itinerary.id,
         {
@@ -151,6 +172,16 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
           allowedEditors
         }
       )
+
+      // Save pricing if user has a paid plan
+      if (canSetPricing) {
+        const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
+        await updateItineraryPricing(itinerary.id, {
+          is_paid: isPaid,
+          price_cents: isPaid ? priceCents : 0
+        })
+      }
+
       toast.success('Settings saved successfully')
       router.refresh()
     } catch (error) {
@@ -489,6 +520,74 @@ export function ItinerarySettingsContent({ itinerary, userId }: ItinerarySetting
               )}
             </div>
           </div>
+
+          {/* Pricing - Only for Standard/Premium users */}
+          {canSetPricing && (
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <DollarSign className="h-5 w-5 text-gray-700" />
+                <h2 className="text-xl font-semibold text-gray-900">Pricing</h2>
+              </div>
+              <p className="text-sm text-gray-600 mb-6">
+                Set a price to sell this itinerary to other travelers
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isPaid"
+                    checked={isPaid}
+                    onChange={(e) => setIsPaid(e.target.checked)}
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
+                  />
+                  <Label htmlFor="isPaid" className="text-base font-medium cursor-pointer">
+                    Enable paid access for this itinerary
+                  </Label>
+                </div>
+
+                {isPaid && (
+                  <div className="flex flex-col gap-2 pt-4">
+                    <Label className="text-base font-medium">Price (USD)</Label>
+                    <div className="relative max-w-xs">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                      <Input
+                        type="number"
+                        min="0.50"
+                        step="0.01"
+                        placeholder="9.99"
+                        value={priceInDollars}
+                        onChange={(e) => setPriceInDollars(e.target.value)}
+                        className="pl-7"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500 mb-0">
+                      Minimum price: $0.50. You'll receive {userPlan === 'standard' ? '80%' : '90%'} of the sale after platform fees.
+                    </p>
+                    {userPlan === 'standard' && (
+                      <Link href="/plans" className="text-cyan-700 text-sm font-medium hover:underline">Upgrade to our Premium plan to unlock more features and reduced selling fee.</Link>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Upgrade prompt for free users */}
+          {!canSetPricing && (
+            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl shadow-sm p-6 border border-cyan-200">
+              <div className="flex items-center gap-3 mb-4">
+                <DollarSign className="h-5 w-5 text-cyan-700" />
+                <h2 className="text-xl font-semibold text-gray-900">Sell Your Itinerary</h2>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Upgrade to a Standard or Premium plan to set a price and earn money from your travel expertise.
+              </p>
+              <a href="/plans" className="text-cyan-700 font-medium hover:underline">
+                View Plans →
+              </a>
+            </div>
+          )}
 
           {/* Save Button */}
           <div className="flex justify-end gap-4 pt-4">

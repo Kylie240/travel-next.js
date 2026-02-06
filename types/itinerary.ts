@@ -13,11 +13,11 @@ export type Itinerary = {
     mainImage: string;
     countries: string[];
     cities: City[];
-    days: Day[];
+    days?: Day[];
     status: number;
     itineraryTags: number[];
     activityTags: number[];
-    notes: Note[];
+    notes?: Note[];
     created: string;  // ISO date string
     updated: string;  // ISO date string
     views?: number;

@@ -4,6 +4,28 @@ import { IoDocumentOutline } from "react-icons/io5";
 import { GoPeople } from "react-icons/go";
 import { GrAppsRounded } from "react-icons/gr";
 import { CiCalendarDate } from 'react-icons/ci';
+import { FiEdit2 } from 'react-icons/fi';
+
+const newestFeatures = [
+  {
+    title: "Edit Published Itineraries",
+    description: "You can now edit your published itineraries.",
+    date: "February 6, 2026",
+    icon: <FiEdit2 className="w-6 h-6" />
+  },
+  {
+    title: "Travel Dates",
+    description: "Optional date fields for each day of your itinerary.",
+    date: "November 28, 2025",
+    icon: <CiCalendarDate className="w-6 h-6" />
+  },
+  {
+    title: "Search Page",
+    description: "Search for other users by name or username.",
+    date: "December 2, 2025",
+    icon: <IoDocumentOutline className="w-6 h-6" />
+  }
+]
 
 const AboutPage = () => {
   return (
@@ -93,24 +115,17 @@ const AboutPage = () => {
           <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 mb-2 md:mb-6">Newest Features</h2>
           <p className="text-gray-600 mb-6 text-sm md:text-md">Check out the newest features added to Journli:</p>
           <div className="grid sm:grid-cols-2 gap-6">
-            <div className="border border-gray-500 border-1 p-6 rounded-lg">
-              <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><CiCalendarDate className="w-6 h-6" />Travel Dates</h3>
-              <p className="text-gray-600 text-sm md:text-md">
-                Optional date fields for each day of your itinerary.
-              </p>
-              <p className="text-gray-400 text-xs mt-1 md:text-md flex items-center">
-                  Added November 28, 2025
+            {newestFeatures.map((feature) => (
+              <div key={feature.title} className="border border-gray-500 border-1 p-6 rounded-lg">
+                <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2">{feature.icon} {feature.title}</h3>
+                <p className="text-gray-600 text-sm md:text-md">
+                  {feature.description}
                 </p>
-            </div>
-            <div className="border border-gray-500 border-1 p-6 rounded-lg">
-              <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><UserIcon className="w-5 h-5" />Search Page</h3>
-              <p className="text-gray-600 text-sm md:text-md">
-                Search for other users by name or username.
-              </p>
-              <p className="text-gray-400 text-xs mt-1 md:text-md flex items-center">
-                  Added December 2, 2025
+                <p className="text-gray-400 text-xs mt-1 md:text-md flex items-center">
+                  Added {feature.date}
                 </p>
-            </div>
+              </div>
+            ))}
           </div>
         </section>
       </div>

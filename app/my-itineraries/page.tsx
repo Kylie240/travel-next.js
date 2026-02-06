@@ -302,7 +302,6 @@ export default function MyItinerariesPage() {
                               align="end"
                               sideOffset={5}
                             >
-                              {userPlan != "free" && 
                               <DropdownMenu.Item
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                 onClick={(event) => {
@@ -315,7 +314,6 @@ export default function MyItinerariesPage() {
                                     Edit
                                 </Link>
                               </DropdownMenu.Item>
-                              }
                               {itinerary.status == ItineraryStatusEnum.archived && (
                                 <DropdownMenu.Item
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"

@@ -6,4 +6,5 @@ export interface UserSettings {
   stripe_subscription_id: string
   stripe_subscription_status: string
   stripe_subscription_created_date: Date
+  stripe_subscription_ends_at: Date
 }

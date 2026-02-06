@@ -7,7 +7,7 @@ import { itineraryTagsMap } from "@/lib/constants/tags";
 import { UserData } from "@/lib/types";
 import { PhotoItem } from "@/lib/utils/photos";
 import { Itinerary } from "@/types/itinerary";
-import { Calendar, DollarSign, MapPin, User } from "lucide-react";
+import { Calendar, DollarSign, Lock, MapPin, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { FiEdit } from "react-icons/fi";
@@ -18,7 +18,7 @@ import ScheduleSection from "@/app/itinerary/[id]/schedule-section";
 import NoteSection from "@/app/itinerary/[id]/note-section";
 import { FaUserLarge } from "react-icons/fa6";
 
-export default function BasicTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId }: { 
+export default function BasicTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId, isRestrictedView = false, priceCents = 0 }: { 
     itinerary: Itinerary, 
     countries: string[], 
     photos: PhotoItem[], 
@@ -29,6 +29,8 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
     initialIsFollowing: boolean,
     creator: UserData
     currentUserId: string
+    isRestrictedView?: boolean
+    priceCents?: number
  }) {
     // Early return if essential data is missing
     if (!itinerary || !creator) {
@@ -92,9 +94,10 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                 <div className="flex w-full justify-between items-center mb-1">
                   <h2 className="text-xl flex items-center font-semibold">Overview</h2>
                   <div className="flex">
+                    {canEdit}
                     {canEdit ? (
                       <div className="flex">
-                      <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
+                      <Link href={`/create?itineraryId=${itinerary.id}`}>
                         <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                       </Link>
                       <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
@@ -255,7 +258,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                         />
                       )}
                       {canEdit &&
-                        <Link href={`/create?itineraryId=${itinerary.id}`} className={paidUser ? "" : "hidden"}>
+                        <Link href={`/create?itineraryId=${itinerary.id}`}>
                           <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                         </Link>
                       }
@@ -287,13 +290,31 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                   </>
                   }
                 </div>
-                <ScheduleSection 
-                  schedule={itinerary.days} 
-                  notes={itinerary.notes}
-                  itineraryId={itinerary.id}
-                  isCreator={canEdit}
-                  duration={itinerary.duration}
-                />
+                {isRestrictedView ? (
+                  <div className="mt-8 p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+                      <Lock className="w-8 h-8 text-gray-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Premium Content</h3>
+                    <p className="text-gray-600 mb-4">
+                      Purchase this itinerary to unlock the full day-by-day schedule, detailed notes, and all travel tips.
+                    </p>
+                    <div className="text-2xl font-bold text-gray-900 mb-4">
+                      ${(priceCents / 100).toFixed(2)}
+                    </div>
+                    <Button className="bg-black hover:bg-gray-800 text-white px-8 py-2">
+                      Purchase Itinerary
+                    </Button>
+                  </div>
+                ) : (
+                  <ScheduleSection 
+                    schedule={itinerary.days} 
+                    notes={itinerary.notes}
+                    itineraryId={itinerary.id}
+                    isCreator={canEdit}
+                    duration={itinerary.duration}
+                  />
+                )}
               </div>
     
               {/* Right Column - Details & Notes */}
@@ -354,8 +375,8 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                       </div>
                     </div>
                   </div>
-                  {/* Creator Notes */}
-                  {itinerary?.notes && itinerary.notes.length > 0 &&
+                  {/* Creator Notes - hidden for restricted view */}
+                  {!isRestrictedView && itinerary?.notes && itinerary.notes.length > 0 &&
                   <>
                     <p className="text-lg text-center font-medium mt-8">Useful Trip Notes</p>
                     <div className="px-1 w-full">

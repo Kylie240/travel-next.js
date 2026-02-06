@@ -226,6 +226,21 @@ export const getItineraryById = async (itineraryId: string) => {
     return data;
 }
 
+// Returns a restricted version of the itinerary without notes and day schedule details
+// Used when itinerary is paid and user hasn't purchased access
+export const getRestrictedItineraryById = async (itineraryId: string) => {
+    const supabase = await createClient()
+    
+    const { data, error } = await supabase.rpc("get_restricted_itinerary", {
+        p_itinerary_id: itineraryId,
+    });
+
+    if (error) throw new Error(error.message);
+    if (!data) return null;
+
+    return data;
+}
+
 export const deleteItinerary = async (itineraryId: string) => {
     const supabase = await createClient()
     const {
@@ -508,6 +523,60 @@ export const updateItineraryPermissions = async (
 
   if (error) {
     console.error("RPC Error:", error);
+    throw new Error(error.message);
+  }
+
+  return { success: true };
+}
+
+export const updateItineraryPricing = async (
+  itineraryId: string,
+  pricing: {
+    is_paid: boolean;
+    price_cents: number;
+  }
+) => {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) throw new Error("Not authenticated")
+
+  // Verify the user is the creator and has a paid plan
+  const { data: userSettings, error: settingsError } = await supabase
+    .from('users_settings')
+    .select('plan')
+    .eq('user_id', user.id)
+    .single()
+
+  if (settingsError) throw new Error("Could not verify user plan")
+  
+  if (userSettings.plan !== 'standard' && userSettings.plan !== 'premium') {
+    throw new Error("You need a Standard or Premium plan to set pricing")
+  }
+
+  // Verify the user is the creator
+  const { data: itinerary, error: fetchError } = await supabase
+    .from('itineraries')
+    .select('creator_id')
+    .eq('id', itineraryId)
+    .single()
+
+  if (fetchError) throw new Error("Itinerary not found")
+  if (itinerary.creator_id !== user.id) throw new Error("You are not authorized to update this itinerary")
+
+  // Update the pricing
+  const { error } = await supabase
+    .from('itineraries')
+    .update({
+      is_paid: pricing.is_paid,
+      price_cents: pricing.price_cents,
+    })
+    .eq('id', itineraryId)
+
+  if (error) {
+    console.error("Update Error:", error);
     throw new Error(error.message);
   }
 

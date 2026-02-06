@@ -841,14 +841,22 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           </div>
           )}
           <Button variant="outline" onClick={() => router.push('/plans')}>Explore All Plans</Button>
-          { userSettings.plan !== 'free' && (
+          { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
+          <div className="mt-12">
+            <label className="block text-md font-semibold mb-2">Downgrade</label>
+            <p className="text-sm text-gray-600 mb-4">
+              In order to downgrade your plan, you will need to cancel your current subscription and then upgrade to the new plan.
+            </p>
+          </div>
+          )}
+          { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
           <div className="mt-12">
             <label className="block text-md font-semibold mb-2">Unsubscribe</label>
             <p className="text-sm text-gray-600 mb-4">
               Unsubscribing from your plan means that you will no longer be able to access the features of your current plan.
               You will still be able to access your itineraries and profile. If you have more than 20 shareable itineraries, we will automatically reduce the number of both itineraries you can create and share to 20.
             </p>
-            <a className="underline cursor-pointer hover:text-red-600" onClick={() => handleDeleteAccount()}>Unsubscribe</a>
+            <a href="https://billing.stripe.com/p/login/test_dRmcN40YlfXM6UkcTKgMw00" target="_blank" className="underline cursor-pointer hover:text-red-600">Cancel your subscription</a>
           </div>
           )}
         </div>
