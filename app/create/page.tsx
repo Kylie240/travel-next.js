@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input, Textarea } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload, ChevronLeft, ChevronRight, CalendarPlus, PencilRuler, Flag, Loader2 } from "lucide-react"
+import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload, ChevronLeft, ChevronRight, CalendarPlus, PencilRuler, Flag, Loader2, Eye, Edit, DollarSign } from "lucide-react"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
 import { useForm, useFieldArray, FormProvider } from "react-hook-form"
@@ -36,14 +36,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
-import { createItinerary, getItineraryById, updateItinerary } from "@/lib/actions/itinerary.actions"
+import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing } from "@/lib/actions/itinerary.actions"
 import createClient from "@/utils/supabase/client"
 import { CreateItinerary } from "@/types/createItinerary"
 import { Day } from "@/types/Day"
 import { Note } from "@/types/Note"
 import { Activity } from "@/types/Activity"
 import { supabase } from "@/utils/supabase/superbase-client"
-import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum"
+import { ItineraryStatusEnum, viewPermissionEnum, editPermissionEnum } from "@/enums/itineraryStatusEnum"
 import { ItineraryStatus } from "@/types/itineraryStatus"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 import { ImageUpload } from "@/components/ui/image-upload"
@@ -870,6 +870,17 @@ export default function CreatePage() {
   const [pendingItineraryData, setPendingItineraryData] = useState<any>(null)
   const [enableDates, setEnableDates] = useState(false)
   const countriesList = countries;
+  
+  // User plan and permissions state (for step 4)
+  const [userPlan, setUserPlan] = useState<string>('free')
+  const [viewPermission, setViewPermission] = useState<'public' | 'creator' | 'restricted'>('public')
+  const [editPermission, setEditPermission] = useState<'creator' | 'collaborators'>('creator')
+  const [isPaid, setIsPaid] = useState(false)
+  const [priceInDollars, setPriceInDollars] = useState('')
+  
+  // Determine if user can access step 4 (non-free users)
+  const canAccessStep4 = userPlan !== 'free'
+  const totalSteps = canAccessStep4 ? 4 : 3
 
   // Generate itinerary ID if one doesn't exist
   useEffect(() => {
@@ -885,15 +896,41 @@ export default function CreatePage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
+        
+        // Fetch user plan
+        if (user) {
+          const { data: settings } = await supabase
+            .from('users_settings')
+            .select('plan')
+            .eq('user_id', user.id)
+            .single()
+          
+          if (settings?.plan) {
+            setUserPlan(settings.plan)
+          }
+        }
       } catch (error) {
         setUser(null)
       } 
     }
     getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
+      
+      // Fetch user plan when auth state changes
+      if (session?.user) {
+        const { data: settings } = await supabase
+          .from('users_settings')
+          .select('plan')
+          .eq('user_id', session.user.id)
+          .single()
+        
+        if (settings?.plan) {
+          setUserPlan(settings.plan)
+        }
+      }
     })
 
     return () => {
@@ -1028,6 +1065,42 @@ export default function CreatePage() {
           }
 
           form.reset(itinerary);
+          
+          // Load permissions and pricing for paid users when editing
+          if (canAccessStep4) {
+            try {
+              // Fetch permissions
+              const { data: permData } = await supabase
+                .from('itineraries')
+                .select('view_permission, edit_permission, is_paid, price_cents')
+                .eq('id', itineraryId)
+                .single()
+              
+              if (permData) {
+                // Map view permission
+                if (permData.view_permission === viewPermissionEnum.public) {
+                  setViewPermission('public')
+                } else if (permData.view_permission === viewPermissionEnum.creator) {
+                  setViewPermission('creator')
+                } else if (permData.view_permission === viewPermissionEnum.restricted) {
+                  setViewPermission('restricted')
+                }
+                
+                // Map edit permission
+                if (permData.edit_permission === editPermissionEnum.creator) {
+                  setEditPermission('creator')
+                } else if (permData.edit_permission === editPermissionEnum.collaborators) {
+                  setEditPermission('collaborators')
+                }
+                
+                // Map pricing
+                setIsPaid(permData.is_paid || false)
+                setPriceInDollars(permData.price_cents ? (permData.price_cents / 100).toFixed(2) : '')
+              }
+            } catch (permError) {
+              console.error('Error loading permissions/pricing:', permError)
+            }
+          }
         } catch (error) {
           toast.error('Failed to load itinerary')
         } finally {
@@ -1036,7 +1109,7 @@ export default function CreatePage() {
       }
     }
     init()
-  }, [searchParams, form, initialItineraryId])
+  }, [searchParams, form, initialItineraryId, canAccessStep4, supabase])
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1229,6 +1302,30 @@ export default function CreatePage() {
       } else {
         await createItinerary(itineraryData);
       }
+      
+      // Save permissions and pricing for paid users (step 4)
+      if (canAccessStep4 && itineraryId) {
+        try {
+          // Save permissions
+          await updateItineraryPermissions(itineraryId, {
+            viewPermission: viewPermission as 'public' | 'private' | 'restricted',
+            editPermission: editPermission as 'collaborators' | 'creator',
+            allowedViewers: [],
+            allowedEditors: []
+          })
+          
+          // Save pricing
+          const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
+          await updateItineraryPricing(itineraryId, {
+            is_paid: isPaid,
+            price_cents: isPaid ? priceCents : 0
+          })
+        } catch (permError) {
+          console.error('Error saving permissions/pricing:', permError)
+          // Don't fail the whole save, just log the error
+        }
+      }
+      
       toast.success('Itinerary saved as draft');
       return true;
     } catch (error) {
@@ -1283,6 +1380,30 @@ export default function CreatePage() {
           response = await createItinerary(itineraryData)
           toast.success('Itinerary created successfully')
         }
+        
+        // Save permissions and pricing for paid users (step 4)
+        if (canAccessStep4 && itineraryId) {
+          try {
+            // Save permissions
+            await updateItineraryPermissions(itineraryId, {
+              viewPermission: viewPermission as 'public' | 'private' | 'restricted',
+              editPermission: editPermission as 'collaborators' | 'creator',
+              allowedViewers: [],
+              allowedEditors: []
+            })
+            
+            // Save pricing
+            const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
+            await updateItineraryPricing(itineraryId, {
+              is_paid: isPaid,
+              price_cents: isPaid ? priceCents : 0
+            })
+          } catch (permError) {
+            console.error('Error saving permissions/pricing:', permError)
+            // Don't fail the whole save, just log the error
+          }
+        }
+        
         router.push('/my-itineraries')
       } catch (error) {
         if (error instanceof Error && error.message === 'Unauthorized') {
@@ -1525,7 +1646,7 @@ export default function CreatePage() {
             {currentStep !== 0 && <div className="flex justify-between items-center py-4 mb-2 md:mb-8">
               <h1 className="text-xl md:text-2xl font-semibold">{initialItineraryId ? "Edit" : "Create New"} Itinerary</h1>
               <div className="flex gap-2">
-                {[1, 2, 3].map(step => (
+                {Array.from({ length: totalSteps }, (_, i) => i + 1).map(step => (
                   <div onClick={() => setCurrentStep(step)}
                     key={step}
                     className={`rounded-full w-8 h-8 flex items-center justify-center cursor-pointer ${
@@ -1999,6 +2120,198 @@ export default function CreatePage() {
                       onClick={(e) => {
                         e.preventDefault()
                         setCurrentStep(2)
+                        scrollToTop()
+                      }}
+                    >
+                      <span className="hidden sm:block">Back</span>
+                      <ChevronLeft className="sm:hidden" />
+                    </Button>
+                    {canAccessStep4 ? (
+                      <Button 
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setCurrentStep(4)
+                          scrollToTop()
+                        }}
+                      >
+                        <span className="hidden sm:block">Next</span>
+                        <ChevronRight className="sm:hidden" />
+                      </Button>
+                    ) : (
+                      <>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft}
+                          disabled={isFormDisabled}
+                        >
+                          {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
+                        </Button>
+                        <Button 
+                          type="submit"
+                          className="bg-black text-white hover:bg-gray-800"
+                          disabled={isFormDisabled}
+                        >
+                          {itineraryStatus === ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived ? "Publish" : "Update"}
+                        </Button>
+                        <Button 
+                          type="button"
+                          variant="outline"
+                          color="crimson"
+                          className="text-red hover:bg-red-500 hover:text-white"
+                          disabled={isFormDisabled}
+                          onClick={(e) => {
+                            if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
+                              router.push('/my-itineraries')
+                            }
+                          }}
+                        >
+                          <X className="sm:hidden"/>
+                          <span className="hidden sm:block">Cancel</span>
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 4 && canAccessStep4 && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-2">Sharing & Pricing</h2>
+                    <p className="text-gray-600 text-sm">Control who can view and edit this itinerary, and set pricing if you want to sell it.</p>
+                  </div>
+
+                  {/* View Permissions */}
+                  <div className="bg-gray-50 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Eye className="h-5 w-5 text-gray-700" />
+                      <h3 className="text-lg font-semibold text-gray-900">Who Can View</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Control who can see this itinerary
+                    </p>
+
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Label className="text-base font-medium">View Permission</Label>
+                        <Select value={viewPermission} onValueChange={(value) => setViewPermission(value as 'public' | 'creator' | 'restricted')}>
+                          <SelectTrigger className="w-full rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="public">
+                              Public - Anyone can view
+                            </SelectItem>
+                            <SelectItem value="creator">
+                              Private - Only you can view
+                            </SelectItem>
+                            <SelectItem value="restricted">
+                              Restricted - Only selected users (configure in settings after creating)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {viewPermission === 'restricted' && (
+                        <p className="text-sm text-gray-500 bg-yellow-50 p-3 rounded-lg">
+                          After creating the itinerary, you can select specific users in the itinerary settings page.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Edit Permissions */}
+                  <div className="bg-gray-50 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Edit className="h-5 w-5 text-gray-700" />
+                      <h3 className="text-lg font-semibold text-gray-900">Who Can Edit</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Control who can make changes to this itinerary
+                    </p>
+
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <Label className="text-base font-medium">Edit Permission</Label>
+                        <Select value={editPermission} onValueChange={(value) => setEditPermission(value as 'creator' | 'collaborators')}>
+                          <SelectTrigger className="w-full rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="creator">
+                              Creator Only - Only you can edit
+                            </SelectItem>
+                            <SelectItem value="collaborators">
+                              Collaborators - Selected users can edit (configure in settings after creating)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {editPermission === 'collaborators' && (
+                        <p className="text-sm text-gray-500 bg-yellow-50 p-3 rounded-lg">
+                          After creating the itinerary, you can select specific collaborators in the itinerary settings page.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pricing */}
+                  <div className="bg-gray-50 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <DollarSign className="h-5 w-5 text-gray-700" />
+                      <h3 className="text-lg font-semibold text-gray-900">Pricing</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Set a price to sell this itinerary to other travelers
+                    </p>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="isPaidCreate"
+                          checked={isPaid}
+                          onChange={(e) => setIsPaid(e.target.checked)}
+                          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
+                          disabled={isFormDisabled}
+                        />
+                        <Label htmlFor="isPaidCreate" className="text-base font-medium cursor-pointer">
+                          Enable paid access for this itinerary
+                        </Label>
+                      </div>
+
+                      {isPaid && (
+                        <div className="flex flex-col gap-2 pt-4">
+                          <Label className="text-base font-medium">Price (USD)</Label>
+                          <div className="relative max-w-xs">
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                            <Input
+                              type="number"
+                              min="0.50"
+                              step="0.01"
+                              placeholder="9.99"
+                              value={priceInDollars}
+                              onChange={(e) => setPriceInDollars(e.target.value)}
+                              className="pl-7 rounded-xl"
+                              disabled={isFormDisabled}
+                            />
+                          </div>
+                          <p className="text-sm text-gray-500 mb-0">
+                            Minimum price: $0.50. You'll receive {userPlan === 'standard' ? '80%' : '90%'} of the sale after platform fees.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-10 md:pt-0">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setCurrentStep(3)
                         scrollToTop()
                       }}
                     >

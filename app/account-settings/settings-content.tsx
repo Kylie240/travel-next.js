@@ -23,6 +23,7 @@ import { FaUserLarge } from "react-icons/fa6";
 import createClient from "@/utils/supabase/client"
 import { supabase } from "@/utils/supabase/superbase-client"
 import { dispatchAvatarUpdate, dispatchProfileUpdate } from "@/lib/utils/avatar-events"
+import { OnboardingTour } from "@/components/ui/onboarding-tour"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -76,6 +77,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false)
   const [uploadedAvatar, setUploadedAvatar] = useState<File | null>(null)
+  const showPlans = process.env.NEXT_PUBLIC_ENABLE_CART === 'true'
   const planDetails = [
     {
       title: "free",
@@ -753,182 +755,120 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         </div>
       )
     },
-    // {
-    //   title: "Your Plan",
-    //   description: "Manage your subscription",
-    //   content: (
-    //     <div className="space-y-8">
-    //       <div>
-    //         <label className="text-sm text-gray-600">Current plan</label>
-    //         <p className="block text-md font-semibold mt-2">
-    //           {userSettings.plan.charAt(0).toUpperCase() + userSettings.plan.slice(1)} Plan
-    //         </p>
-    //         {planDetails.find(plan => plan.title === userSettings.plan)?.description && (
-    //           <p className="text-sm text-gray-600">
-    //             {planDetails.find(plan => plan.title === userSettings.plan)?.description}
-    //           </p>
-    //         )}
-    //         {userSettings.plan !== 'free' && 
-    //           <a href="https://billing.stripe.com/p/login/test_dRmcN40YlfXM6UkcTKgMw00" target="_blank" className="mt-4 underline cursor-pointer hover:text-red-600">Manage your subscription</a>
-    //         }
-    //       </div>
-    //       {userSettings.plan !== 'free' && (
-    //         <div>
-    //           <label className="block text-md font-semibold mb-2">Subscription Status</label>
-    //           <p className="text-sm text-gray-600 mb-4">
-    //             Your {userSettings.plan === 'free' ? 'plan' : 'subscription status'} is {userSettings.plan === 'free' ? 'active' : userSettings.stripe_subscription_status}.
-    //           </p>
-    //         </div>
-    //       )}
-    //       {userSettings.stripe_subscription_status === 'active' && userSettings.plan !== 'free' && (
-    //         <div>
-    //           <label className="block text-md font-semibold mb-2">Billing Details</label>
-    //           <p className="text-sm text-gray-600 mb-4">
-    //             Your next billing date is { userSettings.stripe_subscription_created_date ? new Date(userSettings.stripe_subscription_created_date).toLocaleDateString() : 'N/A' }. You will be charged {userSettings.plan === 'standard' ? '$5.99' : '$13.99'} per month.
-    //           </p>
-    //           <p className="text-sm text-gray-600 mb-4">
-    //             Your billing email is {userData.email}.
-    //           </p>
-    //         </div>
-    //       )}
-    //       <div>
-    //         <label className="block text-md font-semibold mb-2">Plan details</label>
-    //           {planDetails.find(plan => plan.title === userSettings.plan)?.features.map((feature) => (
-    //             <div key={feature}>
-    //               <div className="flex items-start gap-3">
-    //                 <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-    //                 <span className="text-gray-700">{feature}</span>
-    //               </div>
-    //             </div>
-    //           ))}
-    //       </div>
-    //       { userSettings.plan !== 'premium' && (
-    //       <div className="mt-12">
-    //         <label className="block text-md font-semibold mb-2">{userSettings.plan === 'free' ? 'Upgrade and subsribe' : 'Upgrade to Premium'}</label>
-    //         {userSettings.plan === 'free' ? (
-    //           <>
-    //             <p className="text-sm text-gray-600 mb-4">
-    //               Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, monetize your content, and more.
-    //             </p>
-    //             {userData.id === 'bb9bae46-6088-4a9f-ad81-9f81ed305958' ? (
-    //             <form action="api/checkout-session" method="POST">
-    //               <Button className="bg-green-600" type="submit">
-    //                 Upgrade to Standard
-    //               </Button>
-    //             </form>
-    //             ) : (
-    //               <Button disabled className="bg-gray-400 cursor-not-allowed">
-    //                 Upgrade to Standard (Coming Soon)
-    //               </Button>
-    //             )}
-    //           </>
-    //         ) : (
-    //           <>
-    //             <p className="text-sm text-gray-600 mb-4">
-    //               Upgrading to Premium will give you access to all features and allow you to create unlimited itineraries.
-    //             </p>
-    //             <Button disabled className="bg-gray-400 cursor-not-allowed">
-    //                 Upgrade to Premium (Coming Soon)
-    //               </Button>
-    //             {/* Uncomment when premium available */}
-    //             {/* <form action="api/checkout-session" method="POST">
-    //               <Button className="bg-green-600" type="submit">
-    //                 Upgrade to Premium (Coming Soon)
-    //               </Button>
-    //             </form> */}
-    //           </>
-    //         )}
-    //       </div>
-    //       )}
-    //       <Button variant="outline" onClick={() => router.push('/plans')}>Explore All Plans</Button>
-    //       { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
-    //       <div className="mt-12">
-    //         <label className="block text-md font-semibold mb-2">Downgrade</label>
-    //         <p className="text-sm text-gray-600 mb-4">
-    //           In order to downgrade your plan, you will need to cancel your current subscription and then upgrade to the new plan.
-    //         </p>
-    //       </div>
-    //       )}
-    //       { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
-    //       <div className="mt-12">
-    //         <label className="block text-md font-semibold mb-2">Unsubscribe</label>
-    //         <p className="text-sm text-gray-600 mb-4">
-    //           Unsubscribing from your plan means that you will no longer be able to access the features of your current plan.
-    //           You will still be able to access your itineraries and profile. If you have more than 20 shareable itineraries, we will automatically reduce the number of both itineraries you can create and share to 20.
-    //         </p>
-    //         <a href="https://billing.stripe.com/p/login/test_dRmcN40YlfXM6UkcTKgMw00" target="_blank" className="underline cursor-pointer hover:text-red-600">Cancel your subscription</a>
-    //       </div>
-    //       )}
-    //     </div>
-    //   )
-    // }
-    // {
-    //   title: "Travel preferences",
-    //   description: "Set your travel style and interests",
-    //   content: (
-    //     <div className="space-y-6">
-    //       <div>
-    //         <label className="block text-sm font-medium mb-2">Travel Style</label>
-    //         <div className="space-y-2">
-    //           {["Budget", "Mid-range", "Luxury", "Backpacker", "Digital Nomad"].map((style) => (
-    //             <label key={style} className="flex items-center">
-    //               <input type="checkbox" className="mr-2" />
-    //               {style}
-    //             </label>
-    //           ))}
-    //         </div>
-    //       </div>
-    //       <div>
-    //         <label className="block text-sm font-medium mb-2">Interests</label>
-    //         <div className="space-y-2">
-    //           {["Culture", "Nature", "Adventure", "Food", "Photography", "History"].map((interest) => (
-    //             <label key={interest} className="flex items-center">
-    //               <input type="checkbox" className="mr-2" />
-    //               {interest}
-    //             </label>
-    //           ))}
-    //         </div>
-    //       </div>
-    //       <Button>Save Preferences</Button>
-    //     </div>
-    //   )
-    // },
-    // {
-    //   title: "Site preferences",
-    //   description: "Customize your experience",
-    //   content: (
-    //     <div className="space-y-6">
-    //       <div>
-    //         <label className="block text-sm font-medium mb-2">Language</label>
-    //         <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
-    //           <option value="en">English</option>
-    //           <option value="es">Spanish</option>
-    //           <option value="fr">French</option>
-    //           <option value="de">German</option>
-    //         </select>
-    //       </div>
-    //       <div>
-    //         <label className="block text-sm font-medium mb-2">Currency</label>
-    //         <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
-    //           <option value="USD">USD ($)</option>
-    //           <option value="EUR">EUR (€)</option>
-    //           <option value="GBP">GBP (£)</option>
-    //           <option value="JPY">JPY (¥)</option>
-    //         </select>
-    //       </div>
-    //       {/* <div>
-    //         <label className="block text-sm font-medium mb-2">Theme</label>
-    //         <select className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-travel-900">
-    //           <option value="light">Light</option>
-    //           <option value="dark">Dark</option>
-    //           <option value="system">System</option>
-    //         </select>
-    //       </div> */}
-    //       <Button>Save Preferences</Button>
-    //     </div>
-    //   )
-    // }
   ]
+
+  if (showPlans) {
+    settingsSections.push({
+        title: "Your Plan",
+        description: "Manage your subscription",
+        content: (
+          <div className="space-y-8">
+            <div>
+              <label className="text-sm text-gray-600">Current plan</label>
+              <p className="block text-md font-semibold mt-2">
+                {userSettings.plan.charAt(0).toUpperCase() + userSettings.plan.slice(1)} Plan
+              </p>
+              {planDetails.find(plan => plan.title === userSettings.plan)?.description && (
+                <p className="text-sm text-gray-600">
+                  {planDetails.find(plan => plan.title === userSettings.plan)?.description}
+                </p>
+              )}
+              {userSettings.plan !== 'free' && 
+                <a href="https://billing.stripe.com/p/login/test_dRmcN40YlfXM6UkcTKgMw00" target="_blank" className="mt-4 underline cursor-pointer hover:text-red-600">Manage your subscription</a>
+              }
+            </div>
+            {userSettings.plan !== 'free' && (
+              <div>
+                <label className="block text-md font-semibold mb-2">Subscription Status</label>
+                <p className="text-sm text-gray-600 mb-4">
+                  Your {userSettings.plan === 'free' ? 'plan' : 'subscription status'} is {userSettings.plan === 'free' ? 'active' : userSettings.stripe_subscription_status}.
+                </p>
+              </div>
+            )}
+            {userSettings.stripe_subscription_status === 'active' && userSettings.plan !== 'free' && (
+              <div>
+                <label className="block text-md font-semibold mb-2">Billing Details</label>
+                <p className="text-sm text-gray-600 mb-4">
+                  Your next billing date is { userSettings.stripe_subscription_created_date ? new Date(userSettings.stripe_subscription_created_date).toLocaleDateString() : 'N/A' }. You will be charged {userSettings.plan === 'standard' ? '$5.99' : '$13.99'} per month.
+                </p>
+                <p className="text-sm text-gray-600 mb-4">
+                  Your billing email is {userData.email}.
+                </p>
+              </div>
+            )}
+            <div>
+              <label className="block text-md font-semibold mb-2">Plan details</label>
+                {planDetails.find(plan => plan.title === userSettings.plan)?.features.map((feature) => (
+                  <div key={feature}>
+                    <div className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">{feature}</span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+            { userSettings.plan !== 'premium' && (
+            <div className="mt-12">
+              <label className="block text-md font-semibold mb-2">{userSettings.plan === 'free' ? 'Upgrade and subsribe' : 'Upgrade to Premium'}</label>
+              {userSettings.plan === 'free' ? (
+                <>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, monetize your content, and more.
+                  </p>
+                  {userData.id === 'bb9bae46-6088-4a9f-ad81-9f81ed305958' ? (
+                  <form action="api/checkout-session" method="POST">
+                    <Button className="bg-green-600" type="submit">
+                      Upgrade to Standard
+                    </Button>
+                  </form>
+                  ) : (
+                    <Button disabled className="bg-gray-400 cursor-not-allowed">
+                      Upgrade to Standard (Coming Soon)
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Upgrading to Premium will give you access to all features and allow you to create unlimited itineraries.
+                  </p>
+                  <Button disabled className="bg-gray-400 cursor-not-allowed">
+                      Upgrade to Premium (Coming Soon)
+                    </Button>
+                  {/* Uncomment when premium available */}
+                  {/* <form action="api/checkout-session" method="POST">
+                    <Button className="bg-green-600" type="submit">
+                      Upgrade to Premium (Coming Soon)
+                    </Button>
+                  </form> */}
+                </>
+              )}
+            </div>
+            )}
+            <Button variant="outline" onClick={() => router.push('/plans')}>Explore All Plans</Button>
+            { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
+            <div className="mt-12">
+              <label className="block text-md font-semibold mb-2">Downgrade</label>
+              <p className="text-sm text-gray-600 mb-4">
+                In order to downgrade your plan, you will need to cancel your current subscription and then upgrade to the new plan.
+              </p>
+            </div>
+            )}
+            { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
+            <div className="mt-12">
+              <label className="block text-md font-semibold mb-2">Unsubscribe</label>
+              <p className="text-sm text-gray-600 mb-4">
+                Unsubscribing from your plan means that you will no longer be able to access the features of your current plan.
+                You will still be able to access your itineraries and profile. If you have more than 20 shareable itineraries, we will automatically reduce the number of both itineraries you can create and share to 20.
+              </p>
+              <a href="https://billing.stripe.com/p/login/test_dRmcN40YlfXM6UkcTKgMw00" target="_blank" className="underline cursor-pointer hover:text-red-600">Cancel your subscription</a>
+            </div>
+            )}
+          </div>
+        )
+      },
+    )
+  }
 
   return (
     <div className="min-h-fit h-screen md:h-[calc(100vh-64px)] bg-white lg:bg-gray-50">
@@ -988,7 +928,9 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       >
         {settingsSections.find(section => section.title === activeSection)?.content}                                                                            
       </SettingsSidebar>
-      
+
+      {/* Onboarding tour for new users */}
+      <OnboardingTour userName={userData?.name?.split(' ')[0]} />
     </div>
   )
 }

@@ -26,8 +26,9 @@ export function UserMenu() {
   const [userProfile, setUserProfile] = useState<any>(null)
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
-  const { loading, error, user } = useUser()
-  const [userPlan, setUserPlan] = useState<string | null>(null)
+  const { loading, error, user } = useUser()  
+  const userPlan = user?.user_metadata?.plan
+  const showSellerDashboard = process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && userPlan !== "free"
 
   // Track the last fetched user ID to prevent unnecessary refetches
   const lastFetchedUserIdRef = useRef<string | null>(null)
@@ -187,10 +188,10 @@ export function UserMenu() {
                   Account Settings
                 </DropdownMenu.Item>
 
-              {userPlan !== "free" && (
+              {showSellerDashboard && (
                 <DropdownMenu.Item
                   className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                  onClick={() => router.push('/my-itineraries')}
+                  onClick={() => router.push('/seller-dashboard')}
                 >
                   <AiOutlineDashboard className="mr-2" size={18} strokeWidth={.75} />
                   Seller Dashboard
@@ -215,19 +216,21 @@ export function UserMenu() {
                 My Itineraries
               </DropdownMenu.Item>
 
-              {/* <DropdownMenu.Item
-                className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                onClick={() => router.push('/purchases')}
-              >
-                <TiTag className="mr-2" size={18} strokeWidth={.25} />
-                Purchases
-              </DropdownMenu.Item> */}
+              {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
+                <DropdownMenu.Item
+                  className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                  onClick={() => router.push('/purchases')}
+                >
+                  <TiTag className="mr-2" size={18} strokeWidth={.25} />
+                  Purchases
+                </DropdownMenu.Item>
+              )}
 
               <DropdownMenu.Item
                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                 onClick={() => router.push('/saves')}
               >
-                <Bookmark className="mr-2 h-4 w-4" />
+                <Bookmark className="mr-2 h-[18px] w-[18px]" />
                 Saves
               </DropdownMenu.Item>
 

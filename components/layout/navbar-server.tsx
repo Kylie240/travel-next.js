@@ -19,6 +19,9 @@ export default async function NavbarServer() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
+  // Feature flag for cart functionality
+  const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART === 'true'
+  
   // Combine public navigation with authenticated navigation if user is logged in
   const navigation = user 
     ? [...publicNavigation, ...authenticatedNavigation]
@@ -49,10 +52,13 @@ export default async function NavbarServer() {
           </div>
 
           <div className="flex items-center md:space-x-4">
-            {/* Cart button - visible to all users */}
-            {/* <div className="ml-4">
-              <CartButton />
-            </div> */}
+            {/* Cart button - visible to all users when enabled */}
+            {isCartEnabled && (
+              <div className="ml-4">
+                <CartButton />
+              </div>
+            )}
+            
             {/* User menu or auth buttons */}
             <UserMenu />
 

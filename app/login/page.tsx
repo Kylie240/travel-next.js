@@ -99,7 +99,7 @@ export default function LoginPage() {
         signUpForm.reset()
         signInForm.reset()
         toast.success("Account created successfully")
-        router.push("/account-settings?tab=Profile")
+        router.push("/account-settings?tab=Profile&welcome=true")
       } else {
         const { error, data: userCredential } = await supabase.auth.signInWithPassword({
           email,

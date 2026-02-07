@@ -12,25 +12,20 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const { data: { user } } = await supabase.auth.getUser()
   const currentUserId = user?.id
   const paramsValue = await params;
-  
-  // First, check if itinerary is paid and if user has access
   const { data: itineraryMeta } = await supabase
     .from('itineraries')
     .select('is_paid, price_cents, creator_id, view_permission, edit_permission')
     .eq('id', paramsValue.id)
     .single()
 
-  // Determine if user has full access to a paid itinerary
   let hasFullAccess = true;
   let isRestricted = false;
   
+  console.log(currentUserId === itineraryMeta.creator_id)
   if (itineraryMeta?.is_paid) {
-    // User has full access if they are the creator
     const isCreator = currentUserId === itineraryMeta.creator_id;
     
     if (!isCreator) {
-      // Check if user has purchased this itinerary (you'll need to create this table)
-      // For now, we'll check if user is in a purchases table
       const { data: purchaseData } = await supabase
         .from('itinerary_purchases')
         .select('id')

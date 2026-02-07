@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 export default async function PlansPage() {
   const supabase = createServerComponentClient({ cookies })
   const { data: { user } } = await supabase.auth.getUser()
+  const showCart = process.env.NEXT_PUBLIC_ENABLE_CART === 'true'
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -107,14 +108,17 @@ export default async function PlansPage() {
               </div>
             </div>
 
-            <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
-              Coming Soon
-            </Button>
-            {/* <form action="api/checkout-session" method="POST">
-              <Button className="w-full mb-8 bg-gray-400" type="submit">
-                Upgrade to Standard
+            {!showCart ? (
+              <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
+                Coming Soon
               </Button>
-            </form> */}
+            ) : (
+              <form action="api/checkout-session" method="POST">
+                <Button className="w-full mb-8 bg-gray-400" type="submit">
+                  Upgrade to Standard
+                </Button>
+              </form>
+            )}
 
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900 mb-4">Everything in Free, plus:</h3>

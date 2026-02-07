@@ -307,17 +307,19 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                       <Button className="bg-black hover:bg-gray-800 text-white px-8 py-2">
                         Purchase Itinerary
                       </Button>
-                      <AddToCartButton
-                        itinerary={{
-                          id: itinerary.id,
-                          title: itinerary.title,
-                          priceCents: priceCents,
-                          mainImage: itinerary.mainImage,
-                          creatorName: creator.name || "",
-                          creatorUsername: creator.username || "",
-                        }}
-                        className="px-8 py-2"
-                      />
+                      {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
+                        <AddToCartButton
+                          itinerary={{
+                            id: itinerary.id,
+                            title: itinerary.title,
+                            priceCents: priceCents,
+                            mainImage: itinerary.mainImage,
+                            creatorName: creator.name || "",
+                            creatorUsername: creator.username || "",
+                          }}
+                          className="px-8 py-2"
+                        />
+                      )}
                     </div>
                   </div>
                 ) : (
