@@ -107,11 +107,9 @@ export default async function PlansPage() {
               </div>
             </div>
 
-            <div className="absolute top-4 right-4">
-              <span className="bg-purple-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                Coming Soon
-              </span>
-            </div>
+            <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
+              Coming Soon
+            </Button>
             {/* <form action="api/checkout-session" method="POST">
               <Button className="w-full mb-8 bg-gray-400" type="submit">
                 Upgrade to Standard

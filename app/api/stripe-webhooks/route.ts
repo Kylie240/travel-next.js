@@ -102,11 +102,66 @@ export async function POST(request: NextRequest) {
 
   try {
     switch (event.type) {
-      // When a checkout session is completed (initial subscription)
+      // When a checkout session is completed (subscription or one-time payment)
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         
-        // Only process subscription checkouts
+        // Handle itinerary cart purchases (one-time payments)
+        if (session.mode === 'payment' && session.metadata?.purchase_type === 'itinerary_cart') {
+          const itineraryIds = session.metadata?.itinerary_ids?.split(',') || [];
+          const customerEmail = session.customer_details?.email || session.customer_email;
+          
+          if (itineraryIds.length === 0) {
+            console.error('Missing itinerary IDs in cart checkout metadata');
+            break;
+          }
+
+          const supabase = createClient();
+          
+          // Try to get user ID from metadata, or look up by email
+          let userId = session.metadata?.supabase_user_id;
+          
+          if (!userId && customerEmail) {
+            // Try to find existing user by email
+            const { data: existingUser } = await supabase
+              .from('users')
+              .select('id')
+              .eq('email', customerEmail)
+              .single();
+            
+            if (existingUser) {
+              userId = existingUser.id;
+              console.log(`Found existing user ${userId} for email ${customerEmail}`);
+            }
+          }
+          
+          // Create purchase records for each itinerary
+          // Store user_id if logged in, otherwise store customer_email for guest purchases
+          const purchaseRecords = itineraryIds.map(itineraryId => ({
+            user_id: userId || null,
+            customer_email: userId ? null : customerEmail, // Only store email for guests
+            itinerary_id: itineraryId,
+            stripe_payment_intent_id: session.payment_intent as string,
+            stripe_checkout_session_id: session.id,
+            amount_cents: Math.round((session.amount_total || 0) / itineraryIds.length),
+            purchased_at: new Date().toISOString(),
+          }));
+
+          const { error: purchaseError } = await supabase
+            .from('itinerary_purchases')
+            .insert(purchaseRecords);
+
+          if (purchaseError) {
+            console.error('Error creating purchase records:', purchaseError);
+          } else {
+            const userInfo = userId ? `user ${userId}` : `guest (${customerEmail})`;
+            console.log(`Created ${purchaseRecords.length} purchase records for ${userInfo}`);
+          }
+
+          break;
+        }
+        
+        // Handle subscription checkouts
         if (session.mode !== 'subscription') {
           console.log('Not a subscription checkout, skipping');
           break;

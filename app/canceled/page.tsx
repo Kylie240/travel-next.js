@@ -1,16 +1,17 @@
-import Link from 'next/link'
-import { XCircle, ArrowLeft, HelpCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Metadata } from 'next'
+"use client"
 
-export const metadata: Metadata = {
-  title: "Payment Canceled - Journli",
-  description: "Your payment was canceled. No charges have been made.",
-}
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { XCircle, ArrowLeft, ShoppingCart, HelpCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function CanceledPage() {
+  const searchParams = useSearchParams()
+  const type = searchParams.get('type')
+  const isCartCancel = type === 'cart'
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-6 py-16 md:py-24">
         <div className="max-w-2xl mx-auto">
           
@@ -20,16 +21,16 @@ export default function CanceledPage() {
             {/* Canceled Icon */}
             <div className="flex justify-center mb-6">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-                <XCircle className="w-12 h-12 text-gray-500" />
+                <XCircle className="w-12 h-12 text-gray-400" />
               </div>
             </div>
 
             {/* Heading */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-3">
               Payment Canceled
             </h1>
             <p className="text-lg text-gray-600 mb-8">
-              No worries! Your payment was canceled and no charges have been made to your account.
+              No worries! Your payment was canceled and no charges have been made.
             </p>
 
             {/* Info Box */}
@@ -37,16 +38,22 @@ export default function CanceledPage() {
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <HelpCircle className="w-5 h-5 text-gray-600" />
+                    {isCartCancel ? (
+                      <ShoppingCart className="w-5 h-5 text-gray-600" />
+                    ) : (
+                      <HelpCircle className="w-5 h-5 text-gray-600" />
+                    )}
                   </div>
                 </div>
                 <div className="text-left">
                   <h3 className="font-semibold text-gray-900 mb-1">
-                    Changed Your Mind?
+                    {isCartCancel ? "Your cart is still saved" : "Changed Your Mind?"}
                   </h3>
                   <p className="text-gray-600 text-sm">
-                    That's okay! You can continue using Journli for free, or come back anytime 
-                    to upgrade your plan when you're ready.
+                    {isCartCancel 
+                      ? "The items in your cart are still there. You can complete your purchase whenever you're ready."
+                      : "That's okay! You can continue using Journli for free, or come back anytime to upgrade when you're ready."
+                    }
                   </p>
                 </div>
               </div>
@@ -54,26 +61,44 @@ export default function CanceledPage() {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/plans">
-                <Button className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-6">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Plans
-                </Button>
-              </Link>
-              <Link href="/itineraries">
-                <Button variant="outline" className="w-full sm:w-auto px-6">
-                  Continue Free
-                </Button>
-              </Link>
+              {isCartCancel ? (
+                <>
+                  <Link href="/explore">
+                    <Button className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white px-6">
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Continue Browsing
+                    </Button>
+                  </Link>
+                  <Link href="/">
+                    <Button variant="outline" className="w-full sm:w-auto px-6">
+                      Return Home
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/plans">
+                    <Button className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white px-6">
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Plans
+                    </Button>
+                  </Link>
+                  <Link href="/explore">
+                    <Button variant="outline" className="w-full sm:w-auto px-6">
+                      Explore Itineraries
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
           {/* Additional Info */}
           <div className="mt-8 text-center">
             <p className="text-gray-500 text-sm">
-              Have questions about our plans?{' '}
-              <Link href="/contact" className="text-blue-600 hover:text-blue-700 font-medium">
-                Contact Us
+              Have questions?{' '}
+              <Link href="/about" className="text-gray-900 hover:underline font-medium">
+                Learn more about Journli
               </Link>
             </p>
           </div>

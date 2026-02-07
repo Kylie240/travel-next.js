@@ -179,7 +179,6 @@ export function UserMenu() {
                 </DropdownMenu.Item>
               )}
 
-              {userPlan !== "free" && (
                 <DropdownMenu.Item
                   className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                   onClick={() => router.push(`/account-settings`)}
@@ -187,15 +186,16 @@ export function UserMenu() {
                   <Settings className="mr-2 h-4 w-4" />
                   Account Settings
                 </DropdownMenu.Item>
-              )}
 
-              <DropdownMenu.Item
-                className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                onClick={() => router.push('/my-itineraries')}
-              >
-                <AiOutlineDashboard className="mr-2" size={18} strokeWidth={.75} />
-                Seller Dashboard
-              </DropdownMenu.Item>
+              {userPlan !== "free" && (
+                <DropdownMenu.Item
+                  className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                  onClick={() => router.push('/my-itineraries')}
+                >
+                  <AiOutlineDashboard className="mr-2" size={18} strokeWidth={.75} />
+                  Seller Dashboard
+                </DropdownMenu.Item>
+                )}
 
               <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
               
@@ -215,13 +215,13 @@ export function UserMenu() {
                 My Itineraries
               </DropdownMenu.Item>
 
-              <DropdownMenu.Item
+              {/* <DropdownMenu.Item
                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                 onClick={() => router.push('/purchases')}
               >
                 <TiTag className="mr-2" size={18} strokeWidth={.25} />
                 Purchases
-              </DropdownMenu.Item>
+              </DropdownMenu.Item> */}
 
               <DropdownMenu.Item
                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"

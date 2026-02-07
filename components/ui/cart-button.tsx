@@ -1,16 +1,51 @@
 "use client"
 
 import { useState } from "react"
-import { ShoppingCart, X, Trash2 } from "lucide-react"
+import { ShoppingCart, X, Trash2, Loader2 } from "lucide-react"
 import { useCart, CartItem } from "@/context/cart"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
 import * as Dialog from "@radix-ui/react-dialog"
+import { toast } from "sonner"
 
 export function CartButton() {
-  const { items, itemCount, totalCents, removeFromCart } = useCart()
+  const { items, itemCount, totalCents, removeFromCart, clearCart } = useCart()
   const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleCheckout = async () => {
+    if (items.length === 0) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/cart-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error)
+      toast.error('Checkout failed', {
+        description: error.message || 'Please try again later.',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
@@ -65,8 +100,19 @@ export function CartButton() {
                 <span className="text-lg font-medium">Total</span>
                 <span className="text-xl font-bold">${(totalCents / 100).toFixed(2)}</span>
               </div>
-              <Button className="w-full bg-black hover:bg-gray-800 text-white py-3">
-                Checkout
+              <Button 
+                className="w-full bg-black hover:bg-gray-800 text-white py-3"
+                onClick={handleCheckout}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Checkout'
+                )}
               </Button>
             </div>
           )}
