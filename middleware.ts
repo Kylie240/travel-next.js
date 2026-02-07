@@ -15,5 +15,6 @@ export const config = {
     '/account-settings/:path*',
     '/itinerary-settings/:path*',
     '/search/:path*',
+    '/purchases/:path*',
   ],
 };

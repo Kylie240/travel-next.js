@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { AuthDialog } from "@/components/ui/auth-dialog"
 import { UserMenu } from "@/components/ui/user-menu"
+import { CartButton } from "@/components/ui/cart-button"
 import { NavbarSearch } from "@/components/ui/navbar-search"
 import { LocaleMenu } from "@/components/ui/locale-menu"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -142,6 +143,9 @@ export default function Navbar() {
                 <Search className="h-5 w-5" />
               </Button>
             )} */}
+
+            {/* Cart button */}
+            <CartButton />
 
             {/* User menu or auth buttons */}
             {user ? (

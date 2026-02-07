@@ -16,7 +16,8 @@ import FollowButton from "@/app/itinerary/[id]/follow-button";
 import BioSection from "@/app/itinerary/[id]/bio-section";
 import ScheduleSection from "@/app/itinerary/[id]/schedule-section";
 import NoteSection from "@/app/itinerary/[id]/note-section";
-import { FaUserLarge } from "react-icons/fa6";
+import { FaUserLarge } from "react-icons/fa6"
+import { AddToCartButton } from "../ui/add-to-cart-button";
 
 export default function BasicTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId, isRestrictedView = false, priceCents = 0 }: { 
     itinerary: Itinerary, 
@@ -302,9 +303,22 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                     <div className="text-2xl font-bold text-gray-900 mb-4">
                       ${(priceCents / 100).toFixed(2)}
                     </div>
-                    <Button className="bg-black hover:bg-gray-800 text-white px-8 py-2">
-                      Purchase Itinerary
-                    </Button>
+                    <div className="flex flex-col gap-3 items-center">
+                      <Button className="bg-black hover:bg-gray-800 text-white px-8 py-2">
+                        Purchase Itinerary
+                      </Button>
+                      <AddToCartButton
+                        itinerary={{
+                          id: itinerary.id,
+                          title: itinerary.title,
+                          priceCents: priceCents,
+                          mainImage: itinerary.mainImage,
+                          creatorName: creator.name || "",
+                          creatorUsername: creator.username || "",
+                        }}
+                        className="px-8 py-2"
+                      />
+                    </div>
                   </div>
                 ) : (
                   <ScheduleSection 

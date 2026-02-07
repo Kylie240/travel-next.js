@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { AuthDialog } from "@/components/ui/auth-dialog"
 import { UserMenu } from "@/components/ui/user-menu"
+import { CartButton } from "@/components/ui/cart-button"
 import { NavbarClient } from "./navbar-client"
 import createClient from "@/utils/supabase/server"
 
@@ -48,6 +49,10 @@ export default async function NavbarServer() {
           </div>
 
           <div className="flex items-center md:space-x-4">
+            {/* Cart button - visible to all users */}
+            <div className="ml-4">
+              <CartButton />
+            </div>
             {/* User menu or auth buttons */}
             <UserMenu />
 
