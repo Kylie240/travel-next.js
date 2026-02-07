@@ -107,11 +107,16 @@ export default async function PlansPage() {
               </div>
             </div>
 
-            <form action="api/checkout-session" method="POST">
+            <div className="absolute top-4 right-4">
+              <span className="bg-purple-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                Coming Soon
+              </span>
+            </div>
+            {/* <form action="api/checkout-session" method="POST">
               <Button className="w-full mb-8 bg-gray-400" type="submit">
                 Upgrade to Standard
               </Button>
-            </form>
+            </form> */}
 
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900 mb-4">Everything in Free, plus:</h3>

@@ -145,7 +145,7 @@ export default function Navbar() {
             )} */}
 
             {/* Cart button */}
-            <CartButton />
+            {/* <CartButton /> */}
 
             {/* User menu or auth buttons */}
             {user ? (

@@ -50,9 +50,9 @@ export default async function NavbarServer() {
 
           <div className="flex items-center md:space-x-4">
             {/* Cart button - visible to all users */}
-            <div className="ml-4">
+            {/* <div className="ml-4">
               <CartButton />
-            </div>
+            </div> */}
             {/* User menu or auth buttons */}
             <UserMenu />
 
