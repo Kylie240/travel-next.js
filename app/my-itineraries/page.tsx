@@ -7,12 +7,12 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { deleteItinerary, getItinerarySummaries, updateItineraryStatus } from "@/lib/actions/itinerary.actions"
 import Link from "next/link"
 import createClient from "@/utils/supabase/client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { User, Session } from "@supabase/supabase-js"
 import { ItineraryStatusEnum, ItineraryStatusEnumString, viewPermissionEnum } from "@/enums/itineraryStatusEnum"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation" 
+import { useRouter, usePathname } from "next/navigation" 
 import { Input } from "@/components/ui/input"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 import ShareElement from "../itinerary/[id]/share-element"
@@ -21,7 +21,9 @@ import { exportItineraryToPDF } from "@/lib/utils/pdf-export"
 
 export default function MyItinerariesPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const pathname = usePathname()
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
   const [user, setUser] = useState<User | null>(null)
   const [itinerarySummaries, setItinerarySummaries] = useState<ItinerarySummary[] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -139,6 +141,33 @@ export default function MyItinerariesPage() {
       subscription.unsubscribe()
     }
   }, [])
+
+  // Re-fetch when we have a user but no itineraries (e.g. after navigating back from another page)
+  useEffect(() => {
+    if (pathname !== "/my-itineraries" || !user?.id || loading) return
+    const hasNoData =
+      itinerarySummaries === null ||
+      (Array.isArray(itinerarySummaries) && itinerarySummaries.length === 0)
+    if (!hasNoData) return
+
+    let mounted = true
+    setLoading(true)
+    getItinerarySummaries(user.id)
+      .then((data) => {
+        if (!mounted) return
+        setItinerarySummaries((data ?? []) as ItinerarySummary[])
+        setFilteredItinerarySummaries((data ?? []) as ItinerarySummary[])
+      })
+      .catch(() => {
+        if (mounted) toast.error("Failed to load itineraries")
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
+    return () => {
+      mounted = false
+    }
+  }, [pathname, user?.id, loading, itinerarySummaries])
 
   useEffect(() => {
     // Check if native share is available (typically on mobile devices)

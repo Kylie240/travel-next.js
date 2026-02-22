@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
           name: itinerary.title,
           metadata: {
             itinerary_id: itinerary.id,
+            seller_id: itinerary.creator_id,
           },
         },
         unit_amount: itinerary.price_cents,
@@ -85,10 +86,11 @@ export async function POST(request: NextRequest) {
     }))
 
     // Create Checkout Session - allow email input for guest users
+    const isGuest = !user
     const sessionConfig: any = {
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${origin}/purchases?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/purchase?success=true&session_id={CHECKOUT_SESSION_ID}&isGuest=${isGuest}`,
       cancel_url: `${origin}/canceled?type=cart`,
       metadata: {
         itinerary_ids: itineraryIds.join(','),

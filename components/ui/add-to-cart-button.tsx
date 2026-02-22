@@ -14,6 +14,7 @@ type AddToCartButtonProps = {
     mainImage: string | null
     creatorName: string
     creatorUsername: string
+    creatorId: string
   }
   className?: string
 }
@@ -32,6 +33,7 @@ export function AddToCartButton({ itinerary, className }: AddToCartButtonProps) 
       mainImage: itinerary.mainImage,
       creatorName: itinerary.creatorName,
       creatorUsername: itinerary.creatorUsername,
+      creatorId: itinerary.creatorId,
     })
 
     toast.success("Added to cart", {

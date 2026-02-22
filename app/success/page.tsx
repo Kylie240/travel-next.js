@@ -111,9 +111,9 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
                     Manage Your Subscription
                   </h3>
                   <p className="text-gray-600 text-sm">
-                    You can view, update, or cancel your subscription anytime from your 
+                    You can view, update, or cancel your subscription anytime from the 
                     <Link href="/account-settings" className="text-blue-600 hover:text-blue-700 font-medium ml-1">
-                      Account Settings
+                      Settings Page
                     </Link>
                     . We'll also send you reminders before your subscription renews.
                   </p>
@@ -126,7 +126,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
               <Link href="/account-settings?tab=Your Plan">
                 <Button className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-6">
                   <Settings className="w-4 h-4 mr-2" />
-                  Account Settings
+                  Settings Page
                 </Button>
               </Link>
               <Link href="/itineraries">

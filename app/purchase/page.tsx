@@ -1,0 +1,86 @@
+"use client"
+
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { CheckCircle, DownloadIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+export default function PurchasePage() {
+  const searchParams = useSearchParams()
+  const isGuest = searchParams.get('isGuest')
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-6 py-16 md:py-24">
+        <div className="max-w-2xl mx-auto">
+          
+          {/* Canceled Card */}
+          <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 border border-gray-200 text-center">
+            
+            {/* Canceled Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-12 h-12 text-green-400" />
+              </div>
+            </div>
+
+            {/* Heading */}
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-3">
+              Payment Successful
+            </h1>
+            <p className="text-lg text-gray-600 mb-8">
+              Thank you for your purchase! Your itineraries are now available in your purchased itineraries.
+            </p>
+
+            {/* Info Box */}
+            <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    <DownloadIcon className="w-5 h-5 text-green-400" />
+                  </div>
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900 mb-1">
+                    You will receive an email shortly with a download link for your purchase.
+                  </h3>
+                  <p className="text-gray-600 text-sm mt-2">
+                    If you have an account, you can also access purchased itineraries from your <Link href="/purchased" className="text-blue-600 hover:text-blue-700 font-medium">Purchased Itineraries</Link> page. Don't have an account? Sign up now to link your purchases to your account and access your itineraries later.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {isGuest === 'false' ? (
+                <Link href="/purchased">
+                <Button variant="outline" className="w-full sm:w-auto px-6">
+                  My Purchases
+                </Button>
+              </Link>
+              ) : (
+                <Link href="/login?mode=signup">
+                  <Button variant="outline" className="w-full sm:w-auto px-6">
+                    Sign Up
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Additional Info */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-500 text-sm">
+              Have questions?{' '}
+              <Link href="/about" className="text-gray-900 hover:underline font-medium">
+                Learn more about Journli
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+

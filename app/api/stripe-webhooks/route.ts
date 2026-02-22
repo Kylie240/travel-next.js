@@ -152,7 +152,16 @@ export async function POST(request: NextRequest) {
             .insert(purchaseRecords);
 
           if (purchaseError) {
-            console.error('Error creating purchase records:', purchaseError);
+            console.error('Error creating itinerary_purchases records:', purchaseError);
+            console.error('Session id:', session.id, 'itinerary_ids:', itineraryIds);
+            // Return 500 so Stripe retries; duplicate key (23505) is ok - already recorded
+            const isDuplicate = purchaseError.code === '23505';
+            if (!isDuplicate) {
+              return NextResponse.json(
+                { error: 'Failed to create purchase records', details: purchaseError.message },
+                { status: 500 }
+              );
+            }
           } else {
             const userInfo = userId ? `user ${userId}` : `guest (${customerEmail})`;
             console.log(`Created ${purchaseRecords.length} purchase records for ${userInfo}`);

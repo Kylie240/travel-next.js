@@ -9,6 +9,7 @@ export type CartItem = {
   mainImage: string | null
   creatorName: string
   creatorUsername: string
+  creatorId: string
 }
 
 type CartContextType = {

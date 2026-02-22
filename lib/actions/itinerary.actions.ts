@@ -161,16 +161,43 @@ export const getItinerarySummaries = async (userId?: string) => {
     
       if (!user) throw new Error("Not authenticated")
     
-    const { data, error } = await supabase
-    .rpc("get_my_itineraries", { p_user_id: user.id }) as { 
-        data: ItinerarySummary[] | null, 
-        error: Error | null };
+    // Try RPC first (get_my_itineraries may not exist or may return null in some setups)
+    const { data: rpcData, error: rpcError } = await supabase
+        .rpc("get_my_itineraries", { p_user_id: user.id }) as {
+        data: ItinerarySummary[] | null;
+        error: { message: string } | null;
+    };
 
-    if (error) {
-        throw new Error(error.message);
+    if (!rpcError && Array.isArray(rpcData)) {
+        return rpcData;
     }
 
-    return data;
+    // Fallback: query itineraries directly by creator_id (when RPC is missing or returns null)
+    const { data: rows, error: queryError } = await supabase
+        .from("itineraries")
+        .select("id, title, status, main_image, short_description, countries, view_permission, edit_permission")
+        .eq("creator_id", user.id)
+        .order("id", { ascending: false });
+
+    if (queryError) {
+        if (rpcError) throw new Error(rpcError.message);
+        throw new Error(queryError.message);
+    }
+
+    const summaries: ItinerarySummary[] = (rows || []).map((row: any) => ({
+        id: row.id,
+        title: row.title ?? "",
+        status: row.status,
+        mainImage: row.main_image ?? null,
+        views: row.views ?? 0,
+        likes: row.likes ?? 0,
+        saves: row.saves ?? 0,
+        shortDescription: row.short_description,
+        countries: row.countries ?? [],
+        viewPermission: row.view_permission ?? 0,
+        editPermission: row.edit_permission ?? 0,
+    }));
+    return summaries;
 }
 
 export const getItineraryPermissions = async (userId?: string) => {
@@ -281,6 +308,27 @@ export const incrementItineraryViewCount = async (itineraryId: string) => {
     if (error) {
         console.log("Error incrementing view count:", error)
     } 
+}
+
+export const getPurchasedByUserId = async (userId: string) => {
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+    
+      if (!user) throw new Error("Not authenticated")
+        
+      const { data, error } = await supabase
+      .rpc("get_purchased_itineraries", { p_user_id: userId }) as { 
+          data: SavedItinerary[] | null, 
+          error: Error | null 
+      };
+
+      if (error) {
+          throw new Error(error.message);
+      } 
+
+      return data;
 }
 
 export const getSavesByUserId = async (userId: string, creatorId: string = null) => {

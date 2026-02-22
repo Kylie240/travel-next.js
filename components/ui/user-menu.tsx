@@ -185,7 +185,7 @@ export function UserMenu() {
                   onClick={() => router.push(`/account-settings`)}
                 >
                   <Settings className="mr-2 h-4 w-4" />
-                  Account Settings
+                  Settings
                 </DropdownMenu.Item>
 
               {showSellerDashboard && (
@@ -219,10 +219,10 @@ export function UserMenu() {
               {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
                 <DropdownMenu.Item
                   className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                  onClick={() => router.push('/purchases')}
+                  onClick={() => router.push('/purchased')}
                 >
                   <TiTag className="mr-2" size={18} strokeWidth={.25} />
-                  Purchases
+                  Purchased
                 </DropdownMenu.Item>
               )}
 

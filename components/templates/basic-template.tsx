@@ -18,6 +18,7 @@ import ScheduleSection from "@/app/itinerary/[id]/schedule-section";
 import NoteSection from "@/app/itinerary/[id]/note-section";
 import { FaUserLarge } from "react-icons/fa6"
 import { AddToCartButton } from "../ui/add-to-cart-button";
+import { PurchaseButton } from "../ui/purchase-button";
 
 export default function BasicTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId, isRestrictedView = false, priceCents = 0 }: { 
     itinerary: Itinerary, 
@@ -304,9 +305,19 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                       ${(priceCents / 100).toFixed(2)}
                     </div>
                     <div className="flex flex-col gap-3 items-center">
-                      <Button className="bg-black hover:bg-gray-800 text-white px-8 py-2">
-                        Purchase Itinerary
-                      </Button>
+                      {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
+                        <PurchaseButton
+                          itinerary={{
+                            id: itinerary.id,
+                            title: itinerary.title,
+                            priceCents: priceCents,
+                            mainImage: itinerary.mainImage,
+                            creatorName: creator.name || "",
+                            creatorUsername: creator.username || "",
+                            creatorId: creator.id || "",
+                          }}
+                        />
+                      )}
                       {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
                         <AddToCartButton
                           itinerary={{
@@ -316,6 +327,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                             mainImage: itinerary.mainImage,
                             creatorName: creator.name || "",
                             creatorUsername: creator.username || "",
+                            creatorId: creator.id || "",
                           }}
                           className="px-8 py-2"
                         />

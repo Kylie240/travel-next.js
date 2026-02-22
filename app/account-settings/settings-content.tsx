@@ -887,7 +887,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               userStats={userStats}
             />
             <div className="border-t pt-4 border-gray-200 py-4">
-              <h2 className="text-2xl font-medium mb-4 pl-2 md:pl-4 pt-4 md:pt-8 lg:pt-0">Account Settings</h2>
+              <h2 className="text-2xl font-medium mb-4 pl-2 md:pl-4 pt-4 md:pt-8 lg:pt-0">Settings</h2>
               <div className="space-y-2">
                 {settingsSections.map((section) => (
                   <button

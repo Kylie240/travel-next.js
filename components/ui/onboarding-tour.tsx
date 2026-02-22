@@ -20,7 +20,7 @@ const tourSteps = [
   {
     id: "profile",
     title: "Complete Your Profile",
-    description: "You're on your Account Settings page. Here you can customize your profile, add a photo, write a bio, and connect your social media accounts. A complete profile helps other travelers discover and connect with you.",
+    description: "You're on your account's Settings page. Here you can customize your profile, add a photo, write a bio, and connect your social media accounts. A complete profile helps other travelers discover and connect with you.",
     icon: MapPin,
   },
   {

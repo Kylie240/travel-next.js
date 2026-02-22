@@ -16,6 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+**Stripe webhooks (local):** With the dev server running, forward events with:
+`stripe listen --forward-to localhost:3000/api/stripe-webhooks`
+Use the signing secret the CLI prints as `STRIPE_WEBHOOK_SECRET` in `.env.local`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
