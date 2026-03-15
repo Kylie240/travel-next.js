@@ -13,12 +13,14 @@ export function InteractionButtons({
   itineraryId, 
   initialIsLiked, 
   initialIsSaved,
-  itineraryStatus 
+  itineraryStatus,
+  isRestrictedView
 }: { 
   itineraryId: string
   initialIsLiked?: boolean
   initialIsSaved?: boolean
   itineraryStatus?: number
+  isRestrictedView?: boolean
 }) {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
   const [loading, setLoading] = useState(true)
@@ -105,12 +107,14 @@ export function InteractionButtons({
         currentUserId={currentUserId || ""} 
         initialIsLiked={initialIsLiked}
       />  
-      <BookmarkElement 
-        color="black" 
-        itineraryId={itineraryId} 
-        currentUserId={currentUserId || ""} 
-        initialIsSaved={initialIsSaved}
-      />
+      {!isRestrictedView && (
+        <BookmarkElement 
+          color="black" 
+          itineraryId={itineraryId} 
+          currentUserId={currentUserId || ""} 
+          initialIsSaved={initialIsSaved}
+        />
+      )}
       {hasPdfAccess && (
         <FileDown 
           size={35}

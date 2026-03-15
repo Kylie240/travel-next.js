@@ -11,4 +11,7 @@ export type ItinerarySummary = {
     countries?: string[];
     viewPermission: number;
     editPermission: number;
+    priceCents?: number;
+    isPaid?: boolean;
+    isPurchased?: boolean;
   };

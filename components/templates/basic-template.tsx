@@ -102,7 +102,9 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                       <Link href={`/create?itineraryId=${itinerary.id}`}>
                         <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                       </Link>
-                      <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                      {!isRestrictedView && (
+                        <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                      )}
                       </div>
                     ) : ( 
                       <InteractionButtons
@@ -110,6 +112,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                         initialIsLiked={initialIsLiked}
                         initialIsSaved={initialIsSaved}
                         itineraryStatus={itinerary.status}
+                        isRestrictedView={isRestrictedView}
                       />
                     )}
                     {itinerary.status === ItineraryStatusEnum.published && 
@@ -318,7 +321,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                           }}
                         />
                       )}
-                      {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
+                      {/* {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
                         <AddToCartButton
                           itinerary={{
                             id: itinerary.id,
@@ -331,7 +334,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                           }}
                           className="px-8 py-2"
                         />
-                      )}
+                      )} */}
                     </div>
                   </div>
                 ) : (

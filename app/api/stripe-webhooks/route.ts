@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/utils/supabase/server-admin";
+import { sendPurchaseConfirmationEmail } from "@/lib/email";
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
@@ -147,9 +148,10 @@ export async function POST(request: NextRequest) {
             purchased_at: new Date().toISOString(),
           }));
 
-          const { error: purchaseError } = await supabase
+          const { data: insertedPurchases, error: purchaseError } = await supabase
             .from('itinerary_purchases')
-            .insert(purchaseRecords);
+            .insert(purchaseRecords)
+            .select('id, itinerary_id');
 
           if (purchaseError) {
             console.error('Error creating itinerary_purchases records:', purchaseError);
@@ -165,6 +167,66 @@ export async function POST(request: NextRequest) {
           } else {
             const userInfo = userId ? `user ${userId}` : `guest (${customerEmail})`;
             console.log(`Created ${purchaseRecords.length} purchase records for ${userInfo}`);
+
+            // Send purchase confirmation email with download links
+            if (customerEmail) {
+              const { data: itineraryRows } = await supabase
+                .from("itineraries")
+                .select("id, title")
+                .in("id", itineraryIds);
+              const itineraries = (itineraryRows || []).map((r) => ({
+                id: r.id,
+                title: r.title || "Itinerary",
+              }));
+              const baseUrl =
+                process.env.NEXT_PUBLIC_SITE_URL ||
+                (process.env.VERCEL_URL
+                  ? `https://${process.env.VERCEL_URL}`
+                  : "https://www.journli.com");
+              const { success, error } = await sendPurchaseConfirmationEmail(
+                customerEmail,
+                itineraries,
+                baseUrl.replace(/\/$/, "")
+              );
+              if (!success) {
+                console.error("Purchase confirmation email failed:", error);
+              }
+            }
+
+            // Use inserted itinerary_purchases ids for purchase_id (one seller_transaction per purchase)
+            // Set payout_status from session: 'paid' => funds captured, seller payout pending; otherwise unpaid
+            const payoutStatus =
+              session.payment_status === 'paid' ? 'pending' : 'unpaid';
+            const amountPerItem = Math.round((session.amount_total || 0) / (insertedPurchases?.length ?? 1));
+            const platformFee = Math.round(amountPerItem * 0.1);
+            const stripeFee = Math.round(amountPerItem * 0.029 + 0.30);
+            const netAmount = amountPerItem - platformFee - stripeFee;
+            
+            console.log('test', payoutStatus, amountPerItem);
+            const sellerTransactionRecords = (insertedPurchases || []).map((purchase) => ({
+              seller_id: userId,
+              itinerary_id: purchase.itinerary_id,
+              purchase_id: purchase.id,
+              gross_amount_cents: amountPerItem,
+              platform_fee_cents: platformFee,
+              stripe_fee_cents: stripeFee,
+              seller_earnings_cents: netAmount,
+              stripe_payment_intent_id: session.payment_intent as string,
+              payout_status: payoutStatus,
+              created_at: new Date().toISOString(),
+            }));
+
+            const { error: insertError } = await supabase
+              .from('seller_transactions')
+              .insert(sellerTransactionRecords);
+
+            if (insertError) {
+              console.error('Error inserting seller_transactions records:', insertError);
+              return NextResponse.json(
+                { error: 'Failed to insert seller_transactions', details: insertError.message },
+                { status: 500 }
+              );
+            }
           }
 
           break;
