@@ -10,18 +10,15 @@ import {
   TrendingUp,
   Loader2,
   FileText,
-  ExternalLink,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  getSellerTransactions,
-  getSellerTransactions2,
-  SellerTransactionRow,
+  getSellerDashboardSummary,
   SellerDashboardData,
 } from "@/lib/actions/seller.actions";
 import createClient from "@/utils/supabase/client";
 import { StripeAccountButton } from "@/components/ui/stripe-account-button";
+import { SellerConnectEmbedded } from "@/components/connect/seller-connect-embedded";
 
 function formatCents(cents: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -31,33 +28,14 @@ function formatCents(cents: number): string {
   }).format(cents / 100);
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function PayoutStatusBadge({ status }: { status: string }) {
-  const variant =
-    status === "paid"
-      ? "default"
-      : status === "pending"
-        ? "secondary"
-        : "outline";
-  const label =
-    status === "paid" ? "Paid" : status === "pending" ? "Pending" : status;
-  return <Badge variant={variant}>{label}</Badge>;
-}
-
 export default function SellerDashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [data, setData] = useState<SellerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
-  const [completeStripeAccountSetup, setCompleteStripeAccountSetup] = useState<boolean>(false);
+  const [completeStripeAccountSetup, setCompleteStripeAccountSetup] =
+    useState<boolean>(false);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -95,9 +73,11 @@ export default function SellerDashboardPage() {
     };
     setStripeAccountId(body.stripeAccountId ?? null);
     setCompleteStripeAccountSetup(Boolean(body.sellerAccountReady));
+
     if (body.sellerAccountReady) {
-      const result = await getSellerTransactions2();
+      const result = await getSellerDashboardSummary();
       setData(result ?? null);
+      console.log(result);
     } else {
       setData(null);
     }
@@ -155,9 +135,6 @@ export default function SellerDashboardPage() {
 
   if (!user) return null;
 
-  const transactions = data?.transactions ?? [];
-  const hasTransactions = transactions.length > 0;
-
   return (
     <div className="min-h-screen bg-gray-50/80 py-8 sm:pt-[4rem]">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
@@ -170,7 +147,7 @@ export default function SellerDashboardPage() {
           </p>
         </div>
 
-        {/* Summary cards */}
+        {/* Summary cards — Journli itinerary sales (your database) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
@@ -223,117 +200,67 @@ export default function SellerDashboardPage() {
           </Card>
         </div>
 
-        {/* Transactions list */}
         <Card>
           <CardContent className="p-0">
             <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
               <h2 className="text-lg font-medium text-gray-900">
-                Transaction history
+                Stripe account activity
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">
-                Sales of your paid itineraries
+                Balances, payments, and payouts from your connected Stripe
+                account (loaded with a fresh{" "}
+                <a
+                  className="text-gray-700 underline hover:text-gray-900"
+                  href="https://docs.stripe.com/api/account_sessions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Account Session
+                </a>{" "}
+                each visit). Summary cards above reflect itinerary sales
+                recorded on Journli.
               </p>
             </div>
 
-            { !stripeAccountId || !completeStripeAccountSetup ? (
+            {!stripeAccountId || !completeStripeAccountSetup ? (
               <div className="py-16 px-4 text-center">
                 <TrendingUp className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  { !stripeAccountId ? "Setup your seller account" : "Complete your seller account" }
+                  {!stripeAccountId
+                    ? "Setup your seller account"
+                    : "Complete your seller account"}
                 </h3>
                 <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                  { !stripeAccountId ? "Looks like you're new here! Before you start selling, you'll need to setup your Stripe account." 
-                  : "Looks like you're almost there! Before you start selling, you'll need to complete your Stripe account setup." }
+                  {!stripeAccountId
+                    ? "Looks like you're new here! Before you start selling, you'll need to setup your Stripe account."
+                    : "Looks like you're almost there! Before you start selling, you'll need to complete your Stripe account setup."}
                 </p>
                 <StripeAccountButton />
               </div>
-            ) : !hasTransactions ? (
-              <div className="py-16 px-4 text-center">
-                <TrendingUp className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  No sales yet
-                </h3>
-                <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                  When someone purchases one of your paid itineraries, the sale
-                  will appear here.
-                </p>
-                <Link
-                  href="/my-itineraries"
-                  className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-                >
-                  <FileText className="h-4 w-4" />
-                  My itineraries
-                </Link>
-              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-xs text-gray-500 uppercase tracking-wider border-b border-gray-100 bg-gray-50/50">
-                      <th className="py-3 px-4 font-medium">Date</th>
-                      <th className="py-3 px-4 font-medium">Itinerary</th>
-                      <th className="py-3 px-4 font-medium text-right">
-                        Gross
-                      </th>
-                      <th className="py-3 px-4 font-medium text-right hidden sm:table-cell">
-                        Fees
-                      </th>
-                      <th className="py-3 px-4 font-medium text-right">
-                        Earnings
-                      </th>
-                      <th className="py-3 px-4 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {transactions.map((t) => (
-                      <TransactionRow key={t.id} transaction={t} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <SellerConnectEmbedded />
+                {(data?.transactionCount ?? 0) === 0 && (
+                  <div className="border-t border-gray-100 px-4 py-8 text-center text-sm text-gray-600">
+                    <p className="mb-4 max-w-md mx-auto">
+                      No paid itinerary sales on Journli yet. When buyers
+                      purchase your itineraries, totals in the cards above will
+                      update.
+                    </p>
+                    <Link
+                      href="/my-itineraries"
+                      className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                    >
+                      <FileText className="h-4 w-4" />
+                      My itineraries
+                    </Link>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
       </div>
     </div>
-  );
-}
-
-function TransactionRow({ transaction }: { transaction: SellerTransactionRow }) {
-  const title = transaction.itinerary_title ?? "Itinerary";
-  const itineraryId = transaction.itinerary_id;
-  const fees =
-    (transaction.platform_fee_cents ?? 0) +
-    (transaction.stripe_fee_cents ?? 0);
-
-  return (
-    <tr className="hover:bg-gray-50/50">
-      <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">
-        {formatDate(transaction.created_at)}
-      </td>
-      <td className="py-3 px-4">
-        <Link
-          href={`/itinerary/${itineraryId}`}
-          className="text-sm font-medium text-gray-900 hover:text-gray-700 inline-flex items-center gap-1"
-        >
-          <span className="max-w-[140px] sm:max-w-[200px] truncate block">
-            {title}
-          </span>
-          <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
-        </Link>
-      </td>
-      <td className="py-3 px-4 text-sm text-gray-600 text-right whitespace-nowrap">
-        {formatCents(transaction.gross_amount_cents)}
-      </td>
-      <td className="py-3 px-4 text-sm text-gray-500 text-right whitespace-nowrap hidden sm:table-cell">
-        −{formatCents(fees)}
-      </td>
-      <td className="py-3 px-4 text-sm font-medium text-gray-900 text-right whitespace-nowrap">
-        {formatCents(transaction.seller_earnings_cents)}
-      </td>
-      <td className="py-3 px-4">
-        <PayoutStatusBadge status={transaction.payout_status} />
-      </td>
-    </tr>
   );
 }
