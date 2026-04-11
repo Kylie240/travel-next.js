@@ -1,13 +1,28 @@
 "use client"
 
+import { useEffect } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle, DownloadIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import createClient from '@/utils/supabase/client'
 
 export default function PurchasePage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const isGuest = searchParams.get('isGuest')
+
+  useEffect(() => {
+    const supabase = createClient()
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        router.replace('/')
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [router])
 
   return (
     <div className="min-h-screen bg-white">

@@ -31,6 +31,13 @@ export default async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
+  // Redirect unauthenticated users on seller-dashboard to homepage (no login prompt)
+  if (!user && path.startsWith("/seller-dashboard")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
+
   // Redirect unauthenticated users to login, except for auth routes
   if (!user && !path.startsWith(LOGIN_PATH) && !path.startsWith("/auth")) {
     const url = request.nextUrl.clone();

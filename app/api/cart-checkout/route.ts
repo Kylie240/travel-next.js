@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
       cancel_url: `${origin}/canceled?type=cart`,
       metadata: {
         itinerary_ids: itineraryIds.join(','),
+        itinerary_titles: itineraries.map((i) => (i.title ?? 'Itinerary').replace(/\|/g, ' ')).join('|'),
         purchase_type: 'itinerary_cart',
       },
     }

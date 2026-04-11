@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,10 +16,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   getSellerTransactions,
+  getSellerTransactions2,
   SellerTransactionRow,
   SellerDashboardData,
 } from "@/lib/actions/seller.actions";
 import createClient from "@/utils/supabase/client";
+import { StripeAccountButton } from "@/components/ui/stripe-account-button";
 
 function formatCents(cents: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -54,27 +56,94 @@ export default function SellerDashboardPage() {
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [data, setData] = useState<SellerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
+  const [completeStripeAccountSetup, setCompleteStripeAccountSetup] = useState<boolean>(false);
 
-  useEffect(() => {
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
     const supabase = createClient();
 
-    const load = async () => {
-      const {
-        data: { user: u },
-      } = await supabase.auth.getUser();
-      if (!u) {
-        router.replace("/login?redirect=/seller-dashboard");
-        setLoading(false);
-        return;
-      }
-      setUser(u);
-      const result = await getSellerTransactions();
-      setData(result ?? null);
+    const {
+      data: { user: u },
+    } = await supabase.auth.getUser();
+    if (!u) {
+      router.replace("/");
       setLoading(false);
-    };
+      return;
+    }
+    setUser(u);
 
-    load();
+    const statusRes = await fetch(
+      `/api/stripe-connect/status?t=${Date.now()}`,
+      {
+        credentials: "same-origin",
+        cache: "no-store",
+      }
+    );
+    if (statusRes.status === 401) {
+      router.replace("/");
+      setLoading(false);
+      return;
+    }
+    if (!statusRes.ok) {
+      setLoading(false);
+      return;
+    }
+    const body = (await statusRes.json()) as {
+      stripeAccountId?: string | null;
+      sellerAccountReady?: boolean;
+    };
+    setStripeAccountId(body.stripeAccountId ?? null);
+    setCompleteStripeAccountSetup(Boolean(body.sellerAccountReady));
+    if (body.sellerAccountReady) {
+      const result = await getSellerTransactions2();
+      setData(result ?? null);
+    } else {
+      setData(null);
+    }
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (
+        url.searchParams.has("stripe_return") ||
+        url.searchParams.has("stripe_refresh")
+      ) {
+        url.searchParams.delete("stripe_return");
+        url.searchParams.delete("stripe_refresh");
+        const qs = url.searchParams.toString();
+        window.history.replaceState(
+          null,
+          "",
+          qs ? `${url.pathname}?${qs}` : url.pathname
+        );
+      }
+    }
+
+    setLoading(false);
   }, [router]);
+
+  useEffect(() => {
+    void loadDashboard();
+
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) void loadDashboard();
+    };
+    window.addEventListener("pageshow", onPageShow);
+
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        router.replace("/");
+      }
+    });
+
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      subscription.unsubscribe();
+    };
+  }, [loadDashboard, router]);
 
   if (loading) {
     return (
@@ -166,7 +235,19 @@ export default function SellerDashboardPage() {
               </p>
             </div>
 
-            {!hasTransactions ? (
+            { !stripeAccountId || !completeStripeAccountSetup ? (
+              <div className="py-16 px-4 text-center">
+                <TrendingUp className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-1">
+                  { !stripeAccountId ? "Setup your seller account" : "Complete your seller account" }
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+                  { !stripeAccountId ? "Looks like you're new here! Before you start selling, you'll need to setup your Stripe account." 
+                  : "Looks like you're almost there! Before you start selling, you'll need to complete your Stripe account setup." }
+                </p>
+                <StripeAccountButton />
+              </div>
+            ) : !hasTransactions ? (
               <div className="py-16 px-4 text-center">
                 <TrendingUp className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-1">
@@ -219,8 +300,7 @@ export default function SellerDashboardPage() {
 }
 
 function TransactionRow({ transaction }: { transaction: SellerTransactionRow }) {
-  const title =
-    transaction.itineraries?.title ?? "Itinerary";
+  const title = transaction.itinerary_title ?? "Itinerary";
   const itineraryId = transaction.itinerary_id;
   const fees =
     (transaction.platform_fee_cents ?? 0) +

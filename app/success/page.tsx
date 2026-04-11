@@ -126,12 +126,12 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
               <Link href="/account-settings?tab=Your Plan">
                 <Button className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-6">
                   <Settings className="w-4 h-4 mr-2" />
-                  Settings Page
+                  Settings
                 </Button>
               </Link>
-              <Link href="/itineraries">
+              <Link href="/seller-dashboard">
                 <Button variant="outline" className="w-full sm:w-auto px-6">
-                  Start Creating
+                  Start Selling
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>

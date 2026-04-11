@@ -12,6 +12,20 @@ const PRICE_TO_PLAN: Record<string, string> = {
   'price_1SvjvgCFWq8paBje5goZvdZk': 'premium',
 };
 
+/** Stripe API v20+ exposes `current_period_end` on subscription items, not the root subscription. */
+function subscriptionCurrentPeriodEndUnix(subscription: Stripe.Subscription): number | null {
+  const ends =
+    subscription.items?.data
+      ?.map((item) => item.current_period_end)
+      .filter((n): n is number => typeof n === 'number' && Number.isFinite(n)) ?? [];
+  if (ends.length === 0) return null;
+  return Math.max(...ends);
+}
+
+function unixSecondsToIso(seconds: number): string {
+  return new Date(seconds * 1000).toISOString();
+}
+
 async function updateUserSubscription(
   userId: string,
   subscriptionData: {
@@ -110,6 +124,7 @@ export async function POST(request: NextRequest) {
         // Handle itinerary cart purchases (one-time payments)
         if (session.mode === 'payment' && session.metadata?.purchase_type === 'itinerary_cart') {
           const itineraryIds = session.metadata?.itinerary_ids?.split(',') || [];
+          const itineraryTitles = session.metadata?.itinerary_titles?.split('|') || [];
           const customerEmail = session.customer_details?.email || session.customer_email;
           
           if (itineraryIds.length === 0) {
@@ -138,7 +153,7 @@ export async function POST(request: NextRequest) {
           
           // Create purchase records for each itinerary
           // Store user_id if logged in, otherwise store customer_email for guest purchases
-          const purchaseRecords = itineraryIds.map(itineraryId => ({
+          const purchaseRecords = itineraryIds.map((itineraryId, index) => ({
             user_id: userId || null,
             customer_email: userId ? null : customerEmail, // Only store email for guests
             itinerary_id: itineraryId,
@@ -146,6 +161,7 @@ export async function POST(request: NextRequest) {
             stripe_checkout_session_id: session.id,
             amount_cents: Math.round((session.amount_total || 0) / itineraryIds.length),
             purchased_at: new Date().toISOString(),
+            itinerary_title: itineraryTitles[index] ?? 'Itinerary',
           }));
 
           const { data: insertedPurchases, error: purchaseError } = await supabase
@@ -167,6 +183,25 @@ export async function POST(request: NextRequest) {
           } else {
             const userInfo = userId ? `user ${userId}` : `guest (${customerEmail})`;
             console.log(`Created ${purchaseRecords.length} purchase records for ${userInfo}`);
+
+            // Get creator_id (seller) per itinerary for seller_transactions
+            const { data: itineraryRowsForSellers } = await supabase
+              .from('itineraries')
+              .select('id, creator_id')
+              .in('id', itineraryIds);
+            const sellerIdByItineraryId = Object.fromEntries(
+              (itineraryRowsForSellers || []).map((r) => [r.id, r.creator_id])
+            );
+            const missingSeller = (insertedPurchases || []).find(
+              (p) => !sellerIdByItineraryId[p.itinerary_id]
+            );
+            if (missingSeller) {
+              console.error('Missing creator_id for itinerary:', missingSeller.itinerary_id);
+              return NextResponse.json(
+                { error: 'Missing seller for itinerary', itinerary_id: missingSeller.itinerary_id },
+                { status: 500 }
+              );
+            }
 
             // Send purchase confirmation email with download links
             if (customerEmail) {
@@ -198,14 +233,18 @@ export async function POST(request: NextRequest) {
             const payoutStatus =
               session.payment_status === 'paid' ? 'pending' : 'unpaid';
             const amountPerItem = Math.round((session.amount_total || 0) / (insertedPurchases?.length ?? 1));
-            const platformFee = Math.round(amountPerItem * 0.1);
-            const stripeFee = Math.round(amountPerItem * 0.029 + 0.30);
+            const stripeFee = Math.round(amountPerItem * 0.029 + 30);
+            const platformFee = Math.round((amountPerItem - stripeFee) * 0.1);
             const netAmount = amountPerItem - platformFee - stripeFee;
             
             console.log('test', payoutStatus, amountPerItem);
+            const titleByItineraryId = Object.fromEntries(
+              itineraryIds.map((id, i) => [id, itineraryTitles[i] ?? 'Itinerary'])
+            );
             const sellerTransactionRecords = (insertedPurchases || []).map((purchase) => ({
-              seller_id: userId,
+              seller_id: sellerIdByItineraryId[purchase.itinerary_id],
               itinerary_id: purchase.itinerary_id,
+              itinerary_title: titleByItineraryId[purchase.itinerary_id] ?? 'Itinerary',
               purchase_id: purchase.id,
               gross_amount_cents: amountPerItem,
               platform_fee_cents: platformFee,
@@ -284,14 +323,19 @@ export async function POST(request: NextRequest) {
         const priceId = subscription.items.data[0]?.price.id;
         const plan = PRICE_TO_PLAN[priceId] || 'standard';
 
-        await updateUserSubscription(userId, {
+        const periodEndUnix = subscriptionCurrentPeriodEndUnix(subscription);
+        const subscriptionPayload: Parameters<typeof updateUserSubscription>[1] = {
           stripe_customer_id: subscription.customer as string,
           stripe_subscription_id: subscription.id,
           stripe_subscription_status: subscription.status,
-          stripe_subscription_created_date: new Date(subscription.created * 1000).toISOString(),
-          stripe_subscription_ends_at: new Date((subscription as any).current_period_end * 1000).toISOString(),
+          stripe_subscription_created_date: unixSecondsToIso(subscription.created),
           plan: plan,
-        });
+        };
+        if (periodEndUnix != null) {
+          subscriptionPayload.stripe_subscription_ends_at = unixSecondsToIso(periodEndUnix);
+        }
+
+        await updateUserSubscription(userId, subscriptionPayload);
 
         console.log(`Subscription updated for user ${userId}: status=${subscription.status}, plan=${plan}`);
         break;
