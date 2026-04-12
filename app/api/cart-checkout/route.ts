@@ -52,6 +52,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const sellerIds = [
+      ...new Set(itineraries.map((i) => i.creator_id).filter(Boolean)),
+    ] as string[]
+    if (sellerIds.length > 1) {
+      return NextResponse.json(
+        {
+          error:
+            'Your cart can only include itineraries from one seller per checkout. Remove items from other creators or complete separate purchases.',
+        },
+        { status: 400 }
+      )
+    }
+
+    const sellerUserId = sellerIds[0]
+    let sellerStripeAccountId: string | null = null
+    if (sellerUserId) {
+      const { data: sellerSettings } = await adminSupabase
+        .from('users_settings')
+        .select('stripe_account_id')
+        .eq('user_id', sellerUserId)
+        .maybeSingle()
+      sellerStripeAccountId =
+        (sellerSettings?.stripe_account_id as string | null | undefined) ?? null
+    }
+
     // If user is logged in, check they haven't already purchased any of these
     if (user) {
       const { data: existingPurchases } = await adminSupabase
@@ -70,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build line items from verified database data
-    const lineItems = itineraries.map(itinerary => ({
+    const lineItems = itineraries.map((itinerary) => ({
       price_data: {
         currency: 'usd',
         product_data: {
@@ -80,13 +105,22 @@ export async function POST(request: NextRequest) {
             seller_id: itinerary.creator_id,
           },
         },
-        unit_amount: itinerary.price_cents,
+        // Stripe amounts must be whole cents (integers)
+        unit_amount: Math.round(Number(itinerary.price_cents)),
       },
       quantity: 1,
     }))
 
     // Create Checkout Session - allow email input for guest users
     const isGuest = !user
+
+    // Platform application fee in cents — always integers (Stripe rejects floats)
+    const applicationFeeTotalCents = itineraries.reduce((sum, it) => {
+      const p = Math.round(Number(it.price_cents))
+      const stripeFee = Math.round(p * 0.029 + 30)
+      return sum + Math.round(stripeFee + ((p - stripeFee) * 0.1))
+    }, 0)
+
     const sessionConfig: any = {
       line_items: lineItems,
       mode: 'payment',
@@ -94,7 +128,9 @@ export async function POST(request: NextRequest) {
       cancel_url: `${origin}/canceled?type=cart`,
       metadata: {
         itinerary_ids: itineraryIds.join(','),
-        itinerary_titles: itineraries.map((i) => (i.title ?? 'Itinerary').replace(/\|/g, ' ')).join('|'),
+        itinerary_titles: itineraries
+          .map((i) => (i.title ?? 'Itinerary').replace(/\|/g, ' '))
+          .join('|'),
         purchase_type: 'itinerary_cart',
       },
     }
@@ -103,6 +139,15 @@ export async function POST(request: NextRequest) {
     if (user) {
       sessionConfig.customer_email = user.email
       sessionConfig.metadata.supabase_user_id = user.id
+    }
+
+    if (sellerStripeAccountId) {
+      sessionConfig.payment_intent_data = {
+        application_fee_amount: Math.max(0, applicationFeeTotalCents),
+        transfer_data: {
+          destination: sellerStripeAccountId,
+        },
+      }
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig)

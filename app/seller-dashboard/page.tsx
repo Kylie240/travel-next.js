@@ -74,13 +74,10 @@ export default function SellerDashboardPage() {
     setStripeAccountId(body.stripeAccountId ?? null);
     setCompleteStripeAccountSetup(Boolean(body.sellerAccountReady));
 
-    if (body.sellerAccountReady) {
-      const result = await getSellerDashboardSummary();
-      setData(result ?? null);
-      console.log(result);
-    } else {
-      setData(null);
-    }
+    // Summary cards are Journli DB data — load whenever signed in, not only when
+    // Stripe Connect reports "ready" (those states can diverge).
+    const result = await getSellerDashboardSummary();
+    setData(result ?? null);
 
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
@@ -148,7 +145,7 @@ export default function SellerDashboardPage() {
         </div>
 
         {/* Summary cards — Journli itinerary sales (your database) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -198,7 +195,7 @@ export default function SellerDashboardPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         <Card>
           <CardContent className="p-0">

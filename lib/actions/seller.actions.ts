@@ -1,6 +1,7 @@
 "use server";
 
 import createClient from "@/utils/supabase/server";
+import { createClient as createAdminClient } from "@/utils/supabase/server-admin";
 
 export type SellerTransactionRow = {
   id: string;
@@ -32,7 +33,10 @@ export async function getSellerDashboardSummary(): Promise<SellerDashboardData |
 
   if (!user) return null;
 
-  const { data: rows, error } = await supabase
+  // Use service role so row-level security on seller_transactions does not block
+  // reads; scope is strictly seller_id = authenticated user id.
+  const admin = createAdminClient();
+  const { data: rows, error } = await admin
     .from("seller_transactions")
     .select("*")
     .eq("seller_id", user.id)

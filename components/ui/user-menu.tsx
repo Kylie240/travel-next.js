@@ -26,9 +26,11 @@ export function UserMenu() {
   const [userProfile, setUserProfile] = useState<any>(null)
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
-  const { loading, error, user } = useUser()  
-  const userPlan = user?.user_metadata?.plan
-  const showSellerDashboard = process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && userPlan !== "free"
+  const { loading, error, user } = useUser()
+  const [billingPlan, setBillingPlan] = useState<string | null>(null)
+
+  const showSellerDashboard =
+    (billingPlan === "standard" || billingPlan === "premium")
 
   // Track the last fetched user ID to prevent unnecessary refetches
   const lastFetchedUserIdRef = useRef<string | null>(null)
@@ -67,6 +69,27 @@ export function UserMenu() {
   useEffect(() => {
     fetchUserProfile()
   }, [fetchUserProfile])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setBillingPlan(null)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      const { data } = await supabase
+        .from("users_settings")
+        .select("plan")
+        .eq("user_id", user.id)
+        .maybeSingle()
+      if (!cancelled) {
+        setBillingPlan(typeof data?.plan === "string" ? data.plan : "free")
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
 
   // Listen for avatar updates
   useEffect(() => {
@@ -216,7 +239,7 @@ export function UserMenu() {
                 My Itineraries
               </DropdownMenu.Item>
 
-              {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
+              {showSellerDashboard && (
                 <DropdownMenu.Item
                   className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                   onClick={() => router.push('/purchased')}
