@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { loadConnectAndInitialize } from "@stripe/connect-js";
-
-type StripeConnectInstance = ReturnType<typeof loadConnectAndInitialize>;
+import { loadConnectAndInitialize } from "@stripe/connect-js/pure";
 import {
   ConnectBalances,
   ConnectComponentsProvider,
@@ -12,6 +10,8 @@ import {
   ConnectPayouts,
 } from "@stripe/react-connect-js";
 import { Loader2 } from "lucide-react";
+
+type StripeConnectInstance = ReturnType<typeof loadConnectAndInitialize>;
 
 export function SellerConnectEmbedded() {
   const [connectInstance, setConnectInstance] =
