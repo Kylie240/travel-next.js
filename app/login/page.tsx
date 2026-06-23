@@ -145,15 +145,20 @@ export default function LoginPage() {
   }
 
   const handleForgotPassword = async (email: string) => {
-    const supabase = createClient()
+    if (!email) {
+      setAuthError("Please enter your email address")
+      return
+    }
+
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth/reset-password")}`
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`
+      redirectTo,
     })
     if (error) {
       setAuthError(error.message)
       return
     }
-    toast.success("Password reset email sent")
+    toast.success("Password reset email sent. Check your inbox.")
   }
 
   return (
@@ -263,7 +268,13 @@ export default function LoginPage() {
               <p className="text-sm text-red-500">{authError}</p>
             )}
             {!isSignUp && (
-              <a className="text-sm mt-2 text-blue-500 hover:underline cursor-pointer" onClick={() => handleForgotPassword(signInForm.watch("email"))}>Forgot password?</a>
+              <button
+                type="button"
+                className="text-sm mt-2 text-blue-500 hover:underline"
+                onClick={() => handleForgotPassword(signInForm.watch("email"))}
+              >
+                Forgot password?
+              </button>
             )}
             <Button
               type="submit"

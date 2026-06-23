@@ -5,11 +5,23 @@ import { PhotoItem } from '@/lib/utils/photos'
 import PhotoGallery from '@/components/ui/photo-gallery';
 import { Images } from 'lucide-react';
 
-const ItineraryGallery = ({ photos }: { photos: PhotoItem[] }) => {
+const ItineraryGallery = ({ photos, template }: { photos: PhotoItem[], template?: string }) => {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const isDiscoverTemplate = template === "discover"
   return (
     <>
-    <div className="hidden lg:flex bg-gray-800 relative w-full h-full lg:h-[30%] overflow-hidden rounded-md lg:rounded-3xl text-white justify-center items-center curstor-pointer"
+    {isDiscoverTemplate ? (
+      <div onClick={() => setIsGalleryOpen(true)} className={`px-3 py-2 rounded-lg cursor-pointer relative w-full h-full flex justify-center items-center bg-gray-800 hover:bg-gray-700 text-white`}>
+      <span className="gap-1 flex font-thin items-center">
+        View All <Images size={14} strokeWidth={2} />
+      </span>
+      {isGalleryOpen && (
+          <PhotoGallery photos={photos} isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
+      )}
+    </div>
+    ) : (
+      <>
+       <div className="hidden lg:flex bg-gray-800 relative w-full h-full lg:h-[30%] overflow-hidden rounded-md lg:rounded-3xl text-white justify-center items-center curstor-pointer"
         style={{
             backgroundImage: `url(${photos[1]?.url ?? photos[0].url})`,
             backgroundSize: "cover",
@@ -25,18 +37,24 @@ const ItineraryGallery = ({ photos }: { photos: PhotoItem[] }) => {
               </span>
             </div>
         </div>
-        {isGalleryOpen && (
-            <PhotoGallery photos={photos} isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
-        )}
-    </div>
-    <div onClick={() => setIsGalleryOpen(true)} className="lg:hidden bg-gray-800/60 px-3 py-2 rounded-lg cursor-pointer relative w-full h-full hover:bg-gray-800/50 text-white/80 hover:text-white/90 flex justify-center items-center">
-      <span className="lg:hidden gap-1 flex font-thin items-center">
-        {photos.length} <Images size={14} strokeWidth={2} />
-      </span>
-      {isGalleryOpen && (
-          <PhotoGallery photos={photos} isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
-      )}
-    </div>
+          {isGalleryOpen && (
+              <PhotoGallery photos={photos} isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
+          )}
+        </div>
+        <div onClick={() => setIsGalleryOpen(true)} className={`lg:hidden px-3 py-2 rounded-lg cursor-pointer relative w-full h-full flex justify-center items-center ${
+          isDiscoverTemplate
+            ? "bg-gray-900 hover:bg-gray-800 text-white"
+            : "bg-gray-800/60 hover:bg-gray-800/50 text-white/80 hover:text-white/90"
+        }`}>
+          <span className="lg:hidden gap-1 flex font-thin items-center">
+            {isDiscoverTemplate ? "View All" : photos.length} <Images size={14} strokeWidth={2} />
+          </span>
+          {isGalleryOpen && (
+              <PhotoGallery photos={photos} isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
+          )}
+        </div>
+      </>
+    )}
     </>
   )
 }

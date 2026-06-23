@@ -9,19 +9,7 @@ import { itineraryTagsMap } from "@/lib/constants/tags"
 import { UserData } from "@/lib/types"
 import { PhotoItem } from "@/lib/utils/photos"
 import { Itinerary } from "@/types/itinerary"
-import {
-  Bookmark,
-  Calendar,
-  ChevronDown,
-  ChevronLeft,
-  ChevronUp,
-  DollarSign,
-  Lock,
-  MapPin,
-  Search,
-  SlidersHorizontal,
-  Star,
-} from "lucide-react"
+import { MapPin } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { FiEdit } from "react-icons/fi"
@@ -30,9 +18,8 @@ import FollowButton from "@/app/itinerary/[id]/follow-button"
 import NoteSection from "@/app/itinerary/[id]/note-section"
 import { FaUserLarge } from "react-icons/fa6"
 import { PurchaseButton } from "../ui/purchase-button"
-import ScheduleSection from "@/app/itinerary/[id]/schedule-section"
-import { useEffect, useRef, useState } from "react"
-import { DaySection } from "@/components/ui/day-section";
+import { DaySection } from "../ui/day-section"
+import { useState } from "react";
 
 const BRAND = {
   surface: "bg-slate-50",
@@ -101,45 +88,12 @@ export default function DiscoverTemplate({
     countries.length > 0
       ? countries.map((c) => c).join(" · ")
       : itinerary.title
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
-
-  const [activeDays, setActiveDays] = useState<number[]>([])
-  const [showScrollTop, setShowScrollTop] = useState(false)
-  const headerRef = useRef<HTMLHeadingElement>(null)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (headerRef.current) {
-        const headerPosition = headerRef.current.getBoundingClientRect().top
-        setShowScrollTop(headerPosition < 0 && activeDays.length > 0)
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [activeDays.length])
-  
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
   const toggleDay = (dayNumber: number) => {
-    setActiveDays(prev => 
-      prev.includes(dayNumber) 
-        ? prev.filter(d => d !== dayNumber)
-        : [...prev, dayNumber]
-    )
-  }
-
-  const closeAllDays = () => {
-    setActiveDays([])
-  }
-
-  const openAllDays = () => {
-    const allDayIds = itinerary.days.map(day => day.id)
-    setActiveDays(allDayIds)
-  }
-
-  const scrollToTop = () => {
-    if (headerRef.current) {
-      const headerPosition = headerRef.current.getBoundingClientRect().top + window.scrollY - 100
-      window.scrollTo({ top: headerPosition, behavior: 'smooth' })
+    if (selectedDayIndex === dayNumber) {
+      setSelectedDayIndex(null)
+    } else {
+      setSelectedDayIndex(dayNumber)
     }
   }
 
@@ -206,52 +160,95 @@ export default function DiscoverTemplate({
         )}
       </div>
 
-      <div className="max-w-6xl mx-auto w-full mt-8 px-6">
-        {/* Day Images Gallery */}
-        {itinerary.days && Array.isArray(itinerary.days) && itinerary.days.some(day => day.image) && (
+      <div className="w-full mx-auto max-w-6xl px-6 mt-4">
+        <h3 className="text-lg mb-2 leading none" htmlFor="detailedOverview">Detailed Overview</h3>
+        {itinerary?.detailedOverview && itinerary.detailedOverview}
+      </div>
+
+      {itinerary.days &&
+        Array.isArray(itinerary.days) &&
+        itinerary.days.length > 0 && (
           <>
-            
-            {/* Selected Day Schedule */}
-            {itinerary.days[selectedDayIndex] && (
-              <div className="w-full pb-8">
-                <h2 className="text-xl md:text-2xl w-full text-center font-semibold">Itinerary</h2>
-                <div className="sticky w-full top-20 z-50 flex flex-col items-end gap-2">
-                <button 
-                  onClick={activeDays.length > 0 ? closeAllDays : openAllDays} 
-                  className="flex cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
-                >
-                  {activeDays.length > 0 ? (
-                    <div className='flex text-xs sm:text-sm items-center gap-1' onClick={closeAllDays}>
-                      Close
-                      <ChevronUp strokeWidth={3} size={18} />
-                    </div>
-                  ) : (
-                    <div className='flex text-xs sm:text-sm items-center gap-1' onClick={openAllDays}>
-                      Open
-                      <ChevronDown strokeWidth={3} size={18} />
-                    </div>
-                  )}
-                </button>
-                {showScrollTop && (
-                  <button
-                    onClick={scrollToTop}
-                    className="flex text-xs sm:text-sm cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
-                  >
-                    To Top
-                  </button>
-                )}
+            <div className="w-full mt-8">
+              <div className="w-full overflow-x-auto no-scrollbar my-6 pl-0 pr-6 sm:pr-[10%]">
+                <div className="flex flex-col gap-4 sm:gap-3.5">
+                  {itinerary.days.map((day, index) => {
+                    const isSelected = selectedDayIndex === index
+                    const parsedDate = day.date ? new Date(day.date) : null
+                    const hasValidDate =
+                      parsedDate && !Number.isNaN(parsedDate.getTime())
+                    const monthAndDay = hasValidDate
+                      ? parsedDate.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : null
+                    const locationLine = [day.cityName, day.countryName]
+                      .filter(Boolean)
+                      .join(", ")
+                    const summaryLine =
+                      day.description?.trim() ||
+                      locationLine ||
+                      `${itinerary.duration} day trip`
+                    return (
+                      <div
+                        key={day.id || index}
+                        className="flex flex-col w-full gap-0"
+                      >
+                        <button
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => toggleDay(index)}
+                          className={`group flex w-full min-h-[96px] items-center gap-4 border border-l-0 py-4 pl-8 pr-4 text-left transition-colors sm:min-h-[104px] sm:gap-5 sm:pr-4 rounded-none rounded-r-2xl ${
+                            isSelected
+                              ? "border-gray-400/90"
+                              : "border-gray-200/90 bg-gray-900 text-white"
+                          }`}
+                        >
+                          <div className="flex min-w-0 flex-1 flex-col gap-1 pr-1">
+                            <p className={`text-base font-bold leading-snug ${isSelected ? 'text-gray-900' : 'text-white'} sm:text-[17px]`}>
+                              {day.title}
+                            </p>
+                            <p className={`text-sm font-normal ${isSelected ? 'text-gray-600' : 'text-white/80'}`}>
+                              {monthAndDay ?? `Day ${day.id}`}
+                            </p>
+                            <p className={`line-clamp-2 text-sm leading-snug ${isSelected ? 'text-gray-600' : 'text-white/80'} max-w-[70%]`}>
+                              {summaryLine}
+                            </p>
+                          </div>
+                          {/* <div
+                            className={`relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-2xl sm:h-[88px] sm:w-[88px] sm:rounded-[1.25rem]}`}
+                          >
+                            {day.image && (
+                              <Image
+                                src={day.image}
+                                alt={day.title}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 640px) 76px, 88px"
+                              />
+                            )}
+                          </div> */}
+                        </button>
+                        {isSelected && (
+                          <div className="max-w-6xl mx-auto w-full px-6 pb-8 pt-4">
+                            <DaySection
+                              day={day}
+                              isActive={true}
+                              onToggle={() => {}}
+                              duration={itinerary.duration}
+                              template="explore"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-                <DaySection
-                  day={itinerary.days[selectedDayIndex]}
-                  isActive={true}
-                  onToggle={() => {}}
-                  duration={itinerary.days.length}
-                  template="explore"
-                />
-              </div>
-            )}
+            </div>
             {itinerary.notes && itinerary.notes.length > 0 && (
-              <div className="w-full pb-10 mt-6 px-4">
+              <div className="max-w-6xl mx-auto w-full px-6 pb-10 mt-6">
                 <p className="text-xl text-center w-full font-medium mt-2 mb-3">
                   Creator Notes
                 </p>
@@ -260,7 +257,6 @@ export default function DiscoverTemplate({
             )}
           </>
         )}
-      </div>
     </div>
   )
 }

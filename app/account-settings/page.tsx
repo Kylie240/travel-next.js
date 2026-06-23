@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { SettingsContent } from "./settings-content"
 import { getUserDataById, getUserSettingsById } from "@/lib/actions/user.actions"
 import { getUserStatsById } from "@/lib/actions/user.actions"
+import { getStripeBillingSummary } from "@/lib/stripe-billing-summary"
 import createClient from "@/utils/supabase/server"
 
 // Prevent page from being statically cached
@@ -19,7 +20,16 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
   const userData = await getUserDataById()
   const userStats = await getUserStatsById()
   const userSettings = await getUserSettingsById()
-  
+
+  const stripeBilling =
+    userSettings.plan !== "free" &&
+    userSettings.stripe_customer_id &&
+    userSettings.stripe_subscription_id
+      ? await getStripeBillingSummary(
+          userSettings.stripe_customer_id,
+          userSettings.stripe_subscription_id
+        )
+      : null
 
   return (
     <SettingsContent 
@@ -28,6 +38,7 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
       userStats={userStats}
       searchParams={searchParams}
       userSettings={userSettings}
+      stripeBilling={stripeBilling}
     />
   )
 }

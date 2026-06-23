@@ -211,69 +211,71 @@ export default function SellerDashboardPage() {
           </Card>
         </div> */}
 
-        <Card className="mb-6">
-          <CardContent className="p-0">
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-medium text-gray-900">
-                Purchase confirmation email
-              </h2>
-              <p className="text-sm text-gray-500 mt-0.5">
-                Optional message for buyers after they purchase your itineraries
-                (plain text). Your Journli username is included automatically.
-              </p>
-            </div>
-            <div className="px-4 sm:px-6 py-4 space-y-3">
-              <textarea
-                className="w-full min-h-[120px] rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                maxLength={2000}
-                placeholder="e.g. Thanks for supporting my work — enjoy the trip!"
-                value={purchaseThankYouDraft}
-                onChange={(e) => {
-                  setPurchaseThankYouDraft(e.target.value);
-                  setPurchaseThankYouStatus("idle");
-                }}
-              />
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  disabled={purchaseThankYouStatus === "saving"}
-                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-60"
-                  onClick={async () => {
-                    if (!user) return;
-                    setPurchaseThankYouStatus("saving");
-                    const sb = createClient();
-                    const trimmed = purchaseThankYouDraft.trim();
-                    const { error } = await sb
-                      .from("users_settings")
-                      .update({
-                        purchase_thank_you_message:
-                          trimmed.length > 0 ? trimmed : null,
-                      })
-                      .eq("user_id", user.id);
-                    if (error) {
-                      console.error(error);
-                      setPurchaseThankYouStatus("error");
-                      return;
-                    }
-                    setPurchaseThankYouStatus("saved");
-                  }}
-                >
-                  {purchaseThankYouStatus === "saving"
-                    ? "Saving…"
-                    : "Save message"}
-                </button>
-                {purchaseThankYouStatus === "saved" && (
-                  <span className="text-sm text-emerald-600">Saved</span>
-                )}
-                {purchaseThankYouStatus === "error" && (
-                  <span className="text-sm text-red-600">
-                    Could not save. Try again.
-                  </span>
-                )}
+        {stripeAccountId && completeStripeAccountSetup && (
+          <Card className="mb-6">
+            <CardContent className="p-0">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
+                <h2 className="text-lg font-medium text-gray-900">
+                  Purchase confirmation email
+                </h2>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Optional message for buyers after they purchase your itineraries
+                  (plain text). Your Journli username is included automatically.
+                </p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="px-4 sm:px-6 py-4 space-y-3">
+                <textarea
+                  className="w-full min-h-[120px] rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                  maxLength={2000}
+                  placeholder="e.g. Thanks for supporting my work — enjoy the trip!"
+                  value={purchaseThankYouDraft}
+                  onChange={(e) => {
+                    setPurchaseThankYouDraft(e.target.value);
+                    setPurchaseThankYouStatus("idle");
+                  }}
+                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={purchaseThankYouStatus === "saving"}
+                    className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-60"
+                    onClick={async () => {
+                      if (!user) return;
+                      setPurchaseThankYouStatus("saving");
+                      const sb = createClient();
+                      const trimmed = purchaseThankYouDraft.trim();
+                      const { error } = await sb
+                        .from("users_settings")
+                        .update({
+                          purchase_thank_you_message:
+                            trimmed.length > 0 ? trimmed : null,
+                        })
+                        .eq("user_id", user.id);
+                      if (error) {
+                        console.error(error);
+                        setPurchaseThankYouStatus("error");
+                        return;
+                      }
+                      setPurchaseThankYouStatus("saved");
+                    }}
+                  >
+                    {purchaseThankYouStatus === "saving"
+                      ? "Saving…"
+                      : "Save message"}
+                  </button>
+                  {purchaseThankYouStatus === "saved" && (
+                    <span className="text-sm text-emerald-600">Saved</span>
+                  )}
+                  {purchaseThankYouStatus === "error" && (
+                    <span className="text-sm text-red-600">
+                      Could not save. Try again.
+                    </span>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardContent className="p-0">

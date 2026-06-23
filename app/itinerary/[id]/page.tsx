@@ -4,8 +4,10 @@ import { collectAllPhotos } from "@/lib/utils/photos"
 import { redirect } from "next/navigation"
 import createClient from "@/utils/supabase/server"
 import BasicTemplate from "@/components/templates/basic-template"
+import DiscoverTemplate from "@/components/templates/discover-template"
+import ExploreTemplate from "@/components/templates/explore-template"
 import { editPermissionEnum, viewPermissionEnum } from "@/enums/itineraryStatusEnum"
-import TestTemplate from "@/components/templates/test-template"
+import JourneyTemplate from "@/components/templates/journey-template"
 
 export default async function ItineraryPage({ params }: { params: Promise<any> }) {
   const supabase = await createClient()
@@ -101,7 +103,6 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   // Check edit permissions
   let canEdit = false;
   if (currentUserId && itineraryMeta) {
-    console.log(itineraryMeta)
     const editPermission = typeof itineraryMeta.edit_permission === 'string'
       ? parseInt(itineraryMeta.edit_permission)
       : itineraryMeta.edit_permission
@@ -172,35 +173,37 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     initialIsFollowing = !!followData;
   }
 
-  // return (
-  //   <TestTemplate 
-  //     itinerary={itinerary} 
-  //     countries={countries} 
-  //     photos={photos} 
-  //     canEdit={canEdit} 
-  //     paidUser={paidUser} 
-  //     initialIsLiked={initialIsLiked} 
-  //     initialIsSaved={initialIsSaved} 
-  //     initialIsFollowing={initialIsFollowing}
-  //     creator={creator} 
-  //     currentUserId={currentUserId} 
-  //   />
-  // )
+  const templateProps = {
+    itinerary,
+    countries,
+    photos,
+    canEdit,
+    paidUser,
+    initialIsLiked,
+    initialIsSaved,
+    initialIsFollowing,
+    creator,
+    currentUserId: currentUserId ?? "",
+    isRestrictedView: isRestricted,
+    priceCents: itineraryMeta?.price_cents || 0,
+  }
 
-  return (
-    <BasicTemplate 
-      itinerary={itinerary} 
-      countries={countries} 
-      photos={photos} 
-      canEdit={canEdit} 
-      paidUser={paidUser} 
-      initialIsLiked={initialIsLiked} 
-      initialIsSaved={initialIsSaved} 
-      initialIsFollowing={initialIsFollowing}
-      creator={creator} 
-      currentUserId={currentUserId}
-      isRestrictedView={isRestricted}
-      priceCents={itineraryMeta?.price_cents || 0}
-    />
-  )
+  return <BasicTemplate {...templateProps} />
+  const isDEV = process.env.DEV_ENVIRONMENT
+  const template = process.env.NEXT_PUBLIC_ITINERARY_TEMPLATE
+  if (isDEV !== "true") {
+    return <BasicTemplate {...templateProps} />
+  }
+  if (template === "discover") {
+    return <DiscoverTemplate {...templateProps} />
+  }
+  if (template === "explore") {
+    return <ExploreTemplate {...templateProps} />
+  }
+  if (template === "journey") {
+    return <JourneyTemplate {...templateProps} />
+  }
+  if (template === "discover") {
+    return <DiscoverTemplate {...templateProps} />
+  }
 } 

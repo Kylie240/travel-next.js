@@ -142,9 +142,15 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
   }
 
   const handleForgotPassword = async (email: string) => {
+    if (!email) {
+      setAuthError("Please enter your email address")
+      return
+    }
+
     const supabase = createClientComponentClient()
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth/reset-password")}`
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`
+      redirectTo,
     })
     if (error) {
       setAuthError(error.message)
@@ -243,7 +249,13 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             <p className="text-sm text-red-500">{authError}</p>
           )}
           {!isSignUp && (
-            <a className="text-sm mt-2 text-blue-500 hover:underline cursor-pointer" onClick={() => handleForgotPassword(signInForm.watch("email"))}>Forgot password?</a>
+            <button
+              type="button"
+              className="text-sm mt-2 text-blue-500 hover:underline"
+              onClick={() => handleForgotPassword(signInForm.watch("email"))}
+            >
+              Forgot password?
+            </button>
           )}
           <Button
             type="submit"

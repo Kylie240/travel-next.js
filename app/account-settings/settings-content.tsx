@@ -24,6 +24,7 @@ import createClient from "@/utils/supabase/client"
 import { supabase } from "@/utils/supabase/superbase-client"
 import { dispatchAvatarUpdate, dispatchProfileUpdate } from "@/lib/utils/avatar-events"
 import { OnboardingTour } from "@/components/ui/onboarding-tour"
+import type { StripeBillingSummary } from "@/types/stripe-billing"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -31,16 +32,25 @@ interface SettingsContentProps {
   userStats: UserStats;
   searchParams: { tab: string, success: string };
   userSettings: UserSettings;
+  /** Live Stripe customer + subscription fields; null if not applicable or fetch failed. */
+  stripeBilling?: StripeBillingSummary | null;
 }
 
-export function SettingsContent({ initialUser, userData, userStats, searchParams, userSettings }: SettingsContentProps) {
+function formatSettingsDate(value: Date | string | null | undefined): string | null {
+  if (value == null) return null
+  const d = typeof value === "string" ? new Date(value) : value
+  if (Number.isNaN(d.getTime())) return null
+  return d.toLocaleDateString()
+}
+
+export function SettingsContent({ initialUser, userData, userStats, searchParams, userSettings, stripeBilling = null }: SettingsContentProps) {
   const [activeSection, setActiveSection] = useState(searchParams?.tab || "Profile")
   const [success, setSuccess] = useState(searchParams?.success || false)
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false)
   const [ _, setUserData] = useState<UserData>(userData)
   const [updatedUserData, setUpdatedUserData] = useState<UserData>(userData)
   const [updatedContentData, setUpdatedContentData] = useState<UserData>(userData)
-  // Helper function to extract username from full URL
+  // Helper function to extract username from full URL (handles without @; UI prefixes add @ where needed)
   const extractUsername = (url: string) => {
     if (!url) return ""
     if (url.includes("facebook.com/")) return url.replace("https://www.facebook.com/", "").replace("https://facebook.com/", "")
@@ -48,7 +58,15 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     if (url.includes("twitter.com/")) return url.replace("https://www.twitter.com/", "").replace("https://twitter.com/", "")
     if (url.includes("pinterest.com/")) return url.replace("https://www.pinterest.com/", "").replace("https://pinterest.com/", "")
     if (url.includes("tiktok.com/")) return url.replace("https://www.tiktok.com/@", "").replace("https://tiktok.com/@", "")
-    if (url.includes("youtube.com/")) return url.replace("https://www.youtube.com/", "").replace("https://youtube.com/", "")
+    if (url.includes("youtube.com/")) {
+      let h = url
+        .replace("https://www.youtube.com/", "")
+        .replace("https://youtube.com/", "")
+        .replace("https://m.youtube.com/", "")
+      h = h.split(/[?#]/)[0].replace(/^\/+/, "")
+      if (h.startsWith("@")) h = h.slice(1)
+      return h
+    }
     return url
   }
 
@@ -161,7 +179,11 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               tiktok: "https://www.tiktok.com/@",
               youtube: "https://www.youtube.com/@"
             }
-            return `${baseUrls[platform] || ""}${username.trim()}`
+            let handle = username.trim()
+            if (platform === "youtube" || platform === "tiktok") {
+              handle = handle.replace(/^@+/, "")
+            }
+            return `${baseUrls[platform] || ""}${handle}`
           }
 
           const profileResult = await setProfileData(
@@ -551,7 +573,12 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   value={formData.tiktok}
                   placeholder="username"
                   className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
-                  onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      tiktok: e.target.value.replace(/^@+/, ""),
+                    })
+                  }
                 />
               </div>
             </div>
@@ -564,7 +591,12 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   value={formData.youtube}
                   placeholder="username"
                   className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
-                  onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      youtube: e.target.value.replace(/^@+/, ""),
+                    })
+                  }
                 />
               </div>
             </div>
@@ -785,17 +817,50 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                 </p>
               </div>
             )}
-            {userSettings.stripe_subscription_status === 'active' && userSettings.plan !== 'free' && (
+            {/* Need accurate billing date from Stripe */}
+            {/* {userSettings.stripe_subscription_status === 'active' && userSettings.plan !== 'free' && (
               <div>
                 <label className="block text-md font-semibold mb-2">Billing Details</label>
                 <p className="text-sm text-gray-600 mb-4">
-                  Your next billing date is { userSettings.stripe_subscription_created_date ? new Date(userSettings.stripe_subscription_created_date).toLocaleDateString() : 'N/A' }. You will be charged {userSettings.plan === 'standard' ? '$5.99' : '$13.99'} per month.
+                  {(() => {
+                    const nextFromStripe = stripeBilling?.currentPeriodEndMs
+                      ? new Date(stripeBilling.currentPeriodEndMs).toLocaleDateString()
+                      : null
+                    const nextFromDb = formatSettingsDate(userSettings.stripe_subscription_ends_at)
+                    const nextBilling = nextFromStripe ?? nextFromDb
+                    const priceText =
+                      stripeBilling?.priceLabel ??
+                      (userSettings.plan === "standard"
+                        ? "$6.00 per month"
+                        : userSettings.plan === "premium"
+                          ? "$14.00 per month"
+                          : null)
+                    return (
+                      <>
+                        Your next billing date is{" "}
+                        <span className="font-medium text-gray-800">
+                          {nextBilling ?? "available in the billing portal"}
+                        </span>
+                        .
+                        {priceText ? (
+                          <>
+                            {" "}
+                            You will be charged <span className="font-medium text-gray-800">{priceText}</span>.
+                          </>
+                        ) : null}
+                      </>
+                    )
+                  })()}
                 </p>
                 <p className="text-sm text-gray-600 mb-4">
-                  Your billing email is {userData.email}.
+                  Your billing email is{" "}
+                  <span className="font-medium text-gray-800">
+                    {stripeBilling?.billingEmail ?? userData.email}
+                  </span>
+                  .
                 </p>
               </div>
-            )}
+            )} */}
             <div>
               <label className="block text-md font-semibold mb-2">Plan details</label>
                 {planDetails.find(plan => plan.title === userSettings.plan)?.features.map((feature) => (
@@ -815,7 +880,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   <p className="text-sm text-gray-600 mb-4">
                     Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, monetize your content, and more.
                   </p>
-                  {userData.id === 'bb9bae46-6088-4a9f-ad81-9f81ed305958' ? (
+                  {userData.id === 'bb9bae46-6088-4a9f-ad81-9f81ed305958' || showPlans ? (
                   <form action="api/checkout-session" method="POST">
                     <Button className="bg-green-600" type="submit">
                       Upgrade to Standard
@@ -846,14 +911,6 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             </div>
             )}
             <Button variant="outline" onClick={() => router.push('/plans')}>Explore All Plans</Button>
-            { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
-            <div className="mt-12">
-              <label className="block text-md font-semibold mb-2">Downgrade</label>
-              <p className="text-sm text-gray-600 mb-4">
-                In order to downgrade your plan, you will need to cancel your current subscription and then upgrade to the new plan.
-              </p>
-            </div>
-            )}
             { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
             <div className="mt-12">
               <label className="block text-md font-semibold mb-2">Unsubscribe</label>

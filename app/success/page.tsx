@@ -111,11 +111,11 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
                     Manage Your Subscription
                   </h3>
                   <p className="text-gray-600 text-sm">
-                    You can view, update, or cancel your subscription anytime from the 
-                    <Link href="/account-settings" className="text-blue-600 hover:text-blue-700 font-medium ml-1">
-                      Settings Page
+                    View, update, or cancel your subscription anytime from the 
+                    <Link href="/account-settings" className="text-blue-600 mr-1 hover:text-blue-700 font-medium ml-1">
+                      Settings
                     </Link>
-                    . We'll also send you reminders before your subscription renews.
+                    page. We'll also send you reminders before your subscription renews.
                   </p>
                 </div>
               </div>
@@ -123,12 +123,6 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/account-settings?tab=Your Plan">
-                <Button className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-6">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
-              </Link>
               <Link href="/seller-dashboard">
                 <Button variant="outline" className="w-full sm:w-auto px-6">
                   Start Selling

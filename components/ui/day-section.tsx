@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Circle, MapPin, ChevronDown, Link, Hotel, Caravan, Clock } from "lucide-react"
 import { motion } from "framer-motion"
 import { activityTagsMap } from "@/lib/constants/tags"
@@ -19,6 +19,7 @@ import { Day } from "@/types/Day"
 import { GoDash } from 'react-icons/go'
 import { countries } from '@/lib/constants/countries'
 import { formatDateToText } from '@/lib/utils/date'
+import Image from 'next/image'
 
 export interface DaySectionProps {
   day: Day;
@@ -26,14 +27,26 @@ export interface DaySectionProps {
   onToggle: () => void;
   onClose?: () => void;
   duration: number;
+  template?: string;
 }
 
-export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySectionProps) => {
+export const DaySection = ({ day, isActive, onToggle, onClose, duration, template }: DaySectionProps) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
   const [expandedActivities, setExpandedActivities] = useState<Set<number>>(new Set())
   
   // Check if description is long enough to need truncation (roughly 4 lines worth of text)
-  const needsDescriptionTruncation = day.description && day.description.length > 200
+  const isDiscoverTemplate = template === "discover"
+  const isExploreTemplate = template === "explore"
+  const needsDescriptionTruncation = !isDiscoverTemplate && (day.description && day.description.length > 200)
+
+  useEffect(() => {
+    if (isDiscoverTemplate) {
+      const allActivityIndexes = new Set(
+        (day.activities || []).map((_, index) => index)
+      )
+      setExpandedActivities(allActivityIndexes)
+    }
+  }, [isDiscoverTemplate, day.activities])
 
   // Check if day has any expandable content beyond title and location
   const hasExpandableContent = 
@@ -54,7 +67,8 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
   }
   return (
    <div>
-      <div className={`relative border-black border-l-[.12rem] pl-4 mr-2 ${isActive ? 'pb-4' : ''}`}>
+      <div className={`relative ${!isDiscoverTemplate && !isExploreTemplate ? 'border-black border-l-[.12rem] pl-4 mr-2' : ''} ${isActive ? 'pb-4' : ''}`}>
+        {!isDiscoverTemplate && !isExploreTemplate && (
         <div className={`absolute -left-[.83rem] bg-white py-4 ${day.id === 1 ? 'pt-[1.2rem]' : 'top-4'}`}>
           <button 
             onClick={() => hasExpandableContent && onToggle()} 
@@ -72,12 +86,17 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
             )}
           </button>
         </div>
+        )}
         {duration === day.id}
         {day.id === duration &&
-          <div className="absolute -left-[.40rem] bottom-0 w-[10px] h-[.12rem] bg-black">
+          <div className="absolute bottom-0 w-[10px] h-[.12rem] bg-black">
           </div>
         }
+        
+        {!isDiscoverTemplate && !isExploreTemplate && (
         <button 
+          type="button"
+          aria-label={isExploreTemplate && day.image ? `Day ${day.id}: ${day.title}. Show details.` : undefined}
           className={`w-full relative inset-x-3 top-4 flex items-center rounded-2xl overflow-hidden transition-all duration-300 ${(day.image !== null && day.image !== '') ? `shadow-lg p-8 ${isActive ? 'h-[180px] md:h-[220px]' : 'h-[100px] md:h-[130px]'}` : 'px-8 h-[80px] md:h-[100px]'} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
           onClick={() => hasExpandableContent && onToggle()}
           disabled={!hasExpandableContent}
@@ -88,17 +107,20 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
             backgroundRepeat: 'no-repeat',
           }}
         >
-          <div className={`${day.image ? 'text-white' : 'text-gray-700 pt-2'} z-[5] text-left`}>
-            {day.date && (
-              <p className="text-xs md:text-sm lg:text-[16px] text-white/80 font-normal">{formatDateToText(day.date)}</p>
-            )}
-            <h2 className={`text-xl md:text-2xl leading-5 ${day.image ? 'font-bold' : 'font-semibold'}`}>{day.title}</h2>
-            <p className={`text-xs md:text-sm lg:text-[16px] text-whte/80 ${day.image ? 'font-normal' : 'font-thin'}`}>{day.cityName}, {day.countryName}</p>
-          </div>
-          {day.image && 
-            <div className="absolute z-0 inset-0 bg-black/30"></div>
-          }
+          {(!isExploreTemplate || !day.image) && (
+            <div className={`${day.image ? 'text-white' : 'text-gray-700 pt-2'} z-[5] text-left`}>
+              {day.date && (
+                <p className="text-xs md:text-sm lg:text-[16px] text-white/80 font-normal">{formatDateToText(day.date)}</p>
+              )}
+              <h2 className={`text-xl md:text-2xl leading-5 ${day.image ? 'font-bold' : 'font-semibold'}`}>{day.title}</h2>
+              <p className={`text-xs md:text-sm lg:text-[16px] text-white/80 ${day.image ? 'font-normal' : 'font-thin'}`}>{day.cityName}, {day.countryName}</p>
+            </div>
+          )}
+          {day.image && !isExploreTemplate && (
+            <div className="absolute z-0 inset-0 bg-black/30" aria-hidden />
+          )}
         </button>
+        )}
         <motion.div
           initial={false}
           animate={{
@@ -108,11 +130,28 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
           transition={{
             duration: 0.3,
           }}
-          className="relative left-4"
+          className={
+            isDiscoverTemplate || isExploreTemplate ? "relative" : "relative left-4"
+          }
         >
           <div className="mt-8">
+              {isDiscoverTemplate && <h3 className="text-xl font-bold mb-6 pl-2">{day.title}</h3>}
+              {isDiscoverTemplate || isExploreTemplate && 
+                <>
+                  {day.image && <>
+                    <div className="w-full h-[280px] rounded-3xl mx-2 mb-6 overflow-hidden" style={{
+                        backgroundImage: `url(${day.image})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                      }}>
+                    </div>
+                  </>
+                  }
+                </>
+              }
             <div className="p-2">
-              <p className={`text-sm md:text-[16px] ${!isDescriptionExpanded && needsDescriptionTruncation ? 'line-clamp-4' : ''}`}>
+              <p className={`text-sm md:text-[16px] ${needsDescriptionTruncation ? 'line-clamp-4' : ''}`}>
                 {day.description}
               </p>
               {needsDescriptionTruncation && (
@@ -124,7 +163,11 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                 </button>
               )}
             </div>
-            {day.activities.map((activity, index) => {
+            {isDiscoverTemplate && 
+              <h3 className="text-lg font-medium mb-4 pl-2 mt-8">Day Schedule</h3>
+            }
+            
+            {day.activities?.map((activity, index) => {
               // Check if activity has any additional information beyond title
               const hasAdditionalInfo = !!(
                 activity.description ||
@@ -135,7 +178,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
 
               return (
                 <div key={activity.id || index} className="relative mb-2">
-                  {activity?.type ? (
+                  {!isDiscoverTemplate && activity?.type ? (
                     <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity?.time && activity?.time !== '' ? '14px' : '14px'}` }}>
                       {(() => {
                         const tag = activityTagsMap.find(t => t.id === activity.type);
@@ -148,7 +191,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                       })()}
                       <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity?.time)}</p>
                     </div>
-                  ) : (
+                  ) : !isDiscoverTemplate && (
                     <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-63px', top: `${activity?.time && activity?.time !== '' ? '25px' : '25px'}` }}>
                       <div className="w-5 h-5">
                         {activity?.time && activity?.time !== '' ? (
@@ -167,8 +210,10 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                     {hasAdditionalInfo ? (
                       <>
                         <div 
-                          className="flex items-center justify-between cursor-pointer"
-                          onClick={() => toggleActivity(index)}
+                          className={`flex items-center justify-between ${isDiscoverTemplate ? '' : 'cursor-pointer'}`}
+                          onClick={() => {
+                            if (!isDiscoverTemplate) toggleActivity(index)
+                          }}
                         >
                           <div className="flex-1">
                             <h3 className="text-md lg:text-lg font-medium leading-5">{activity.title}</h3>
@@ -179,16 +224,18 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration }: DaySe
                               </div>
                             )}
                           </div>
-                          <motion.button 
-                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                            animate={{ rotate: expandedActivities.has(index) ? 180 : 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <ChevronDown className="w-5 h-5 text-gray-500" />
-                          </motion.button>
+                          {!isDiscoverTemplate && (
+                            <motion.button 
+                              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                              animate={{ rotate: expandedActivities.has(index) ? 180 : 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <ChevronDown className="w-5 h-5 text-gray-500" />
+                            </motion.button>
+                          )}
                         </div>
                         
-                        {expandedActivities.has(index) && (
+                        {(isDiscoverTemplate || expandedActivities.has(index)) && (
                         <div className="mt-4">
                           {activity.description && (
                             <p className="text-gray-600 mb-3">{activity.description}</p>

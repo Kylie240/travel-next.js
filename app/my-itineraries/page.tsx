@@ -50,124 +50,60 @@ export default function MyItinerariesPage() {
 
   useEffect(() => {
     let mounted = true
-    let initialLoadComplete = false
 
-    // Safety timeout to ensure loading never gets stuck (especially on mobile)
-    const timeoutId = setTimeout(() => {
-      if (mounted && !initialLoadComplete) {
-        console.warn("Loading timeout reached, forcing loading state to false")
-        setLoading(false)
-        initialLoadComplete = true
-      }
-    }, 10000) // 10 second timeout
-
-    const fetchUserData = async (user: User | null) => {
+    const fetchUserData = async (currentUser: User | null) => {
       if (!mounted) return
-      
-      if (user) {
-        // Fetch user plan
-        try {
-          const { data } = await supabase.from('users_settings').select('plan').eq('user_id', user.id).single()
-          if (!mounted) return
-          setUserPlan(data?.plan || "free")
-        } catch (error) {
-          console.error("Error fetching user plan:", error)
-          if (!mounted) return
-          setUserPlan("free")
-        }
-        
-        // Fetch itineraries
-        try {
-          const userItineraries = await getItinerarySummaries(user.id)
-          if (!mounted) return
-          console.log("userItineraries", userItineraries)
-          setItinerarySummaries(userItineraries as ItinerarySummary[])
-          setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
-        } catch (error) {
-          console.error("Error fetching itineraries:", error)
-          if (!mounted) return
-          toast.error('Failed to load itineraries')
-        }
-      } else {
-        if (mounted) {
-          setItinerarySummaries(null)
-          setFilteredItinerarySummaries(null)
-        }
-      }
-      
-      // Always set loading to false after data fetch attempt
-      if (mounted) {
-        setLoading(false)
-        initialLoadComplete = true
-        clearTimeout(timeoutId)
-      }
-    }
 
-    const getUser = async () => {
+      if (!currentUser) {
+        setItinerarySummaries(null)
+        setFilteredItinerarySummaries(null)
+        setLoading(false)
+        return
+      }
+
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data } = await supabase
+          .from("users_settings")
+          .select("plan")
+          .eq("user_id", currentUser.id)
+          .single()
         if (!mounted) return
-        
-        setUser(user)
-        await fetchUserData(user)
+        setUserPlan(data?.plan || "free")
       } catch (error) {
-        console.error("Error getting user:", error)
-        if (mounted) {
-          setLoading(false)
-          initialLoadComplete = true
-          clearTimeout(timeoutId)
-        }
+        console.error("Error fetching user plan:", error)
+        if (!mounted) return
+        setUserPlan("free")
+      }
+
+      try {
+        const userItineraries = await getItinerarySummaries(currentUser.id)
+        if (!mounted) return
+        setItinerarySummaries(userItineraries as ItinerarySummary[])
+        setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
+      } catch (error) {
+        console.error("Error fetching itineraries:", error)
+        if (!mounted) return
+        toast.error("Failed to load itineraries")
+      } finally {
+        if (mounted) setLoading(false)
       }
     }
-    
-    getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
-      if (!mounted) return
-      
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      
-      // Only fetch data on auth state change if initial load is complete
-      // This prevents race conditions on page refresh
-      if (initialLoadComplete) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event: string, session: Session | null) => {
+        if (!mounted) return
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+        setLoading(true)
         await fetchUserData(currentUser)
       }
-    })
+    )
 
     return () => {
       mounted = false
-      clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
-  }, [])
-
-  // Re-fetch when we have a user but no itineraries (e.g. after navigating back from another page)
-  useEffect(() => {
-    if (pathname !== "/my-itineraries" || !user?.id || loading) return
-    const hasNoData =
-      itinerarySummaries === null ||
-      (Array.isArray(itinerarySummaries) && itinerarySummaries.length === 0)
-    if (!hasNoData) return
-
-    let mounted = true
-    setLoading(true)
-    getItinerarySummaries(user.id)
-      .then((data) => {
-        if (!mounted) return
-        setItinerarySummaries((data ?? []) as ItinerarySummary[])
-        setFilteredItinerarySummaries((data ?? []) as ItinerarySummary[])
-      })
-      .catch(() => {
-        if (mounted) toast.error("Failed to load itineraries")
-      })
-      .finally(() => {
-        if (mounted) setLoading(false)
-      })
-    return () => {
-      mounted = false
-    }
-  }, [pathname, user?.id, loading, itinerarySummaries])
+  }, [pathname, supabase])
 
   useEffect(() => {
     // Check if native share is available (typically on mobile devices)
