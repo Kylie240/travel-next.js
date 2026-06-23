@@ -77,6 +77,8 @@ export default function DiscoverTemplate({
   paidUser: _paidUser = false,
 }: DiscoverTemplateProps) {
   void _paidUser
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0)
+
   if (!itinerary || !creator) {
     return null
   }
@@ -89,7 +91,6 @@ export default function DiscoverTemplate({
     countries.length > 0
       ? countries.map((c) => c).join(" · ")
       : itinerary.title
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
 
   return (
     <div

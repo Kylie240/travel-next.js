@@ -76,6 +76,15 @@ export default function DiscoverTemplate({
   paidUser: _paidUser = false,
 }: ExploreTemplateProps) {
   void _paidUser
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
+  const toggleDay = (dayNumber: number) => {
+    if (selectedDayIndex === dayNumber) {
+      setSelectedDayIndex(null)
+    } else {
+      setSelectedDayIndex(dayNumber)
+    }
+  }
+
   if (!itinerary || !creator) {
     return null
   }
@@ -88,14 +97,6 @@ export default function DiscoverTemplate({
     countries.length > 0
       ? countries.map((c) => c).join(" · ")
       : itinerary.title
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
-  const toggleDay = (dayNumber: number) => {
-    if (selectedDayIndex === dayNumber) {
-      setSelectedDayIndex(null)
-    } else {
-      setSelectedDayIndex(dayNumber)
-    }
-  }
 
   return (
     <div
@@ -161,7 +162,7 @@ export default function DiscoverTemplate({
       </div>
 
       <div className="w-full mx-auto max-w-6xl px-6 mt-4">
-        <h3 className="text-lg mb-2 leading none" htmlFor="detailedOverview">Detailed Overview</h3>
+        <h3 className="text-lg mb-2 leading-none">Detailed Overview</h3>
         {itinerary?.detailedOverview && itinerary.detailedOverview}
       </div>
 
