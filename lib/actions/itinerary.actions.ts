@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
+import { revalidatePath } from "next/cache";
 import { CreateItinerary } from "@/types/createItinerary";
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
 import { ItinerarySummary } from "@/types/ItinerarySummary";
@@ -253,6 +254,52 @@ export const getItineraryById = async (itineraryId: string) => {
     return data;
 }
 
+export const getItineraryForPdfExport = async (itineraryId: string) => {
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+    if (!user) throw new Error("Not authenticated")
+
+    const { data: itineraryMeta, error: itineraryMetaError } = await supabase
+    .from('itineraries')
+    .select('is_paid, creator_id')
+    .eq('id', itineraryId)
+    .single()
+
+    if (itineraryMetaError || !itineraryMeta) {
+        throw new Error("Itinerary not found")
+    }
+
+    const isCreator = itineraryMeta.creator_id === user.id
+
+    if (itineraryMeta.is_paid && !isCreator) {
+        const { data: purchaseData, error: purchaseError } = await supabase
+        .from('itinerary_purchases')
+        .select('id')
+        .eq('itinerary_id', itineraryId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+        if (purchaseError) {
+            throw new Error(purchaseError.message)
+        }
+
+        if (!purchaseData) {
+            throw new Error("Purchase required to export PDF")
+        }
+    }
+
+    const { data, error } = await supabase.rpc("get_itinerary", {
+        p_itinerary_id: itineraryId,
+    });
+
+    if (error) throw new Error(error.message);
+
+    return data;
+}
+
 // Returns a restricted version of the itinerary without notes and day schedule details
 // Used when itinerary is paid and user hasn't purchased access
 export const getRestrictedItineraryById = async (itineraryId: string) => {
@@ -429,11 +476,15 @@ export const SaveItinerary = async (itineraryId: string) => {
 
         if (itineraryError) {
             if (itineraryError.code === "23505") {
+                revalidatePath("/saves");
+                revalidatePath("/profile/[username]", "page");
                 return { success: true, message: "Already saved" };
             }
             throw itineraryError;
         }
 
+        revalidatePath("/saves");
+        revalidatePath("/profile/[username]", "page");
         return { success: true };
 }
 
@@ -455,6 +506,8 @@ export const UnsaveItinerary = async (itineraryId: string) => {
             throw itineraryError;
         }
 
+        revalidatePath("/saves");
+        revalidatePath("/profile/[username]", "page");
         return { success: true };
 }
 

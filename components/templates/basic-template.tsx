@@ -96,29 +96,27 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                 <div className="flex w-full justify-between items-center mb-1">
                   <h2 className="text-xl flex items-center font-semibold">Overview</h2>
                   <div className="flex">
-                    {canEdit}
-                    {canEdit ? (
-                      <div className="flex">
-                      <Link href={`/create?itineraryId=${itinerary.id}`}>
-                        <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
-                      </Link>
-                      {!isRestrictedView && (
-                        <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                      {currentUserId !== itinerary.creatorId && (
+                        <InteractionButtons 
+                          itineraryId={itinerary.id} 
+                          initialIsLiked={initialIsLiked}
+                          initialIsSaved={initialIsSaved}
+                        />
                       )}
-                      </div>
-                    ) : ( 
-                      <InteractionButtons
-                        itineraryId={itinerary.id} 
-                        initialIsLiked={initialIsLiked}
-                        initialIsSaved={initialIsSaved}
-                        itineraryStatus={itinerary.status}
-                        isRestrictedView={isRestrictedView}
-                      />
-                    )}
-                    {itinerary.status === ItineraryStatusEnum.published && 
-                      <ShareElement id={itinerary.id} smallButton={false} />
-                    }
-                  </div>
+                      {canEdit &&
+                        <Link href={`/create?itineraryId=${itinerary.id}`}>
+                          <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
+                        </Link>
+                      }
+                      {(!isRestrictedView || canEdit) && (
+                        <div className="inline-flex shrink-0 items-center">
+                          <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                        </div>
+                      )}
+                      {itinerary.status === ItineraryStatusEnum.published && 
+                        <ShareElement id={itinerary.id} smallButton={false} />
+                      }
+                    </div>
                 </div>
                 <div className="flex justify-center w-full text-sm sm:text-base px-2 sm:px-4">
                   {/* <div className="flex mb-2 px-1 justify-between sm:hidden w-full max-w-[500px]">
@@ -259,7 +257,6 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                           itineraryId={itinerary.id} 
                           initialIsLiked={initialIsLiked}
                           initialIsSaved={initialIsSaved}
-                          itineraryStatus={itinerary.status}
                         />
                       )}
                       {canEdit &&
@@ -267,6 +264,11 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                           <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
                         </Link>
                       }
+                      {(!isRestrictedView || canEdit) && (
+                        <div className="hidden lg:inline-flex">
+                          <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                        </div>
+                      )}
                       {itinerary.status === ItineraryStatusEnum.published && 
                         <ShareElement id={itinerary.id} smallButton={false} />
                       }

@@ -34,7 +34,7 @@ export default function CanceledPage() {
             </p>
 
             {/* Info Box */}
-            <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
+            {/* <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
@@ -57,7 +57,7 @@ export default function CanceledPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

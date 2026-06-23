@@ -31,6 +31,15 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/auth/confirm-email`);
   }
 
+  // Link guest purchases (same email) to authenticated user.
+  if (user?.id && user?.email) {
+    await supabase
+      .from("itinerary_purchases")
+      .update({ user_id: user.id })
+      .is("user_id", null)
+      .eq("buyer_email", user.email);
+  }
+
   // Otherwise, continue to intended destination
   return NextResponse.redirect(`${origin}${next}`);
 }

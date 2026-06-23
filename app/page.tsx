@@ -1,15 +1,11 @@
 "use client"
 
-import Link from "next/link"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Mountain, Palmtree, Building, Utensils, Camera, Tent, Bike, Ship } from "lucide-react"
-import { SearchArea } from "@/components/ui/search-area"
-import { ItinerarySection } from "@/components/ui/itinerary-section"
-import { BlackBanner } from "@/components/ui/black-banner"
-import { CountryCard } from "@/components/ui/country-card"
-import { CategoryCard } from "@/components/ui/category-card"
-import { useRouter } from "next/navigation"
 import LandingPage from "./landing/page"
 import Head from "next/head"
+import { Button } from "@/components/ui/button"
 
 // Sample data for featured itineraries
 const multiCountryItineraries = [
@@ -418,9 +414,19 @@ const fadeInUp = {
 
 export default function Home() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [showWelcome, setShowWelcome] = useState(false)
 
-  const onEditProfile = () => {
-    router.push("/profile")
+  useEffect(() => {
+    if (searchParams.get("welcome") === "true") {
+      setShowWelcome(true)
+      localStorage.setItem("journli_onboarding_pending", "true")
+    }
+  }, [searchParams])
+
+  const handleCloseWelcome = () => {
+    setShowWelcome(false)
+    router.replace("/")
   }
 
   return (
@@ -428,6 +434,19 @@ export default function Home() {
       <Head>
           <link rel="icon" href="/favicon.ico" />
       </Head>
+      {showWelcome && (
+        <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold mb-2">Welcome to Journli</h2>
+            <p className="text-gray-600 text-sm mb-5">
+              Your account is ready. Explore itineraries now, and visit Settings anytime to complete your onboarding tour.
+            </p>
+            <div className="flex justify-end">
+              <Button onClick={handleCloseWelcome}>Continue</Button>
+            </div>
+          </div>
+        </div>
+      )}
       <LandingPage />
     </>
   );

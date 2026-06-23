@@ -21,10 +21,10 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   let hasFullAccess = true;
   let isRestricted = false;
   
-  console.log(currentUserId === itineraryMeta.creator_id)
   if (itineraryMeta?.is_paid) {
     const isCreator = currentUserId === itineraryMeta.creator_id;
-    
+    hasFullAccess = isCreator;
+
     if (!isCreator) {
       const { data: purchaseData } = await supabase
         .from('itinerary_purchases')
@@ -34,8 +34,8 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
         .maybeSingle()
       
       hasFullAccess = !!purchaseData;
-      isRestricted = !hasFullAccess;
     }
+    isRestricted = !hasFullAccess;
   }
 
   // Fetch itinerary - use restricted version if user doesn't have full access to paid content

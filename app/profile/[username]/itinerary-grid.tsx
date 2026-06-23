@@ -6,7 +6,7 @@ import Image from "next/image"
 import { MapPin, Star } from "lucide-react"
 import BookmarkElement from "@/components/ui/bookmark-element"
 import SearchItineraries from "./search-itineraries"
-import { FaRegHeart } from "react-icons/fa6"
+import { FaRegHeart, FaLock, FaUnlock } from "react-icons/fa6"
 
 interface ItineraryGridProps {
   itineraryData: any[]
@@ -102,11 +102,13 @@ export default function ItineraryGrid({
                   <div className="flex justify-between items-center">
                       {itinerary.isPaid && !itinerary.isPurchased && (
                         <span className={`px-3 py-2 gap-1.5 flex items-center rounded-full text-sm md:text-md font-semibold capitalize bg-lime-500/70 text-white`}>
+                          <FaLock />
                           ${itinerary.priceCents / 100}
                         </span>
                       )}
                       {itinerary.isPaid && itinerary.isPurchased && (
                         <span className={`px-3 py-2 gap-1.5 flex items-center rounded-full text-sm md:text-md font-semibold capitalize bg-gray-700/80 text-white`}>
+                          <FaUnlock />
                           Purchased
                         </span>
                       )}

@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import Image from "next/image"
 import Link from "next/link"
 import createClient from "@/utils/supabase/client"
+import { linkPurchasesToUser } from "@/lib/actions/user.actions"
 
 const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
@@ -98,8 +99,11 @@ export default function LoginPage() {
         }
         signUpForm.reset()
         signInForm.reset()
+        localStorage.setItem("journli_onboarding_pending", "true")
+        localStorage.setItem(`journli_onboarding_pending_${user.id}`, "true")
+        await linkPurchasesToUser()
         toast.success("Account created successfully")
-        router.push("/account-settings?tab=Profile&welcome=true")
+        router.push("/?welcome=true")
       } else {
         const { error, data: userCredential } = await supabase.auth.signInWithPassword({
           email,
@@ -112,6 +116,7 @@ export default function LoginPage() {
         setSessionCookie(userCredential.session)
         signUpForm.reset()
         signInForm.reset()
+        await linkPurchasesToUser()
         toast.success("Successfully signed in")
         // Use window.location for full page reload to ensure state is refreshed
         window.location.href = "/"

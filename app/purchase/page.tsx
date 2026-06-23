@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle, DownloadIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import createClient from '@/utils/supabase/client'
+import { FaRegQuestionCircle } from 'react-icons/fa'
 
 export default function PurchasePage() {
   const router = useRouter()
@@ -44,27 +45,33 @@ export default function PurchasePage() {
               Payment Successful
             </h1>
             <p className="text-lg text-gray-600 mb-8">
-              Thank you for your purchase! Your itineraries are now available in your purchased itineraries.
+              You will receive an email shortly with a download link for your purchase.
             </p>
 
             {/* Info Box */}
             <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <DownloadIcon className="w-5 h-5 text-green-400" />
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                    <FaRegQuestionCircle size={24} className="text-gray-500" />
                   </div>
                 </div>
                 <div className="text-left">
                   <h3 className="font-semibold text-gray-900 mb-1">
-                    You will receive an email shortly with a download link for your purchase.
+                    How to access your purchase
                   </h3>
                   <p className="text-gray-600 text-sm mt-2">
-                    If you have an account, you can also access purchased itineraries from your <Link href="/purchased" className="text-blue-600 hover:text-blue-700 font-medium">Purchased Itineraries</Link> page. Don't have an account? Sign up now to link your purchases to your account and access your itineraries later.
+                    A PDF copy of your purchase will be attached to the email. Journli account holders can also access their purchases from the <Link href="/purchased" className="text-blue-600 hover:text-blue-700 font-medium">Purchased Itineraries</Link> page.
                   </p>
                 </div>
               </div>
             </div>
+
+            {isGuest === 'true' && (
+              <p className="text-gray-600 text-sm mt-2">
+                Don't have an account? Sign up now to link your purchase <br /> to your account and access your itineraries later.
+              </p>
+            )}
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -76,7 +83,7 @@ export default function PurchasePage() {
               </Link>
               ) : (
                 <Link href="/login?mode=signup">
-                  <Button variant="outline" className="w-full sm:w-auto px-6">
+                  <Button variant="outline" className="w-full sm:w-auto px-6 mt-4">
                     Sign Up
                   </Button>
                 </Link>

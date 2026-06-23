@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/utils/supabase/server-admin";
 import { sendPurchaseConfirmationEmail } from "@/lib/email";
+import { getItineraryPdfAttachmentForEmail } from "@/lib/itinerary-purchase-pdf";
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
@@ -218,13 +219,74 @@ export async function POST(request: NextRequest) {
                 (process.env.VERCEL_URL
                   ? `https://${process.env.VERCEL_URL}`
                   : "https://www.journli.com");
-              const { success, error } = await sendPurchaseConfirmationEmail(
-                customerEmail,
-                itineraries,
-                baseUrl.replace(/\/$/, "")
-              );
-              if (!success) {
-                console.error("Purchase confirmation email failed:", error);
+
+              const firstItineraryId = itineraryIds[0];
+              const sellerId = firstItineraryId
+                ? sellerIdByItineraryId[firstItineraryId]
+                : null;
+              const buyerName =
+                session.customer_details?.name?.trim() || null;
+
+              const [sellerUserRes, buyerUserRes, sellerSettingsRes] =
+                await Promise.all([
+                  sellerId
+                    ? supabase
+                        .from("users")
+                        .select("username")
+                        .eq("id", sellerId)
+                        .maybeSingle()
+                    : Promise.resolve({ data: null }),
+                  userId
+                    ? supabase
+                        .from("users")
+                        .select("username")
+                        .eq("id", userId)
+                        .maybeSingle()
+                    : Promise.resolve({ data: null }),
+                  sellerId
+                    ? supabase
+                        .from("users_settings")
+                        .select("purchase_thank_you_message")
+                        .eq("user_id", sellerId)
+                        .maybeSingle()
+                    : Promise.resolve({ data: null }),
+                ]);
+
+              const sellerThankYouRaw =
+                (
+                  sellerSettingsRes.data as {
+                    purchase_thank_you_message?: string | null;
+                  } | null
+                )?.purchase_thank_you_message ?? null;
+
+              const emailContext = {
+                creatorUsername: sellerUserRes.data?.username ?? null,
+                buyerUsername: buyerUserRes.data?.username ?? null,
+                buyerName,
+                sellerThankYouMessage: sellerThankYouRaw,
+              };
+              const base = baseUrl.replace(/\/$/, "");
+
+              for (const it of itineraries) {
+                const pdfAttachment = await getItineraryPdfAttachmentForEmail(
+                  it.id,
+                  it.title
+                );
+                const { success, error } = await sendPurchaseConfirmationEmail(
+                  customerEmail,
+                  it,
+                  base,
+                  emailContext,
+                  pdfAttachment
+                );
+                if (!success) {
+                  console.error(
+                    "Purchase confirmation email failed:",
+                    error,
+                    "itinerary_id:",
+                    it.id
+                  );
+                }
               }
             }
 

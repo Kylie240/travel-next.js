@@ -4,10 +4,10 @@ import { useState, useEffect } from "react"
 import { X, ChevronRight, ChevronLeft, MapPin, Share2, Compass, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CiPassport1 } from "react-icons/ci"
-import { useRouter, useSearchParams } from "next/navigation"
 
 interface OnboardingTourProps {
   userName?: string
+  userId?: string
 }
 
 const tourSteps = [
@@ -43,26 +43,35 @@ const tourSteps = [
   },
 ]
 
-export function OnboardingTour({ userName }: OnboardingTourProps) {
+export function OnboardingTour({ userName, userId }: OnboardingTourProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
-  const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check if this is a new user (welcome param) and hasn't seen the tour
-    const isNewUser = searchParams.get("welcome") === "true"
-    const hasSeenTour = localStorage.getItem("journli_onboarding_completed")
+    if (!userId) return
 
-    if (isNewUser && !hasSeenTour) {
+    const pendingKey = `journli_onboarding_pending_${userId}`
+    const completedKey = `journli_onboarding_completed_${userId}`
+    const firstVisitKey = `journli_settings_first_visit_${userId}`
+
+    // Show tour if signup marked it pending OR this is first settings visit.
+    const isPending = localStorage.getItem(pendingKey) === "true" || localStorage.getItem("journli_onboarding_pending") === "true"
+    const hasSeenTour = localStorage.getItem(completedKey)
+    const hasVisitedSettings = localStorage.getItem(firstVisitKey)
+    const shouldOpen = !hasSeenTour && (isPending || !hasVisitedSettings)
+
+    if (shouldOpen) {
       setIsOpen(true)
-      // Clean up the URL
-      router.replace("/account-settings?tab=Profile")
+      localStorage.setItem(firstVisitKey, "true")
+      localStorage.removeItem(pendingKey)
+      localStorage.removeItem("journli_onboarding_pending")
     }
-  }, [searchParams, router])
+  }, [userId])
 
   const handleClose = () => {
-    localStorage.setItem("journli_onboarding_completed", "true")
+    if (userId) {
+      localStorage.setItem(`journli_onboarding_completed_${userId}`, "true")
+    }
     setIsOpen(false)
   }
 

@@ -512,3 +512,22 @@ export const searchUsers = async (searchQuery: string, currentUserId?: string) =
 
     return data || []
 }
+
+export const linkPurchasesToUser = async () => {
+    const supabase = await createClient()
+    const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+    if (!user || !user.email) return
+
+    const { error } = await supabase
+      .from("itinerary_purchases")
+      .update({ user_id: user.id })
+      .is("user_id", null)
+      .eq("customer_email", user.email)
+
+    if (error) {
+        throw new Error(error.message)
+    }
+}

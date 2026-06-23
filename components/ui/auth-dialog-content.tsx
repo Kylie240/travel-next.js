@@ -13,6 +13,7 @@ import { createClientComponentClient, Session } from "@supabase/auth-helpers-nex
 import { toast } from "sonner"
 import Image from "next/image"
 import { createClient as createClient2 } from "@supabase/supabase-js"
+import { linkPurchasesToUser } from "@/lib/actions/user.actions"
 
 const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
@@ -94,8 +95,11 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         setIsOpen(false)
         signUpForm.reset()
         signInForm.reset()
+        localStorage.setItem("journli_onboarding_pending", "true")
+        localStorage.setItem(`journli_onboarding_pending_${user.id}`, "true")
+        await linkPurchasesToUser()
         toast.success("Account created successfully")
-        router.push("/account-settings?tab=Profile&welcome=true")
+        router.push("/?welcome=true")
       } else {
         const { error, data: userCredential } = await supabase.auth.signInWithPassword({
           email,
@@ -109,6 +113,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         setIsOpen(false)
         signUpForm.reset()
         signInForm.reset()
+        await linkPurchasesToUser()
         router.refresh()
         toast.success("Successfully signed in")
       }

@@ -930,7 +930,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       </SettingsSidebar>
 
       {/* Onboarding tour for new users */}
-      <OnboardingTour userName={userData?.name?.split(' ')[0]} />
+      <OnboardingTour userName={userData?.name?.split(' ')[0]} userId={userData?.id} />
     </div>
   )
 }
