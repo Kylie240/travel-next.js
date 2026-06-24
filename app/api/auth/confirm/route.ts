@@ -1,35 +1,52 @@
-import { type EmailOtpType } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
-import createClient from '@/utils/supabase/server'
+import { type EmailOtpType } from "@supabase/supabase-js"
+import { NextResponse, type NextRequest } from "next/server"
+import { createServerClient } from "@supabase/ssr"
 
-function stringOrFirstString(item: string | string[] | undefined) {
+function stringOrFirstString(item: string | string[] | null) {
   return Array.isArray(item) ? item[0] : item
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  
-  const token_hash = searchParams.get('token_hash')
-  const type = searchParams.get('type')
-  const next = searchParams.get('next')
-  
-  let redirectPath = '/error'
-  
-  if (token_hash && type) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.verifyOtp({
-      type: type as EmailOtpType,
-      token_hash,
-    })
-    
-    if (error) {
-      console.error('Error verifying OTP:', error)
-      // Optionally redirect to an error page with the error message
-      redirectPath = '/auth/auth-code-error'
-    } else {
-      redirectPath = next || '/'
-    }
+
+  const token_hash = stringOrFirstString(searchParams.get("token_hash"))
+  const type = stringOrFirstString(searchParams.get("type"))
+  const next = stringOrFirstString(searchParams.get("next"))
+
+  if (!token_hash || !type) {
+    return NextResponse.redirect(`${origin}/login?error=auth_confirm_failed`)
   }
-  
-  return NextResponse.redirect(`${origin}${redirectPath}`)
+
+  const redirectPath =
+    type === "recovery" ? "/auth/reset-password" : next || "/"
+  const response = NextResponse.redirect(`${origin}${redirectPath}`)
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
+
+  const { error } = await supabase.auth.verifyOtp({
+    type: type as EmailOtpType,
+    token_hash,
+  })
+
+  if (error) {
+    console.error("Error verifying OTP:", error)
+    return NextResponse.redirect(`${origin}/login?error=auth_confirm_failed`)
+  }
+
+  return response
 }

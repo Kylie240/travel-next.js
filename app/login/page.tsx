@@ -150,7 +150,7 @@ export default function LoginPage() {
       return
     }
 
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth/reset-password")}`
+    const redirectTo = `${window.location.origin}/auth/reset-password`
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     })

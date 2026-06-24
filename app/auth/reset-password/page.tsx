@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useRef } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -25,7 +25,9 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const searchParams = useSearchParams()
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [checkingSession, setCheckingSession] = useState(true)
@@ -39,22 +41,55 @@ export default function ResetPasswordPage() {
   })
 
   useEffect(() => {
-    const checkSession = async () => {
+    let mounted = true
+
+    const establishSession = async () => {
+      const code = searchParams.get("code")
+
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        if (error) {
+          console.error("Reset password code exchange error:", error.message)
+          if (mounted) {
+            toast.error("Reset link expired or invalid. Please request a new one.")
+            router.replace("/login")
+          }
+          return
+        }
+        window.history.replaceState({}, "", "/auth/reset-password")
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession()
 
-      if (!session) {
-        toast.error("Reset link expired or invalid. Please request a new one.")
-        router.replace("/login")
+      if (!mounted) return
+
+      if (session) {
+        setCheckingSession(false)
         return
       }
 
-      setCheckingSession(false)
+      toast.error("Reset link expired or invalid. Please request a new one.")
+      router.replace("/login")
     }
 
-    checkSession()
-  }, [router, supabase])
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
+      if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session) {
+        setCheckingSession(false)
+      }
+    })
+
+    establishSession()
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [router, searchParams, supabase])
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     const { error } = await supabase.auth.updateUser({
