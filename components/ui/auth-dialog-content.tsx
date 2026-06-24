@@ -13,7 +13,7 @@ import { createClientComponentClient, Session } from "@supabase/auth-helpers-nex
 import { toast } from "sonner"
 import Image from "next/image"
 import { createClient as createClient2 } from "@supabase/supabase-js"
-import { linkPurchasesToUser } from "@/lib/actions/user.actions"
+import { linkPurchasesToUser, requestPasswordReset } from "@/lib/actions/user.actions"
 
 const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
@@ -147,16 +147,12 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
       return
     }
 
-    const supabase = createClientComponentClient()
-    const redirectTo = `${window.location.origin}/auth/reset-password`
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo,
-    })
-    if (error) {
-      setAuthError(error.message)
+    const result = await requestPasswordReset(email, window.location.origin)
+    if (!result.success) {
+      setAuthError(result.error ?? "Failed to send reset email")
       return
     }
-    toast.success("Password reset email sent")
+    toast.success("Password reset email sent. Check your inbox.")
     setIsOpen(false)
   }
 

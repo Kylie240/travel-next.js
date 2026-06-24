@@ -35,9 +35,13 @@ export function UserMenu() {
   // Track the last fetched user ID to prevent unnecessary refetches
   const lastFetchedUserIdRef = useRef<string | null>(null)
 
+  const isAuthFlowPage =
+    pathname?.startsWith("/auth/reset-password") ||
+    pathname?.startsWith("/login")
+
   // Function to fetch user profile
   const fetchUserProfile = useCallback(async (force = false) => {
-    if (!user?.id) {
+    if (!user?.id || isAuthFlowPage) {
       setUserProfile(null)
       setProfileLoading(false)
       lastFetchedUserIdRef.current = null
@@ -63,7 +67,7 @@ export function UserMenu() {
     } finally {
       setProfileLoading(false)
     }
-  }, [user?.id]) // Only depend on user?.id to prevent unnecessary function recreations
+  }, [user?.id, isAuthFlowPage]) // Only depend on user?.id to prevent unnecessary function recreations
 
   // Fetch user profile when user ID is present or changes
   useEffect(() => {
@@ -148,7 +152,7 @@ export function UserMenu() {
 
   return (
     <>
-    {user?.id ? (
+    {user?.id && !isAuthFlowPage ? (
       <DropdownMenu.Root open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenu.Trigger asChild>
           <button className="flex cursor-pointer items-center space-x-2 rounded-full bg-white/90 p-1.5 hover:bg-white/100 transition-colors">

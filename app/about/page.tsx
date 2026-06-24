@@ -4,9 +4,15 @@ import { IoDocumentOutline } from "react-icons/io5";
 import { GoPeople } from "react-icons/go";
 import { GrAppsRounded } from "react-icons/gr";
 import { CiCalendarDate } from 'react-icons/ci';
-import { FiEdit2 } from 'react-icons/fi';
+import { FiEdit2, FiLock } from 'react-icons/fi';
 
 const newestFeatures = [
+  {
+    title: "Password Reset",
+    description: "Password reset functionality has fixed on the login page.",
+    date: "June 24, 2026",
+    icon: <FiLock className="w-6 h-6" />
+  },
   {
     title: "Edit Published Itineraries",
     description: "You can now edit your published itineraries.",
@@ -17,7 +23,7 @@ const newestFeatures = [
     title: "Travel Dates",
     description: "Optional date fields for each day of your itinerary.",
     date: "November 28, 2025",
-    icon: <CiCalendarDate className="w-6 h-6" />
+    icon: <CiCalendarDate className="w-7 h-7" />
   },
   {
     title: "Search Page",

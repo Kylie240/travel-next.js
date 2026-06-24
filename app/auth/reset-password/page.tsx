@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import createClient from "@/utils/supabase/client"
+import { updatePassword } from "@/lib/actions/user.actions"
 
 const resetPasswordSchema = z
   .object({
@@ -31,6 +32,7 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [checkingSession, setCheckingSession] = useState(true)
+  const [hasRecoverySession, setHasRecoverySession] = useState(false)
 
   const {
     register,
@@ -42,63 +44,109 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     let mounted = true
+    let resolved = false
+    const code = searchParams.get("code")
 
-    const establishSession = async () => {
-      const code = searchParams.get("code")
+    const finish = (ok: boolean) => {
+      if (!mounted || resolved) return
+      resolved = true
+      if (ok) {
+        if (code) {
+          window.history.replaceState({}, "", "/auth/reset-password")
+        }
+        setHasRecoverySession(true)
+        setCheckingSession(false)
+      } else {
+        toast.error("Reset link expired or invalid. Please request a new one.")
+        router.replace("/login")
+      }
+    }
 
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (error) {
-          console.error("Reset password code exchange error:", error.message)
-          if (mounted) {
-            toast.error("Reset link expired or invalid. Please request a new one.")
-            router.replace("/login")
-          }
+    const establishRecoverySession = async () => {
+      // Arrived via /auth/callback — session cookies should already be set
+      if (!code) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        if (session) {
+          finish(true)
           return
         }
-        window.history.replaceState({}, "", "/auth/reset-password")
+        return
+      }
+
+      // Direct link with ?code= — clear stale session so recovery code can apply
+      await supabase.auth.signOut({ scope: "local" })
+
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error) {
+        console.error("Recovery code exchange error:", error.message)
+        finish(false)
+        return
       }
 
       const {
         data: { session },
       } = await supabase.auth.getSession()
-
-      if (!mounted) return
-
-      if (session) {
-        setCheckingSession(false)
-        return
-      }
-
-      toast.error("Reset link expired or invalid. Please request a new one.")
-      router.replace("/login")
+      finish(!!session)
     }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
-      if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session) {
-        setCheckingSession(false)
+      if (!mounted || resolved || !session) return
+      if (event === "PASSWORD_RECOVERY") {
+        finish(true)
+        return
+      }
+      // After /auth/callback redirect, session arrives via INITIAL_SESSION / SIGNED_IN
+      if (!code && (event === "INITIAL_SESSION" || event === "SIGNED_IN")) {
+        finish(true)
       }
     })
 
-    establishSession()
+    void establishRecoverySession()
+
+    const timeoutId = window.setTimeout(async () => {
+      if (!mounted || resolved) return
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      finish(!!session)
+    }, code ? 8000 : 3000)
 
     return () => {
       mounted = false
+      window.clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [router, searchParams, supabase])
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    const { error } = await supabase.auth.updateUser({
-      password: data.password,
-    })
+    if (!hasRecoverySession) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session) {
+        toast.error("Auth session missing. Please request a new reset link.")
+        return
+      }
+    }
 
-    if (error) {
-      toast.error(error.message)
-      return
+    // Refresh client session so cookies are synced for the server action
+    await supabase.auth.refreshSession()
+
+    const result = await updatePassword(data.password)
+
+    if (!result.success) {
+      // Fallback to client-side update if server cookies aren't ready yet
+      const { error } = await supabase.auth.updateUser({
+        password: data.password,
+      })
+      if (error) {
+        toast.error(error.message)
+        return
+      }
     }
 
     toast.success("Password updated successfully")

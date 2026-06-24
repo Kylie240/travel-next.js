@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import Image from "next/image"
 import Link from "next/link"
 import createClient from "@/utils/supabase/client"
-import { linkPurchasesToUser } from "@/lib/actions/user.actions"
+import { linkPurchasesToUser, requestPasswordReset } from "@/lib/actions/user.actions"
 
 const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
@@ -150,12 +150,9 @@ export default function LoginPage() {
       return
     }
 
-    const redirectTo = `${window.location.origin}/auth/reset-password`
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo,
-    })
-    if (error) {
-      setAuthError(error.message)
+    const result = await requestPasswordReset(email, window.location.origin)
+    if (!result.success) {
+      setAuthError(result.error ?? "Failed to send reset email")
       return
     }
     toast.success("Password reset email sent. Check your inbox.")

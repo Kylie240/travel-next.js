@@ -8,6 +8,7 @@ import { UserData } from "../types";
 import { ProfileData } from "@/types/profileData";
 import createClient from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@/utils/supabase/server-admin"
+import { sendPasswordResetEmail } from "@/lib/email";
 
 export const getUserDataById = async () => {
     const supabase = await createClient()
@@ -37,7 +38,11 @@ export const getUserProfileById = async (userId: string) => {
         data: { user },
       } = await supabase.auth.getUser()
     
-      if (!user) throw new Error("Not authenticated")
+      if (!user) return null
+
+      if (user.id !== userId) {
+        throw new Error("Unauthorized")
+      }
     
       const { data, error } = await supabase
         .from("users")
@@ -530,4 +535,87 @@ export const linkPurchasesToUser = async () => {
     if (error) {
         throw new Error(error.message)
     }
+}
+
+function getAppBaseUrl(requestOrigin?: string) {
+    const origin = requestOrigin?.trim().replace(/\/$/, "")
+    if (origin) return origin
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "")
+    if (siteUrl) return siteUrl
+
+    if (process.env.NODE_ENV === "development") {
+        return `http://localhost:${process.env.PORT || 3000}`
+    }
+
+    if (process.env.VERCEL_URL) {
+        return `https://${process.env.VERCEL_URL}`
+    }
+
+    return "http://localhost:3000"
+}
+
+/** Generate a Supabase recovery link and send it via Resend (no Supabase email). */
+export async function requestPasswordReset(email: string, requestOrigin?: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+        return { success: false, error: "Email is required" };
+    }
+
+    const admin = createAdminClient();
+    const baseUrl = getAppBaseUrl(requestOrigin);
+
+    const { data, error } = await admin.auth.admin.generateLink({
+        type: "recovery",
+        email: normalizedEmail,
+        options: {
+            redirectTo: `${baseUrl}/auth/reset-password`,
+        },
+    });
+
+    // Always return success when link generation fails to avoid account enumeration
+    if (error || !data?.properties?.hashed_token) {
+        if (error) {
+            console.error("Password reset link generation error:", error.message);
+        }
+        return { success: true };
+    }
+
+    // Build our own link so Supabase can't override redirect_to with the project Site URL
+    const resetLink = `${baseUrl}/api/auth/confirm?token_hash=${encodeURIComponent(data.properties.hashed_token)}&type=recovery`;
+
+    const sendResult = await sendPasswordResetEmail(
+        normalizedEmail,
+        resetLink
+    );
+
+    if (!sendResult.success) {
+        console.error("Password reset email send failed:", sendResult.error);
+        return { success: false, error: "Failed to send reset email. Please try again." };
+    }
+
+    return { success: true };
+}
+
+/** Update password during recovery flow (uses server session cookies). */
+export async function updatePassword(password: string) {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return {
+            success: false,
+            error: "Auth session missing. Please request a new reset link.",
+        };
+    }
+
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+        return { success: false, error: error.message };
+    }
+
+    return { success: true };
 }

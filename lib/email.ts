@@ -126,6 +126,53 @@ export async function sendPurchaseConfirmationEmail(
   }
 }
 
+export async function sendPasswordResetEmail(
+  to: string,
+  resetLink: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set, skipping password reset email");
+    return { success: false, error: "Resend not configured" };
+  }
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:0 auto;padding:24px;">
+  <h1 style="font-size:1.5rem;margin-bottom:16px;">Journli</h1>
+  <h2 style="font-size:1.25rem;margin-bottom:16px;">Reset your password</h2>
+  <p style="margin-bottom:16px;color:#4b5563;">We received a request to reset your password. Click the button below to choose a new one. This link expires in 1 hour.</p>
+  <p style="margin:24px 0;">
+    <a href="${resetLink}" style="display:inline-block;padding:12px 24px;background:#0d6b64;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">Reset password</a>
+  </p>
+  <p style="color:#6b7280;font-size:0.875rem;">If you didn't request this, you can safely ignore this email.</p>
+  <p style="margin-top:24px;color:#6b7280;font-size:0.875rem;">— The Journli team</p>
+</body>
+</html>
+  `.trim();
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Reset your Journli password",
+      html,
+    });
+
+    if (error) {
+      console.error("Resend password reset email error:", error);
+      return { success: false, error: error.message };
+    }
+    console.log("Password reset email sent:", data?.id, "to", to);
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Resend password reset send failed:", message);
+    return { success: false, error: message };
+  }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")

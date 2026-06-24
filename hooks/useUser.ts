@@ -39,10 +39,10 @@ export default function useUser() {
     // Listen to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
+        if ((event === "SIGNED_IN" || event === "PASSWORD_RECOVERY") && session) {
           setSession(session);
           setUser(session.user);
-        } else if (event === 'SIGNED_OUT') {
+        } else if (event === "SIGNED_OUT") {
           setSession(null);
           setUser(null);
         }
