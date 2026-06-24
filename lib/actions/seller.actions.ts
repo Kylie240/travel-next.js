@@ -8,6 +8,7 @@ export type SellerTransactionRow = {
   itinerary_id: string;
   itinerary_title: string;
   purchase_id: string;
+  buyer_id: string | null;
   gross_amount_cents: number;
   platform_fee_cents: number;
   stripe_fee_cents: number | null;

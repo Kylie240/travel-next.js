@@ -4,9 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  DollarSign,
-  Clock,
-  Receipt,
   TrendingUp,
   Loader2,
   FileText,
@@ -57,11 +54,11 @@ export default function SellerDashboardPage() {
 
     const { data: thankRow } = await supabase
       .from("users_settings")
-      .select("purchase_thank_you_message")
+      .select("seller_message")
       .eq("user_id", u.id)
       .maybeSingle();
     setPurchaseThankYouDraft(
-      (thankRow?.purchase_thank_you_message as string | null) ?? ""
+      (thankRow?.seller_message as string | null) ?? ""
     );
     setPurchaseThankYouStatus("idle");
 
@@ -216,11 +213,11 @@ export default function SellerDashboardPage() {
             <CardContent className="p-0">
               <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
                 <h2 className="text-lg font-medium text-gray-900">
-                  Purchase confirmation email
+                  Custom thank you message
                 </h2>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  Optional message for buyers after they purchase your itineraries
-                  (plain text). Your Journli username is included automatically.
+                  Optional message for buyers after they purchase your itineraries. 
+                  Your Journli username is included automatically.
                 </p>
               </div>
               <div className="px-4 sm:px-6 py-4 space-y-3">
@@ -246,11 +243,14 @@ export default function SellerDashboardPage() {
                       const trimmed = purchaseThankYouDraft.trim();
                       const { error } = await sb
                         .from("users_settings")
-                        .update({
-                          purchase_thank_you_message:
-                            trimmed.length > 0 ? trimmed : null,
-                        })
-                        .eq("user_id", user.id);
+                        .upsert(
+                          {
+                            user_id: user.id,
+                            seller_message:
+                              trimmed.length > 0 ? trimmed : null,
+                          },
+                          { onConflict: "user_id" }
+                        );
                       if (error) {
                         console.error(error);
                         setPurchaseThankYouStatus("error");

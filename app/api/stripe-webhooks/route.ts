@@ -282,24 +282,34 @@ export async function POST(request: NextRequest) {
                   sellerId
                     ? supabase
                         .from("users_settings")
-                        .select("purchase_thank_you_message")
+                        .select("seller_message")
                         .eq("user_id", sellerId)
                         .maybeSingle()
-                    : Promise.resolve({ data: null }),
+                    : Promise.resolve({ data: null, error: null }),
                 ]);
 
-              const sellerThankYouRaw =
+              if (sellerSettingsRes.error) {
+                console.error(
+                  "Failed to load seller purchase message:",
+                  sellerSettingsRes.error,
+                  "seller_id:",
+                  sellerId
+                );
+              }
+
+              const purchaseThankYou =
                 (
                   sellerSettingsRes.data as {
-                    purchase_thank_you_message?: string | null;
+                    seller_message?: string | null;
                   } | null
-                )?.purchase_thank_you_message ?? null;
+                )?.seller_message?.trim() || null;
 
               const emailContext = {
                 creatorUsername: sellerUserRes.data?.username ?? null,
                 buyerUsername: buyerUserRes.data?.username ?? null,
                 buyerName,
-                sellerThankYouMessage: sellerThankYouRaw,
+                sellerMessage: purchaseThankYou,
+                sellerThankYouMessage: null,
               };
               const base = baseUrl.replace(/\/$/, "");
 
@@ -341,6 +351,7 @@ export async function POST(request: NextRequest) {
             );
             const sellerTransactionRecords = (insertedPurchases || []).map((purchase) => ({
               seller_id: sellerIdByItineraryId[purchase.itinerary_id],
+              buyer_id: userId || null,
               itinerary_id: purchase.itinerary_id,
               itinerary_title: titleByItineraryId[purchase.itinerary_id] ?? 'Itinerary',
               purchase_id: purchase.id,

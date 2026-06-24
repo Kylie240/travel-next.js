@@ -8,7 +8,8 @@ export type PurchaseEmailContext = {
   buyerUsername?: string | null;
   /** Stripe Checkout collects this for guests when name is enabled. */
   buyerName?: string | null;
-  sellerThankYouMessage?: string | null;
+  /** Custom intro from users_settings.seller_message (replaces default fromLine). */
+  sellerMessage?: string | null;
 };
 
 /** Same PDF as in-app Export (jsPDF); optional when generation fails. */
@@ -50,7 +51,9 @@ export async function sendPurchaseConfirmationEmail(
   const creator = context?.creatorUsername?.trim();
   const buyerU = context?.buyerUsername?.trim();
   const buyerN = context?.buyerName?.trim();
+  const sellerMessage = context?.sellerMessage?.trim();
   const thankYou = context?.sellerThankYouMessage?.trim();
+  const customIntro = sellerMessage || thankYou || null;
 
   const greeting =
     buyerU != null && buyerU.length > 0
@@ -60,12 +63,16 @@ export async function sendPurchaseConfirmationEmail(
         : "Hi there";
 
   const fromLine =
-    creator != null && creator.length > 0
-      ? `<p style="margin-bottom:16px;color:#4b5563;">Thank you for purchasing <strong>${subjectSnippet}</strong> from <strong>@${escapeHtml(creator)}</strong> on Journli. Your download is now ready.</p>`
-      : "";
+    customIntro != null && customIntro.length > 0
+      ? `<p style="margin-bottom:16px;color:#4b5563;white-space:pre-wrap;">${escapeHtml(customIntro)}</p>`
+      : creator != null && creator.length > 0
+        ? `<p style="margin-bottom:16px;color:#4b5563;">Thank you for purchasing <strong>${subjectSnippet}</strong> from <strong>@${escapeHtml(creator)}</strong> on Journli. Your download is now ready.</p>`
+        : "";
 
   const sellerNote =
-    thankYou != null && thankYou.length > 0
+    thankYou != null &&
+    thankYou.length > 0 &&
+    thankYou !== customIntro
       ? `<div style="margin:20px 0;padding:16px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
   <p style="margin:0 0 8px;font-size:0.875rem;font-weight:600;color:#374151;">A note from the creator${
     creator != null && creator.length > 0 ? ` (${escapeHtml(creator)})` : ""
@@ -87,7 +94,7 @@ export async function sendPurchaseConfirmationEmail(
   <h3 style="font-size:1.5rem;margin-bottom:16px;">Thank you for your purchase</h3>
   <p style="margin-bottom:8px;">${greeting},</p>
   ${fromLine} 
-  If you purchased from a Journli account, access the itinerary by following the link below or navigating to the <a href="${baseUrl}/purchased" style="color:#2563eb;">Purchased</a> page on your account. 
+  If you purchased from a Journli account, access the itinerary by following the link below or navigating to the 'Purchased' page on your account. 
   ${linkHtml}
   <p style="margin-top:24px;color:#6b7280;font-size:0.875rem;">— The Journli team</p>
   ${sellerNote}
@@ -98,8 +105,7 @@ export async function sendPurchaseConfirmationEmail(
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
-      // to: [to],
-      to: ["info@journli.com"],
+      to: [to],
       subject: "Your itinerary is here! – Journli",
       html,
       attachments:
@@ -144,7 +150,7 @@ export async function sendPasswordResetEmail(
   <h2 style="font-size:1.25rem;margin-bottom:16px;">Reset your password</h2>
   <p style="margin-bottom:16px;color:#4b5563;">We received a request to reset your password. Click the button below to choose a new one. This link expires in 1 hour.</p>
   <p style="margin:24px 0;">
-    <a href="${resetLink}" style="display:inline-block;padding:12px 24px;background:#0d6b64;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">Reset password</a>
+    <a href="${resetLink}" style="display:inline-block;padding:12px 24px;background:#0E7490;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">Reset password</a>
   </p>
   <p style="color:#6b7280;font-size:0.875rem;">If you didn't request this, you can safely ignore this email.</p>
   <p style="margin-top:24px;color:#6b7280;font-size:0.875rem;">— The Journli team</p>
