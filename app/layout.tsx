@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
@@ -40,6 +41,7 @@ export default function RootLayout({
         <Toaster richColors position="top-center" />
         </CartProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
