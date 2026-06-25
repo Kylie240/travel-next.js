@@ -328,7 +328,7 @@ export default function MyItinerariesPage() {
                                 className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                 onClick={(event) => {
                                   event.stopPropagation()
-                                  router.push(`/itinerary-settings/${itinerary.id}`)
+                                  router.push(`/create?itineraryId=${itinerary.id}&step=4`)
                                 }}
                               >
                                 <div className="flex">

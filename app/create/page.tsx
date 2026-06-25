@@ -36,7 +36,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
-import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing } from "@/lib/actions/itinerary.actions"
+import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
+import { getFollowersById } from "@/lib/actions/user.actions"
 import createClient from "@/utils/supabase/client"
 import { CreateItinerary } from "@/types/createItinerary"
 import { Day } from "@/types/Day"
@@ -47,7 +48,9 @@ import { ItineraryStatusEnum, viewPermissionEnum, editPermissionEnum } from "@/e
 import { ItineraryStatus } from "@/types/itineraryStatus"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 import { ImageUpload } from "@/components/ui/image-upload"
-import { v4 as uuidv4 } from 'uuid'
+import { Followers } from "@/types/followers"
+import { FollowerUserPicker } from "@/components/ui/follower-user-picker"
+import { v4 as uuidv4 } from "uuid"
 import { countries } from "@/lib/constants/countries"
 
 type City = { city: string; country: string };
@@ -858,6 +861,7 @@ export default function CreatePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialItineraryId = searchParams.get('itineraryId')
+  const initialStep = searchParams.get('step')
   const [itineraryId, setItineraryId] = useState<string | null>(initialItineraryId)
   const [itineraryStatus, setItineraryStatus] = useState<number>(ItineraryStatusEnum.draft)
   const supabase = createClient()
@@ -875,11 +879,18 @@ export default function CreatePage() {
   const [userPlan, setUserPlan] = useState<string>('free')
   const [viewPermission, setViewPermission] = useState<'public' | 'creator' | 'restricted'>('public')
   const [editPermission, setEditPermission] = useState<'creator' | 'collaborators'>('creator')
+  const [allowedViewers, setAllowedViewers] = useState<string[]>([])
+  const [allowedEditors, setAllowedEditors] = useState<string[]>([])
+  const [followers, setFollowers] = useState<Followers[]>([])
+  const [loadingFollowers, setLoadingFollowers] = useState(false)
+  const [viewerSearchTerm, setViewerSearchTerm] = useState('')
+  const [editorSearchTerm, setEditorSearchTerm] = useState('')
   const [isPaid, setIsPaid] = useState(false)
   const [priceInDollars, setPriceInDollars] = useState('')
+  const [isItineraryCreator, setIsItineraryCreator] = useState(!initialItineraryId)
   
-  // Determine if user can access step 4 (non-free users)
-  const canAccessStep4 = userPlan !== 'free'
+  // Step 4: paid creators only (not collaborators editing shared itineraries)
+  const canAccessStep4 = userPlan !== 'free' && isItineraryCreator
   const totalSteps = canAccessStep4 ? 4 : 3
 
   // Generate itinerary ID if one doesn't exist
@@ -937,8 +948,62 @@ export default function CreatePage() {
       subscription.unsubscribe()
     }
   }, [supabase])
+
+  useEffect(() => {
+    const fetchFollowers = async () => {
+      const needsFollowers =
+        viewPermission === 'restricted' || editPermission === 'collaborators'
+      if (!needsFollowers || !user?.id || followers.length > 0 || loadingFollowers) {
+        return
+      }
+
+      setLoadingFollowers(true)
+      try {
+        const followersData = await getFollowersById(user.id)
+        setFollowers(followersData || [])
+      } catch (error) {
+        toast.error('Failed to load followers')
+        console.error('Error fetching followers:', error)
+      } finally {
+        setLoadingFollowers(false)
+      }
+    }
+
+    fetchFollowers()
+  }, [viewPermission, editPermission, user?.id, followers.length, loadingFollowers])
+
+  const handleToggleViewer = (userId: string) => {
+    setAllowedViewers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    )
+  }
+
+  const handleToggleEditor = (userId: string) => {
+    setAllowedEditors((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    )
+  }
+
+  const buildPermissionsPayload = () => ({
+    viewPermission: (viewPermission === 'creator' ? 'private' : viewPermission) as
+      | 'public'
+      | 'private'
+      | 'restricted',
+    editPermission: editPermission as 'collaborators' | 'creator',
+    allowedViewers: viewPermission === 'restricted' ? allowedViewers : [],
+    allowedEditors: editPermission === 'collaborators' ? allowedEditors : [],
+  })
   
-  const [currentStep, setCurrentStep] = useState(itineraryId ? 1 : 0)
+  const [currentStep, setCurrentStep] = useState(() => {
+    if (initialStep === '4' && !initialItineraryId) return 4
+    return initialItineraryId ? 1 : 0
+  })
+
+  useEffect(() => {
+    if (currentStep === 4 && !canAccessStep4) {
+      setCurrentStep(3)
+    }
+  }, [currentStep, canAccessStep4])
 
   const form = useForm<FormData>({
     resolver: zodResolver(createSchema),
@@ -1024,9 +1089,28 @@ export default function CreatePage() {
       if (itineraryId && initialItineraryId) {
         try {
           setItineraryLoading(true)
-          const itinerary = await getItineraryById(itineraryId) as CreateItinerary;
+          const itinerary = await getItineraryById(itineraryId) as CreateItinerary & {
+            creatorId?: string
+          }
           console.log(itinerary)
           setItineraryStatus(itinerary.status)
+
+          const { data: { user: currentUser } } = await supabase.auth.getUser()
+          let creatorId = itinerary.creatorId
+          if (!creatorId) {
+            const { data: meta } = await supabase
+              .from('itineraries')
+              .select('creator_id')
+              .eq('id', itineraryId)
+              .single()
+            creatorId = meta?.creator_id
+          }
+          const isCreator =
+            !!currentUser && !!creatorId && creatorId === currentUser.id
+          setIsItineraryCreator(isCreator)
+          if (searchParams.get('step') === '4' && isCreator) {
+            setCurrentStep(4)
+          }
           
           // Extract unique countries and cities from days
           const countries = new Set<string>();
@@ -1096,6 +1180,39 @@ export default function CreatePage() {
                 // Map pricing
                 setIsPaid(permData.is_paid || false)
                 setPriceInDollars(permData.price_cents ? (permData.price_cents / 100).toFixed(2) : '')
+              }
+
+              const permissions = await getItineraryPermissionsById(itineraryId, {} as any)
+              if (permissions) {
+                const viewPerm =
+                  typeof permissions.viewPermission === 'string'
+                    ? parseInt(permissions.viewPermission)
+                    : permissions.viewPermission
+                const editPerm =
+                  typeof permissions.editPermission === 'string'
+                    ? parseInt(permissions.editPermission)
+                    : permissions.editPermission
+
+                if (viewPerm === viewPermissionEnum.public) {
+                  setViewPermission('public')
+                } else if (viewPerm === viewPermissionEnum.creator) {
+                  setViewPermission('creator')
+                } else if (viewPerm === viewPermissionEnum.restricted) {
+                  setViewPermission('restricted')
+                }
+
+                if (editPerm === editPermissionEnum.creator) {
+                  setEditPermission('creator')
+                } else if (editPerm === editPermissionEnum.collaborators) {
+                  setEditPermission('collaborators')
+                }
+
+                if (permissions.allowedViewers && Array.isArray(permissions.allowedViewers)) {
+                  setAllowedViewers(permissions.allowedViewers)
+                }
+                if (permissions.allowedEditors && Array.isArray(permissions.allowedEditors)) {
+                  setAllowedEditors(permissions.allowedEditors)
+                }
               }
             } catch (permError) {
               console.error('Error loading permissions/pricing:', permError)
@@ -1307,12 +1424,7 @@ export default function CreatePage() {
       if (canAccessStep4 && itineraryId) {
         try {
           // Save permissions
-          await updateItineraryPermissions(itineraryId, {
-            viewPermission: viewPermission as 'public' | 'private' | 'restricted',
-            editPermission: editPermission as 'collaborators' | 'creator',
-            allowedViewers: [],
-            allowedEditors: []
-          })
+          await updateItineraryPermissions(itineraryId, buildPermissionsPayload())
           
           // Save pricing
           const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
@@ -1385,12 +1497,7 @@ export default function CreatePage() {
         if (canAccessStep4 && itineraryId) {
           try {
             // Save permissions
-            await updateItineraryPermissions(itineraryId, {
-              viewPermission: viewPermission as 'public' | 'private' | 'restricted',
-              editPermission: editPermission as 'collaborators' | 'creator',
-              allowedViewers: [],
-              allowedEditors: []
-            })
+            await updateItineraryPermissions(itineraryId, buildPermissionsPayload())
             
             // Save pricing
             const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
@@ -1792,12 +1899,6 @@ export default function CreatePage() {
                   </div>
 
                   <div className="flex justify-end gap-2 pt-10 md:pt-0">
-                    {itineraryId && itineraryStatus !== ItineraryStatusEnum.archived && 
-                      <Button type="button" variant="outline" onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft} disabled={isFormDisabled}>
-                        {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
-                      </Button>
-                    }
-
                     <Button 
                       type="button" 
                       onClick={(e) => {
@@ -1903,16 +2004,6 @@ export default function CreatePage() {
                         <span className="hidden sm:block">Back</span>
                         <ChevronLeft className="sm:hidden" />
                       </Button>
-                      {itineraryStatus !== ItineraryStatusEnum.archived && (
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft}
-                          disabled={isFormDisabled}
-                        >
-                          {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
-                        </Button>
-                      )}
                       <Button 
                         type="button"
                         onClick={(e) => {
@@ -2127,33 +2218,52 @@ export default function CreatePage() {
                       <ChevronLeft className="sm:hidden" />
                     </Button>
                     {canAccessStep4 ? (
-                      <Button 
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          setCurrentStep(4)
-                          scrollToTop()
-                        }}
-                      >
-                        <span className="hidden sm:block">Next</span>
-                        <ChevronRight className="sm:hidden" />
-                      </Button>
+                      <>
+                        <Button 
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setCurrentStep(4)
+                            scrollToTop()
+                          }}
+                        >
+                          <span className="hidden sm:block">Next: Advanced Settings</span>
+                          <ChevronRight className="sm:hidden" />
+                        </Button>
+                        <Button 
+                          type="button"
+                          variant="outline"
+                          color="crimson"
+                          className="text-red hover:bg-red-500 hover:text-white"
+                          disabled={isFormDisabled}
+                          onClick={(e) => {
+                            if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
+                              router.push('/my-itineraries')
+                            }
+                          }}
+                        >
+                          <X className="sm:hidden"/>
+                          <span className="hidden sm:block">Cancel</span>
+                        </Button>
+                      </>
                     ) : (
                       <>
+                      {(itineraryStatus == ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived) && (
                         <Button 
                           type="button" 
                           variant="outline" 
-                          onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft}
+                          onClick={saveDraft}
                           disabled={isFormDisabled}
                         >
-                          {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
+                          Save Draft
                         </Button>
+                        )}
                         <Button 
-                          type="submit"
-                          className="bg-black text-white hover:bg-gray-800"
+                          type="button"
+                          onClick={itineraryStatus == ItineraryStatusEnum.published ? onSubmit : saveDraft}
                           disabled={isFormDisabled}
                         >
-                          {itineraryStatus === ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived ? "Publish" : "Update"}
+                          {itineraryStatus == ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived ? "Publish" : "Update"}
                         </Button>
                         <Button 
                           type="button"
@@ -2180,8 +2290,7 @@ export default function CreatePage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-semibold mb-2">Sharing & Pricing</h2>
-                    <p className="text-gray-600 text-sm">Control who can view and edit this itinerary, and set pricing if you want to sell it.</p>
-                  </div>
+                    <p className="text-gray-600 text-sm">Control who can view and edit this itinerary, and set pricing if you want to sell it.</p>                  </div>
 
                   {/* View Permissions */}
                   <div className="bg-gray-50 rounded-xl p-6">
@@ -2208,15 +2317,23 @@ export default function CreatePage() {
                               Private - Only you can view
                             </SelectItem>
                             <SelectItem value="restricted">
-                              Restricted - Only selected users (configure in settings after creating)
+                              Restricted - Only selected users
                             </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       {viewPermission === 'restricted' && (
-                        <p className="text-sm text-gray-500 bg-yellow-50 p-3 rounded-lg">
-                          After creating the itinerary, you can select specific users in the itinerary settings page.
-                        </p>
+                        <FollowerUserPicker
+                          label="Select Users Who Can View"
+                          subLabel="Only those you follow will be shown in the list"
+                          followers={followers}
+                          loadingFollowers={loadingFollowers}
+                          selectedUserIds={allowedViewers}
+                          searchTerm={viewerSearchTerm}
+                          onSearchTermChange={setViewerSearchTerm}
+                          onToggle={handleToggleViewer}
+                          disabled={isFormDisabled}
+                        />
                       )}
                     </div>
                   </div>
@@ -2243,15 +2360,23 @@ export default function CreatePage() {
                               Creator Only - Only you can edit
                             </SelectItem>
                             <SelectItem value="collaborators">
-                              Collaborators - Selected users can edit (configure in settings after creating)
+                              Collaborators - Selected users can edit
                             </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       {editPermission === 'collaborators' && (
-                        <p className="text-sm text-gray-500 bg-yellow-50 p-3 rounded-lg">
-                          After creating the itinerary, you can select specific collaborators in the itinerary settings page.
-                        </p>
+                        <FollowerUserPicker
+                          label="Select Users Who Can Edit"
+                          subLabel="Only those you follow will be shown in the list"
+                          followers={followers}
+                          loadingFollowers={loadingFollowers}
+                          selectedUserIds={allowedEditors}
+                          searchTerm={editorSearchTerm}
+                          onSearchTermChange={setEditorSearchTerm}
+                          onToggle={handleToggleEditor}
+                          disabled={isFormDisabled}
+                        />
                       )}
                     </div>
                   </div>
@@ -2318,20 +2443,22 @@ export default function CreatePage() {
                       <span className="hidden sm:block">Back</span>
                       <ChevronLeft className="sm:hidden" />
                     </Button>
+                    {(itineraryStatus == ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived) && (
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={saveDraft}
+                        disabled={isFormDisabled}
+                      >
+                        Save Draft
+                      </Button>
+                    )}
                     <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={itineraryStatus === ItineraryStatusEnum.published ? onSubmit : saveDraft}
+                      type="button"  
+                      onClick={onSubmit}
                       disabled={isFormDisabled}
                     >
-                      {itineraryStatus === ItineraryStatusEnum.published ? 'Save' : 'Draft'}
-                    </Button>
-                    <Button 
-                      type="submit"
-                      className="bg-black text-white hover:bg-gray-800"
-                      disabled={isFormDisabled}
-                    >
-                      {itineraryStatus === ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived ? "Publish" : "Update"}
+                      {itineraryStatus == ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived ? "Publish" : "Update"}
                     </Button>
                     <Button 
                       type="button"
