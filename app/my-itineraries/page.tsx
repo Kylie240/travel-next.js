@@ -8,11 +8,11 @@ import { deleteItinerary, getItinerarySummaries, updateItineraryStatus } from "@
 import Link from "next/link"
 import createClient from "@/utils/supabase/client"
 import { useEffect, useState, useRef } from "react"
-import { User, Session } from "@supabase/supabase-js"
+import { User } from "@supabase/supabase-js"
 import { ItineraryStatusEnum, ItineraryStatusEnumString, viewPermissionEnum } from "@/enums/itineraryStatusEnum"
 import { ItinerarySummary } from "@/types/ItinerarySummary"
 import { toast } from "sonner"
-import { useRouter, usePathname } from "next/navigation" 
+import { useRouter } from "next/navigation" 
 import { Input } from "@/components/ui/input"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 import ShareElement from "../itinerary/[id]/share-element"
@@ -21,7 +21,6 @@ import { exportItineraryToPDF } from "@/lib/utils/pdf-export"
 
 export default function MyItinerariesPage() {
   const router = useRouter()
-  const pathname = usePathname()
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
   const [user, setUser] = useState<User | null>(null)
@@ -55,18 +54,21 @@ export default function MyItinerariesPage() {
       if (!mounted) return
 
       if (!currentUser) {
+        setUser(null)
         setItinerarySummaries(null)
         setFilteredItinerarySummaries(null)
         setLoading(false)
         return
       }
 
+      setUser(currentUser)
+
       try {
         const { data } = await supabase
           .from("users_settings")
           .select("plan")
           .eq("user_id", currentUser.id)
-          .single()
+          .maybeSingle()
         if (!mounted) return
         setUserPlan(data?.plan || "free")
       } catch (error) {
@@ -89,13 +91,21 @@ export default function MyItinerariesPage() {
       }
     }
 
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      await fetchUserData(session?.user ?? null)
+    }
+
+    void init()
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: string, session: Session | null) => {
-        if (!mounted) return
-        const currentUser = session?.user ?? null
-        setUser(currentUser)
+      (event, session) => {
+        if (!mounted || event === "INITIAL_SESSION") return
         setLoading(true)
-        await fetchUserData(currentUser)
+        // Defer to avoid Supabase auth deadlock when calling supabase from within callback
+        setTimeout(() => {
+          if (mounted) void fetchUserData(session?.user ?? null)
+        }, 0)
       }
     )
 
@@ -103,7 +113,7 @@ export default function MyItinerariesPage() {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [pathname, supabase])
+  }, [supabase])
 
   useEffect(() => {
     // Check if native share is available (typically on mobile devices)
