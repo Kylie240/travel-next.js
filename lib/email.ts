@@ -22,8 +22,32 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM_EMAIL =
-  process.env.RESEND_FROM || "Journli <onboarding@resend.dev>";
+const DEFAULT_FROM_EMAIL = "Journli <onboarding@resend.dev>";
+
+/** Resend requires `email@domain.com` or `Name <email@domain.com>`. */
+function getFromEmail(): string {
+  const raw = process.env.RESEND_FROM?.trim();
+  if (!raw) return DEFAULT_FROM_EMAIL;
+
+  // Strip wrapping quotes from .env values like "Journli <info@journli.com>"
+  const from = raw.replace(/^["']|["']$/g, "").trim();
+  if (!from) return DEFAULT_FROM_EMAIL;
+
+  const plainEmail = /^[^\s<>]+@[^\s<>]+\.[^\s<>]+$/;
+  const namedEmail = /^.+<[^\s<>]+@[^\s<>]+\.[^\s<>]+>$/;
+
+  if (plainEmail.test(from) || namedEmail.test(from)) {
+    return from;
+  }
+
+  console.warn(
+    "Invalid RESEND_FROM format; falling back to default sender:",
+    raw
+  );
+  return DEFAULT_FROM_EMAIL;
+}
+
+const FROM_EMAIL = getFromEmail();
 
 /**
  * Sends a purchase confirmation email for one itinerary (view / download link).
