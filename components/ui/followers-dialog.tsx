@@ -27,15 +27,18 @@ export function FollowersDialog({ isOpen, onOpenChange, users, title, currentUse
 
   // Initialize follow and block status from props
   useEffect(() => {
+    const isBlockedUsersList = title === "Blocked Users"
     const initialFollowStatus: Record<string, boolean> = {}
     const initialBlockStatus: Record<string, boolean> = {}
     users.forEach(user => {
       initialFollowStatus[user.userId] = user.isFollowing
-      initialBlockStatus[user.userId] = user.isBlocked || false
+      initialBlockStatus[user.userId] = isBlockedUsersList
+        ? true
+        : user.isBlocked || false
     })
     setFollowStatus(initialFollowStatus)
     setBlockStatus(initialBlockStatus)
-  }, [users])
+  }, [users, title])
 
   const handleFollowToggle = async (userId: string) => {
     const currentStatus = followStatus[userId]

@@ -8,7 +8,7 @@ import { SettingsSidebar } from "@/components/ui/settings-sidebar"
 import { User as UserType } from "@supabase/supabase-js"
 import { UserData } from "@/lib/types"
 import { UserStats } from "@/types/userStats"
-import { Check, ChevronRight } from "lucide-react"
+import { Bell, Check, ChevronRight, ShieldHalf, UserRoundCog } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { travelerTypesMap } from "@/lib/constants/tags"
@@ -25,6 +25,7 @@ import { supabase } from "@/utils/supabase/superbase-client"
 import { dispatchAvatarUpdate, dispatchProfileUpdate } from "@/lib/utils/avatar-events"
 import { OnboardingTour } from "@/components/ui/onboarding-tour"
 import type { StripeBillingSummary } from "@/types/stripe-billing"
+import { LuEyeClosed } from "react-icons/lu"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -401,6 +402,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const settingsSections = [
     {
       title: "Profile",
+      icon: <UserRoundCog className="h-5 w-5 text-gray-700" />,
       description: "Edit your public profile information",
       content: (
         <div className="space-y-6">
@@ -662,6 +664,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     // },
     {
       title: "Login & Security",
+      icon: <ShieldHalf className="h-5 w-5 text-gray-700" />,
       description: "Update your password and secure your account",
       content: (
         <div className="space-y-8">
@@ -701,7 +704,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         </div>
       )
     },{
-      title: "Visibility",
+      title: "Privacy",
+      icon: <LuEyeClosed className="h-5 w-5 text-gray-700" />,
       description: "Edit your public profile information",
       content: (
         <div className="space-y-10">
@@ -721,7 +725,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               </span>
             </div>
           </div>
-          <div className="hidden">
+          <div>
             <label className="block text-md font-semibold mb-2">Blocked Users</label>
             <p className="text-sm text-gray-600 mb-4">
               Block users from viewing your profile and itineraries.
@@ -753,6 +757,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     },
     {
       title: "Notifications",
+      icon: <Bell className="h-5 w-5 text-gray-700" />,
       description: "Choose how you want to be notified",
       content: (
         <div className="space-y-6">
@@ -791,7 +796,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
 
   if (showPlans) {
     settingsSections.push({
-        title: "Your Plan",
+        title: "Account",
+        icon: <UserRoundCog className="h-5 w-5 text-gray-700" />,
         description: "Manage your subscription",
         content: (
           <div className="space-y-8">
@@ -955,7 +961,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                     }`}
                   >
                     <div className="w-full flex justify-between">
-                      <div className="flex">
+                      <div className="flex items-center gap-3">
+                        {section.icon}
                         <h3 className="font-medium">{section.title}</h3>
                       </div>
                       <ChevronRight strokeWidth={1} className="block lg:hidden" />

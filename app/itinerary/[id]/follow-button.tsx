@@ -11,11 +11,14 @@ import { useRouter } from 'next/navigation'
 const FollowButton = ({ 
   creatorId, 
   userId, 
-  initialIsFollowing 
+  initialIsFollowing,
+  externalFollowing,
 }: { 
   creatorId: string
   userId: string
   initialIsFollowing?: boolean
+  /** When set (e.g. after blocking on profile), syncs button label without remounting. */
+  externalFollowing?: boolean
 }) => {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing || false)
   const [loading, setLoading] = useState(initialIsFollowing === undefined)
@@ -33,7 +36,6 @@ const FollowButton = ({
       }
       // If initialIsFollowing was provided, use it and skip database check
       if (initialIsFollowing !== undefined && initialIsFollowing !== null) {
-        console.log("initialIsFollowing", initialIsFollowing)
         setIsFollowing(initialIsFollowing)
         setLoading(false)
         return
@@ -45,7 +47,6 @@ const FollowButton = ({
         .eq('following_id', creatorId)
         .maybeSingle()
       setIsFollowing(!!data)
-      console.log("data", data, !!data, userId, creatorId)
       setLoading(false)
     }
     checkFollow()
@@ -61,6 +62,12 @@ const FollowButton = ({
       return () => window.removeEventListener('resize', checkMobile)
     }
   }, [creatorId, userId, initialIsFollowing])
+
+  useEffect(() => {
+    if (externalFollowing !== undefined) {
+      setIsFollowing(externalFollowing)
+    }
+  }, [externalFollowing])
 
   const toggleFollow = async (isFollow: boolean) => {
     if (!userId) {

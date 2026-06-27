@@ -6,12 +6,12 @@ import { FaPinterestP } from "react-icons/fa6";
 import Image from "next/image";
 import Link from "next/link";
 import { FaTiktok, FaUserLarge, FaXTwitter } from "react-icons/fa6";
-import FollowButton from "@/app/itinerary/[id]/follow-button";
 import ShareProfileButton from "./share-profile";
 import ItineraryGrid from "./itinerary-grid";
 import createClient from "@/utils/supabase/server";
 import { AiOutlineYoutube } from "react-icons/ai";
 import { redirect } from "next/navigation";
+import ProfileActions from "./profile-actions";
 
 export default async function UserProfilePage({ params }: { params: { username: string } }) {
 const { username } = params;
@@ -23,14 +23,36 @@ if (!userData || !userData[0]?.userId) {
   redirect('/not-found')
 }
 const userId = userData[0]?.userId;
-let isPrivate: boolean = false;
-if (userData[0]?.isPrivate && userId !== currentUser?.id) {
-isPrivate = true
-}
-const itineraryData = await getItineraryDataByUserId(userId, currentUser?.id || null)
 const isCurrentUser = userId == currentUser?.id;
-const { data: currentUserSaves } = await supabase.from('interactions_saves').select('itinerary_id').eq('user_id', currentUser?.id) || null
-const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinerary_id) : null
+let isPrivate = false;
+if (userData[0]?.isPrivate && !isCurrentUser) {
+  isPrivate = true;
+}
+
+let isBlockedByViewer = false;
+if (currentUser && !isCurrentUser) {
+  const { data: blockRow } = await supabase
+    .from("users_blocked")
+    .select("user_id")
+    .eq("user_id", currentUser.id)
+    .eq("blocked_id", userId)
+    .maybeSingle();
+  isBlockedByViewer = !!blockRow;
+}
+
+const itineraryData =
+  !isPrivate && !isBlockedByViewer
+    ? await getItineraryDataByUserId(userId, currentUser?.id || null)
+    : [];
+const { data: currentUserSaves } = currentUser
+  ? await supabase
+      .from("interactions_saves")
+      .select("itinerary_id")
+      .eq("user_id", currentUser.id)
+  : { data: null };
+const savedList = currentUserSaves
+  ? currentUserSaves.map((save) => save.itinerary_id)
+  : null;
 
   return (
     <div className="min-h-screen max-w-[1340px] mx-auto bg-white py-8 mb-4">
@@ -54,44 +76,59 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
                       <FaUserLarge className="h-14 w-14 text-gray-300" />
                     </div>
                   )}
-                    { !isPrivate ? (
+                    { !isPrivate && !isBlockedByViewer ? (
                     <div className="flex flex-col gap-2 items-center justify-center">
                       <div className="flex flex-col items-center justify-center gap-1">
                         <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
                         <p className="text-gray-600 text-center">@ {userData[0].username}</p>
                       </div>
                       <p className="text-gray-700 text-center px-0 sm:px-4 text-sm md:text-md max-w-[500px] mx-4">{userData[0].bio}</p>
-                      <div className="flex gap-2 mt-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          {isCurrentUser ? (
-                          <Link href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
+                      {isCurrentUser ? (
+                        <div className="flex gap-2 mt-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <Link href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
                               <Button className="w-full">Edit Profile</Button>
-                          </Link>
-                          ) : (
-                            <div>
-                              <FollowButton creatorId={userId} userId={currentUser?.id || null} />
-                            </div>
-                          )}
-                          <ShareProfileButton username={userData[0].username} />
+                            </Link>
+                            <ShareProfileButton username={userData[0].username} />
+                          </div>
                         </div>
-                        {/* {!isCurrentUser && currentUser && (
-                          <ProfileMenuButton creatorId={userId} userId={currentUser?.id || null} />
-                        )} */}
-                      </div>
+                      ) : (
+                        <ProfileActions
+                          creatorId={userId}
+                          userId={currentUser?.id ?? ""}
+                          username={userData[0].username}
+                        />
+                      )}
                     </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center">
                         <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
                         <p className="text-gray-600 text-center">@{userData[0].username}</p>
-                        <p className="text-gray-700 flex mt-2 text-center gap-1">This user's profile is 
-                          <strong className="flex items-center gap-1"> 
-                            private
-                          </strong>
+                        <p className="text-gray-700 flex mt-2 text-center gap-1">
+                          {isBlockedByViewer ? (
+                            <>
+                              You have
+                              <strong className="flex items-center gap-1">blocked</strong>
+                              this user
+                            </>
+                          ) : (
+                            <>
+                              This user&apos;s profile is
+                              <strong className="flex items-center gap-1">private</strong>
+                            </>
+                          )}
                         </p>
+                        {isBlockedByViewer && (
+                          <ProfileActions
+                            creatorId={userId}
+                            userId={currentUser?.id ?? ""}
+                            username={userData[0].username}
+                          />
+                        )}
                       </div>
                     )}
                     {/* Social Links */}
-                    {!isPrivate && (
+                    {!isPrivate && !isBlockedByViewer && (
                     <div className="flex gap-3 mt-2">
                       {userData[0].facebook && (
                       <Link href={`${userData[0].facebook}`} target="_blank">
@@ -129,9 +166,9 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
               </div>
             </div>
             <div className="md:mt-4 mb-4 md:mb-8">
-              {itineraryData?.length > 0 ? (
+              {!isPrivate && !isBlockedByViewer && itineraryData?.length > 0 ? (
                 <h2 className="my-3 md:my-6 font-bold py-4 border-b-2 border-gray-200 text-xl">Itineraries</h2>
-              ) : (
+              ) : !isPrivate && !isBlockedByViewer ? (
                 <div className="text-center py-12 px-4 rounded-xl border-2 border-dashed">
                   <div className="mb-4">
                     <PenSquare className="h-12 w-12 mx-auto text-gray-400" />
@@ -148,10 +185,14 @@ const savedList = currentUserSaves ? currentUserSaves.map((save) => save.itinera
                     </>
                   )}
                 </div>
+              ) : null}
+              {(isPrivate || isBlockedByViewer) && (
+                <h2 className="my-3 md:my-6 font-bold py-4 border-b-2 border-gray-200 text-xl">Itineraries</h2>
               )}
               <ItineraryGrid 
                 itineraryData={itineraryData}
                 isPrivate={isPrivate}
+                isBlockedByViewer={isBlockedByViewer}
                 isCurrentUser={isCurrentUser}
                 currentUserId={currentUser?.id}
                 savedList={savedList}

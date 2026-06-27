@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { MapPin, Star } from "lucide-react"
+import { MapPin, Ban } from "lucide-react"
 import BookmarkElement from "@/components/ui/bookmark-element"
 import SearchItineraries from "./search-itineraries"
 import { FaRegHeart, FaLock, FaUnlock } from "react-icons/fa6"
@@ -11,6 +11,7 @@ import { FaRegHeart, FaLock, FaUnlock } from "react-icons/fa6"
 interface ItineraryGridProps {
   itineraryData: any[]
   isPrivate: boolean
+  isBlockedByViewer?: boolean
   isCurrentUser: boolean
   currentUserId?: string
   savedList?: string[]
@@ -18,13 +19,15 @@ interface ItineraryGridProps {
 
 export default function ItineraryGrid({ 
   itineraryData, 
-  isPrivate, 
+  isPrivate,
+  isBlockedByViewer = false,
   isCurrentUser, 
   currentUserId,
   savedList
 }: ItineraryGridProps) {
   const router = useRouter()
   const [filteredItineraryData, setFilteredItineraryData] = useState(itineraryData)
+  const isRestricted = isPrivate || isBlockedByViewer
 
   const handleSearch = (filteredData: any[]) => {
     setFilteredItineraryData(filteredData)
@@ -33,7 +36,7 @@ export default function ItineraryGrid({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        {!isPrivate && itineraryData?.length > 6 && (
+        {!isRestricted && itineraryData?.length > 6 && (
           <SearchItineraries 
             itineraryData={itineraryData} 
             onSearch={handleSearch}
@@ -41,7 +44,7 @@ export default function ItineraryGrid({
         )}
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-        {isPrivate ? (
+        {isRestricted ? (
           <div className="col-span-full relative">
             <div className="w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8 blur-sm">
               {Array.from({ length: 2 }).map((_, index) => (
@@ -57,10 +60,25 @@ export default function ItineraryGrid({
                 </div>
               ))}
             </div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-20 w-20 text-gray-400">
-              <svg className="w-full h-full" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z"/>
-              </svg>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-3 text-gray-500 px-4 text-center">
+              {isBlockedByViewer ? (
+                <div className="flex flex-col items-center text-gray-400">
+                  <Ban className="h-20 w-20" />
+                  <h3 className="text-base font-medium text-gray-900 mt-2">
+                    You have blocked this user
+                  </h3>
+                  <p className="text-base font-medium text-gray-700">
+                    Unblock this user to view their itineraries and interact with their content.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center text-gray-400">
+                  <FaLock className="h-20 w-20" />
+                  <h3 className="text-base font-medium text-gray-900 mt-2">
+                    This account is private
+                  </h3>
+                </div>
+              )}
             </div>
           </div>
         ) : (
