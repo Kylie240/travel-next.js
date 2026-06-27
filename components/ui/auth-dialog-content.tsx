@@ -147,13 +147,18 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
       return
     }
 
-    const result = await requestPasswordReset(email, window.location.origin)
-    if (!result.success) {
-      setAuthError(result.error ?? "Failed to send reset email")
-      return
+    try {
+      const result = await requestPasswordReset(email, window.location.origin)
+      if (!result.success) {
+        setAuthError(result.error ?? "Failed to send reset email")
+        return
+      }
+      toast.success("Password reset email sent. Check your inbox.")
+      setIsOpen(false)
+    } catch (error) {
+      console.error("Forgot password error:", error)
+      setAuthError("Failed to send reset email. Please try again.")
     }
-    toast.success("Password reset email sent. Check your inbox.")
-    setIsOpen(false)
   }
 
   return (

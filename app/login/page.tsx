@@ -150,12 +150,17 @@ export default function LoginPage() {
       return
     }
 
-    const result = await requestPasswordReset(email, window.location.origin)
-    if (!result.success) {
-      setAuthError(result.error ?? "Failed to send reset email")
-      return
+    try {
+      const { success, error } = await requestPasswordReset(email, window.location.origin)
+      if (!success || error) {
+        setAuthError(error ?? "Failed to send reset email")
+        return
+      }
+      toast.success("Password reset email sent. Check your inbox.")
+    } catch (error) {
+      console.error("Forgot password error:", error)
+      setAuthError("Failed to send reset email. Please try again.")
     }
-    toast.success("Password reset email sent. Check your inbox.")
   }
 
   return (

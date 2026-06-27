@@ -7,7 +7,7 @@ import { Followers } from "@/types/followers";
 import { UserData } from "../types";
 import { ProfileData } from "@/types/profileData";
 import createClient from "@/utils/supabase/server";
-import { createClient as createAdminClient } from "@/utils/supabase/server-admin"
+import { createClient as createAdminClient, createClientIfConfigured } from "@/utils/supabase/server-admin"
 import { sendPasswordResetEmail } from "@/lib/email";
 
 export const getUserDataById = async () => {
@@ -557,65 +557,91 @@ function getAppBaseUrl(requestOrigin?: string) {
 
 /** Generate a Supabase recovery link and send it via Resend (no Supabase email). */
 export async function requestPasswordReset(email: string, requestOrigin?: string) {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail) {
-        return { success: false, error: "Email is required" };
-    }
-
-    const admin = createAdminClient();
-    const baseUrl = getAppBaseUrl(requestOrigin);
-
-    const { data, error } = await admin.auth.admin.generateLink({
-        type: "recovery",
-        email: normalizedEmail,
-        options: {
-            redirectTo: `${baseUrl}/auth/reset-password`,
-        },
-    });
-
-    // Always return success when link generation fails to avoid account enumeration
-    if (error || !data?.properties?.hashed_token) {
-        if (error) {
-            console.error("Password reset link generation error:", error.message);
+    try {
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!normalizedEmail) {
+            return { success: false, error: "Email is required" };
         }
+
+        const admin = createClientIfConfigured();
+        if (!admin) {
+            console.error(
+                "Password reset misconfigured: SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL is missing"
+            );
+            return {
+                success: false,
+                error: "Password reset is temporarily unavailable. Please try again later.",
+            };
+        }
+
+        const baseUrl = getAppBaseUrl(requestOrigin);
+
+        const { data, error } = await admin.auth.admin.generateLink({
+            type: "recovery",
+            email: normalizedEmail,
+            options: {
+                redirectTo: `${baseUrl}/auth/reset-password`,
+            },
+        });
+
+        // Always return success when link generation fails to avoid account enumeration
+        if (error || !data?.properties?.hashed_token) {
+            if (error) {
+                console.error("Password reset link generation error:", error.message);
+            }
+            return { success: true };
+        }
+
+        // Build our own link so Supabase can't override redirect_to with the project Site URL
+        const resetLink = `${baseUrl}/api/auth/confirm?token_hash=${encodeURIComponent(data.properties.hashed_token)}&type=recovery`;
+
+        const sendResult = await sendPasswordResetEmail(
+            normalizedEmail,
+            resetLink
+        );
+
+        if (!sendResult.success) {
+            console.error("Password reset email send failed:", sendResult.error);
+            return { success: false, error: "Failed to send reset email. Please try again." };
+        }
+
         return { success: true };
+    } catch (err) {
+        console.error("requestPasswordReset failed:", err);
+        return {
+            success: false,
+            error: "Failed to send reset email. Please try again.",
+        };
     }
-
-    // Build our own link so Supabase can't override redirect_to with the project Site URL
-    const resetLink = `${baseUrl}/api/auth/confirm?token_hash=${encodeURIComponent(data.properties.hashed_token)}&type=recovery`;
-
-    const sendResult = await sendPasswordResetEmail(
-        normalizedEmail,
-        resetLink
-    );
-
-    if (!sendResult.success) {
-        console.error("Password reset email send failed:", sendResult.error);
-        return { success: false, error: "Failed to send reset email. Please try again." };
-    }
-
-    return { success: true };
 }
 
 /** Update password during recovery flow (uses server session cookies). */
 export async function updatePassword(password: string) {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    try {
+        const supabase = await createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
 
-    if (!user) {
+        if (!user) {
+            return {
+                success: false,
+                error: "Auth session missing. Please request a new reset link.",
+            };
+        }
+
+        const { error } = await supabase.auth.updateUser({ password });
+
+        if (error) {
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
+    } catch (err) {
+        console.error("updatePassword failed:", err);
         return {
             success: false,
-            error: "Auth session missing. Please request a new reset link.",
+            error: "Failed to update password. Please try again.",
         };
     }
-
-    const { error } = await supabase.auth.updateUser({ password });
-
-    if (error) {
-        return { success: false, error: error.message };
-    }
-
-    return { success: true };
 }
