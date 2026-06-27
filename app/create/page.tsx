@@ -36,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
-import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
+import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, updateItineraryTemplate, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
 import { getFollowersById } from "@/lib/actions/user.actions"
 import createClient from "@/utils/supabase/client"
 import { CreateItinerary } from "@/types/createItinerary"
@@ -52,6 +52,7 @@ import { Followers } from "@/types/followers"
 import { FollowerUserPicker } from "@/components/ui/follower-user-picker"
 import { v4 as uuidv4 } from "uuid"
 import { countries } from "@/lib/constants/countries"
+import { TbTemplate } from "react-icons/tb"
 
 type City = { city: string; country: string };
 type FormData = {
@@ -877,6 +878,7 @@ export default function CreatePage() {
   
   // User plan and permissions state (for step 4)
   const [userPlan, setUserPlan] = useState<string>('free')
+  const [template, setTemplate] = useState<'basic' | 'discover' | 'explore' | 'journey'>('basic')
   const [viewPermission, setViewPermission] = useState<'public' | 'creator' | 'restricted'>('public')
   const [editPermission, setEditPermission] = useState<'creator' | 'collaborators'>('creator')
   const [allowedViewers, setAllowedViewers] = useState<string[]>([])
@@ -1156,7 +1158,7 @@ export default function CreatePage() {
               // Fetch permissions
               const { data: permData } = await supabase
                 .from('itineraries')
-                .select('view_permission, edit_permission, is_paid, price_cents')
+                .select('view_permission, edit_permission, is_paid, price_cents, template')
                 .eq('id', itineraryId)
                 .single()
               
@@ -1180,6 +1182,14 @@ export default function CreatePage() {
                 // Map pricing
                 setIsPaid(permData.is_paid || false)
                 setPriceInDollars(permData.price_cents ? (permData.price_cents / 100).toFixed(2) : '')
+                if (
+                  permData.template === 'basic' ||
+                  permData.template === 'discover' ||
+                  permData.template === 'explore' ||
+                  permData.template === 'journey'
+                ) {
+                  setTemplate(permData.template)
+                }
               }
 
               const permissions = await getItineraryPermissionsById(itineraryId, {} as any)
@@ -1432,6 +1442,7 @@ export default function CreatePage() {
             is_paid: isPaid,
             price_cents: isPaid ? priceCents : 0
           })
+          await updateItineraryTemplate(itineraryId, template)
         } catch (permError) {
           console.error('Error saving permissions/pricing:', permError)
           // Don't fail the whole save, just log the error
@@ -1505,6 +1516,7 @@ export default function CreatePage() {
               is_paid: isPaid,
               price_cents: isPaid ? priceCents : 0
             })
+            await updateItineraryTemplate(itineraryId, template)
           } catch (permError) {
             console.error('Error saving permissions/pricing:', permError)
             // Don't fail the whole save, just log the error
@@ -2292,9 +2304,91 @@ export default function CreatePage() {
                     <h2 className="text-xl font-semibold mb-2">Sharing & Pricing</h2>
                     <p className="text-gray-600 text-sm">Control who can view and edit this itinerary, and set pricing if you want to sell it.</p>                  </div>
 
+                  {/* Template */}
+                  <div className="bg-gray-50 rounded-xl p-6">
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="h-5 w-5 text-gray-700" />
+                      <h3 className="text-lg font-semibold text-gray-900">Pricing</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Set a price to sell this itinerary to other travelers
+                    </p>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="isPaidCreate"
+                          checked={isPaid}
+                          onChange={(e) => setIsPaid(e.target.checked)}
+                          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
+                          disabled={isFormDisabled}
+                        />
+                        <Label htmlFor="isPaidCreate" className="text-base font-medium cursor-pointer">
+                          Enable paid access for this itinerary
+                        </Label>
+                      </div>
+
+                      {isPaid && (
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-base font-medium">Price (USD)</Label>
+                          <div className="relative max-w-xs">
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                            <Input
+                              type="number"
+                              min="0.50"
+                              step="0.01"
+                              placeholder="9.99"
+                              value={priceInDollars}
+                              onChange={(e) => setPriceInDollars(e.target.value)}
+                              className="pl-7 rounded-xl"
+                              disabled={isFormDisabled}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pricing */}
+                  <div className="bg-gray-50 rounded-xl p-6">
+                    <div className="flex items-center gap-3">
+                      <TbTemplate className="h-5 w-5 text-gray-700" />
+                      <h3 className="text-lg font-semibold text-gray-900">Template</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Select the layout for this itinerary
+                    </p>
+
+                    <div className="space-y-4">
+                    <div className="flex flex-col gap-2">
+                        <Label className="text-base font-medium">Template</Label>
+                        <Select value={template} onValueChange={(value) => setTemplate(value as 'basic' | 'discover' | 'explore' | 'journey')}>
+                          <SelectTrigger className="w-full rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="basic">
+                              Basic - A basic itinerary with a title, description, and map
+                            </SelectItem>
+                            <SelectItem value="discover">
+                              Discover - A visually stunning itinerary with stunning photos and videos
+                            </SelectItem>
+                            <SelectItem value="explore">
+                              Explore - A detailed itinerary with all the information you need
+                            </SelectItem>
+                            <SelectItem value="journey">
+                              Journey - A journey itinerary with a map and directions
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* View Permissions */}
                   <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-3">
                       <Eye className="h-5 w-5 text-gray-700" />
                       <h3 className="text-lg font-semibold text-gray-900">Who Can View</h3>
                     </div>
@@ -2340,7 +2434,7 @@ export default function CreatePage() {
 
                   {/* Edit Permissions */}
                   <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-3">
                       <Edit className="h-5 w-5 text-gray-700" />
                       <h3 className="text-lg font-semibold text-gray-900">Who Can Edit</h3>
                     </div>
@@ -2377,55 +2471,6 @@ export default function CreatePage() {
                           onToggle={handleToggleEditor}
                           disabled={isFormDisabled}
                         />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Pricing */}
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <DollarSign className="h-5 w-5 text-gray-700" />
-                      <h3 className="text-lg font-semibold text-gray-900">Pricing</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Set a price to sell this itinerary to other travelers
-                    </p>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          id="isPaidCreate"
-                          checked={isPaid}
-                          onChange={(e) => setIsPaid(e.target.checked)}
-                          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
-                          disabled={isFormDisabled}
-                        />
-                        <Label htmlFor="isPaidCreate" className="text-base font-medium cursor-pointer">
-                          Enable paid access for this itinerary
-                        </Label>
-                      </div>
-
-                      {isPaid && (
-                        <div className="flex flex-col gap-2 pt-4">
-                          <Label className="text-base font-medium">Price (USD)</Label>
-                          <div className="relative max-w-xs">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
-                            <Input
-                              type="number"
-                              min="0.50"
-                              step="0.01"
-                              placeholder="9.99"
-                              value={priceInDollars}
-                              onChange={(e) => setPriceInDollars(e.target.value)}
-                              className="pl-7 rounded-xl"
-                              disabled={isFormDisabled}
-                            />
-                          </div>
-                          <p className="text-sm text-gray-500 mb-0">
-                            Minimum price: $0.50. You'll receive {userPlan === 'standard' ? '80%' : '90%'} of the sale after platform fees.
-                          </p>
-                        </div>
                       )}
                     </div>
                   </div>

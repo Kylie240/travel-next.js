@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/utils/supabase/server-admin";
-import { sendPurchaseConfirmationEmail } from "@/lib/email";
+import { sendPurchaseConfirmationEmail, sendCreatorPurchaseNotificationEmail } from "@/lib/email";
 import { getItineraryPdfAttachmentForEmail } from "@/lib/itinerary-purchase-pdf";
 import {
   subscriptionEndsAtForUserSettings,
@@ -312,6 +312,27 @@ export async function POST(request: NextRequest) {
                 sellerThankYouMessage: null,
               };
               const base = baseUrl.replace(/\/$/, "");
+              const amountPerItem = Math.round(
+                (session.amount_total || 0) / itineraryIds.length
+              );
+
+              const uniqueSellerIds = [
+                ...new Set(
+                  Object.values(sellerIdByItineraryId).filter(
+                    (id): id is string => !!id
+                  )
+                ),
+              ];
+              const { data: sellerUsers } =
+                uniqueSellerIds.length > 0
+                  ? await supabase
+                      .from("users")
+                      .select("id, email, username")
+                      .in("id", uniqueSellerIds)
+                  : { data: [] as { id: string; email: string | null; username: string | null }[] };
+              const sellerById = Object.fromEntries(
+                (sellerUsers || []).map((u) => [u.id, u])
+              );
 
               for (const it of itineraries) {
                 const pdfAttachment = await getItineraryPdfAttachmentForEmail(
@@ -332,6 +353,38 @@ export async function POST(request: NextRequest) {
                     "itinerary_id:",
                     it.id
                   );
+                }
+
+                const itSellerId = sellerIdByItineraryId[it.id];
+                const itSeller = itSellerId ? sellerById[itSellerId] : null;
+                if (
+                  itSeller?.email &&
+                  itSellerId !== userId
+                ) {
+                  const { success: creatorNotifyOk, error: creatorNotifyErr } =
+                    await sendCreatorPurchaseNotificationEmail(
+                      itSeller.email,
+                      base,
+                      {
+                        creatorUsername: itSeller.username,
+                        itineraryTitle: it.title,
+                        itineraryId: it.id,
+                        buyerUsername: buyerUserRes.data?.username ?? null,
+                        buyerName,
+                        buyerEmail: customerEmail,
+                        amountCents: amountPerItem,
+                      }
+                    );
+                  if (!creatorNotifyOk) {
+                    console.error(
+                      "Creator purchase notification failed:",
+                      creatorNotifyErr,
+                      "itinerary_id:",
+                      it.id,
+                      "seller_id:",
+                      itSellerId
+                    );
+                  }
                 }
               }
             }

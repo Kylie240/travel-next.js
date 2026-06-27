@@ -561,9 +561,6 @@ export function ItinerarySettingsContent({ itinerary, userId, userPlan }: Itiner
                         className="pl-7"
                       />
                     </div>
-                    <p className="text-sm text-gray-500 mb-0">
-                      Minimum price: $0.50. You'll receive {userPlan === 'standard' ? '80%' : '90%'} of the sale after platform fees.
-                    </p>
                     {userPlan === 'standard' && (
                       <Link href="/plans" className="text-cyan-700 text-sm font-medium hover:underline">Upgrade to our Premium plan to unlock more features and reduced selling fee.</Link>
                     )}

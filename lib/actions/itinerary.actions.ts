@@ -683,3 +683,40 @@ export const updateItineraryPricing = async (
 
   return { success: true };
 }
+
+export type ItineraryTemplate = "basic" | "discover" | "explore" | "journey";
+
+export const updateItineraryTemplate = async (
+  itineraryId: string,
+  template: ItineraryTemplate
+) => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: itinerary, error: fetchError } = await supabase
+    .from("itineraries")
+    .select("creator_id")
+    .eq("id", itineraryId)
+    .single();
+
+  if (fetchError) throw new Error("Itinerary not found");
+  if (itinerary.creator_id !== user.id) {
+    throw new Error("You are not authorized to update this itinerary");
+  }
+
+  const { error } = await supabase
+    .from("itineraries")
+    .update({ template })
+    .eq("id", itineraryId);
+
+  if (error) {
+    console.error("Update template error:", error);
+    throw new Error(error.message);
+  }
+
+  return { success: true };
+};

@@ -52,8 +52,7 @@ export async function sendPurchaseConfirmationEmail(
   const buyerU = context?.buyerUsername?.trim();
   const buyerN = context?.buyerName?.trim();
   const sellerMessage = context?.sellerMessage?.trim();
-  const thankYou = context?.sellerThankYouMessage?.trim();
-  const customIntro = sellerMessage || thankYou || null;
+  const customIntro = sellerMessage || null;
 
   const greeting =
     buyerU != null && buyerU.length > 0
@@ -69,20 +68,6 @@ export async function sendPurchaseConfirmationEmail(
         ? `<p style="margin-bottom:16px;color:#4b5563;">Thank you for purchasing <strong>${subjectSnippet}</strong> from <strong>@${escapeHtml(creator)}</strong> on Journli. Your download is now ready.</p>`
         : "";
 
-  const sellerNote =
-    thankYou != null &&
-    thankYou.length > 0 &&
-    thankYou !== customIntro
-      ? `<div style="margin:20px 0;padding:16px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
-  <p style="margin:0 0 8px;font-size:0.875rem;font-weight:600;color:#374151;">A note from the creator${
-    creator != null && creator.length > 0 ? ` (${escapeHtml(creator)})` : ""
-  }</p>
-  <p style="margin:0;white-space:pre-wrap;color:#1f2937;font-size:0.9375rem;">${escapeHtml(
-    thankYou
-  )}</p>
-</div>`
-      : "";
-
   const linkHtml = `<p style="margin:16px 0;"><a href="${linkUrl}" style="color:#2563eb;text-decoration:underline;font-weight:600;">view itinerary</a></p>`;
 
   const html = `
@@ -97,7 +82,6 @@ export async function sendPurchaseConfirmationEmail(
   If you purchased from a Journli account, access the itinerary by following the link below or navigating to the 'Purchased' page on your account. 
   ${linkHtml}
   <p style="margin-top:24px;color:#6b7280;font-size:0.875rem;">— The Journli team</p>
-  ${sellerNote}
 </body>
 </html>
   `.trim();
@@ -128,6 +112,95 @@ export async function sendPurchaseConfirmationEmail(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Resend send failed:", message);
+    return { success: false, error: message };
+  }
+}
+
+export type CreatorPurchaseNotificationContext = {
+  creatorUsername?: string | null;
+  itineraryTitle: string;
+  itineraryId: string;
+  buyerUsername?: string | null;
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  amountCents?: number | null;
+};
+
+/**
+ * Notifies the itinerary creator that someone purchased their itinerary.
+ */
+export async function sendCreatorPurchaseNotificationEmail(
+  to: string,
+  baseUrl: string,
+  context: CreatorPurchaseNotificationContext
+): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set, skipping creator purchase notification");
+    return { success: false, error: "Resend not configured" };
+  }
+
+  const title = context.itineraryTitle?.trim() || "Itinerary";
+  const creator = context.creatorUsername?.trim();
+  const buyerU = context.buyerUsername?.trim();
+  const buyerN = context.buyerName?.trim();
+  const buyerEmail = context.buyerEmail?.trim();
+
+  const buyerLabel =
+    buyerU != null && buyerU.length > 0
+      ? `@${buyerU}`
+      : buyerN != null && buyerN.length > 0
+        ? buyerN
+        : buyerEmail != null && buyerEmail.length > 0
+          ? buyerEmail
+          : "Someone";
+
+  const greeting =
+    creator != null && creator.length > 0
+      ? `Hi ${escapeHtml(creator)}`
+      : "Hi there";
+
+  const amountLine =
+    context.amountCents != null && context.amountCents > 0
+      ? `<p style="margin:16px 0;color:#4b5563;">Sale amount: <strong>${formatUsd(context.amountCents)}</strong></p>`
+      : "";
+
+  const dashboardUrl = `${baseUrl.replace(/\/$/, "")}/seller-dashboard`;
+  const itineraryUrl = `${baseUrl.replace(/\/$/, "")}/itinerary/${context.itineraryId}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:0 auto;padding:24px;">
+  <h1 style="font-size:1.5rem;margin-bottom:16px;">Journli</h1>
+  <h3 style="font-size:1.25rem;margin-bottom:16px;">You made a sale!</h3>
+  <p style="margin-bottom:8px;">${greeting},</p>
+  <p style="margin-bottom:16px;color:#4b5563;"><strong>${escapeHtml(buyerLabel)}</strong> just purchased your itinerary <strong>${escapeHtml(title)}</strong>.</p>
+  ${amountLine}
+  <p style="margin:16px 0;"><a href="${itineraryUrl}" style="color:#2563eb;text-decoration:underline;font-weight:600;">View itinerary</a></p>
+  <p style="margin:16px 0;"><a href="${dashboardUrl}" style="color:#2563eb;text-decoration:underline;font-weight:600;">Open seller dashboard</a></p>
+  <p style="margin-top:24px;color:#6b7280;font-size:0.875rem;">— The Journli team</p>
+</body>
+</html>
+  `.trim();
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `New sale: ${title.slice(0, 50)} – Journli`,
+      html,
+    });
+
+    if (error) {
+      console.error("Resend creator purchase notification error:", error);
+      return { success: false, error: error.message };
+    }
+    console.log("Creator purchase notification sent:", data?.id, "to", to);
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Resend creator notification send failed:", message);
     return { success: false, error: message };
   }
 }
@@ -185,4 +258,11 @@ function escapeHtml(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function formatUsd(cents: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(cents / 100);
 }

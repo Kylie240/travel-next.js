@@ -16,7 +16,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   const paramsValue = await params;
   const { data: itineraryMeta } = await supabase
     .from('itineraries')
-    .select('is_paid, price_cents, creator_id, view_permission, edit_permission')
+    .select('is_paid, price_cents, creator_id, view_permission, edit_permission, template')
     .eq('id', paramsValue.id)
     .single()
 
@@ -188,12 +188,7 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
     priceCents: itineraryMeta?.price_cents || 0,
   }
 
-  return <BasicTemplate {...templateProps} />
-  const isDEV = process.env.DEV_ENVIRONMENT
-  const template = process.env.NEXT_PUBLIC_ITINERARY_TEMPLATE
-  if (isDEV !== "true") {
-    return <BasicTemplate {...templateProps} />
-  }
+  const template = itineraryMeta?.template || "basic"
   if (template === "discover") {
     return <DiscoverTemplate {...templateProps} />
   }
@@ -203,7 +198,5 @@ export default async function ItineraryPage({ params }: { params: Promise<any> }
   if (template === "journey") {
     return <JourneyTemplate {...templateProps} />
   }
-  if (template === "discover") {
-    return <DiscoverTemplate {...templateProps} />
-  }
+  return <BasicTemplate {...templateProps} />
 } 
