@@ -1,6 +1,6 @@
 "use client"
 
-import { removeFollow } from '@/lib/actions/user.actions'
+import { blockUser, removeBlockedUser } from '@/lib/actions/user.actions'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/utils/supabase/superbase-client'
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
@@ -22,43 +22,25 @@ const ProfileMenuButton = ({
   const router = useRouter()
 
   const handleBlockUser = async (creatorId: string, userId: string) => {
-    const { error } = await supabase.from('users_blocked').insert({
-      user_id: userId,
-      blocked_id: creatorId
-    })
-    if (!error) {
-      const { data: followRow } = await supabase
-        .from('users_following')
-        .select('user_id')
-        .eq('user_id', userId)
-        .eq('following_id', creatorId)
-        .maybeSingle()
-
-      if (followRow) {
-        try {
-          await removeFollow(userId, creatorId)
-        } catch (unfollowError) {
-          console.error('Error unfollowing blocked user', unfollowError)
-        }
-      }
-
+    try {
+      await blockUser(userId, creatorId)
       toast.success('User blocked')
       setIsBlocked(true)
       onUserBlocked?.()
       router.refresh()
-    } else {
+    } catch (error) {
       console.log('Error blocking user', error)
       toast.error('Error blocking user')
     }
   }
   
   const handleUnblockUser = async (creatorId: string, userId: string) => {
-    const { error } = await supabase.from('users_blocked').delete().eq('user_id', userId).eq('blocked_id', creatorId)
-    if (!error) {
+    try {
+      await removeBlockedUser(userId, creatorId)
       toast.success('User unblocked')
       setIsBlocked(false)
       router.refresh()
-    } else {
+    } catch (error) {
       console.log('Error unblocking user', error)
       toast.error('Error unblocking user')
     }

@@ -105,13 +105,7 @@ const savedList = currentUserSaves
                         <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
                         <p className="text-gray-600 text-center">@{userData[0].username}</p>
                         <p className="text-gray-700 flex mt-2 text-center gap-1">
-                          {isBlockedByViewer ? (
-                            <>
-                              You have
-                              <strong className="flex items-center gap-1">blocked</strong>
-                              this user
-                            </>
-                          ) : (
+                          {isPrivate && (
                             <>
                               This user&apos;s profile is
                               <strong className="flex items-center gap-1">private</strong>
@@ -123,6 +117,7 @@ const savedList = currentUserSaves
                             creatorId={userId}
                             userId={currentUser?.id ?? ""}
                             username={userData[0].username}
+                            isBlockedByViewer
                           />
                         )}
                       </div>
@@ -190,9 +185,11 @@ const savedList = currentUserSaves
                 <h2 className="my-3 md:my-6 font-bold py-4 border-b-2 border-gray-200 text-xl">Itineraries</h2>
               )}
               <ItineraryGrid 
+                key={`${userId}-${isBlockedByViewer}`}
                 itineraryData={itineraryData}
                 isPrivate={isPrivate}
                 isBlockedByViewer={isBlockedByViewer}
+                profileUserId={userId}
                 isCurrentUser={isCurrentUser}
                 currentUserId={currentUser?.id}
                 savedList={savedList}

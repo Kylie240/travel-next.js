@@ -1,17 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { MapPin, Ban } from "lucide-react"
 import BookmarkElement from "@/components/ui/bookmark-element"
 import SearchItineraries from "./search-itineraries"
 import { FaRegHeart, FaLock, FaUnlock } from "react-icons/fa6"
-
 interface ItineraryGridProps {
   itineraryData: any[]
   isPrivate: boolean
   isBlockedByViewer?: boolean
+  profileUserId?: string
   isCurrentUser: boolean
   currentUserId?: string
   savedList?: string[]
@@ -21,6 +21,7 @@ export default function ItineraryGrid({
   itineraryData, 
   isPrivate,
   isBlockedByViewer = false,
+  profileUserId,
   isCurrentUser, 
   currentUserId,
   savedList
@@ -28,6 +29,10 @@ export default function ItineraryGrid({
   const router = useRouter()
   const [filteredItineraryData, setFilteredItineraryData] = useState(itineraryData)
   const isRestricted = isPrivate || isBlockedByViewer
+
+  useEffect(() => {
+    setFilteredItineraryData(itineraryData)
+  }, [itineraryData, isBlockedByViewer, isPrivate])
 
   const handleSearch = (filteredData: any[]) => {
     setFilteredItineraryData(filteredData)

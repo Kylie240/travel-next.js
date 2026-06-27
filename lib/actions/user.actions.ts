@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { UserStats } from "@/types/userStats";
@@ -229,6 +230,7 @@ export const blockUser = async (userId: string, blockedUserId: string) => {
       } = await supabase.auth.getUser()
     
       if (!user) throw new Error("Not authenticated")
+      if (user.id !== userId) throw new Error("Not authorized")
         
         const { data, error } = await supabase
         .from('users_blocked')
@@ -243,7 +245,54 @@ export const blockUser = async (userId: string, blockedUserId: string) => {
             throw new Error(error.message);
         }
 
+        const admin = createClientIfConfigured()
+        const db = admin ?? supabase
+
+        // Stop blocker following blocked user
+        await db
+          .from('users_following')
+          .delete()
+          .eq('user_id', userId)
+          .eq('following_id', blockedUserId)
+
+        // Remove blocked user from following the blocker
+        await db
+          .from('users_following')
+          .delete()
+          .eq('user_id', blockedUserId)
+          .eq('following_id', userId)
+
+        await db
+          .from('users_followers')
+          .delete()
+          .eq('user_id', userId)
+          .eq('follower_id', blockedUserId)
+
+        await db
+          .from('users_followers')
+          .delete()
+          .eq('user_id', blockedUserId)
+          .eq('follower_id', userId)
+
+        await revalidateBlockedProfile(supabase, blockedUserId)
+
         return data;
+}
+
+async function revalidateBlockedProfile(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  blockedUserId: string
+) {
+  const { data: profile } = await supabase
+    .from("users")
+    .select("username")
+    .eq("id", blockedUserId)
+    .maybeSingle()
+
+  if (profile?.username) {
+    revalidatePath(`/profile/${profile.username}`)
+  }
+  revalidatePath("/profile/[username]", "page")
 }
 
 export const removeBlockedUser = async (userId: string, blockedUserId: string) => {
@@ -263,6 +312,8 @@ export const removeBlockedUser = async (userId: string, blockedUserId: string) =
         if (error) {
             throw new Error(error.message);
         }
+
+        await revalidateBlockedProfile(supabase, blockedUserId)
 
         return data;
 }
