@@ -6,6 +6,11 @@ import { useState } from "react"
 import { v4 as uuidv4 } from 'uuid'
 import Image from "next/image"
 import createClient from "@/utils/supabase/client"
+import {
+  getUploadExtension,
+  prepareImageForUpload,
+  withTimeout,
+} from "@/lib/utils/prepare-image-upload"
 
 interface ImageUploadProps {
   value?: string
@@ -28,42 +33,46 @@ export function ImageUpload({
   const supabase = createClient()
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.target
     try {
       setUploadingImage(true)
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-      const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
-      const file = event.target.files?.[0];
-      const fileExt = file?.name.split('.').pop()?.toLowerCase()
-      
-      if (!file) return;
+      const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+      const file = input.files?.[0]
 
-      // Check file type
-      if (!ALLOWED_TYPES.includes(file.type) || !ALLOWED_EXTENSIONS.includes(fileExt || '')) {
-        toast.error("File type not accepted. Please use JPG, JPEG, PNG or WEBP.");
-        setUploadingImage(false);
-        return;
-      }
+      if (!file) return
 
       if (file.size > MAX_FILE_SIZE) {
-        toast.error("File size must be under 10MB");
-        setUploadingImage(false);
-        return;
+        toast.error("File size must be under 10MB")
+        return
       }
 
-      let filePath = '';
+      const preparedFile = await prepareImageForUpload(file)
+
+      if (preparedFile.size > MAX_FILE_SIZE) {
+        toast.error("File size must be under 10MB after processing")
+        return
+      }
+
+      const fileExt = getUploadExtension(preparedFile)
+
+      let filePath = ''
       if(bucket === "itinerary-images") { 
         filePath = `${folder}/${uuidv4()}.${fileExt}`;
       } else {
         filePath = `${folder}/${Date.now()}/${uuidv4()}.${fileExt}`;
       }
 
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
+      const { error: uploadError } = await withTimeout(
+        supabase.storage
+          .from(bucket)
+          .upload(filePath, preparedFile, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: preparedFile.type || "image/jpeg",
+          }),
+        90_000,
+        "Upload timed out. Check your connection and try again."
+      )
 
       if (uploadError) {
         throw new Error(uploadError.message || "Failed to upload image")
@@ -79,6 +88,7 @@ export function ImageUpload({
       toast.error(error.message || "Failed to upload image")
     } finally {
       setUploadingImage(false)
+      if (input) input.value = ""
     }
   }
 
@@ -123,7 +133,7 @@ export function ImageUpload({
                 <Upload className="w-4 h-4" />
                 <input
                   type="file"
-                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,image/*,.jpg,.jpeg,.png,.webp"
                   onChange={handleImageUpload}
                   className="hidden"
                   disabled={disabled || uploadingImage}

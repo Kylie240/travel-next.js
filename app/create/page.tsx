@@ -236,7 +236,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                 <Input
                   {...form.register(`days.${index}.cityName`)}
                   className="rounded-xl"
-                  placeholder="Tokyo"
+                  placeholder="City Name"
                   disabled={disabled}
                 />
                 {form.formState.errors.days?.[index]?.cityName && (
@@ -248,7 +248,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                 <Input
                   {...form.register(`days.${index}.provinceName`)}
                   className="rounded-xl"
-                  placeholder=""
+                  placeholder="State / Province"
                   disabled={disabled}
                 />
               </div>
@@ -350,7 +350,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
               <Input
                 {...form.register(`days.${index}.title`)}
                 className="rounded-xl"
-                placeholder="Tokyo Exploration"
+                placeholder="Day Title"
                 disabled={disabled}
               />
               {form.formState.errors.days?.[index]?.title && (
@@ -379,7 +379,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
               <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Description</Label>
               <Textarea
                 {...form.register(`days.${index}.description`)}
-                placeholder="Discover the highlights of Tokyo's most famous districts"
+                placeholder="Add a description of your day"
                 className="rounded-xl"
                 rows={6}
                 disabled={disabled}
@@ -1835,7 +1835,7 @@ export default function CreatePage() {
                     <Input
                       id="title"
                       {...form.register("title")}
-                      placeholder="Japanese Cultural Journey"
+                      placeholder="Title of your itinerary"
                       className="rounded-xl"
                       disabled={isFormDisabled}
                     />
@@ -1854,7 +1854,7 @@ export default function CreatePage() {
                     <textarea
                       id="shortDescription"
                       {...form.register("shortDescription")}
-                      placeholder="Experience the best of Japan's ancient traditions and modern wonders on this comprehensive 14-day journey through the Land of the Rising Sun."
+                      placeholder="A short description of your trip"
                       className="w-full text-base sm:text-sm md:text-md p-2 border rounded-xl h-[150px] md:h-[100px]"
                       disabled={isFormDisabled}
                     />
@@ -1888,7 +1888,7 @@ export default function CreatePage() {
                     <textarea
                       id="detailedOverview"
                       {...form.register("detailedOverview")}
-                      placeholder="This carefully curated journey takes you through the heart of Japan, blending ancient traditions with modern experiences. You'll explore historic temples, participate in traditional tea ceremonies, and discover the vibrant food scene. The itinerary includes stays in both luxury hotels and authentic ryokans, offering a perfect balance of comfort and cultural immersion. Suitable for first-time visitors to Japan who want to experience the country's highlights while enjoying premium accommodations and expert-guided tours."
+                      placeholder="Add more information about your trip"
                       className="w-full text-base sm:text-sm md:text-md p-2 border rounded-xl min-h-[210px] md:min-h-[150px]"
                       disabled={isFormDisabled}
                     />
