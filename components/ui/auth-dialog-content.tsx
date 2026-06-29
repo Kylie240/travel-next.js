@@ -299,7 +299,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           </button>
         </div>
         <div className="flex justify-center mt-2">
-          <span className="text-gray-500 text-xs text-center">By continuing, you agree to Journli's <a href="legal/terms" target="_blank" className="underline">Terms of Service</a> and acknowledge that you have read our <a href="legal/privacy" target="_blank" className="underline">Privacy Policy</a></span>
+          <span className="text-gray-500 text-xs text-center">By continuing, you agree to Journli's <a href="/legal/terms" target="_blank" className="underline">Terms of Service</a> and acknowledge that you have read our <a href="/legal/privacy" target="_blank" className="underline">Privacy Policy</a></span>
         </div>
 
         <Dialog.Close asChild>

@@ -244,11 +244,12 @@ export async function POST(request: NextRequest) {
             if (customerEmail) {
               const { data: itineraryRows } = await supabase
                 .from("itineraries")
-                .select("id, title")
+                .select("id, title, slug")
                 .in("id", itineraryIds);
               const itineraries = (itineraryRows || []).map((r) => ({
                 id: r.id,
                 title: r.title || "Itinerary",
+                slug: r.slug ?? null,
               }));
               const baseUrl =
                 process.env.NEXT_PUBLIC_SITE_URL ||
@@ -369,6 +370,7 @@ export async function POST(request: NextRequest) {
                         creatorUsername: itSeller.username,
                         itineraryTitle: it.title,
                         itineraryId: it.id,
+                        itinerarySlug: it.slug,
                         buyerUsername: buyerUserRes.data?.username ?? null,
                         buyerName,
                         buyerEmail: customerEmail,

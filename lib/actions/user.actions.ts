@@ -201,6 +201,74 @@ export const getFollowingById = async (userId: string) => {
         return data;
 }
 
+export const getPermissionPickerUsers = async (
+    userId: string,
+    selectedUserIds: string[] = []
+) => {
+    const supabase = await createClient()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) throw new Error("Not authenticated")
+
+    const { data: followingData, error: followingError } = await supabase.rpc(
+        "get_user_following",
+        { p_user_id: userId }
+    ) as {
+        data: Followers[] | null
+        error: { message: string } | null
+    }
+
+    if (followingError) {
+        throw new Error(followingError.message)
+    }
+
+    const following = followingData ?? []
+    const followingIds = new Set(following.map((person) => person.userId))
+    const uniqueSelectedIds = [...new Set(selectedUserIds.filter(Boolean))]
+
+    const { data: blockedRows } = await supabase
+        .from("users_blocked")
+        .select("blocked_id")
+        .eq("user_id", user.id)
+
+    const blockedIds = new Set(blockedRows?.map((row) => row.blocked_id) ?? [])
+
+    const missingSelectedIds = uniqueSelectedIds.filter(
+        (id) => !followingIds.has(id) && !blockedIds.has(id)
+    )
+
+    let selectedUsers: Followers[] = []
+    if (missingSelectedIds.length > 0) {
+        const { data: users, error: usersError } = await supabase
+            .from("users")
+            .select("id, name, username, avatar")
+            .in("id", missingSelectedIds)
+
+        if (usersError) {
+            throw new Error(usersError.message)
+        }
+
+        selectedUsers = (users ?? []).map((profile) => ({
+            userId: profile.id,
+            userName: profile.name ?? "",
+            userUsername: profile.username ?? "",
+            userAvatar: profile.avatar ?? "",
+            isFollowing: false,
+        }))
+    }
+
+    const merged = new Map<string, Followers>()
+    for (const person of [...following, ...selectedUsers]) {
+        if (!blockedIds.has(person.userId)) {
+            merged.set(person.userId, person)
+        }
+    }
+
+    return Array.from(merged.values())
+}
+
 // blocking mathods
 export const getBlockedUsersById = async (userId: string) => {
     const supabase = await createClient()

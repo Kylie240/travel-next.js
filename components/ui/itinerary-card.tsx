@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { getItineraryPath } from "@/lib/utils/itinerary-url";
 
 interface ItineraryCardProps {
   id: string | number;
   title: string;
+  slug?: string | null;
   destination?: string;
   imageUrl: string;
   duration: number | string;
@@ -20,6 +22,7 @@ interface ItineraryCardProps {
 export function ItineraryCard({
   id,
   title,
+  slug,
   destination,
   imageUrl,
   duration,
@@ -36,7 +39,7 @@ export function ItineraryCard({
 
   return (
     <Link 
-      href={`/itinerary/${id}`}
+      href={getItineraryPath({ id: String(id), title, slug })}
       className="flex-none w-[300px] group cursor-pointer"
       onClick={handleCardClick}
     >

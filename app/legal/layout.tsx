@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Legal | Journli",
-  description: "Privacy Policy, Terms of Service, and Cookie Policy for Journli.",
+  description: "Privacy Policy, Terms of Service, Seller Agreement, and Cookie Policy for Journli.",
 };
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {

@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 import ShareElement from "../itinerary/[id]/share-element"
+import { getItineraryPath } from "@/lib/utils/itinerary-url"
 import { FaLock, FaRegHeart } from "react-icons/fa6"
 import { exportItineraryToPDF } from "@/lib/utils/pdf-export"
 
@@ -237,7 +238,7 @@ export default function MyItinerariesPage() {
           (filteredItinerarySummaries && filteredItinerarySummaries?.length > 0) ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {filteredItinerarySummaries.map((itinerary: ItinerarySummary) => (
-                <Link key={itinerary.id} href={itinerary.status !== ItineraryStatusEnum.draft ? `/itinerary/${itinerary.id}` : `/create?itineraryId=${itinerary.id}`}>
+                <Link key={itinerary.id} href={itinerary.status !== ItineraryStatusEnum.draft ? getItineraryPath({ id: itinerary.id, title: itinerary.title, slug: itinerary.slug }) : `/create?itineraryId=${itinerary.id}`}>
                   <div
                     className="group relative rounded-2xl overflow-hidden cursor-pointer bg-gray-300 shadow-md"
                   >
@@ -401,7 +402,7 @@ export default function MyItinerariesPage() {
                           }}
                           className="p-2 absolute top-8 mt-6 right-4 rounded-full bg-white/40 hover:bg-white/60 transition-colors">
                           {itinerary.status === ItineraryStatusEnum.published && 
-                            <ShareElement id={itinerary.id} smallButton={true} />
+                            <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} smallButton={true} />
                           }
                         </button>
                       )}

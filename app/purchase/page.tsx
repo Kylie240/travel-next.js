@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle, DownloadIcon } from 'lucide-react'
+import { CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import createClient from '@/utils/supabase/client'
 import { FaRegQuestionCircle } from 'react-icons/fa'

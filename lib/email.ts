@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 
-export type PurchaseItinerary = { id: string; title: string };
+import { getItineraryPublicUrl } from "@/lib/utils/itinerary-url";
+
+export type PurchaseItinerary = { id: string; title: string; slug?: string | null };
 
 /** Shown in the purchase confirmation email (from DB / Stripe session at send time). */
 export type PurchaseEmailContext = {
@@ -65,7 +67,10 @@ export async function sendPurchaseConfirmationEmail(
     return { success: false, error: "Resend not configured" };
   }
 
-  const linkUrl = `${baseUrl}/itinerary/${itinerary.id}`;
+  const linkUrl = getItineraryPublicUrl(
+    { id: itinerary.id, title: itinerary.title, slug: itinerary.slug },
+    baseUrl
+  );
   const title = itinerary.title?.trim() || "Itinerary";
   const subjectSnippet = title
     .replace(/\s+/g, " ")
@@ -144,6 +149,7 @@ export type CreatorPurchaseNotificationContext = {
   creatorUsername?: string | null;
   itineraryTitle: string;
   itineraryId: string;
+  itinerarySlug?: string | null;
   buyerUsername?: string | null;
   buyerName?: string | null;
   buyerEmail?: string | null;
@@ -189,7 +195,14 @@ export async function sendCreatorPurchaseNotificationEmail(
       : "";
 
   const dashboardUrl = `${baseUrl.replace(/\/$/, "")}/seller-dashboard`;
-  const itineraryUrl = `${baseUrl.replace(/\/$/, "")}/itinerary/${context.itineraryId}`;
+  const itineraryUrl = getItineraryPublicUrl(
+    {
+      id: context.itineraryId,
+      title: context.itineraryTitle,
+      slug: context.itinerarySlug,
+    },
+    baseUrl
+  );
 
   const html = `
 <!DOCTYPE html>
@@ -212,7 +225,7 @@ export async function sendCreatorPurchaseNotificationEmail(
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: `New sale: ${title.slice(0, 50)} – Journli`,
+      subject: `Journli sale confirmation for: ${title.slice(0, 50)}`,
       html,
     });
 
@@ -289,4 +302,100 @@ function formatUsd(cents: number): string {
     style: "currency",
     currency: "USD",
   }).format(cents / 100);
+}
+
+export type FeedbackNotificationContext = {
+  submitterUserId: string;
+  submitterEmail?: string | null;
+  submitterName?: string | null;
+  submitterUsername?: string | null;
+  rating?: number | null;
+  selectedIssues: string[];
+  comment?: string | null;
+};
+
+function getFeedbackNotificationRecipient(): string {
+  const configured = process.env.FEEDBACK_NOTIFICATION_EMAIL?.trim();
+  if (configured) return configured;
+  return "info@journli.com";
+}
+
+/**
+ * Notifies the site owner when a user submits feedback.
+ * Set FEEDBACK_NOTIFICATION_EMAIL to override the default info@journli.com recipient.
+ */
+export async function sendFeedbackNotificationEmail(
+  context: FeedbackNotificationContext
+): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set, skipping feedback notification email");
+    return { success: false, error: "Resend not configured" };
+  }
+
+  const to = getFeedbackNotificationRecipient();
+  const submitterLabel =
+    context.submitterUsername?.trim()
+      ? `@${context.submitterUsername.trim()}`
+      : context.submitterName?.trim() || context.submitterEmail?.trim() || "Unknown user";
+
+  const ratingLine =
+    context.rating != null && context.rating > 0
+      ? `<p style="margin:12px 0;color:#4b5563;"><strong>Rating:</strong> ${context.rating} / 5</p>`
+      : `<p style="margin:12px 0;color:#4b5563;"><strong>Rating:</strong> Not provided</p>`;
+
+  const issuesHtml =
+    context.selectedIssues.length > 0
+      ? `<ul style="margin:8px 0 16px;padding-left:20px;color:#4b5563;">${context.selectedIssues
+          .map((issue) => `<li>${escapeHtml(issue)}</li>`)
+          .join("")}</ul>`
+      : `<p style="margin:8px 0 16px;color:#4b5563;">None selected</p>`;
+
+  const commentText = context.comment?.trim() || "";
+  const commentHtml = commentText
+    ? `<p style="margin:16px 0 8px;color:#111827;font-weight:600;">Additional details</p>
+       <p style="margin:0 0 16px;color:#4b5563;white-space:pre-wrap;">${escapeHtml(commentText)}</p>`
+    : `<p style="margin:16px 0;color:#4b5563;">No additional details provided.</p>`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:0 auto;padding:24px;">
+  <h1 style="font-size:1.5rem;margin-bottom:16px;">Journli</h1>
+  <h2 style="font-size:1.25rem;margin-bottom:16px;">New user feedback</h2>
+  <p style="margin-bottom:16px;color:#4b5563;"><strong>From:</strong> ${escapeHtml(submitterLabel)}</p>
+  <p style="margin-bottom:8px;color:#4b5563;"><strong>User ID:</strong> ${escapeHtml(context.submitterUserId)}</p>
+  ${
+    context.submitterEmail?.trim()
+      ? `<p style="margin-bottom:8px;color:#4b5563;"><strong>Email:</strong> ${escapeHtml(context.submitterEmail.trim())}</p>`
+      : ""
+  }
+  ${ratingLine}
+  <p style="margin:16px 0 8px;color:#111827;font-weight:600;">Issues reported</p>
+  ${issuesHtml}
+  ${commentHtml}
+  <p style="margin-top:24px;color:#6b7280;font-size:0.875rem;">— Journli feedback</p>
+</body>
+</html>
+  `.trim();
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `New feedback from ${submitterLabel.replace(/^@/, "")} – Journli`,
+      html,
+    });
+
+    if (error) {
+      console.error("Resend feedback notification error:", error);
+      return { success: false, error: error.message };
+    }
+    console.log("Feedback notification email sent:", data?.id, "to", to);
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Resend feedback notification send failed:", message);
+    return { success: false, error: message };
+  }
 }

@@ -12,19 +12,19 @@ export default function LandingPage() {
     <div className="bg-white">
       {/* Hero Section */}
       <div className="w-full flex justify-center items-center shadow-[inset_0_12px_20px_-12px_rgba(0,0,0,0.1)]">
-        <div className="w-screen max-w-[1800px] px-8 mt-10 sm:mt-16 mb-4 sm:mb-10 flex flex-col-reverse sm:flex-col lg:flex-row justify-center items-center gap-8">
+        <div className="w-screen max-w-[1800px] px-8 mt-6 mb-4 sm:mb-10 flex flex-col-reverse sm:flex-col lg:flex-row justify-center items-center gap-6">
           <div className="flex flex-col items-center lg:items-start justify-center sm:px-4 md:px-6 max-w-[600px] lg:w-1/2">
-            <h1 className="text-4xl font-medium text-center lg:text-left my-8 sm:mb-8">
+            <h1 className="text-3xl md:text-4xl font-medium text-center lg:text-left my-8 sm:mb-8">
               Welcome To Your New < br /> Travel Journal
             </h1>
-            <p className="text-lg sm:text-xl lg:text-2xl text-center lg:text-left font-light mb-4 sm:mb-8 sm:mx-2">
+            <p className="lg:text-base text-center lg:text-left font-light mb-4 mx-2 md:mx-0">
               Create and share your travel itineraries with friends and followers. Journli houses your experiences in one place, making it easy to share and discover new travel ideas with one link.
             </p>
-            <div className="gap-4 sm:mt-8">
+            <div className="gap-4 mt-6">
                 <ActionButtons />
             </div>
           </div>
-          <div className="flex relative justify-center items-center w-full lg:w-1/2 mt-0 sm:mt-8 aspect-[1/1] sm:aspect-[4/3] md:aspect-[2/1] lg:aspect-[1/1] overflow-hidden">
+          <div className="flex relative justify-center items-center w-full lg:w-1/2 aspect-[1/1] sm:aspect-[4/3] md:aspect-[2/1] lg:aspect-[1/1] overflow-hidden">
             <div className="mx-0 md:mx-12 lg:mx-0 grid grid-cols-2 gap-4 sm:gap-6 lg:gap-8 rotate-12 w-full xl:w-[732px]">
               <div className="flex flex-col gap-y-4 sm:gap-y-6 lg:gap-y-8 mt-12 sm:mt-16 lg:mt-24">
                 <div className="relative rounded-xl w-full aspect-[7/10]" style={{ backgroundImage: 'url(https://i.pinimg.com/736x/1b/3e/92/1b3e926253fe18a02d71386b006ed85c.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -59,7 +59,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <div className="py-20 px-4 bg-gray-100 mt-20">
+      <div className="py-20 px-4 bg-gray-100 mt-4">
         <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
           <p className="text-sm text-gray-800 mb-2">Coming Soon</p>
           <h2 className="text-2xl md:text-3xl text-cyan-700 font-bold mb-6">

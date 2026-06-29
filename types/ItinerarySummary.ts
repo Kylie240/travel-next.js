@@ -14,4 +14,5 @@ export type ItinerarySummary = {
     priceCents?: number;
     isPaid?: boolean;
     isPurchased?: boolean;
+    slug?: string | null;
   };

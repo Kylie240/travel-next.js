@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react'
 import { Bookmark } from "lucide-react"
 import { SaveItinerary, UnsaveItinerary } from '@/lib/actions/itinerary.actions'
 import { supabase } from '@/utils/supabase/superbase-client'
+import { FaRegHeart } from 'react-icons/fa'
 
-const BookmarkElement = ({ itineraryId, currentUserId, color, initialIsSaved, savedList, onUnsave, backgroundColor }: { itineraryId: string, currentUserId: string, color?: string, initialIsSaved?: boolean, savedList?: string[], onUnsave?: (itineraryId: string) => void, backgroundColor?: string }) => {
+const BookmarkElement = ({ itineraryId, currentUserId, color, initialIsSaved, savedList, onUnsave, backgroundColor, smallButton = false }: { itineraryId: string, currentUserId: string, color?: string, initialIsSaved?: boolean, savedList?: string[], onUnsave?: (itineraryId: string) => void, backgroundColor?: string, smallButton?: boolean }) => {
   const [isSaved, setIsSaved] = useState(initialIsSaved || false) // Use initialIsSaved if provided
 
   useEffect(() => {
@@ -57,16 +58,19 @@ const BookmarkElement = ({ itineraryId, currentUserId, color, initialIsSaved, sa
   }
 
   return (
-    <button
-      onClick={handleBookmark}
-      className={`${color == 'black' ? 'p-2 h-10 w-10 hover:bg-gray-100' : 'h-10 w-10 sm:h-12 sm:w-12 md:h-10 md:w-10'} transition-colors cursor-pointer rounded-lg flex items-center justify-center`}
-    >
-      <Bookmark className={`${
-        isSaved
-            ? `${color == 'black' ? 'fill-black text-black hover:text-black/60 hover:fill-black/70' : 'fill-white text-white hover:text-white/70 hover:fill-white/80'}`
-            : `${color == 'black' ? 'fill-white text-black hover:text-black/60 hover:fill-black/60' : 'fill-white/60 text-white/70 hover:text-white/70 hover:fill-white/80'}`
-        }`} size={35} />
-    </button>
+    <>
+      {isSaved ? (
+        <Bookmark size={smallButton ? 30 : 35}
+            className={`transition-colors cursor-pointer h-10 w-10 p-2 ${color == 'black' ? 'fill-black text-black hover:bg-gray-100' : 'fill-white text-white hover:bg-gray-100/60'} rounded-lg`}
+            onClick={handleBookmark}
+        />
+      ) : (
+        <Bookmark size={smallButton ? 30 : 35}
+            className={`transition-colors cursor-pointer h-10 w-10 p-2 ${color == 'black' ? 'text-black hover:bg-gray-100 hover:fill-black/60' : 'text-white hover:bg-gray-100/60 hover:fill-white/60'} rounded-lg`}
+            onClick={handleBookmark}
+        />
+      )}
+    </>
   )
 }
 

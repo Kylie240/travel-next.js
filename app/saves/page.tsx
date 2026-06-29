@@ -12,6 +12,7 @@ import { SavedItinerary } from "@/types/savedItinerary"
 import { toast } from "sonner"
 import BookmarkElement from "../../components/ui/bookmark-element"
 import createClient from "@/utils/supabase/client"
+import { getItineraryPath } from "@/lib/utils/itinerary-url"
 
 export default function SavesPage() { 
   const router = useRouter()
@@ -132,7 +133,15 @@ export default function SavesPage() {
               <div
                 key={itinerary.id}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white shadow-sm"
-                onClick={() => router.push(`/itinerary/${itinerary.id}`)}
+                onClick={() =>
+                  router.push(
+                    getItineraryPath({
+                      id: itinerary.id,
+                      title: itinerary.title,
+                      slug: itinerary.slug,
+                    })
+                  )
+                }
               >
                 <div className="relative aspect-[2/3]">
                   <Image

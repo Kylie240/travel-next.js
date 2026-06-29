@@ -151,7 +151,7 @@ export default function Navbar() {
             {user ? (
               <UserMenu />
             ) : (
-              <div className="items-center gap-2">
+              <div className="hidden md:flex items-center gap-2">
                 <Button 
                   variant="ghost" 
                   className="text-gray-700 hover:text-black"
@@ -206,28 +206,19 @@ export default function Navbar() {
                   {item.name}
                 </Link>
               ))}
-              {/* {!user && (
-                <div className="flex flex-col gap-2 p-3">
-                  <AuthDialog 
-                    isOpen={isAuthOpen} 
-                    setIsOpen={setIsAuthOpen} 
-                    isSignUp={isSignUp} 
-                    setIsSignUp={setIsSignUp}
+              {!user && (
+                <div className="border-t border-gray-100 pt-2 mt-2 px-3">
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      router.push("/login?mode=login")
+                      setIsOpen(false)
+                    }}
                   >
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-center text-gray-700 hover:text-black"
-                      onClick={() => {
-                        setIsSignUp(false)
-                        setIsAuthOpen(true)
-                        setIsOpen(false)
-                      }}
-                    >
-                      Log In
-                    </Button>
-                  </AuthDialog>
+                    Log In
+                  </Button>
                 </div>
-              )} */}
+              )}
             </div>
           </motion.div>
         )}

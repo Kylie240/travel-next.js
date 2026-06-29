@@ -8,11 +8,15 @@ import { FaHeart, FaRegHeart, FaRegStar, FaStar } from "react-icons/fa6"
 const LikeElement = ({ 
   itineraryId, 
   currentUserId, 
-  initialIsLiked 
+  initialIsLiked,
+  color = "black",
+  smallButton = false,
 }: { 
   itineraryId: string
-  currentUserId: string
+  currentUserId: string 
   initialIsLiked?: boolean
+  color?: string
+  smallButton?: boolean
 }) => {
   const [isLiked, setIsLiked] = useState(initialIsLiked || false)
   
@@ -50,13 +54,13 @@ const LikeElement = ({
   return (
     <>
       {isLiked ? (
-        <FaHeart size={35}
-            className="transition-colors cursor-pointer h-10 w-10 p-2 fill-black text-black hover:bg-gray-100 rounded-lg"
+        <FaHeart size={smallButton ? 30 : 35}
+            className={`transition-colors cursor-pointer h-10 w-10 p-2 ${color == 'black' ? 'fill-black text-black hover:bg-gray-100' : 'fill-white text-white hover:bg-gray-100/60'} rounded-lg`}
             onClick={handleLike}
         />
       ) : (
-        <FaRegHeart size={35}
-            className="transition-colors cursor-pointer h-10 w-10 p-2 text-black hover:bg-gray-100 hover:fill-black/60 rounded-lg"
+        <FaRegHeart size={smallButton ? 30 : 35}
+            className={`transition-colors cursor-pointer h-10 w-10 p-2 ${color == 'black' ? 'text-black hover:bg-gray-100 hover:fill-black/60' : 'text-white hover:bg-gray-100/60 hover:fill-white/60'} rounded-lg`}
             onClick={handleLike}
         />
       )}

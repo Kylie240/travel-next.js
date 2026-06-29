@@ -1,7 +1,7 @@
  "use client"
 
  import React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input, Textarea } from "@/components/ui/input"
@@ -37,7 +37,7 @@ import { Switch } from "@/components/ui/switch"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
 import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, updateItineraryTemplate, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
-import { getFollowersById } from "@/lib/actions/user.actions"
+import { getPermissionPickerUsers } from "@/lib/actions/user.actions"
 import createClient from "@/utils/supabase/client"
 import { CreateItinerary } from "@/types/createItinerary"
 import { Day } from "@/types/Day"
@@ -951,28 +951,35 @@ export default function CreatePage() {
     }
   }, [supabase])
 
-  useEffect(() => {
-    const fetchFollowers = async () => {
-      const needsFollowers =
-        viewPermission === 'restricted' || editPermission === 'collaborators'
-      if (!needsFollowers || !user?.id || followers.length > 0 || loadingFollowers) {
-        return
-      }
-
-      setLoadingFollowers(true)
-      try {
-        const followersData = await getFollowersById(user.id)
-        setFollowers(followersData || [])
-      } catch (error) {
-        toast.error('Failed to load followers')
-        console.error('Error fetching followers:', error)
-      } finally {
-        setLoadingFollowers(false)
-      }
+  const refreshPermissionUsers = useCallback(async () => {
+    const needsFollowers =
+      viewPermission === "restricted" || editPermission === "collaborators"
+    if (!needsFollowers || !user?.id) {
+      return
     }
 
-    fetchFollowers()
-  }, [viewPermission, editPermission, user?.id, followers.length, loadingFollowers])
+    setLoadingFollowers(true)
+    try {
+      const selectedIds = [...new Set([...allowedViewers, ...allowedEditors])]
+      const pickerUsers = await getPermissionPickerUsers(user.id, selectedIds)
+      setFollowers(pickerUsers || [])
+    } catch (error) {
+      toast.error("Failed to load users")
+      console.error("Error fetching permission users:", error)
+    } finally {
+      setLoadingFollowers(false)
+    }
+  }, [
+    viewPermission,
+    editPermission,
+    user?.id,
+    allowedViewers,
+    allowedEditors,
+  ])
+
+  useEffect(() => {
+    void refreshPermissionUsers()
+  }, [refreshPermissionUsers])
 
   const handleToggleViewer = (userId: string) => {
     setAllowedViewers((prev) =>
@@ -1006,6 +1013,24 @@ export default function CreatePage() {
       setCurrentStep(3)
     }
   }, [currentStep, canAccessStep4])
+
+  useEffect(() => {
+    if (currentStep !== 4) return
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshPermissionUsers()
+      }
+    }
+
+    window.addEventListener("focus", refreshPermissionUsers)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener("focus", refreshPermissionUsers)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [currentStep, refreshPermissionUsers])
 
   const form = useForm<FormData>({
     resolver: zodResolver(createSchema),
@@ -2419,7 +2444,7 @@ export default function CreatePage() {
                       {viewPermission === 'restricted' && (
                         <FollowerUserPicker
                           label="Select Users Who Can View"
-                          subLabel="Only those you follow will be shown in the list"
+                          subLabel="People you follow and anyone already added appear here"
                           followers={followers}
                           loadingFollowers={loadingFollowers}
                           selectedUserIds={allowedViewers}
@@ -2462,7 +2487,7 @@ export default function CreatePage() {
                       {editPermission === 'collaborators' && (
                         <FollowerUserPicker
                           label="Select Users Who Can Edit"
-                          subLabel="Only those you follow will be shown in the list"
+                          subLabel="People you follow and anyone already added appear here"
                           followers={followers}
                           loadingFollowers={loadingFollowers}
                           selectedUserIds={allowedEditors}

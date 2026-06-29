@@ -7,8 +7,21 @@ import * as Popover from '@radix-ui/react-popover'
 import { FaFacebook, FaWhatsapp } from 'react-icons/fa'
 import { FaXTwitter } from "react-icons/fa6";
 import { MdIosShare } from "react-icons/md";
+import { getItineraryPublicUrl } from "@/lib/utils/itinerary-url"
 
-const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: boolean }) => {
+const ShareElement = ({
+  id,
+  slug,
+  title,
+  smallButton = false,
+  color = "black",
+}: {
+  id: string
+  slug?: string | null
+  title?: string | null
+  smallButton: boolean
+  color?: string
+}) => {
   const [isOpen, setIsOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [canUseNativeShare, setCanUseNativeShare] = useState(false)
@@ -45,7 +58,9 @@ const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: bo
   }
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`https://www.journli.com/itinerary/${id}`)
+    navigator.clipboard.writeText(
+      getItineraryPublicUrl({ id, slug, title })
+    )
     setCopied(true)
     toast.success('Link copied to clipboard')
     setTimeout(() => setCopied(false), 2000)
@@ -95,9 +110,9 @@ const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: bo
           e.stopPropagation()
           handleNativeShare()
         }}
-        className={`${smallButton ? 'h-4 w-4 ' : 'h-10 w-10 p-1 hover:bg-gray-100'} cursor-pointer rounded-lg flex items-center justify-center`}
+        className={`h-10 w-10 p-1 hover:bg-gray-100/60 cursor-pointer rounded-lg flex items-center justify-center`}
       >
-        <MdIosShare size={24} />
+        <MdIosShare size={smallButton ? 24 : 35} className={`${color == 'black' ? 'text-black' : 'text-white'}`} />
       </button>
     )
   }
@@ -112,9 +127,9 @@ const ShareElement = ({ id, smallButton = false }: { id: string, smallButton: bo
             e.stopPropagation()
             setIsOpen(true)
           }}
-          className={`${smallButton ? 'h-4 w-4' : 'h-10 w-10 hover:bg-gray-100 p-1'} cursor-pointer rounded-lg flex items-center justify-center`}
+          className={`${smallButton ? 'h-10 w-10' : 'h-10 w-10 p-1'} ${color == 'black' ? 'hover:bg-gray-100' : 'hover:bg-gray-100/60'} cursor-pointer rounded-lg flex items-center justify-center`}
         >
-          <MdIosShare size={24} />
+          <MdIosShare size={smallButton ? 30 : 35} className={`${color == 'black' ? 'text-black' : 'text-white'}`} />
         </button>
       </Popover.Trigger>
       <Popover.Portal>

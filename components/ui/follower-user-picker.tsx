@@ -64,7 +64,7 @@ export function FollowerUserPicker({
         </div>
       ) : followers.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          <p>No followers found. Share your profile to get followers!</p>
+          <p>No users found. Follow people on their profiles to add them here.</p>
         </div>
       ) : (
         <div className="max-h-[400px] overflow-y-auto border rounded-lg p-4 space-y-2">
@@ -123,12 +123,13 @@ export function FollowerUserPicker({
           <div className="flex flex-wrap gap-2">
             {selectedUserIds.map((id) => {
               const person = followers.find((f) => f.userId === id)
-              return person ? (
+              const displayName = person?.userName || person?.userUsername || "User"
+              return (
                 <div
                   key={id}
                   className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm"
                 >
-                  <span>{person.userName}</span>
+                  <span>{displayName}</span>
                   <button
                     type="button"
                     onClick={() => !disabled && onToggle(id)}
@@ -138,7 +139,7 @@ export function FollowerUserPicker({
                     ×
                   </button>
                 </div>
-              ) : null
+              )
             })}
           </div>
         </div>

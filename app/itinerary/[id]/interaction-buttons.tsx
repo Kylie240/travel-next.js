@@ -9,10 +9,16 @@ export function InteractionButtons({
   itineraryId, 
   initialIsLiked, 
   initialIsSaved,
+  columnLayout = false,
+  color = "black",
+  smallButton = false,
 }: { 
   itineraryId: string
   initialIsLiked?: boolean
-  initialIsSaved?: boolean
+  initialIsSaved?: boolean  
+  columnLayout?: boolean
+  color?: string
+  smallButton?: boolean
 }) {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
   const [loading, setLoading] = useState(true)
@@ -42,17 +48,20 @@ export function InteractionButtons({
   }
 
   return (
-    <div className="flex">
+    <div className={`flex ${columnLayout ? "flex-col" : "flex-row"}`}>
       <LikeElement 
+        color={color} 
         itineraryId={itineraryId} 
         currentUserId={currentUserId || ""} 
         initialIsLiked={initialIsLiked}
+        smallButton={smallButton}
       />  
       <BookmarkElement 
-        color="black" 
+        color={color} 
         itineraryId={itineraryId} 
         currentUserId={currentUserId || ""} 
         initialIsSaved={initialIsSaved}
+        smallButton={smallButton}
       />
     </div>
   )

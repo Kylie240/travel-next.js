@@ -10,8 +10,9 @@ const navigation = {
   main: [
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
-    { name: "Privacy Policy", href: "legal/privacy" },
-    { name: "Terms of Service", href: "legal/terms" },
+    { name: "Privacy Policy", href: "/legal/privacy" },
+    { name: "Terms of Service", href: "/legal/terms" },
+    { name: "Seller Agreement", href: "/legal/seller-agreement" },
   ],
   social: [
     {
@@ -56,7 +57,7 @@ export default function Footer() {
             </p>
             <NewsletterForm />
             <p className="text-sm text-gray-500 sm:mt-2 md:mt-4">
-              By subscribing, you agree to our <Link href="legal/privacy" className="text-black hover:text-gray-900">Privacy Policy</Link> and consent to receive updates from us.
+              By subscribing, you agree to our <Link href="/legal/privacy" className="text-black hover:text-gray-900">Privacy Policy</Link> and consent to receive updates from us.
             </p>
           </div>
         </div>
@@ -81,8 +82,6 @@ export default function Footer() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="text-sm text-gray-400 hover:text-white transition-colors"
                 >
                   {item.name}

@@ -114,7 +114,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                         </div>
                       )}
                       {itinerary.status === ItineraryStatusEnum.published && 
-                        <ShareElement id={itinerary.id} smallButton={false} />
+                        <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} smallButton={false} />
                       }
                     </div>
                 </div>
@@ -270,7 +270,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                         </div>
                       )}
                       {itinerary.status === ItineraryStatusEnum.published && 
-                        <ShareElement id={itinerary.id} smallButton={false} />
+                        <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} smallButton={false} />
                       }
                     </div>
                   </div>
@@ -310,19 +310,17 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                       ${(priceCents / 100).toFixed(2)}
                     </div>
                     <div className="flex flex-col gap-3 items-center">
-                      {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
-                        <PurchaseButton
-                          itinerary={{
-                            id: itinerary.id,
-                            title: itinerary.title,
-                            priceCents: priceCents,
-                            mainImage: itinerary.mainImage,
-                            creatorName: creator.name || "",
-                            creatorUsername: creator.username || "",
-                            creatorId: creator.id || "",
-                          }}
-                        />
-                      )}
+                      <PurchaseButton
+                        itinerary={{
+                          id: itinerary.id,
+                          title: itinerary.title,
+                          priceCents: priceCents,
+                          mainImage: itinerary.mainImage,
+                          creatorName: creator.name || "",
+                          creatorUsername: creator.username || "",
+                          creatorId: creator.id || "",
+                        }}
+                      />
                       {/* {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
                         <AddToCartButton
                           itinerary={{

@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { ItineraryCard } from "./itinerary-card";
 import { useRouter } from "next/navigation";
+import { getItineraryPath } from "@/lib/utils/itinerary-url";
 
 export interface ItinerarySectionProps {
   title: string;
@@ -9,6 +10,7 @@ export interface ItinerarySectionProps {
   itineraries: Array<{
     id: string;
     title: string;
+    slug?: string | null;
     destination?: string;
     countries?: string[];
     imageUrl: string;
@@ -52,7 +54,15 @@ export const ItinerarySection = ({ title, description, itineraries, type }: Itin
             <ItineraryCard
               key={itinerary.id}
               {...itinerary}
-              onClick={() => router.push(`/itinerary/${itinerary.id}`)}
+              onClick={() =>
+                router.push(
+                  getItineraryPath({
+                    id: itinerary.id,
+                    title: itinerary.title,
+                    slug: itinerary.slug,
+                  })
+                )
+              }
             />
           ))}
         </div>

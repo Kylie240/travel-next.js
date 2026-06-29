@@ -9,6 +9,7 @@ const publicNavigation = [
   { name: "Explore", href: "/explore" },
   { name: "Plans", href: "/plans" },
   { name: "About", href: "/about" },
+  { name: "Login", href: "/login" },
 ]
 
 const authenticatedNavigation = [

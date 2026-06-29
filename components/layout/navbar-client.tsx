@@ -17,6 +17,9 @@ const publicNavigation = [
 const authenticatedNavigation = [
   { name: "Search", href: "/search" },
 ]
+  const unauthenticatedNavigation = [
+  { name: "Login", href: "/login" },
+]
 
 interface NavbarClientProps {
   user: User | null
@@ -26,7 +29,7 @@ export function NavbarClient({ user }: NavbarClientProps) {
   // Combine public navigation with authenticated navigation if user is logged in
   const navigation = user 
     ? [...publicNavigation, ...authenticatedNavigation]
-    : publicNavigation
+    : [...publicNavigation, ...unauthenticatedNavigation]
   const [isOpen, setIsOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
@@ -74,19 +77,6 @@ export function NavbarClient({ user }: NavbarClientProps) {
 
   return (
     <>
-      {/* Mobile auth button (when not logged in) */}
-      {!user && (
-        <div className="md:hidden">
-          <Button 
-            variant="ghost" 
-            className="text-gray-700 hover:text-black"
-            onClick={() => router.push('/login?mode=login')}
-          >
-            Log In
-          </Button>
-        </div>
-      )}
-
       {/* Mobile menu button */}
       <Button
         ref={menuButtonRef}

@@ -96,46 +96,6 @@ export default function DiscoverTemplate({
     <div
       className={`min-h-screen bg-slate-50 flex flex-col pb-12`}
     >
-
-      {/* Discover-style header */}
-      <div className="block max-w-6xl mx-auto w-full px-4 md:px-6 pt-2">
-        <div className="flex items-start justify-start gap-4">
-          <div className="min-w-0 flex-1 my-2">
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              {itinerary.title}
-            </h1>
-            <div className="w-full flex justify-start items-center mr-2">
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-900">
-                {typeof itinerary.rating === "number" && !Number.isNaN(itinerary.rating) && (
-                  <span className="inline-flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-amber-300 text-amber-200" />
-                    {itinerary.rating.toFixed(1)}
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4 opacity-90" />
-                  {itinerary.duration}{" "}
-                  {itinerary.duration === 1 ? "day" : "days"}
-                </span>
-                {itinerary.budget != null && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <DollarSign className="h-4 w-4 opacity-90" />
-                    {itinerary.budget}
-                    <span className="text-gray-900">/ person</span>
-                  </span>
-                )}
-                {typeof itinerary.likes === "number" && (
-                  <span className="inline-flex items-center gap-1.5 text-white/85">
-                    {itinerary.likes} likes
-                  </span>
-                )}
-                <LocationLine countries={countries} />
-              </div>  
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Full-bleed hero + glass overlay (detail page style) */}
       <div className="mt-2 px-3 md:px-6 w-full md:max-w-6xl md:mx-auto pb-8 pb-[280px] md:pb-[160px]">
         <div className="relative h-[calc(100svh-600px)] min-h-[calc(100svh-600px)] md:min-h-[520px] md:h-auto rounded-3xl overflow-visible">
@@ -151,24 +111,20 @@ export default function DiscoverTemplate({
             )}
             {/* <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" /> */}
           </div>              
-          <div className="absolute top-6 right-6 z-10 gap-4 flex flex-col">
+          <div className="absolute top-6 right-6 z-10 flex flex-col items-center">
             {currentUserId !== itinerary.creatorId && (
               <InteractionButtons 
                 itineraryId={itinerary.id} 
                 initialIsLiked={initialIsLiked}
                 initialIsSaved={initialIsSaved}
-              />
-            )}
-            {currentUserId !== itinerary.creatorId && (
-              <InteractionButtons 
-                itineraryId={itinerary.id} 
-                initialIsLiked={initialIsLiked}
-                initialIsSaved={initialIsSaved}
+                columnLayout={true}
+                color="white"
+                smallButton={true}
               />
             )}
             {canEdit &&
               <Link href={`/create?itineraryId=${itinerary.id}`}>
-                <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black bg-white/80 hover:bg-gray-100 rounded-lg p-2`}/>
+                <FiEdit size={30} className={`transition-colors cursor-pointer h-8 w-8 text-black bg-white/80 hover:bg-gray-100 rounded-lg p-1`}/>
               </Link>
             }
             {(!isRestrictedView || canEdit) && (
@@ -177,22 +133,53 @@ export default function DiscoverTemplate({
               </div>
             )}
             {itinerary.status === ItineraryStatusEnum.published && 
-              <div className="inline-flex shrink-0 items-center bg-white/80 rounded-lg">
-                <ShareElement id={itinerary.id} smallButton={false} />
+              <div className="inline-flex shrink-0 items-center cursor-pointer rounded-lg">
+                <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} smallButton={true} color="white" />
               </div>
             }
           </div>
 
-          <div className="absolute inset-x-0 -bottom-[240px] md:-bottom-[160px] p-4 md:p-6 lg:p-8 z-20">
+          <div className="absolute inset-x-0 -bottom-[280px] md:-bottom-[160px] p-4 md:p-6 lg:p-8 z-20">
             <div
               className={`mx-auto relative max-w-2xl rounded-3xl px-5 py-5 text-gray-900 shadow-2xl sm:px-6 sm:py-6 bg-white`}
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-900 px-2">
+              <h1 className="mt-2 ml-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                {itinerary.title}
+              </h1>
+              <div className="w-full flex justify-start items-center mx-2">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-900">
+                  {typeof itinerary.rating === "number" && !Number.isNaN(itinerary.rating) && (
+                    <span className="inline-flex items-center gap-1">
+                      <Star className="h-4 w-4 fill-amber-300 text-amber-200" />
+                      {itinerary.rating.toFixed(1)}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4 opacity-90" />
+                    {itinerary.duration}{" "}
+                    {itinerary.duration === 1 ? "day" : "days"}
+                  </span>
+                  {itinerary.budget != null && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <DollarSign className="h-4 w-4 opacity-90" />
+                      {itinerary.budget}
+                      <span className="text-gray-900">/ person</span>
+                    </span>
+                  )}
+                  {typeof itinerary.likes === "number" && (
+                    <span className="inline-flex items-center gap-1.5 text-white/85">
+                      {itinerary.likes} likes
+                    </span>
+                  )}
+                  <LocationLine countries={countries} />
+                </div>  
+              </div>
+              <p className="text-xs mt-1 py-2 font-semibold uppercase tracking-wide text-gray-900 px-2">
                 About this itinerary
               </p>
               <div className="flex items-start gap-2">
                 {itinerary.shortDescription && (
-                  <div className="pt-2 pb-4">
+                  <div className="pb-4">
                     <div className="flex flex-wrap gap-2 my-2">
                       {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => {
                           const tagData = itineraryTagsMap.find(t => t.id === tag);
@@ -310,8 +297,50 @@ export default function DiscoverTemplate({
         </div>
       )}
 
+      {isRestrictedView ? (
+        <div className="px-8 max-w-6xl mx-auto">
+          <div className="mt-8 p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+              <Lock className="w-8 h-8 text-gray-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Premium Content</h3>
+            <p className="text-gray-600 mb-4">
+              Purchase this itinerary to unlock the full day-by-day schedule, detailed notes, and all travel tips.
+            </p>
+            <div className="text-2xl font-bold text-gray-900 mb-4">
+              ${(priceCents / 100).toFixed(2)}
+            </div>
+            <div className="flex flex-col gap-3 items-center">
+              <PurchaseButton
+                itinerary={{
+                  id: itinerary.id,
+                  title: itinerary.title,
+                  priceCents: priceCents,
+                  mainImage: itinerary.mainImage,
+                  creatorName: creator.name || "",
+                  creatorUsername: creator.username || "",
+                  creatorId: creator.id || "",
+                }}
+              />
+              {/* {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
+                <AddToCartButton
+                  itinerary={{
+                    id: itinerary.id,
+                    title: itinerary.title,
+                    priceCents: priceCents,
+                    mainImage: itinerary.mainImage,
+                    creatorName: creator.name || "",
+                    creatorUsername: creator.username || "",
+                    creatorId: creator.id || "",
+                  }}
+                  className="px-8 py-2"
+                />
+              )} */}
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="max-w-6xl mx-auto w-full mt-8 px-6">
-        {/* Day Images Gallery */}
         {itinerary.days && Array.isArray(itinerary.days) && itinerary.days.some(day => day.image) && (
           <>
             <div className="w-full px-4">
@@ -389,6 +418,7 @@ export default function DiscoverTemplate({
           </>
         )}
       </div>
+      )}
     </div>
   )
 }

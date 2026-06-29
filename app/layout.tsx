@@ -13,12 +13,13 @@ import NavbarServer from "@/components/layout/navbar-server";
 const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 export const metadata: Metadata = {
-  title: "Journli - Create and Share Travel Itineraries",
+  title: "Journli | Create and Share Travel Itineraries",
   description: "Discover, create, and share travel itineraries with fellow travelers around the world.",
   icons: {
     icon: "/favicon.ico",
     apple: "/favicon.ico",
   },
+  
 };
 
 

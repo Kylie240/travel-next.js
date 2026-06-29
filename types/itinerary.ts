@@ -29,4 +29,5 @@ export type Itinerary = {
     viewPermission: number;
     editPermission: number;
     creator?: any; //create new type
+    slug?: string;
 }

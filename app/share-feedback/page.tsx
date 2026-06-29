@@ -10,6 +10,7 @@ import { MessageSquare, Star, Mail, CheckCircle2 } from "lucide-react"
 import createClient from "@/utils/supabase/client"
 import { useEffect } from "react"
 import { Feedback } from "@/types/Feedback"
+import { submitUserFeedback } from "@/lib/actions/feedback.actions"
 
 const commonProblems = [
   "Difficulty creating or editing itineraries",
@@ -118,38 +119,22 @@ export default function ShareFeedbackPage() {
     setIsSubmitting(true)
     
     try {
-      // Combine selected problems and additional details into feedback text
-      let feedbackText = ""
-      if (selectedProblems.length > 0) {
-        feedbackText = "Issues encountered:\n" + selectedProblems.map(p => `- ${p}`).join("\n")
-      }
-      if (feedback.comment.trim()) {
-        feedbackText += (feedbackText ? "\n\nAdditional details:\n" : "") + feedback.comment.trim()
-      }
-      
-      const { data, error } = await supabase.from("users_feeback").insert([
-        {
-          user_id: user.id,
-          editing: feedback.editing,
-          saving: feedback.saving,
-          navigation: feedback.navigation,
-          performance: feedback.performance,
-          interface: feedback.interface,
-          functionality: feedback.functionality,
-          feature: feedback.feature,
-          account: feedback.account,
-          sharing: feedback.sharing,
-          responsiveness: feedback.responsiveness,
-          other: feedback.other,
-          comment: feedback.comment,
-          rating: feedback.rating || null,
-        },
-      ]);
-    
-      if (error) {
-        console.error("Error inserting feedback:", error);
-        throw new Error(error.message);
-      }
+      await submitUserFeedback({
+        editing: feedback.editing,
+        saving: feedback.saving,
+        navigation: feedback.navigation,
+        performance: feedback.performance,
+        interface: feedback.interface,
+        functionality: feedback.functionality,
+        feature: feedback.feature,
+        account: feedback.account,
+        sharing: feedback.sharing,
+        responsiveness: feedback.responsiveness,
+        other: feedback.other,
+        comment: feedback.comment,
+        rating: feedback.rating || null,
+        selectedIssues: selectedProblems,
+      })
 
       toast.success("Thank you for your feedback! We appreciate your input.")
       setIsSubmitted(true)

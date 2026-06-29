@@ -44,6 +44,13 @@ function formatSettingsDate(value: Date | string | null | undefined): string | n
   return d.toLocaleDateString()
 }
 
+const socialLinkWrapperClass =
+  "flex w-full min-w-0 items-center overflow-hidden rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+const socialLinkPrefixClass =
+  "shrink-0 max-w-[55%] truncate border-r px-3 py-2 text-sm text-gray-500 sm:w-[160px] sm:max-w-[160px]"
+const socialLinkInputClass =
+  "min-w-0 flex-1 h-10 px-3 py-2 text-base bg-transparent focus:outline-none"
+
 export function SettingsContent({ initialUser, userData, userStats, searchParams, userSettings, stripeBilling = null }: SettingsContentProps) {
   const [activeSection, setActiveSection] = useState(searchParams?.tab || "Profile")
   const [success, setSuccess] = useState(searchParams?.success || false)
@@ -516,65 +523,65 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Facebook</label>
-              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ width: '205px' }}>https://www.facebook.com/</span>
+              <div className={socialLinkWrapperClass}>
+                <span className={socialLinkPrefixClass}>www.facebook.com/</span>
                 <input
                   type="text"
                   value={formData.facebook}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
+                  className={socialLinkInputClass}
                   onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
                 />
               </div>
             </div>
             <div>
               <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Instagram</label>
-              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.instagram.com/</span>
+              <div className={socialLinkWrapperClass}>
+                <span className={socialLinkPrefixClass}>www.instagram.com/</span>
                 <input
                   type="text"
                   value={formData.instagram}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
+                  className={socialLinkInputClass}
                   onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
                 />
               </div>
             </div>
             <div>
               <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Twitter</label>
-              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.twitter.com/</span>
+              <div className={socialLinkWrapperClass}>
+                <span className={socialLinkPrefixClass}>www.twitter.com/</span>
                 <input
                   type="text"
                   value={formData.twitter}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
+                  className={socialLinkInputClass}
                   onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
                 />
               </div>
             </div>
             <div>
               <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Pinterest</label>
-              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.pinterest.com/</span>
+              <div className={socialLinkWrapperClass}>
+                <span className={socialLinkPrefixClass}>www.pinterest.com/</span>
                 <input
                   type="text"
                   value={formData.pinterest}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
+                  className={socialLinkInputClass}
                   onChange={(e) => setFormData({ ...formData, pinterest: e.target.value })}
                 />
               </div>
             </div>
             <div>
               <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Tiktok</label>
-              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.tiktok.com/@</span>
+              <div className={socialLinkWrapperClass}>
+                <span className={socialLinkPrefixClass}>www.tiktok.com/@</span>
                 <input
                   type="text"
                   value={formData.tiktok}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
+                  className={socialLinkInputClass}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -586,13 +593,13 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             </div>
             <div>
               <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Youtube</label>
-              <div className="flex items-center rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                <span className="px-3 py-2 text-sm text-gray-500 border-r" style={{ minWidth: '205px' }}>https://www.youtube.com/@</span>
+              <div className={socialLinkWrapperClass}>
+                <span className={socialLinkPrefixClass}>www.youtube.com/@</span>
                 <input
                   type="text"
                   value={formData.youtube}
                   placeholder="username"
-                  className="flex-1 h-10 px-3 py-2 text-base focus:outline-none bg-transparent"
+                  className={socialLinkInputClass}
                   onChange={(e) =>
                     setFormData({
                       ...formData,

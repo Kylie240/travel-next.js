@@ -8,6 +8,7 @@ import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
 import { ItinerarySummary } from "@/types/ItinerarySummary";
 import { SavedItinerary } from "@/types/savedItinerary";
 import createClient from "@/utils/supabase/server";
+import { syncItinerarySlug } from "@/lib/utils/itinerary-slug";
 
 export const getItineraries = async (options?: GetItineraryOptions) => {
     const supabase = await createClient()
@@ -18,7 +19,7 @@ export const getItineraries = async (options?: GetItineraryOptions) => {
     const {destination, durationMin, durationMax, budgetMin, budgetMax, continents, activityTags, itineraryTags, countries, sort, quickFilter} = options?.filters ?? {};
 
     let query = supabase.from('itineraries').select(
-        'id, title, duration, short_description, main_image, countries, cities, itinerary_tags, activity_tags, featured_categories, creator_id, creator_name, creator_image'
+        'id, title, slug, duration, short_description, main_image, countries, cities, itinerary_tags, activity_tags, featured_categories, creator_id, creator_name, creator_image'
     )
 
          if (destination) {
@@ -132,6 +133,17 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             throw new Error("Maximum number of itineraries reached.");
         } else if (error) throw new Error(error.message);
 
+        const itineraryId =
+          typeof data === "string"
+            ? data
+            : data && typeof data === "object" && "id" in data
+              ? String((data as { id: string }).id)
+              : null
+
+        if (itineraryId && itinerary.title) {
+          await syncItinerarySlug(supabase, itineraryId, itinerary.title)
+        }
+
         return data;
 }
 
@@ -150,6 +162,12 @@ export const updateItinerary = async (id: string, itinerary: CreateItinerary) =>
       });
 
       if (error) throw new Error(error.message);
+
+      if (itinerary.title) {
+        await syncItinerarySlug(supabase, id, itinerary.title)
+      }
+
+      revalidatePath(`/itinerary/[id]/[slug]`, "page")
 
       return { success: true };
 }
@@ -176,7 +194,7 @@ export const getItinerarySummaries = async (userId?: string) => {
     // Fallback: query itineraries directly by creator_id (when RPC is missing or returns null)
     const { data: rows, error: queryError } = await supabase
         .from("itineraries")
-        .select("id, title, status, main_image, short_description, countries, view_permission, edit_permission")
+        .select("id, title, status, main_image, short_description, countries, view_permission, edit_permission, slug")
         .eq("creator_id", user.id)
         .order("id", { ascending: false });
 
@@ -197,6 +215,7 @@ export const getItinerarySummaries = async (userId?: string) => {
         countries: row.countries ?? [],
         viewPermission: row.view_permission ?? 0,
         editPermission: row.edit_permission ?? 0,
+        slug: row.slug ?? null,
     }));
     return summaries;
 }
