@@ -286,7 +286,7 @@ export function UserMenu() {
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
     ) : (
-      <div className="hidden md:block">
+      <div className="block">
         <Link href="/login?mode=login">
           <Button 
             variant="ghost" 

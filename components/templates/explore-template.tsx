@@ -20,6 +20,7 @@ import { FaUserLarge } from "react-icons/fa6"
 import { PurchaseButton } from "../ui/purchase-button"
 import { DaySection } from "../ui/day-section"
 import { useState } from "react";
+import BioSection from "@/app/itinerary/[id]/bio-section";
 
 const BRAND = {
   surface: "bg-slate-50",
@@ -104,7 +105,7 @@ export default function DiscoverTemplate({
     >
 
       {/* Explore-style header */}
-      <div className="flex mx-auto w-full pt-8 pb-[80px] bg-gray-900 rounded-bl-3xl">
+      <div className="flex mx-auto w-full pt-8 pb-[80px] bg-gray-900" style={{ borderRadius: '0 0 0 4rem' }}>
         <div className="max-w-6xl mx-auto w-full">
           <div className="flex items-start justify-start">
             <div className="min-w-0 flex-1 gap-3 p-8 sm:p-12 md:px-24 md:py-12 flex flex-col">
@@ -112,9 +113,6 @@ export default function DiscoverTemplate({
               <h1 className="mt-2 text-2xl md:q lg:text-4xl md:mb-2 font-bold tracking-tight text-white sm:text-3xl">
                 {itinerary.title}
               </h1>
-              <p className="text-white/80 text-md lg:text-lg max-w-xl font-light">
-                {itinerary.shortDescription}
-              </p>
               {/* Category tabs (tags) */}
               <div className="flex flex-wrap gap-2 my-2">
                 {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => {
@@ -130,6 +128,9 @@ export default function DiscoverTemplate({
                     );
                   })}
               </div>
+              <p className="text-white/80 text-md lg:text-lg max-w-xl font-light">
+                {itinerary.shortDescription}
+              </p>
             </div>
           </div>
         </div>
@@ -137,7 +138,7 @@ export default function DiscoverTemplate({
 
       <div className="flex justify-center items-center flex-col">
         {photos.length > 1 && (
-          <div className="max-w-6xl w-full pl-12 -mt-[80px] mb-4">
+          <div className="max-w-6xl w-full pl-12 -mt-[60px] mb-4">
             <div className="flex gap-5 md:gap-6 lg:gap-8 overflow-x-auto no-scrollbar">
               {photos.map((p) => (
                 <div
@@ -161,18 +162,87 @@ export default function DiscoverTemplate({
         )}
       </div>
 
-      <div className="w-full mx-auto max-w-6xl px-6 mt-4">
-        <h3 className="text-lg mb-2 leading-none">Detailed Overview</h3>
-        {itinerary?.detailedOverview && itinerary.detailedOverview}
+      <div className="flex flex-col gap-8 w-full mx-auto max-w-6xl px-6 mt-8">
+        {itinerary?.detailedOverview && (
+          <div>
+            <h3 className="text-lg mb-2 leading-none font-semibold">Detailed Overview</h3>
+            <p className="mt-1 text-sm leading-relaxed text-gray-900 line-clamp-4">
+              {itinerary.detailedOverview}
+            </p>
+          </div>
+        )}
+
+        <div className="p-4 border rounded-md">
+          {creator.bio && creator.bio.length > 0 && (
+            <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
+          )}
+          <div className="flex flex-wrap w-full justify-between">
+            <div>
+              <Link href={`/profile/${creator.username || ''}`} className="min-w-[100px] md:w-full cursor-pointer">
+                <div className="flex items-center gap-2 px-1">
+                  <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
+                    {creator.avatar && creator.avatar.length > 0 ? (
+                      <Image
+                        src={creator.avatar}
+                        alt={creator.name || "Creator"}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="relative h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                        <FaUserLarge className="h-10 w-10 mt-2 text-gray-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex flex-col">
+                      <p className="text-xl font-medium">{creator.name}</p>
+                      <p className="text-gray-500">@{creator.username}</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+            <div className="flex w-fit gap-4 justify-end items-start">
+              <div className="hidden md:block md:w-1/2">
+                <Link href={`/profile/${creator.username}`} className="hidden md:block">
+                  <Button variant="outline" className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100">
+                    View Profile
+                  </Button>
+                </Link>
+              </div>
+              {currentUserId === itinerary.creatorId ? (
+                <Link className="min-w-[100px] md:w-1/2" href={`/account-settings?tab=${encodeURIComponent('Profile')}`}>
+                  <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+                    Edit Profile
+                  </Button>
+                </Link>
+                ) : (
+                  <div className="min-w-[100px] md:w-1/2">
+                    <FollowButton 
+                      creatorId={itinerary.creatorId} 
+                      userId={currentUserId || ""} 
+                      initialIsFollowing={initialIsFollowing}
+                    />
+                  </div>
+                )}
+            </div>
+          </div>
+          <div className="mt-2 space-y-2">
+            <BioSection bio={creator.bio} />
+          </div>
+        </div>
+        <h3 className="text-lg mt-6 leading-none font-semibold">Itinerary</h3>
       </div>
 
-      {itinerary.days &&
+
+      {itinerary.days && 
         Array.isArray(itinerary.days) &&
         itinerary.days.length > 0 && (
           <>
-            <div className="w-full mt-8">
+            <div className="w-full">
               <div className="w-full overflow-x-auto no-scrollbar my-6 pl-0 pr-6 sm:pr-[10%]">
-                <div className="flex flex-col gap-4 sm:gap-3.5">
+                <div className="flex flex-col gap-8">
                   {itinerary.days.map((day, index) => {
                     const isSelected = selectedDayIndex === index
                     const parsedDate = day.date ? new Date(day.date) : null
@@ -199,22 +269,40 @@ export default function DiscoverTemplate({
                         <button
                           type="button"
                           aria-pressed={isSelected}
+                          style={{ borderRadius: '0 2.2rem 2.2rem 0' }}
                           onClick={() => toggleDay(index)}
-                          className={`group flex w-full min-h-[96px] items-center gap-4 border border-l-0 py-4 pl-8 pr-4 text-left transition-colors sm:min-h-[104px] sm:gap-5 sm:pr-4 rounded-none rounded-r-2xl ${
+                          className={`group relative flex w-full min-h-[120px] items-center gap-4 border border-l-0 py-4 pl-8 pr-4 text-left transition-colors sm:gap-5 sm:pr-4 rounded-none ${
                             isSelected
                               ? "border-gray-400/90"
                               : "border-gray-200/90 bg-gray-900 text-white"
-                          }`}
+                          }
+                          ${day.id === itinerary.days.length ? 'mb-6' : ''}`}
                         >
-                          <div className="flex min-w-0 flex-1 flex-col gap-1 pr-1">
-                            <p className={`text-base font-bold leading-snug ${isSelected ? 'text-gray-900' : 'text-white'} sm:text-[17px]`}>
-                              {day.title}
-                            </p>
+                          {(day.activities?.length > 0 || day.accommodation?.name || day.notes?.length > 0) && (
+                            <div className="absolute flex gap-2 bottom-[-20px] right-[50px] text-sm font-normal bg-white text-black shadow-md p-3 rounded-md">
+                              {day.activities && day.activities.length > 0 && (
+                                <p className="">
+                                  <strong> Activities: </strong> {day.activities.length}
+                                </p>
+                              )}
+                              {day.accommodation?.name && (
+                                <p className="">
+                                  <strong> Accomodation: </strong> {day.accommodation?.name}
+                                </p>
+                              )}
+                              {day.notes && day.notes.length > 0 && (
+                                <p className="">
+                                  <strong> Notes: </strong> {day.notes.length}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          <div className={`flex min-w-0 flex-1 flex-col gap-1 pr-1 ${day.activities?.length > 0 || day.accommodation?.name || day.notes?.length > 0 ? 'mb-6' : ''}`}>
                             <p className={`text-sm font-normal ${isSelected ? 'text-gray-600' : 'text-white/80'}`}>
                               {monthAndDay ?? `Day ${day.id}`}
                             </p>
-                            <p className={`line-clamp-2 text-sm leading-snug ${isSelected ? 'text-gray-600' : 'text-white/80'} max-w-[70%]`}>
-                              {summaryLine}
+                            <p className={`text-2xl font-bold leading-snug ${isSelected ? 'text-gray-900' : 'text-white'}`}>
+                              {day.title}
                             </p>
                           </div>
                           {/* <div

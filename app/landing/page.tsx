@@ -14,13 +14,13 @@ export default function LandingPage() {
       <div className="w-full flex justify-center items-center shadow-[inset_0_12px_20px_-12px_rgba(0,0,0,0.1)]">
         <div className="w-screen max-w-[1800px] px-8 mt-6 mb-4 sm:mb-10 flex flex-col-reverse sm:flex-col lg:flex-row justify-center items-center gap-6">
           <div className="flex flex-col items-center lg:items-start justify-center sm:px-4 md:px-6 max-w-[600px] lg:w-1/2">
-            <h1 className="text-3xl md:text-4xl font-medium text-center lg:text-left my-8 sm:mb-8">
+            <h1 className="text-3xl md:text-4xl font-medium text-center lg:text-left my-4 lg:my-8 sm:mb-8">
               Welcome To Your New < br /> Travel Journal
             </h1>
             <p className="lg:text-base text-center lg:text-left font-light mb-4 mx-2 md:mx-0">
               Create and share your travel itineraries with friends and followers. Journli houses your experiences in one place, making it easy to share and discover new travel ideas with one link.
             </p>
-            <div className="gap-4 mt-6">
+            <div className="gap-4 my-4">
                 <ActionButtons />
             </div>
           </div>
@@ -59,7 +59,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <div className="py-20 px-4 bg-gray-100 mt-4">
+      <div className="py-12 px-4 bg-gray-100 mt-4">
         <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
           <p className="text-sm text-gray-800 mb-2">Coming Soon</p>
           <h2 className="text-2xl md:text-3xl text-cyan-700 font-bold mb-6">
@@ -72,7 +72,7 @@ export default function LandingPage() {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 px-12">
+      <div className="py-12 px-12">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center justify-center mb-16">
             <h2 className="text-2xl md:text-3xl lg:text-4xl px-8 sm:px-6 font-bold text-center mb-2">
@@ -161,13 +161,13 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <div className="py-20 px-4 bg-gray-900">
+      <div className="py-12 px-4 bg-gray-900">
         <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
           <h2 className="text-2xl md:text-3xl text-white font-bold mb-6">
             Start Sharing Your Journey For Free
           </h2>
           <p className="text-md md:text-lg text-white mb-8 px-8">
-            Sign up to start creating and sharing your stories,<br /> or learn more about Journli by clicking the button below.
+            Sign up to start creating and sharing your stories, or learn more about Journli by clicking the button below.
           </p>
           <Link href="/about">
             <Button className="px-6 text-md md:font-large md:h-12 md:py-4 md:px-8 md:text-xl text-black cursor-pointer border bg-white flex justify-center items-center p-2 hover:bg-gray-100">
@@ -178,7 +178,7 @@ export default function LandingPage() {
       </div>
 
       {/* FAQ Section */}
-      <div className="py-20 px-4 md:px-8 bg-gray-50">
+      <div className="py-12 px-4 md:px-8 bg-gray-50">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl md:text-3xl md:text-4xl font-bold text-center mb-4">
             Frequently Asked Questions
