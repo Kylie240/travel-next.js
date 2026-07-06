@@ -23,6 +23,7 @@ import {
   type ItineraryRouteMeta,
 } from "@/lib/itinerary-route"
 import { getItineraryPath } from "@/lib/utils/itinerary-url"
+import WonderTemplate from "@/components/templates/wonder"
 
 type PageParams = { id: string; slug: string }
 
@@ -203,6 +204,7 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
     priceCents: itineraryMeta.price_cents || 0,
   }
 
+  // return <ExploreTemplate {...templateProps} />
   const template = itineraryMeta.template || "basic"
   if (template === "discover") {
     return <DiscoverTemplate {...templateProps} />

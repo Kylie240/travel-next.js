@@ -37,6 +37,8 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
   // Check if description is long enough to need truncation (roughly 4 lines worth of text)
   const isDiscoverTemplate = template === "discover"
   const isExploreTemplate = template === "explore"
+  const isWonderTemplate = template === "wonder"
+  const isBasicTemplate = template === "basic"
   const needsDescriptionTruncation = !isDiscoverTemplate && (day.description && day.description.length > 200)
 
   useEffect(() => {
@@ -67,8 +69,8 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
   }
   return (
    <div>
-      <div className={`relative ${!isDiscoverTemplate && !isExploreTemplate ? 'border-black border-l-[.12rem] pl-4 mr-2' : ''} ${isActive ? 'pb-4' : ''}`}>
-        {!isDiscoverTemplate && !isExploreTemplate && (
+      <div className={`relative ${isBasicTemplate ? 'border-black border-l-[.12rem] pl-4 mr-2' : ''} ${isActive ? 'pb-4' : ''}`}>
+        {isBasicTemplate && (
         <div className={`absolute -left-[.83rem] bg-white py-4 ${day.id === 1 ? 'pt-[1.2rem]' : 'top-4'}`}>
           <button 
             onClick={() => hasExpandableContent && onToggle()} 
@@ -88,12 +90,12 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
         </div>
         )}
         {duration === day.id}
-        {day.id === duration &&
+        {day.id === duration && isBasicTemplate &&
           <div className="absolute bottom-0 w-[10px] h-[.12rem] bg-black">
           </div>
         }
         
-        {!isDiscoverTemplate && !isExploreTemplate && (
+        {isBasicTemplate && (
         <button 
           type="button"
           aria-label={isExploreTemplate && day.image ? `Day ${day.id}: ${day.title}. Show details.` : undefined}
@@ -121,6 +123,43 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
           )}
         </button>
         )}
+        {isWonderTemplate && (
+            <button 
+              type="button"
+              aria-label={`Day ${day.id}: ${day.title}`}
+              className={`w-full p-2 bg-white relative border border-gray-200 top-4 flex items-center justify-between gap-4 rounded-2xl overflow-hidden transition-all duration-300 h-[170px] ${isActive ? 'shadow-lg ring-1 ring-gray-300' : 'shadow-sm'} ${hasExpandableContent ? 'cursor-pointer' : 'cursor-default'}`} 
+              onClick={() => hasExpandableContent && onToggle()}
+              disabled={!hasExpandableContent}
+            >
+              <div className="z-[5] min-w-0 flex-1 text-left h-full flex flex-col justify-between p-4">
+                <div className="mb-2 border border-gray-200 rounded-2xl max-w-fit px-2 py-1 flex items-center justify-center gap-1">
+                  {day.date ? (
+                    <p className="text-xs lg:text-[14px] font-normal">{formatDateToText(day.date)}</p>
+                  ) : <p className="text-xs lg:text-[14px] font-normal">Day {day.id}</p>}
+                </div>
+                {(day.cityName || day.countryName) && (
+                  <p className="text-sm lg:text-[16px] text-gray-500 font-thin">
+                    {[day.cityName, day.countryName].filter(Boolean).join(", ")}
+                  </p>
+                )}
+                <h2 className="text-xl md:text-2xl leading-5 font-semibold mb-1">{day.title}</h2>
+                {day.description && (
+                  <p className="text-sm text-gray-500 font-thin line-clamp-1 max-w-[70%]">{day.description}</p>
+                )}
+              </div>
+              {day.image && (
+                <div className="relative h-full aspect-square shrink-0 self-center overflow-hidden rounded-xl">
+                  <Image
+                    src={day.image}
+                    alt={day.title}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                  />
+                </div>
+              )}
+            </button>
+        )}
         <motion.div
           initial={false}
           animate={{
@@ -131,7 +170,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
             duration: 0.3,
           }}
           className={
-            isDiscoverTemplate || isExploreTemplate ? "relative" : "relative left-4"
+            isBasicTemplate ? "relative left-4" : "relative"
           }
         >
           <div className="mt-8">

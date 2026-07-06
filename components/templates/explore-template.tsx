@@ -9,7 +9,7 @@ import { itineraryTagsMap } from "@/lib/constants/tags"
 import { UserData } from "@/lib/types"
 import { PhotoItem } from "@/lib/utils/photos"
 import { Itinerary } from "@/types/itinerary"
-import { MapPin } from "lucide-react"
+import { Lock, MapPin } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { FiEdit } from "react-icons/fi"
@@ -232,118 +232,150 @@ export default function DiscoverTemplate({
             <BioSection bio={creator.bio} />
           </div>
         </div>
-        <h3 className="text-lg mt-6 leading-none font-semibold">Itinerary</h3>
+        {!isRestrictedView && 
+          <h3 className="text-lg mt-6 leading-none font-semibold">Itinerary</h3>
+        }
       </div>
 
 
-      {itinerary.days && 
-        Array.isArray(itinerary.days) &&
-        itinerary.days.length > 0 && (
+      {isRestrictedView ? (
+          <div className="mt-8 w-full max-w-[1080px] mx-auto px-4 p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+              <Lock className="w-8 h-8 text-gray-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Premium Content</h3>
+            <p className="text-gray-600 mb-4">
+              Purchase this itinerary to unlock the full day-by-day schedule, detailed notes, and all travel tips.
+            </p>
+            <div className="text-2xl font-bold text-gray-900 mb-4">
+              ${(priceCents / 100).toFixed(2)}
+            </div>
+            <div className="flex flex-col gap-3 items-center">
+              <PurchaseButton
+                itinerary={{
+                  id: itinerary.id,
+                  title: itinerary.title,
+                  priceCents: priceCents,
+                  mainImage: itinerary.mainImage,
+                  creatorName: creator.name || "",
+                  creatorUsername: creator.username || "",
+                  creatorId: creator.id || "",
+                }}
+              />
+            </div>
+          </div>
+        ) : (
           <>
-            <div className="w-full">
-              <div className="w-full overflow-x-auto no-scrollbar my-6 pl-0 pr-6 sm:pr-[10%]">
-                <div className="flex flex-col gap-8">
-                  {itinerary.days.map((day, index) => {
-                    const isSelected = selectedDayIndex === index
-                    const parsedDate = day.date ? new Date(day.date) : null
-                    const hasValidDate =
-                      parsedDate && !Number.isNaN(parsedDate.getTime())
-                    const monthAndDay = hasValidDate
-                      ? parsedDate.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })
-                      : null
-                    const locationLine = [day.cityName, day.countryName]
-                      .filter(Boolean)
-                      .join(", ")
-                    const summaryLine =
-                      day.description?.trim() ||
-                      locationLine ||
-                      `${itinerary.duration} day trip`
-                    return (
-                      <div
-                        key={day.id || index}
-                        className="flex flex-col w-full gap-0"
-                      >
-                        <button
-                          type="button"
-                          aria-pressed={isSelected}
-                          style={{ borderRadius: '0 2.2rem 2.2rem 0' }}
-                          onClick={() => toggleDay(index)}
-                          className={`group relative flex w-full min-h-[120px] items-center gap-4 border border-l-0 py-4 pl-8 pr-4 text-left transition-colors sm:gap-5 sm:pr-4 rounded-none ${
-                            isSelected
-                              ? "border-gray-400/90"
-                              : "border-gray-200/90 bg-gray-900 text-white"
-                          }
-                          ${day.id === itinerary.days.length ? 'mb-6' : ''}`}
-                        >
-                          {(day.activities?.length > 0 || day.accommodation?.name || day.notes?.length > 0) && (
-                            <div className="absolute flex gap-2 bottom-[-20px] right-[50px] text-sm font-normal bg-white text-black shadow-md p-3 rounded-md">
-                              {day.activities && day.activities.length > 0 && (
-                                <p className="">
-                                  <strong> Activities: </strong> {day.activities.length}
-                                </p>
-                              )}
-                              {day.accommodation?.name && (
-                                <p className="">
-                                  <strong> Accomodation: </strong> {day.accommodation?.name}
-                                </p>
-                              )}
-                              {day.notes && day.notes.length > 0 && (
-                                <p className="">
-                                  <strong> Notes: </strong> {day.notes.length}
-                                </p>
+            {itinerary.days && 
+              Array.isArray(itinerary.days) &&
+              itinerary.days.length > 0 && (
+                <>
+                  <div className="w-full">
+                    <div className="w-full overflow-x-auto no-scrollbar my-6 pl-0 pr-6 sm:pr-[10%]">
+                      <div className="flex flex-col gap-8">
+                        {itinerary.days.map((day, index) => {
+                          const isSelected = selectedDayIndex === index
+                          const parsedDate = day.date ? new Date(day.date) : null
+                          const hasValidDate =
+                            parsedDate && !Number.isNaN(parsedDate.getTime())
+                          const monthAndDay = hasValidDate
+                            ? parsedDate.toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : null
+                          const locationLine = [day.cityName, day.countryName]
+                            .filter(Boolean)
+                            .join(", ")
+                          const summaryLine =
+                            day.description?.trim() ||
+                            locationLine ||
+                            `${itinerary.duration} day trip`
+                          return (
+                            <div
+                              key={day.id || index}
+                              className="flex flex-col w-full gap-0"
+                            >
+                              <button
+                                type="button"
+                                aria-pressed={isSelected}
+                                style={{ borderRadius: '0 2.2rem 2.2rem 0' }}
+                                onClick={() => toggleDay(index)}
+                                className={`group relative flex w-full min-h-[120px] items-center gap-4 border border-l-0 py-4 pl-8 pr-4 text-left transition-colors sm:gap-5 sm:pr-4 rounded-none ${
+                                  isSelected
+                                    ? "border-gray-400/90"
+                                    : "border-gray-200/90 bg-gray-900 text-white"
+                                }
+                                ${day.id === itinerary.days.length ? 'mb-6' : ''}`}
+                              >
+                                {(day.activities?.length > 0 || day.accommodation?.name || day.notes?.length > 0) && (
+                                  <div className="absolute flex gap-2 bottom-[-20px] right-[50px] text-sm font-normal bg-white text-black shadow-md p-3 rounded-md">
+                                    {day.activities && day.activities.length > 0 && (
+                                      <p className="">
+                                        <strong> Activities: </strong> {day.activities.length}
+                                      </p>
+                                    )}
+                                    {day.accommodation?.name && (
+                                      <p className="">
+                                        <strong> Accomodation: </strong> {day.accommodation?.name}
+                                      </p>
+                                    )}
+                                    {day.notes && day.notes.length > 0 && (
+                                      <p className="">
+                                        <strong> Notes: </strong> {day.notes.length}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                                <div className={`flex min-w-0 flex-1 flex-col gap-1 pr-1 ${day.activities?.length > 0 || day.accommodation?.name || day.notes?.length > 0 ? 'mb-6' : ''}`}>
+                                  <p className={`text-sm font-normal ${isSelected ? 'text-gray-600' : 'text-white/80'}`}>
+                                    {monthAndDay ?? `Day ${day.id}`}
+                                  </p>
+                                  <p className={`text-2xl font-bold leading-snug ${isSelected ? 'text-gray-900' : 'text-white'}`}>
+                                    {day.title}
+                                  </p>
+                                </div>
+                                {/* <div
+                                  className={`relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-2xl sm:h-[88px] sm:w-[88px] sm:rounded-[1.25rem]}`}
+                                >
+                                  {day.image && (
+                                    <Image
+                                      src={day.image}
+                                      alt={day.title}
+                                      fill
+                                      className="object-cover"
+                                      sizes="(max-width: 640px) 76px, 88px"
+                                    />
+                                  )}
+                                </div> */}
+                              </button>
+                              {isSelected && (
+                                <div className="max-w-6xl mx-auto w-full px-6 pb-8 pt-4">
+                                  <DaySection
+                                    day={day}
+                                    isActive={true}
+                                    onToggle={() => {}}
+                                    duration={itinerary.duration}
+                                    template="explore"
+                                  />
+                                </div>
                               )}
                             </div>
-                          )}
-                          <div className={`flex min-w-0 flex-1 flex-col gap-1 pr-1 ${day.activities?.length > 0 || day.accommodation?.name || day.notes?.length > 0 ? 'mb-6' : ''}`}>
-                            <p className={`text-sm font-normal ${isSelected ? 'text-gray-600' : 'text-white/80'}`}>
-                              {monthAndDay ?? `Day ${day.id}`}
-                            </p>
-                            <p className={`text-2xl font-bold leading-snug ${isSelected ? 'text-gray-900' : 'text-white'}`}>
-                              {day.title}
-                            </p>
-                          </div>
-                          {/* <div
-                            className={`relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-2xl sm:h-[88px] sm:w-[88px] sm:rounded-[1.25rem]}`}
-                          >
-                            {day.image && (
-                              <Image
-                                src={day.image}
-                                alt={day.title}
-                                fill
-                                className="object-cover"
-                                sizes="(max-width: 640px) 76px, 88px"
-                              />
-                            )}
-                          </div> */}
-                        </button>
-                        {isSelected && (
-                          <div className="max-w-6xl mx-auto w-full px-6 pb-8 pt-4">
-                            <DaySection
-                              day={day}
-                              isActive={true}
-                              onToggle={() => {}}
-                              duration={itinerary.duration}
-                              template="explore"
-                            />
-                          </div>
-                        )}
+                          )
+                        })}
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-            {itinerary.notes && itinerary.notes.length > 0 && (
-              <div className="max-w-6xl mx-auto w-full px-6 pb-10 mt-6">
-                <p className="text-xl text-center w-full font-medium mt-2 mb-3">
-                  Creator Notes
-                </p>
-                <NoteSection notes={itinerary.notes} />
-              </div>
-            )}
+                    </div>
+                  </div>
+                  {itinerary.notes && itinerary.notes.length > 0 && (
+                    <div className="max-w-6xl mx-auto w-full px-6 pb-10 mt-6">
+                      <p className="text-xl text-center w-full font-medium mt-2 mb-3">
+                        Creator Notes
+                      </p>
+                      <NoteSection notes={itinerary.notes} />
+                    </div>
+                  )}
+                </>
+              )}
           </>
         )}
     </div>
