@@ -187,7 +187,7 @@ export default function WonderTemplate({
       )}
 
       {itinerary.detailedOverview && (
-        <div className="mt-8 px-8 max-w-6xl mx-auto">
+        <div className="mt-8 px-8 max-w-6xl mx-auto mb-6">
           <p className="text-xl font-semibold mb-4 text-gray-700">
             Trip Overview
           </p>

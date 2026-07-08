@@ -2394,16 +2394,19 @@ export default function CreatePage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="basic">
-                              Basic - A basic itinerary with a title, description, and map
+                              Basic
                             </SelectItem>
                             <SelectItem value="discover">
-                              Discover - A visually stunning itinerary with stunning photos and videos
+                              Discover
                             </SelectItem>
                             <SelectItem value="explore">
-                              Explore - A detailed itinerary with all the information you need
+                              Explore
                             </SelectItem>
                             <SelectItem value="journey">
-                              Journey - A journey itinerary with a map and directions
+                              Journey
+                            </SelectItem>
+                            <SelectItem value="wonder">
+                              Wonder
                             </SelectItem>
                           </SelectContent>
                         </Select>

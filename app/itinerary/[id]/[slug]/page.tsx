@@ -215,6 +215,9 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
   if (template === "journey") {
     return <JourneyTemplate {...templateProps} />
   }
+  if (template === "wonder") {
+    return <WonderTemplate {...templateProps} />
+  }
   return <BasicTemplate {...templateProps} />
 }
 

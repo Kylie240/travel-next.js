@@ -111,7 +111,7 @@ export default function DiscoverTemplate({
             )}
             {/* <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" /> */}
           </div>              
-          <div className="absolute top-6 right-6 z-10 flex flex-col items-center">
+          <div className="absolute top-6 right-6 z-10 flex flex-col items-center gap-3">
             {currentUserId !== itinerary.creatorId && (
               <InteractionButtons 
                 itineraryId={itinerary.id} 
@@ -124,18 +124,16 @@ export default function DiscoverTemplate({
             )}
             {canEdit &&
               <Link href={`/create?itineraryId=${itinerary.id}`}>
-                <FiEdit size={30} className={`transition-colors cursor-pointer h-8 w-8 text-black bg-white/80 hover:bg-gray-100 rounded-lg p-1`}/>
+                <FiEdit size={24} className={`transition-colors cursor-pointer h-10 w-10 p-2 text-black bg-white/40 hover:bg-white/80 rounded-lg`}/>
               </Link>
             }
             {(!isRestrictedView || canEdit) && (
-              <div className="inline-flex shrink-0 items-center bg-white/80 rounded-lg">
+              <div className="inline-flex shrink-0 items-center bg-white/40 rounded-lg">
                 <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
               </div>
             )}
             {itinerary.status === ItineraryStatusEnum.published && 
-              <div className="inline-flex shrink-0 items-center cursor-pointer rounded-lg">
-                <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} smallButton={true} color="white" />
-              </div>
+              <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="white" color="black" smallButton={false} />
             }
           </div>
 
@@ -279,7 +277,7 @@ export default function DiscoverTemplate({
             {photos.map((p) => (
               <div
                 key={p.id}
-                className="relative md:h-60 md:w-60 h-40 w-40 shrink-0 overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-200/60"
+                className="relative md:h-60 md:w-60 h-40 w-40 sm:h-50 sm:w-50 shrink-0 overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-200/60"
               >
                 <Image
                   src={p.url}

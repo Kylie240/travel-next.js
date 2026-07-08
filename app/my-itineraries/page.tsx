@@ -268,7 +268,7 @@ export default function MyItinerariesPage() {
                         <DropdownMenu.Root>
                           <DropdownMenu.Trigger asChild>
                             <button 
-                              className="p-2 rounded-full bg-white/40 hover:bg-white/60 transition-colors">
+                              className="p-2 rounded-full bg-white/40 hover:bg-white/80 transition-colors">
                               <MoreVertical className="h-4 w-4 text-black" />
                             </button>
                           </DropdownMenu.Trigger>
@@ -400,10 +400,8 @@ export default function MyItinerariesPage() {
                             e.preventDefault()
                             e.stopPropagation()
                           }}
-                          className="p-2 absolute top-8 mt-6 right-4 rounded-full bg-white/40 hover:bg-white/60 transition-colors">
-                          {itinerary.status === ItineraryStatusEnum.published && 
-                            <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} smallButton={true} />
-                          }
+                          className="absolute top-8 mt-6 right-4">
+                            <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="circle" backgroundColor="white" color="black" smallButton={true} />
                         </button>
                       )}
                     </div>

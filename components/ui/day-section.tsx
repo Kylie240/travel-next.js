@@ -106,7 +106,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
             backgroundImage: `url(${day.image})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
+            backgroundRepeat: 'no-repeat', 
           }}
         >
           {(!isExploreTemplate || !day.image) && (
@@ -132,7 +132,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
               disabled={!hasExpandableContent}
             >
               <div className="z-[5] min-w-0 flex-1 text-left h-full flex flex-col justify-between p-4">
-                <div className="mb-2 border border-gray-200 rounded-2xl max-w-fit px-2 py-1 flex items-center justify-center gap-1">
+                <div className="mb-2 border bg-gray-800 text-white rounded-2xl max-w-fit px-3 py-1 flex items-center justify-center gap-1">
                   {day.date ? (
                     <p className="text-xs lg:text-[14px] font-normal">{formatDateToText(day.date)}</p>
                   ) : <p className="text-xs lg:text-[14px] font-normal">Day {day.id}</p>}
@@ -173,7 +173,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
             isBasicTemplate ? "relative left-4" : "relative"
           }
         >
-          <div className="mt-8">
+          <div className={`mt-8 ${isWonderTemplate ? 'pr-4' : ''}`}>
               {isDiscoverTemplate && <h3 className="text-xl font-bold mb-6 pl-2">{day.title}</h3>}
               {isDiscoverTemplate || isExploreTemplate && 
                 <>
@@ -217,8 +217,8 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
 
               return (
                 <div key={activity.id || index} className="relative mb-2">
-                  {!isDiscoverTemplate && activity?.type ? (
-                    <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity?.time && activity?.time !== '' ? '14px' : '14px'}` }}>
+                  {!isDiscoverTemplate && !isExploreTemplate && !isWonderTemplate && activity?.type ? (
+                    <div className="absolute z-[5] min-w-[65px] flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity?.time && activity?.time !== '' ? '14px' : '14px'}` }}>
                       {(() => {
                         const tag = activityTagsMap.find(t => t.id === activity.type);
                         const IconComponent = tag?.icon;
@@ -230,8 +230,8 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
                       })()}
                       <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity?.time)}</p>
                     </div>
-                  ) : !isDiscoverTemplate && (
-                    <div className="absolute z-[5] min-w-[65px] bg-white flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-63px', top: `${activity?.time && activity?.time !== '' ? '25px' : '25px'}` }}>
+                  ) : !isDiscoverTemplate && !isExploreTemplate && !isWonderTemplate && (
+                    <div className="absolute z-[5] min-w-[65px] flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-63px', top: `${activity?.time && activity?.time !== '' ? '25px' : '25px'}` }}>
                       <div className="w-5 h-5">
                         {activity?.time && activity?.time !== '' ? (
                           <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity?.time)}</p>

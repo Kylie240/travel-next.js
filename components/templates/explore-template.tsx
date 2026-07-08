@@ -162,7 +162,7 @@ export default function DiscoverTemplate({
         )}
       </div>
 
-      <div className="flex flex-col gap-8 w-full mx-auto max-w-6xl px-6 mt-8">
+      <div className="flex flex-col gap-8 w-full mx-auto max-w-6xl px-8 mt-8">
         {itinerary?.detailedOverview && (
           <div>
             <h3 className="text-lg mb-2 leading-none font-semibold">Detailed Overview</h3>
@@ -271,7 +271,7 @@ export default function DiscoverTemplate({
               itinerary.days.length > 0 && (
                 <>
                   <div className="w-full">
-                    <div className="w-full overflow-x-auto no-scrollbar my-6 pl-0 pr-6 sm:pr-[10%]">
+                    <div className="w-full overflow-x-auto no-scrollbar my-6 pl-0 pr-6">
                       <div className="flex flex-col gap-8">
                         {itinerary.days.map((day, index) => {
                           const isSelected = selectedDayIndex === index
@@ -303,13 +303,13 @@ export default function DiscoverTemplate({
                                 onClick={() => toggleDay(index)}
                                 className={`group relative flex w-full min-h-[120px] items-center gap-4 border border-l-0 py-4 pl-8 pr-4 text-left transition-colors sm:gap-5 sm:pr-4 rounded-none ${
                                   isSelected
-                                    ? "border-gray-400/90"
+                                    ? "bg-white border-1 border-gray-900"
                                     : "border-gray-200/90 bg-gray-900 text-white"
                                 }
                                 ${day.id === itinerary.days.length ? 'mb-6' : ''}`}
                               >
                                 {(day.activities?.length > 0 || day.accommodation?.name || day.notes?.length > 0) && (
-                                  <div className="absolute flex gap-2 bottom-[-20px] right-[50px] text-sm font-normal bg-white text-black shadow-md p-3 rounded-md">
+                                  <div className={`absolute flex gap-2 bottom-[-20px] right-[50px] text-sm font-normal ${!isSelected ? 'bg-white text-black' : 'bg-gray-900 text-white'} shadow-md p-3 rounded-md`}>
                                     {day.activities && day.activities.length > 0 && (
                                       <p className="">
                                         <strong> Activities: </strong> {day.activities.length}

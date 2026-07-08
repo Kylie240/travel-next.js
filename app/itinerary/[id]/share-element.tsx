@@ -15,12 +15,16 @@ const ShareElement = ({
   title,
   smallButton = false,
   color = "black",
+  shape = "circle",
+  backgroundColor = "gray-100",
 }: {
   id: string
   slug?: string | null
   title?: string | null
-  smallButton: boolean
+  smallButton?: boolean
   color?: string
+  shape?: "circle" | "square"
+  backgroundColor?: "gray-100" | "white"
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -110,9 +114,9 @@ const ShareElement = ({
           e.stopPropagation()
           handleNativeShare()
         }}
-        className={`h-10 w-10 p-1 hover:bg-gray-100/60 cursor-pointer rounded-lg flex items-center justify-center`}
-      >
-        <MdIosShare size={smallButton ? 24 : 35} className={`${color == 'black' ? 'text-black' : 'text-white'}`} />
+        className={`${smallButton ? "h-8 w-8" : "h-10 w-10"} hover:bg-gray-100 cursor-pointer flex items-center justify-center transition-colors rounded-${shape == "circle" ? "full" : "lg"} bg-${backgroundColor}/40 hover:bg-${backgroundColor}/80`}
+        >
+        <MdIosShare size={24} className={`${color == 'black' ? 'text-black' : 'text-white'}`} />
       </button>
     )
   }
@@ -127,18 +131,18 @@ const ShareElement = ({
             e.stopPropagation()
             setIsOpen(true)
           }}
-          className={`${smallButton ? 'h-10 w-10' : 'h-10 w-10 p-1'} ${color == 'black' ? 'hover:bg-gray-100' : 'hover:bg-gray-100/60'} cursor-pointer rounded-lg flex items-center justify-center`}
-        >
-          <MdIosShare size={smallButton ? 30 : 35} className={`${color == 'black' ? 'text-black' : 'text-white'}`} />
+          className={`${smallButton ? "h-8 w-8" : "h-10 w-10"} hover:bg-gray-100 cursor-pointer flex items-center justify-center transition-colors rounded-${shape == "circle" ? "full" : "lg"} bg-${backgroundColor}/40 hover:bg-${backgroundColor}/80`}
+          >
+          <MdIosShare size={24} className={`${color == "black" ? "text-black" : "text-white"}`} />
         </button>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
-          className="bg-white rounded-2xl shadow-2xl p-6 w-[380px] z-[10000] border border-gray-200"
+          className="bg-white rounded-2xl shadow-2xl w-[380px] z-[10000] border border-gray-200"
           sideOffset={8}
           align="end"
         >
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <h3 className="text-xl ml-2 font-semibold text-gray-900">Share this itinerary</h3>
             
             {/* Copy Link Section */}

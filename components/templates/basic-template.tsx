@@ -110,11 +110,11 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                       }
                       {(!isRestrictedView || canEdit) && (
                         <div className="inline-flex shrink-0 items-center">
-                          <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                          <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={true} />
                         </div>
                       )}
                       {itinerary.status === ItineraryStatusEnum.published && 
-                        <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} smallButton={false} />
+                        <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
                       }
                     </div>
                 </div>
@@ -270,7 +270,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                         </div>
                       )}
                       {itinerary.status === ItineraryStatusEnum.published && 
-                        <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} smallButton={false} />
+                        <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
                       }
                     </div>
                   </div>
