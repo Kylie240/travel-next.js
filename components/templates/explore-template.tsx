@@ -172,7 +172,7 @@ export default function DiscoverTemplate({
           </div>
         )}
 
-        <div className="p-4 border rounded-md">
+        <div className="p-4 border rounded-2xl">
           {creator.bio && creator.bio.length > 0 && (
             <p className="text-md hidden md:block font-medium px-2 mb-2">About the Creator</p>
           )}

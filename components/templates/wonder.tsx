@@ -197,7 +197,7 @@ export default function WonderTemplate({
         </div>
       )}
 
-      <div className="w-full px-4 flex justify-center">
+      <div className="w-full px-6 flex justify-center">
         {isRestrictedView ? (
           <div className="mt-8 w-full max-w-[1080px] px-4 p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">

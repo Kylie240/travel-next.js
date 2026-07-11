@@ -31,6 +31,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { activityTagsMap, itineraryTagsMap } from "@/lib/constants/tags"
 import { createSchema } from "@/validation/createSchema"
+import { formatPublishValidationToast, getPublishValidationIssues } from "@/validation/publishValidation"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -1582,82 +1583,34 @@ export default function CreatePage() {
     }
   }
 
+  const showPublishValidationErrors = (data: FormData) => {
+    const issues = getPublishValidationIssues(data as z.infer<typeof createSchema>)
+    if (issues.length === 0) return false
+
+    setCurrentStep(issues[0].step)
+    scrollToTop()
+
+    const { title, description } = formatPublishValidationToast(issues)
+    toast.error(title, { description, duration: 8000 })
+
+    return true
+  }
+
     const onSubmit = form.handleSubmit(async (data) => {
       try {
-        // Pre-submission validation check
-        const hasEmptyActivities = data.days.some(day => 
-          day.activities?.some(activity => !activity.title || activity.title.trim() === '')
-        )
-        
-        if (hasEmptyActivities) {
-          toast.error('Please add titles to all activities before publishing')
+        if (showPublishValidationErrors(data)) {
           return
         }
-        
-        const isValid = await form.trigger()
-        if (isValid) {
-          await handleFinalSubmit(data)
-        } else {
-          // Get specific validation errors
-          const errors = form.formState.errors
-          console.log('Validation errors:', errors)
-          
-          // Check for specific missing fields
-          if (errors.title) {
-            toast.error('Title is required')
-          } else if (errors.shortDescription) {
-            toast.error('Short description is required')
-          } else if (errors.mainImage) {
-            toast.error('Main image URL is required')
-          } else if (errors.duration) {
-            toast.error('Duration must be at least 1 day')
-          } else if (errors.cities) {
-            toast.error('At least one city is required')
-          } else if (errors.days) {
-            // Check for specific day errors
-            const dayErrors = errors.days
-            if (Array.isArray(dayErrors)) {
-              for (let i = 0; i < dayErrors.length; i++) {
-                const dayError = dayErrors[i]
-                if (dayError?.title) {
-                  toast.error(`Day ${i + 1}: Title is required`)
-                  break
-                } else if (dayError?.cityName) {
-                  toast.error(`Day ${i + 1}: City name is required`)
-                  break
-                } else if (dayError?.countryName) {
-                  toast.error(`Day ${i + 1}: Country name is required`)
-                  break
-                } else if (dayError?.activities) {
-                  // Check for specific activity errors
-                  const activityErrors = dayError.activities
-                  if (Array.isArray(activityErrors)) {
-                    for (let j = 0; j < activityErrors.length; j++) {
-                      const activityError = activityErrors[j]
-                      if (activityError?.title) {
-                        toast.error(`Day ${i + 1}, Activity ${j + 1}: Title is required`)
-                        break
-                      }
-                    }
-                  } else {
-                    toast.error(`Day ${i + 1}: Activity titles are required`)
-                  }
-                  break
-                }
-              }
-            } else {
-              toast.error('At least one day is required')
-            }
-          } else {
-            toast.error('Please fill in all required fields')
-          }
-        }
+
+        await handleFinalSubmit(data)
       } catch (error) {
         toast.error('Error submitting form')
       }
-    }, (errors) => {
-      console.log('Form validation errors:', errors)
-      toast.error('Please fill in all required fields')
+    }, () => {
+      const data = form.getValues()
+      if (!showPublishValidationErrors(data)) {
+        toast.error('Please fill in all required fields before publishing.')
+      }
     })
   
   const saveDraft = async () => {
@@ -2297,7 +2250,7 @@ export default function CreatePage() {
                         )}
                         <Button 
                           type="button"
-                          onClick={itineraryStatus == ItineraryStatusEnum.published ? onSubmit : saveDraft}
+                          onClick={onSubmit}
                           disabled={isFormDisabled}
                         >
                           {itineraryStatus == ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived ? "Publish" : "Update"}
