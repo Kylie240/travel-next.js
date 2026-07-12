@@ -62,7 +62,7 @@ function LocationLine({ countries }: { countries: string[] }) {
   )
 }
 
-export default function DiscoverTemplate({
+export default function ExploreTemplate({
   itinerary,
   countries,
   photos,
@@ -110,7 +110,7 @@ export default function DiscoverTemplate({
           <div className="flex items-start justify-start">
             <div className="min-w-0 flex-1 gap-3 p-8 sm:p-12 md:px-24 md:py-12 flex flex-col">
               <LocationLine countries={countries} />
-              <h1 className="mt-2 text-2xl md:q lg:text-4xl md:mb-2 font-bold tracking-tight text-white sm:text-3xl">
+              <h1 className="mt-2 text-2xl md:text-3xl lg:text-4xl md:mb-2 font-bold tracking-tight text-white sm:text-3xl">
                 {itinerary.title}
               </h1>
               {/* Category tabs (tags) */}

@@ -80,7 +80,19 @@ export default function WonderTemplate({
   paidUser: _paidUser = false,
 }: WonderTemplateProps) {
   void _paidUser
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0)
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
+
+  const toggleDay = (dayNumber: number | null) => {
+    if (dayNumber === null) {
+      setSelectedDayIndex(null)
+      return
+    }
+    if (selectedDayIndex === dayNumber) {
+      setSelectedDayIndex(null)
+    } else {
+      setSelectedDayIndex(dayNumber)
+    }
+  }
 
   if (!itinerary || !creator) {
     return null
@@ -94,14 +106,6 @@ export default function WonderTemplate({
     countries.length > 0
       ? countries.map((c) => c).join(" · ")
       : itinerary.title
-
-  const toggleDay = (dayNumber: number) => {
-    if (selectedDayIndex === dayNumber) {
-      setSelectedDayIndex(null)
-    } else {
-      setSelectedDayIndex(dayNumber)
-    }
-  }
   return (
     <div
       className={`min-h-screen bg-slate-50 flex flex-col pb-12`}
@@ -228,10 +232,10 @@ export default function WonderTemplate({
           <div className="px-4 max-w-[1080px]">
             <div className="sticky w-full top-20 z-50 flex flex-col items-end gap-2">
             <button 
-              onClick={() => selectedDayIndex > 0 ? toggleDay(null) : toggleDay(0)} 
+              onClick={() => selectedDayIndex !== null ? toggleDay(null) : toggleDay(0)} 
               className="flex cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
             >
-              {selectedDayIndex > 0 ? (
+              {selectedDayIndex !== null ? (
                 <div className='flex text-xs sm:text-sm items-center gap-1' onClick={() => toggleDay(null)}>
                   Close
                   <ChevronUp strokeWidth={3} size={18} />
