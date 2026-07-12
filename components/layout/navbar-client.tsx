@@ -17,7 +17,8 @@ const publicNavigation = [
 const authenticatedNavigation = [
   { name: "Search", href: "/search" },
 ]
-  const unauthenticatedNavigation = [
+
+const unauthenticatedNavigation = [
   { name: "Login", href: "/login" },
 ]
 

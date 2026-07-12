@@ -9,11 +9,14 @@ const publicNavigation = [
   { name: "Explore", href: "/explore" },
   { name: "Plans", href: "/plans" },
   { name: "About", href: "/about" },
-  { name: "Login", href: "/login" },
 ]
 
 const authenticatedNavigation = [
   { name: "Search", href: "/search" },
+]
+
+const unauthenticatedNavigation = [
+  { name: "Login", href: "/login" },
 ]
 
 export default async function NavbarServer() {
@@ -24,9 +27,9 @@ export default async function NavbarServer() {
   const isCartEnabled = process.env.NEXT_PUBLIC_ENABLE_CART === 'true'
   
   // Combine public navigation with authenticated navigation if user is logged in
-  const navigation = user 
+  const navigation = user
     ? [...publicNavigation, ...authenticatedNavigation]
-    : publicNavigation
+    : [...publicNavigation, ...unauthenticatedNavigation]
   
   return (
     <nav className="fixed top-0 left-0 right-0 w-full z-[50] transition-all duration-200 bg-white/80 backdrop-blur-md">
