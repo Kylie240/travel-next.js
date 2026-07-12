@@ -95,7 +95,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
               <div className="mb-2">
                 <div className="flex w-full justify-between items-center mb-1">
                   <h2 className="text-xl flex items-center font-semibold">Overview</h2>
-                  <div className="flex">
+                  <div className="flex items-center">
                       {currentUserId !== itinerary.creatorId && (
                         <InteractionButtons 
                           itineraryId={itinerary.id} 
@@ -109,9 +109,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                         </Link>
                       }
                       {(!isRestrictedView || canEdit) && (
-                        <div className="inline-flex shrink-0 items-center">
-                          <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={true} />
-                        </div>
+                        <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
                       )}
                       {itinerary.status === ItineraryStatusEnum.published && 
                         <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
@@ -245,13 +243,13 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
               {/* Left Column - Schedule */}
               <div className="lg:col-span-2 flex flex-col gap-4 md:gap-8">
                 <div className="flex flex-col lg:mb-0">
-                  <div className="w-full justify-between hidden lg:flex">
+                  <div className="w-full justify-between items-center gap-4 hidden lg:flex min-w-0">
                     {(itinerary.detailedOverview && itinerary.detailedOverview.length > 0 || itinerary.itineraryTags.length > 0) ? (
-                      <h2 className="text-2xl md:text-2xl font-semibold mb-2">Overview</h2>
+                      <h2 className="text-2xl md:text-2xl font-semibold mb-2 shrink min-w-0">Overview</h2>
                     ) : (
-                      <h2 className="text-2xl md:text-2xl font-semibold mb-2"> </h2>
+                      <h2 className="text-2xl md:text-2xl font-semibold mb-2 shrink min-w-0"> </h2>
                     )}
-                    <div className="flex">
+                    <div className="flex shrink-0 flex-nowrap items-center">
                       {currentUserId !== itinerary.creatorId && (
                         <InteractionButtons 
                           itineraryId={itinerary.id} 
@@ -265,9 +263,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                         </Link>
                       }
                       {(!isRestrictedView || canEdit) && (
-                        <div className="hidden lg:inline-flex">
                           <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
-                        </div>
                       )}
                       {itinerary.status === ItineraryStatusEnum.published && 
                         <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />

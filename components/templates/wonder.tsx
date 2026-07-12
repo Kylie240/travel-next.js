@@ -35,6 +35,7 @@ import { useState } from "react"
 import { DaySection } from "@/components/ui/day-section";
 import BioSection from "@/app/itinerary/[id]/bio-section";
 import { Day } from "@/types/Day";
+import PhotoGallery from "@/components/ui/photo-gallery";
 
 export type WonderTemplateProps = {
   itinerary: Itinerary
@@ -80,22 +81,39 @@ export default function WonderTemplate({
   paidUser: _paidUser = false,
 }: WonderTemplateProps) {
   void _paidUser
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
+  const [openDays, setOpenDays] = useState<Set<number>>(new Set())
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false)
+  const [galleryIndex, setGalleryIndex] = useState(0)
 
-  const toggleDay = (dayNumber: number | null) => {
-    if (dayNumber === null) {
-      setSelectedDayIndex(null)
-      return
-    }
-    if (selectedDayIndex === dayNumber) {
-      setSelectedDayIndex(null)
-    } else {
-      setSelectedDayIndex(dayNumber)
-    }
+  const openGalleryAt = (index: number) => {
+    setGalleryIndex(index)
+    setIsGalleryOpen(true)
   }
 
   if (!itinerary || !creator) {
     return null
+  }
+
+  const areAnyDaysOpen = openDays.size > 0
+
+  const openAllDays = () => {
+    setOpenDays(new Set(itinerary.days.map((_, index) => index)))
+  }
+
+  const closeAllDays = () => {
+    setOpenDays(new Set())
+  }
+
+  const toggleDay = (dayIndex: number) => {
+    setOpenDays((prev) => {
+      const next = new Set(prev)
+      if (next.has(dayIndex)) {
+        next.delete(dayIndex)
+      } else {
+        next.add(dayIndex)
+      }
+      return next
+    })
   }
 
   const firstTag = itinerary.itineraryTags?.[0]
@@ -117,77 +135,120 @@ export default function WonderTemplate({
           <p>by <span className="text-gray-700 mt-2 font-bold text-xl">@{creator.username}</span></p>
         </div>
         <div className="w-full md:rounded-3xl md:shadow-xl">
-              <div className="relative h-[calc(100vh-64px)] w-full overflow-hidden md:mt-0 md:h-[520px] md:rounded-3xl">
-                {itinerary.mainImage && (
-                  <Image
-                    src={itinerary.mainImage}
-                    alt={itinerary.title || "Itinerary"}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                )}
-                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
-                <div className="absolute inset-0 flex items-end md:items-end">
-                  <div className="container h-full px-0 mx-0 lg:mx-auto">
-                    <div className="flex h-full flex-col justify-between align-center text-white mx-2 p-4 sm:p-6 md:p-6 md:mb-4 md:ml-4 relative">
-                      <div className="w-full my-4 text-center">
-                        <h1 className="block md:hidden mx-4 text-center text-5xl font-bold">{itinerary.title}</h1>
-                        <p  className="block md:hidden">by <span className="font-bold text-xl">@{creator.username}</span></p>
-                      </div>
-                      <div className="w-full mt-1 p-4 flex flex-col gap-4">
-                        <div className="flex gap-6">
-                          <div className="flex flex-col gap-1">
-                            <p className="text-sm font-medium text-white/80">Duration</p>
-                            <div className="items-center font-bold text-3xl">
-                              {itinerary.duration} {itinerary.duration > 1 ? 'DAYS' : 'DAY'}
-                            </div>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <p className="text-sm font-medium text-white/80">Destinations</p>
-                            <div className="items-center font-bold text-3xl">
-                              {countries.length} {countries.length > 1 ? 'STOPS' : 'STOP'}
-                            </div>
-                          </div>
-                          {itinerary?.budget && 
-                            <div className="flex flex-col gap-1">
-                              <p className="text-sm font-medium text-white/80">Price per person</p>
-                              <div className="items-center font-bold text-3xl">
-                                ${itinerary?.budget}
-                              </div>
-                            </div>
-                            }
+          <div className="relative h-[calc(100vh-64px)] w-full md:rounded-sm overflow-hidden md:mt-0 md:h-[520px]">
+            {itinerary.mainImage && (
+              <Image
+                src={itinerary.mainImage}
+                alt={itinerary.title || "Itinerary"}
+                fill
+                className="object-cover"
+                priority
+              />
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+            <div className="absolute inset-0 flex items-end md:items-end">
+              <div className="container h-full px-0 mx-0 lg:mx-auto">
+                <div className="flex h-full flex-col justify-between align-center text-white mx-2 p-4 sm:p-6 md:p-6 md:mb-4 md:ml-4 relative">
+                  <div className="w-full my-4 text-center">
+                    <h1 className="block md:hidden mx-4 text-center text-5xl font-bold">{itinerary.title}</h1>
+                    <p  className="block md:hidden">by <span className="font-bold text-xl">@{creator.username}</span></p>
+                  </div>
+                  <div className="w-full mt-1 p-4 flex flex-col gap-4">
+                    <div className="flex gap-6">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium text-white/80">Duration</p>
+                        <div className="items-center font-bold text-3xl">
+                          {itinerary.duration} {itinerary.duration > 1 ? 'DAYS' : 'DAY'}
                         </div>
-                        <span className="max-w-[500px]">
-                          {itinerary.shortDescription}
-                        </span>
                       </div>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium text-white/80">Destinations</p>
+                        <div className="items-center font-bold text-3xl">
+                          {countries.length} {countries.length > 1 ? 'STOPS' : 'STOP'}
+                        </div>
+                      </div>
+                      {itinerary?.budget && 
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm font-medium text-white/80">Price per person</p>
+                          <div className="items-center font-bold text-3xl">
+                            ${itinerary?.budget}
+                          </div>
+                        </div>
+                        }
                     </div>
+                    <span className="max-w-[500px]">
+                      {itinerary.shortDescription}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-      </div>
-
-      {photos.length > 1 && (
-        <div className="max-w-6xl mx-auto w-full px-8 mt-8 mb-4">
-          <div className="flex gap-3 overflow-x-auto no-scrollbar">
-            {photos.map((p) => (
-              <div
-                key={p.id}
-                className="relative md:h-30 md:w-30 h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-200/60"
-              >
-                <Image
-                  src={p.url}
-                  alt={p.title || "Photo"}
-                  fill
-                  className="object-cover"
-                  sizes="160px"
-                />
-              </div>
-            ))}
           </div>
         </div>
+      </div>
+
+      <div className="w-full md:px-6 md:max-w-6xl md:mx-auto">
+        <div className="flex flex-col-reverse md:flex-row md:items-start md:gap-4 min-w-0">
+          {photos.length > 1 && (
+            <div className="flex min-w-0 flex-1 items-end gap-2 px-8 md:px-0 mb-4 md:mt-8 md:mb-4 overflow-hidden">
+              <div className="flex min-w-0 flex-1 gap-3 overflow-x-auto no-scrollbar pb-1">
+                {photos.map((p, index) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => openGalleryAt(index)}
+                    className="relative md:h-30 md:w-30 h-20 w-20 shrink-0 overflow-hidden rounded-sm bg-slate-200 ring-1 ring-slate-200/60 cursor-pointer transition-shadow hover:ring-2 hover:ring-gray-400"
+                    aria-label={`View ${p.title || "photo"}`}
+                  >
+                    <Image
+                      src={p.url}
+                      alt={p.title || "Photo"}
+                      fill
+                      className="object-cover"
+                      sizes="160px"
+                    />
+                  </button>
+                ))}
+              </div>
+              <div className="h-full flex flex-col justify-end">
+                <div className="shrink-0 rounded-sm overflow-hidden w-[60px]">
+                  <ItineraryGallery photos={photos} template="wonder" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex shrink-0 flex-nowrap items-center m-4 md:m-0 md:mb-4 md:mt-4 md:pl-2 md:pr-2">
+            {currentUserId !== itinerary.creatorId && (
+              <InteractionButtons 
+                itineraryId={itinerary.id} 
+                initialIsLiked={initialIsLiked}
+                initialIsSaved={initialIsSaved}
+              />
+            )}
+            {canEdit &&
+              <Link href={`/create?itineraryId=${itinerary.id}`}>
+                <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
+              </Link>
+            }
+            {(!isRestrictedView || canEdit) && (
+              <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+            )}
+            {itinerary.status === ItineraryStatusEnum.published && 
+              <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
+            }
+          </div>
+        </div>
+      </div>
+
+      {isGalleryOpen && (
+        <PhotoGallery
+          key={galleryIndex}
+          photos={photos}
+          isOpen={isGalleryOpen}
+          onClose={() => setIsGalleryOpen(false)}
+          initialIndex={galleryIndex}
+        />
       )}
 
       {itinerary.detailedOverview && (
@@ -232,19 +293,20 @@ export default function WonderTemplate({
           <div className="px-4 max-w-[1080px]">
             <div className="sticky w-full top-20 z-50 flex flex-col items-end gap-2">
             <button 
-              onClick={() => selectedDayIndex !== null ? toggleDay(null) : toggleDay(0)} 
+              type="button"
+              onClick={() => areAnyDaysOpen ? closeAllDays() : openAllDays()}
               className="flex cursor-pointer bg-gray-800 text-white px-3 py-1 rounded-lg items-center gap-2 hover:opacity-80"
             >
-              {selectedDayIndex !== null ? (
-                <div className='flex text-xs sm:text-sm items-center gap-1' onClick={() => toggleDay(null)}>
+              {areAnyDaysOpen ? (
+                <>
                   Close
                   <ChevronUp strokeWidth={3} size={18} />
-                </div>
+                </>
               ) : (
-                <div className='flex text-xs sm:text-sm items-center gap-1' onClick={() => toggleDay(0)}>
+                <>
                   Open
                   <ChevronDown strokeWidth={3} size={18} />
-                </div>
+                </>
               )}
             </button>
             
@@ -255,7 +317,7 @@ export default function WonderTemplate({
                   <DaySection
                     key={day.id}
                     day={day}
-                    isActive={selectedDayIndex === index}
+                    isActive={openDays.has(index)}
                     onToggle={() => toggleDay(index)}
                     onClose={() => toggleDay(index)}
                     duration={itinerary.duration}

@@ -54,6 +54,7 @@ import { FollowerUserPicker } from "@/components/ui/follower-user-picker"
 import { v4 as uuidv4 } from "uuid"
 import { countries } from "@/lib/constants/countries"
 import { TbTemplate } from "react-icons/tb"
+import { TemplateEnum, TemplateMap } from "@/enums/templateEnum"
 
 type City = { city: string; country: string };
 type FormData = {
@@ -117,7 +118,8 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
   // Get the list of unique countries from step 1
   const existingCities = form.getValues('cities') || [];
   const existingProvinces = form.getValues('provinces') || [];
-  
+  const templates = Object.values(TemplateEnum);
+
   // Filter out empty/null values
   const [countrySearch, setCountrySearch] = useState<Record<number, string>>({});
   // Add state for accommodation selection
@@ -2346,21 +2348,11 @@ export default function CreatePage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="basic">
-                              Basic
-                            </SelectItem>
-                            <SelectItem value="discover">
-                              Discover
-                            </SelectItem>
-                            <SelectItem value="explore">
-                              Explore
-                            </SelectItem>
-                            <SelectItem value="journey">
-                              Journey
-                            </SelectItem>
-                            <SelectItem value="wonder">
-                              Wonder
-                            </SelectItem>
+                            {Object.keys(TemplateMap).map((template) => (
+                              <SelectItem key={template} value={template}>
+                                {TemplateMap[template as keyof typeof TemplateMap]}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>

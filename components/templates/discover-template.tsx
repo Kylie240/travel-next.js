@@ -32,6 +32,7 @@ import ScheduleSection from "@/app/itinerary/[id]/schedule-section"
 import { useState } from "react"
 import { DaySection } from "@/components/ui/day-section";
 import BioSection from "@/app/itinerary/[id]/bio-section";
+import PhotoGallery from "@/components/ui/photo-gallery";
 
 export type DiscoverTemplateProps = {
   itinerary: Itinerary
@@ -78,6 +79,13 @@ export default function DiscoverTemplate({
 }: DiscoverTemplateProps) {
   void _paidUser
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0)
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false)
+  const [galleryIndex, setGalleryIndex] = useState(0)
+
+  const openGalleryAt = (index: number) => {
+    setGalleryIndex(index)
+    setIsGalleryOpen(true)
+  }
 
   if (!itinerary || !creator) {
     return null
@@ -274,10 +282,13 @@ export default function DiscoverTemplate({
         <div className="max-w-6xl mx-auto w-full px-8 mt-8 mb-4">
           <h2 className="text-xl font-semibold mb-4 text-gray-700">Photos</h2>
           <div className="flex gap-3 overflow-x-auto no-scrollbar">
-            {photos.map((p) => (
-              <div
+            {photos.map((p, index) => (
+              <button
                 key={p.id}
-                className="relative md:h-60 md:w-60 h-40 w-40 sm:h-50 sm:w-50 shrink-0 overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-200/60"
+                type="button"
+                onClick={() => openGalleryAt(index)}
+                className="relative md:h-60 md:w-60 h-40 w-40 sm:h-50 sm:w-50 shrink-0 overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-200/60 cursor-pointer transition-shadow hover:ring-2 hover:ring-gray-400"
+                aria-label={`View ${p.title || "photo"}`}
               >
                 <Image
                   src={p.url}
@@ -286,13 +297,23 @@ export default function DiscoverTemplate({
                   className="object-cover"
                   sizes="160px"
                 />
-              </div>
+              </button>
             ))}
           </div>
           <div className="rounded-2xl overflow-hidden mt-8 max-w-[150px]">
             <ItineraryGallery photos={photos} template="discover" />
           </div>
         </div>
+      )}
+
+      {isGalleryOpen && (
+        <PhotoGallery
+          key={galleryIndex}
+          photos={photos}
+          isOpen={isGalleryOpen}
+          onClose={() => setIsGalleryOpen(false)}
+          initialIndex={galleryIndex}
+        />
       )}
 
       {isRestrictedView ? (

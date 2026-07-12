@@ -21,6 +21,7 @@ import { PurchaseButton } from "../ui/purchase-button"
 import { DaySection } from "../ui/day-section"
 import { useState } from "react";
 import BioSection from "@/app/itinerary/[id]/bio-section";
+import PhotoGallery from "@/components/ui/photo-gallery";
 
 const BRAND = {
   surface: "bg-slate-50",
@@ -78,6 +79,14 @@ export default function ExploreTemplate({
 }: ExploreTemplateProps) {
   void _paidUser
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false)
+  const [galleryIndex, setGalleryIndex] = useState(0)
+
+  const openGalleryAt = (index: number) => {
+    setGalleryIndex(index)
+    setIsGalleryOpen(true)
+  }
+
   const toggleDay = (dayNumber: number) => {
     if (selectedDayIndex === dayNumber) {
       setSelectedDayIndex(null)
@@ -140,10 +149,13 @@ export default function ExploreTemplate({
         {photos.length > 1 && (
           <div className="max-w-6xl w-full pl-12 -mt-[60px] mb-4">
             <div className="flex gap-5 md:gap-6 lg:gap-8 overflow-x-auto no-scrollbar">
-              {photos.map((p) => (
-                <div
+              {photos.map((p, index) => (
+                <button
                   key={p.id}
-                  className="relative md:h-[300px] h-[200px] md:w-[230px] sm:h-[250px] sm:w-[190px] w-[150px] lg:w-[300px] lg:h-[400px] shrink-0 overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-200/60"
+                  type="button"
+                  onClick={() => openGalleryAt(index)}
+                  className="relative md:h-[300px] h-[200px] md:w-[230px] sm:h-[250px] sm:w-[190px] w-[150px] lg:w-[300px] lg:h-[400px] shrink-0 overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-200/60 cursor-pointer transition-shadow hover:ring-2 hover:ring-gray-400"
+                  aria-label={`View ${p.title || "photo"}`}
                 >
                   <Image
                     src={p.url}
@@ -152,7 +164,7 @@ export default function ExploreTemplate({
                     className="object-cover"
                     sizes="160px"
                   />
-                </div>
+                </button>
               ))}
             </div>
             <div className="flex justify-end rounded-2xl overflow-hidden mt-8 max-w-[150px]">
@@ -162,10 +174,42 @@ export default function ExploreTemplate({
         )}
       </div>
 
-      <div className="flex flex-col gap-8 w-full mx-auto max-w-6xl px-8 mt-8">
+      {isGalleryOpen && (
+        <PhotoGallery
+          key={galleryIndex}
+          photos={photos}
+          isOpen={isGalleryOpen}
+          onClose={() => setIsGalleryOpen(false)}
+          initialIndex={galleryIndex}
+        />
+      )}
+
+      <div className="flex flex-col gap-8 w-full mx-auto max-w-6xl px-8 mt-2">
         {itinerary?.detailedOverview && (
           <div>
-            <h3 className="text-lg mb-2 leading-none font-semibold">Detailed Overview</h3>
+            <span className="flex justify-between items-center w-full">
+              <h3 className="text-lg leading-none font-semibold">Detailed Overview</h3>
+              <div className="flex items-center">
+                {currentUserId !== itinerary.creatorId && (
+                  <InteractionButtons 
+                    itineraryId={itinerary.id} 
+                    initialIsLiked={initialIsLiked}
+                    initialIsSaved={initialIsSaved}
+                  />
+                )}
+                {canEdit &&
+                  <Link href={`/create?itineraryId=${itinerary.id}`}>
+                    <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
+                  </Link>
+                }
+                {(!isRestrictedView || canEdit) && (
+                  <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                )}
+                {itinerary.status === ItineraryStatusEnum.published && 
+                  <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
+                }
+              </div>
+            </span>
             <p className="mt-1 text-sm leading-relaxed text-gray-900 line-clamp-4">
               {itinerary.detailedOverview}
             </p>

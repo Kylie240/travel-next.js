@@ -8,12 +8,13 @@ import { Images } from 'lucide-react';
 const ItineraryGallery = ({ photos, template }: { photos: PhotoItem[], template?: string }) => {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const isDiscoverTemplate = template === "discover"
+  const isWonderTemplate = template === "wonder"
   return (
     <>
-    {isDiscoverTemplate ? (
+    {isDiscoverTemplate || isWonderTemplate ? (
       <div onClick={() => setIsGalleryOpen(true)} className={`px-3 py-2 rounded-lg cursor-pointer relative w-full h-full flex justify-center items-center bg-gray-800 hover:bg-gray-700 text-white`}>
       <span className="gap-1 flex font-thin items-center">
-        View All <Images size={14} strokeWidth={2} />
+        {isDiscoverTemplate ? "View All" : photos.length} <Images size={14} strokeWidth={2} />
       </span>
       {isGalleryOpen && (
           <PhotoGallery photos={photos} isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} />
