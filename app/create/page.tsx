@@ -897,6 +897,13 @@ export default function CreatePage() {
   // Step 4: paid creators only (not collaborators editing shared itineraries)
   const canAccessStep4 = userPlan !== 'free' && isItineraryCreator
   const totalSteps = canAccessStep4 ? 4 : 3
+  const sellingFee = userPlan === 'standard' ? 0.9 : 0.95
+
+  const netProfit = (priceInDollars: string) => {
+    const p = Number(priceInDollars)
+    const stripeFee = p * 0.029 + .30
+    return ((p - stripeFee) * sellingFee).toFixed(2)
+  }
 
   // Generate itinerary ID if one doesn't exist
   useEffect(() => {
@@ -2325,6 +2332,7 @@ export default function CreatePage() {
                               disabled={isFormDisabled}
                             />
                           </div>
+                          <p>Net profit: ${netProfit(priceInDollars)}</p>
                         </div>
                       )}
                     </div>

@@ -44,6 +44,23 @@ function formatSettingsDate(value: Date | string | null | undefined): string | n
   return d.toLocaleDateString()
 }
 
+async function openBillingPortal() {
+  try {
+    const res = await fetch("/api/billing-portal", { method: "POST" })
+    const data = await res.json()
+
+    if (!res.ok || !data?.url) {
+      toast.error(data?.error || "Could not open billing portal")
+      return
+    }
+
+    window.location.href = data.url
+  } catch (error) {
+    console.error("Billing portal redirect failed:", error)
+    toast.error("Could not open billing portal")
+  }
+}
+
 const socialLinkWrapperClass =
   "flex w-full min-w-0 items-center overflow-hidden rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
 const socialLinkPrefixClass =
@@ -103,7 +120,6 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false)
   const [uploadedAvatar, setUploadedAvatar] = useState<File | null>(null)
-  const showPlans = process.env.NEXT_PUBLIC_ENABLE_CART === 'true'
   const planDetails = [
     {
       title: "free",
@@ -799,146 +815,150 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         </div>
       )
     },
-  ]
-
-  if (showPlans) {
-    settingsSections.push({
-        title: "Account",
-        icon: <UserRoundCog className="h-5 w-5 text-gray-700" />,
-        description: "Manage your subscription",
-        content: (
-          <div className="space-y-8">
-            <div>
-              <label className="text-sm text-gray-600">Current plan</label>
-              <p className="block text-md font-semibold mt-2">
-                {userSettings.plan.charAt(0).toUpperCase() + userSettings.plan.slice(1)} Plan
+    {
+      title: "Account",
+      icon: <UserRoundCog className="h-5 w-5 text-gray-700" />,
+      description: "Manage your subscription",
+      content: (
+        <div className="space-y-8">
+          <div>
+            <label className="text-sm text-gray-600">Current plan</label>
+            <p className="block text-md font-semibold mt-2">
+              {userSettings.plan.charAt(0).toUpperCase() + userSettings.plan.slice(1)} Plan
+            </p>
+            {planDetails.find(plan => plan.title === userSettings.plan)?.description && (
+              <p className="text-sm text-gray-600">
+                {planDetails.find(plan => plan.title === userSettings.plan)?.description}
               </p>
-              {planDetails.find(plan => plan.title === userSettings.plan)?.description && (
-                <p className="text-sm text-gray-600">
-                  {planDetails.find(plan => plan.title === userSettings.plan)?.description}
-                </p>
-              )}
-              {userSettings.plan !== 'free' && 
-                <a href="https://billing.stripe.com/p/login/test_dRmcN40YlfXM6UkcTKgMw00" target="_blank" className="mt-4 underline cursor-pointer hover:text-red-600">Manage your subscription</a>
-              }
-            </div>
+            )}
             {userSettings.plan !== 'free' && (
-              <div>
-                <label className="block text-md font-semibold mb-2">Subscription Status</label>
-                <p className="text-sm text-gray-600 mb-4">
-                  Your {userSettings.plan === 'free' ? 'plan' : 'subscription status'} is {userSettings.plan === 'free' ? 'active' : userSettings.stripe_subscription_status}.
-                </p>
-              </div>
-            )}
-            {/* Need accurate billing date from Stripe */}
-            {/* {userSettings.stripe_subscription_status === 'active' && userSettings.plan !== 'free' && (
-              <div>
-                <label className="block text-md font-semibold mb-2">Billing Details</label>
-                <p className="text-sm text-gray-600 mb-4">
-                  {(() => {
-                    const nextFromStripe = stripeBilling?.currentPeriodEndMs
-                      ? new Date(stripeBilling.currentPeriodEndMs).toLocaleDateString()
-                      : null
-                    const nextFromDb = formatSettingsDate(userSettings.stripe_subscription_ends_at)
-                    const nextBilling = nextFromStripe ?? nextFromDb
-                    const priceText =
-                      stripeBilling?.priceLabel ??
-                      (userSettings.plan === "standard"
-                        ? "$6.00 per month"
-                        : userSettings.plan === "premium"
-                          ? "$14.00 per month"
-                          : null)
-                    return (
-                      <>
-                        Your next billing date is{" "}
-                        <span className="font-medium text-gray-800">
-                          {nextBilling ?? "available in the billing portal"}
-                        </span>
-                        .
-                        {priceText ? (
-                          <>
-                            {" "}
-                            You will be charged <span className="font-medium text-gray-800">{priceText}</span>.
-                          </>
-                        ) : null}
-                      </>
-                    )
-                  })()}
-                </p>
-                <p className="text-sm text-gray-600 mb-4">
-                  Your billing email is{" "}
-                  <span className="font-medium text-gray-800">
-                    {stripeBilling?.billingEmail ?? userData.email}
-                  </span>
-                  .
-                </p>
-              </div>
-            )} */}
-            <div>
-              <label className="block text-md font-semibold mb-2">Plan details</label>
-                {planDetails.find(plan => plan.title === userSettings.plan)?.features.map((feature) => (
-                  <div key={feature}>
-                    <div className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{feature}</span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-            { userSettings.plan !== 'premium' && (
-            <div className="mt-12">
-              <label className="block text-md font-semibold mb-2">{userSettings.plan === 'free' ? 'Upgrade and subsribe' : 'Upgrade to Premium'}</label>
-              {userSettings.plan === 'free' ? (
-                <>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, monetize your content, and more.
-                  </p>
-                  {userData.id === 'bb9bae46-6088-4a9f-ad81-9f81ed305958' || showPlans ? (
-                  <form action="api/checkout-session" method="POST">
-                    <Button className="bg-green-600" type="submit">
-                      Upgrade to Standard
-                    </Button>
-                  </form>
-                  ) : (
-                    <Button disabled className="bg-gray-400 cursor-not-allowed">
-                      Upgrade to Standard (Coming Soon)
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Upgrading to Premium will give you access to all features and allow you to create unlimited itineraries.
-                  </p>
-                  <Button disabled className="bg-gray-400 cursor-not-allowed">
-                      Upgrade to Premium (Coming Soon)
-                    </Button>
-                  {/* Uncomment when premium available */}
-                  {/* <form action="api/checkout-session" method="POST">
-                    <Button className="bg-green-600" type="submit">
-                      Upgrade to Premium (Coming Soon)
-                    </Button>
-                  </form> */}
-                </>
-              )}
-            </div>
-            )}
-            <Button variant="outline" onClick={() => router.push('/plans')}>Explore All Plans</Button>
-            { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
-            <div className="mt-12">
-              <label className="block text-md font-semibold mb-2">Unsubscribe</label>
-              <p className="text-sm text-gray-600 mb-4">
-                Unsubscribing from your plan means that you will no longer be able to access the features of your current plan.
-                You will still be able to access your itineraries and profile. If you have more than 20 shareable itineraries, we will automatically reduce the number of both itineraries you can create and share to 20.
-              </p>
-              <a href="https://billing.stripe.com/p/login/test_dRmcN40YlfXM6UkcTKgMw00" target="_blank" className="underline cursor-pointer hover:text-red-600">Cancel your subscription</a>
-            </div>
+              <button
+                type="button"
+                onClick={openBillingPortal}
+                className="mt-4 block underline cursor-pointer hover:text-red-600 text-left"
+              >
+                Manage subscription
+              </button>
             )}
           </div>
-        )
-      },
-    )
-  }
+          {userSettings.plan !== 'free' && (
+            <div>
+              <label className="block text-md font-semibold mb-2">Subscription Status</label>
+              <p className="text-sm text-gray-600 mb-4">
+                Your {userSettings.plan === 'free' ? 'plan' : 'subscription status'} is {userSettings.plan === 'free' ? 'active' : userSettings.stripe_subscription_status}.
+              </p>
+            </div>
+          )}
+          {/* Need accurate billing date from Stripe */}
+          {/* {userSettings.stripe_subscription_status === 'active' && userSettings.plan !== 'free' && (
+            <div>
+              <label className="block text-md font-semibold mb-2">Billing Details</label>
+              <p className="text-sm text-gray-600 mb-4">
+                {(() => {
+                  const nextFromStripe = stripeBilling?.currentPeriodEndMs
+                    ? new Date(stripeBilling.currentPeriodEndMs).toLocaleDateString()
+                    : null
+                  const nextFromDb = formatSettingsDate(userSettings.stripe_subscription_ends_at)
+                  const nextBilling = nextFromStripe ?? nextFromDb
+                  const priceText =
+                    stripeBilling?.priceLabel ??
+                    (userSettings.plan === "standard"
+                      ? "$6.00 per month"
+                      : userSettings.plan === "premium"
+                        ? "$14.00 per month"
+                        : null)
+                  return (
+                    <>
+                      Your next billing date is{" "}
+                      <span className="font-medium text-gray-800">
+                        {nextBilling ?? "available in the billing portal"}
+                      </span>
+                      .
+                      {priceText ? (
+                        <>
+                          {" "}
+                          You will be charged <span className="font-medium text-gray-800">{priceText}</span>.
+                        </>
+                      ) : null}
+                    </>
+                  )
+                })()}
+              </p>
+              <p className="text-sm text-gray-600 mb-4">
+                Your billing email is{" "}
+                <span className="font-medium text-gray-800">
+                  {stripeBilling?.billingEmail ?? userData.email}
+                </span>
+                .
+              </p>
+            </div>
+          )} */}
+          <div>
+            <label className="block text-md font-semibold mb-2">Plan details</label>
+              {planDetails.find(plan => plan.title === userSettings.plan)?.features.map((feature) => (
+                <div key={feature}>
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{feature}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+          { userSettings.plan !== 'premium' && (
+          <div className="mt-12">
+            <label className="block text-md font-semibold mb-2">{userSettings.plan === 'free' ? 'Upgrade and subsribe' : 'Upgrade to Premium'}</label>
+            {userSettings.plan === 'free' && (
+              <>
+                <p className="text-sm text-gray-600 mb-4">
+                  Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, monetize your content, and more.
+                </p>
+                <form action="api/checkout-session" method="POST">
+                  <Button className="bg-cyan-600" type="submit">
+                    Upgrade to Standard
+                  </Button>
+                </form>
+              </>
+            )}
+            {userSettings.plan === 'standard' && (
+              <>
+                <p className="text-sm text-gray-600 mb-4">
+                  Upgrading to Premium will give you access to all features and allow you to create unlimited itineraries.
+                </p>
+                <Button disabled className="bg-gray-400 cursor-not-allowed">
+                    Upgrade to Premium (Coming Soon)
+                  </Button>
+                {/* Uncomment when premium available */}
+                {/* <form action="api/checkout-session" method="POST">
+                  <Button className="bg-cyan-600" type="submit">
+                    Upgrade to Premium (Coming Soon)
+                  </Button>
+                </form> */}
+              </>
+            )}
+          </div>
+          )}
+          <Button variant="outline" onClick={() => router.push('/plans')}>Explore All Plans</Button>
+          { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
+          <div className="mt-12">
+            <label className="block text-md font-semibold mb-2">Unsubscribe</label>
+            <p className="text-sm text-gray-600 mb-4">
+              Unsubscribing from your plan means that you will no longer be able to access the features of your current plan.
+              You will still be able to access your itineraries and profile. If you have more than 20 shareable itineraries, we will automatically reduce your itineraries to a maximum of 20.
+            </p>
+            <button
+              type="button"
+              onClick={openBillingPortal}
+              className="underline cursor-pointer hover:text-red-600 text-left"
+            >
+              Cancel subscription
+            </button>
+          </div>
+          )}
+        </div>
+      )
+    }
+  ]
+
 
   return (
     <div className="min-h-fit h-screen md:h-[calc(100vh-64px)] bg-white lg:bg-gray-50">

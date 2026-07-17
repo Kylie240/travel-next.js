@@ -87,12 +87,6 @@ export default async function PlansPage() {
           
           {/* Standard */}
           <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-2 border-blue-200 relative overflow-hidden">
-            <div className="absolute top-4 right-4">
-              <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                Coming Soon
-              </span>
-            </div>
-            
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-6 h-6 text-cyan-600" />
@@ -108,17 +102,11 @@ export default async function PlansPage() {
               </div>
             </div>
 
-            {!showCart ? (
-              <Button disabled className="w-full mb-8 bg-gray-400 cursor-not-allowed">
-                Coming Soon
+            <form action="api/checkout-session" method="POST">
+              <Button className="w-full mb-8 bg-gray-900 hover:bg-gray-800" type="submit">
+                Upgrade to Standard
               </Button>
-            ) : (
-              <form action="api/checkout-session" method="POST">
-                <Button className="w-full mb-8 bg-gray-400" type="submit">
-                  Upgrade to Standard
-                </Button>
-              </form>
-            )}
+            </form>
 
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900 mb-4">Everything in Free, plus:</h3>
