@@ -12,6 +12,14 @@ export async function POST() {
     const headersList = await headers()
     const origin = headersList.get('origin')
 
+    const standardPriceId = process.env.STANDARD_PRICE_ID
+    if (!standardPriceId) {
+      return NextResponse.json(
+        { error: 'STANDARD_PRICE_ID is not configured' },
+        { status: 500 }
+      )
+    }
+
     // Get the current user from Supabase
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -28,8 +36,7 @@ export async function POST() {
       customer_email: user.email,
       line_items: [
         {
-          price: 'price_1SvjvNCFWq8paBje7Q1Q13mG',
-          // price: 'price_1SvjvgCFWq8paBje5goZvdZk', - premium price
+          price: standardPriceId,
           quantity: 1,
         },
       ],

@@ -13,11 +13,17 @@ export const dynamic = 'force-dynamic'
 /** Vercel / long-running webhooks (cart path generates PDFs + email). */
 export const maxDuration = 60
 
-// Map Stripe price IDs to plan names
-const PRICE_TO_PLAN: Record<string, string> = {
-  'price_1SvjvNCFWq8paBje7Q1Q13mG': 'standard',
-  'price_1SvjvgCFWq8paBje5goZvdZk': 'premium',
-};
+// Map Stripe price IDs to plan names (from env so test/live can differ)
+function getPriceToPlanMap(): Record<string, string> {
+  const map: Record<string, string> = {}
+  if (process.env.STANDARD_PRICE_ID) {
+    map[process.env.STANDARD_PRICE_ID] = 'standard'
+  }
+  if (process.env.PREMIUM_PRICE_ID) {
+    map[process.env.PREMIUM_PRICE_ID] = 'premium'
+  }
+  return map
+}
 
 const SUBSCRIPTION_WEBHOOK_RETRIEVE: Stripe.SubscriptionRetrieveParams = {
   expand: ["items.data.price"],
@@ -486,7 +492,7 @@ export async function POST(request: NextRequest) {
         }
 
         const priceId = subscription.items.data[0]?.price.id;
-        const plan = PRICE_TO_PLAN[priceId] || 'standard';
+        const plan = getPriceToPlanMap()[priceId] || 'standard';
 
         await stripe.customers.update(customerId, {
           metadata: { supabase_user_id: userId },
@@ -529,7 +535,7 @@ export async function POST(request: NextRequest) {
         }
 
         const priceId = subscription.items.data[0]?.price.id;
-        const plan = PRICE_TO_PLAN[priceId] || "standard";
+        const plan = getPriceToPlanMap()[priceId] || "standard";
 
         const subscriptionPayload: Parameters<typeof updateUserSubscription>[1] = {
           stripe_customer_id: subscription.customer as string,
@@ -601,7 +607,7 @@ export async function POST(request: NextRequest) {
         }
 
         const priceId = subscription.items.data[0]?.price.id;
-        const plan = PRICE_TO_PLAN[priceId] || 'standard';
+        const plan = getPriceToPlanMap()[priceId] || 'standard';
 
         // Re-sync `stripe_subscription_ends_at` from a live subscription read (covers missed
         // or thin `customer.subscription.updated` webhooks, e.g. local CLI). Same helper as
