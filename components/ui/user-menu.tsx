@@ -18,7 +18,8 @@ import { AiOutlineDashboard } from "react-icons/ai"
 import { TiTag } from "react-icons/ti"
 
 export function UserMenu() {
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
   const router = useRouter()
   const pathname = usePathname()
   const { toast } = useToast()
@@ -30,7 +31,7 @@ export function UserMenu() {
   const [billingPlan, setBillingPlan] = useState<string | null>(null)
 
   const showSellerDashboard =
-    (billingPlan === "standard" || billingPlan === "premium")
+    billingPlan === "standard" || billingPlan === "premium"
 
   // Track the last fetched user ID to prevent unnecessary refetches
   const lastFetchedUserIdRef = useRef<string | null>(null)
@@ -38,6 +39,23 @@ export function UserMenu() {
   const isAuthFlowPage =
     pathname?.startsWith("/auth/reset-password") ||
     pathname?.startsWith("/login")
+
+  const fetchBillingPlan = useCallback(async () => {
+    if (!user?.id || isAuthFlowPage) {
+      setBillingPlan(null)
+      return
+    }
+
+    const { data } = await supabase
+      .from("users_settings")
+      .select("plan")
+      .eq("user_id", user.id)
+      .maybeSingle()
+
+    const plan =
+      typeof data?.plan === "string" ? data.plan.trim().toLowerCase() : "free"
+    setBillingPlan(plan)
+  }, [user?.id, isAuthFlowPage, supabase])
 
   // Function to fetch user profile
   const fetchUserProfile = useCallback(async (force = false) => {
@@ -74,26 +92,17 @@ export function UserMenu() {
     fetchUserProfile()
   }, [fetchUserProfile])
 
+  // Initial plan fetch + refresh after navigation (e.g. returning from /success after upgrade)
   useEffect(() => {
-    if (!user?.id) {
-      setBillingPlan(null)
-      return
+    void fetchBillingPlan()
+  }, [fetchBillingPlan, pathname])
+
+  // Refresh plan whenever the menu opens so upgrades show without a hard reload
+  useEffect(() => {
+    if (isOpen) {
+      void fetchBillingPlan()
     }
-    let cancelled = false
-    void (async () => {
-      const { data } = await supabase
-        .from("users_settings")
-        .select("plan")
-        .eq("user_id", user.id)
-        .maybeSingle()
-      if (!cancelled) {
-        setBillingPlan(typeof data?.plan === "string" ? data.plan : "free")
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [user?.id])
+  }, [isOpen, fetchBillingPlan])
 
   // Listen for avatar updates
   useEffect(() => {

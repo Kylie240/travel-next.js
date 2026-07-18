@@ -125,7 +125,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       title: "free",
       description: "Perfect for the casual traveler and occasional trip planner",
       features: [
-        "20 shareable itineraries",
+        "Up to 20 shareable itineraries",
         "Access to day-by-day planner",
         "Share itineraries with anyone",
         "Save and bookmark favorites",

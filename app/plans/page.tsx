@@ -2,8 +2,7 @@ import { Check, Circle, Lock, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Metadata } from "next"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import createClient from "@/utils/supabase/server"
 
 export const metadata: Metadata = {
   title: "Plans & Pricing - Journli",
@@ -11,8 +10,24 @@ export const metadata: Metadata = {
 }
 
 export default async function PlansPage() {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  let userPlan = "free"
+  if (user) {
+    const { data: settings } = await supabase
+      .from("users_settings")
+      .select("plan")
+      .eq("user_id", user.id)
+      .maybeSingle()
+    userPlan =
+      typeof settings?.plan === "string"
+        ? settings.plan.trim().toLowerCase()
+        : "free"
+  }
+
+  const isOnStandardOrHigher =
+    userPlan === "standard" || userPlan === "premium"
   const showCart = process.env.NEXT_PUBLIC_ENABLE_CART === 'true'
 
   return (
@@ -32,7 +47,7 @@ export default async function PlansPage() {
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <Circle className="w-5 h-5 text-black" strokeWidth={1.5} />
-                <h2 className="text-2xl font-bold text-gray-900">Free Plan</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Free</h2>
               </div>
               <p className="text-gray-600">Perfect for the casual traveler and occasional trip planner</p>
             </div>
@@ -44,11 +59,21 @@ export default async function PlansPage() {
               </div>
             </div>
 
-            <Link href="/login">
-              <Button className="w-full mb-8 bg-gray-900 hover:bg-gray-800" disabled={user ? true : false}>
-                Get Started Free
+            {user && userPlan === "free" ? (
+              <Button className="w-full mb-8" variant="outline" disabled>
+                Current Plan
               </Button>
-            </Link>
+            ) : user ? (
+              <Button className="w-full mb-8" variant="outline" disabled>
+                Included
+              </Button>
+            ) : (
+              <Link href="/login">
+                <Button className="w-full mb-8 bg-gray-900 hover:bg-gray-800">
+                  Get Started Free
+                </Button>
+              </Link>
+            )}
 
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900 mb-4">What's included:</h3>
@@ -86,7 +111,13 @@ export default async function PlansPage() {
           </div>
           
           {/* Standard */}
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-2 border-blue-200 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8 border-2 border-cyan-600 relative overflow-hidden">
+            <div className="absolute top-4 right-4">
+              <span className="bg-cyan-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                New
+              </span>
+            </div>
+
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-6 h-6 text-cyan-600" />
@@ -102,11 +133,23 @@ export default async function PlansPage() {
               </div>
             </div>
 
-            <form action="api/checkout-session" method="POST">
-              <Button className="w-full mb-8 bg-gray-900 hover:bg-gray-800" type="submit">
-                Upgrade to Standard
+            {isOnStandardOrHigher ? (
+              <Button className="w-full mb-8" variant="outline" disabled>
+                {userPlan === "standard" ? "Current Plan" : "Included"}
               </Button>
-            </form>
+            ) : user && userPlan === "free" ? (
+              <form action="/api/checkout-session" method="POST">
+                <Button className="w-full mb-8 bg-gray-900 hover:bg-gray-800" type="submit">
+                  Upgrade to Standard
+                </Button>
+              </form>
+            ) : (
+              <Link href="/login?mode=login">
+                <Button className="w-full mb-8 bg-gray-900 hover:bg-gray-800">
+                  Sign Up Now
+                </Button>
+              </Link>
+            )}
 
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900 mb-4">Everything in Free, plus:</h3>
@@ -154,7 +197,7 @@ export default async function PlansPage() {
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <Lock className="w-6 h-6 text-purple-600" />
-                <h2 className="text-2xl font-bold text-gray-900">Premium</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Pro</h2>
               </div>
               <p className="text-gray-600">Advanced capabilities for creators looking to monetize their content</p>
             </div>
@@ -172,7 +215,7 @@ export default async function PlansPage() {
             {/* <form action="api/checkout-session" method="POST">
               <input type="hidden" name="lookup_key" value="price_1SvjvgCFWq8paBje5goZvdZk" />
               <Button className="w-full mb-8 bg-gray-400">
-                Upgrade to Premium
+                Upgrade to Pro
               </Button>
             </form> */}
 
@@ -192,11 +235,6 @@ export default async function PlansPage() {
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-700">Explore Page boost</span>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Lock className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">Monetization capabilities</span>
               </div>
 
               <div className="flex items-start gap-3">
@@ -224,7 +262,7 @@ export default async function PlansPage() {
                     <th className="text-left py-4 px-6 font-semibold text-gray-900">Features</th>
                     <th className="text-center py-4 px-6 font-semibold text-gray-900">Free</th>
                     <th className="text-center py-4 px-6 font-semibold text-cyan-600">Standard</th>
-                    <th className="text-center py-4 px-6 font-semibold text-purple-600">Premium</th>
+                    <th className="text-center py-4 px-6 font-semibold text-purple-600">Pro</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -431,7 +469,7 @@ export default async function PlansPage() {
                 When will the other plans be available?
               </h3>
               <p className="text-gray-600">
-                We're working hard on bringing the Standard and Premium plans to life! Sign up for our newsletter 
+                We're working hard on bringing the Pro plan to life! Sign up for our newsletter 
                 to be the first to know when they launch.
               </p>
             </div>
@@ -441,8 +479,8 @@ export default async function PlansPage() {
                 Can I upgrade or downgrade my plan later?
               </h3>
               <p className="text-gray-600">
-                Once the Standard and Premium plans are available, you'll be able to upgrade at any time. You can also 
-                downgrade back to the free plan, and all your itineraries will be preserved.
+                Once the Pro plan is available, you'll be able to upgrade at any time. You can also 
+                downgrade back to the free or standard plan, and all your itineraries will be preserved, but you will not be able to access the Pro features. Downgrading to free will also limit your shareable itineraries to 20.
               </p>
             </div>
 
@@ -451,7 +489,7 @@ export default async function PlansPage() {
                 What payment methods do you accept?
               </h3>
               <p className="text-gray-600">
-                When Premiums launch, we'll accept all major credit cards, PayPal, and other 
+                Journli partners with Stripe to accept all major credit cards, PayPal, and other 
                 popular payment methods. Pricing will be transparent with no hidden fees.
               </p>
             </div>
