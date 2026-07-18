@@ -6,26 +6,29 @@ import { stripe } from "@/lib/stripe";
 export const dynamic = "force-dynamic";
 
 /**
- * After Connect onboarding, `stripe_transfers` is often `pending` for a while before `active`.
- * Treat `pending` as "onboarding complete" so the dashboard updates right after return.
+ * After Connect onboarding, capability flags often lag a few seconds (worse on mobile return).
+ * Treat pending/active transfers or applied recipient config as ready; dashboard also polls on return.
  */
 function v2RecipientReadyForDashboard(account: Stripe.V2.Core.Account): boolean {
   const recipient = account.configuration?.recipient;
-  if (!recipient?.applied) return false;
   const transfers =
-    recipient.capabilities?.stripe_balance?.stripe_transfers;
+    recipient?.capabilities?.stripe_balance?.stripe_transfers;
   const status = transfers?.status;
   if (status === "restricted" || status === "unsupported") return false;
   if (status === "active" || status === "pending") return true;
   // Applied but capability status not present yet (Stripe still wiring after onboarding)
-  return true;
+  if (recipient?.applied) return true;
+  return false;
 }
 
 /** Hosted onboarding finished; payouts/charges can still flip on shortly after. */
 function v1SellerReady(account: Stripe.Account): boolean {
-  return Boolean(
-    account.details_submitted && !account.requirements?.disabled_reason
-  );
+  if (account.requirements?.disabled_reason) return false;
+  if (account.details_submitted) return true;
+  // Just after return, currently_due can already be empty before details_submitted flips
+  const currentlyDue = account.requirements?.currently_due ?? [];
+  const pastDue = account.requirements?.past_due ?? [];
+  return currentlyDue.length === 0 && pastDue.length === 0;
 }
 
 export async function GET() {

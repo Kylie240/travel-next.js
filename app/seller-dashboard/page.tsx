@@ -38,7 +38,7 @@ export default function SellerDashboardPage() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
-  const loadDashboard = useCallback(async () => {
+  const loadDashboard = useCallback(async (opts?: { pollIfReturning?: boolean }) => {
     setLoading(true);
     const supabase = createClient();
 
@@ -62,28 +62,72 @@ export default function SellerDashboardPage() {
     );
     setPurchaseThankYouStatus("idle");
 
-    const statusRes = await fetch(
-      `/api/stripe-connect/status?t=${Date.now()}`,
-      {
-        credentials: "same-origin",
-        cache: "no-store",
+    const isReturningFromStripe =
+      typeof window !== "undefined" &&
+      (new URL(window.location.href).searchParams.has("stripe_return") ||
+        new URL(window.location.href).searchParams.has("stripe_refresh"));
+
+    const fetchStatus = async () => {
+      const statusRes = await fetch(
+        `/api/stripe-connect/status?t=${Date.now()}`,
+        {
+          credentials: "same-origin",
+          cache: "no-store",
+        }
+      );
+      if (statusRes.status === 401) {
+        return { unauthorized: true as const };
       }
-    );
-    if (statusRes.status === 401) {
+      if (!statusRes.ok) {
+        return { ok: false as const };
+      }
+      const body = (await statusRes.json()) as {
+        stripeAccountId?: string | null;
+        sellerAccountReady?: boolean;
+      };
+      return {
+        ok: true as const,
+        stripeAccountId: body.stripeAccountId ?? null,
+        sellerAccountReady: Boolean(body.sellerAccountReady),
+      };
+    };
+
+    // Mobile/Safari often returns from Stripe before account status has settled.
+    // Poll briefly when coming back from onboarding.
+    let status = await fetchStatus();
+    if (status.unauthorized) {
       router.replace("/");
       setLoading(false);
       return;
     }
-    if (!statusRes.ok) {
+
+    if (
+      opts?.pollIfReturning !== false &&
+      isReturningFromStripe &&
+      status.ok &&
+      (!status.stripeAccountId || !status.sellerAccountReady)
+    ) {
+      for (let i = 0; i < 8; i++) {
+        await new Promise((r) => setTimeout(r, 1250));
+        status = await fetchStatus();
+        if (status.unauthorized) {
+          router.replace("/");
+          setLoading(false);
+          return;
+        }
+        if (status.ok && status.stripeAccountId && status.sellerAccountReady) {
+          break;
+        }
+      }
+    }
+
+    if (!status.ok) {
       setLoading(false);
       return;
     }
-    const body = (await statusRes.json()) as {
-      stripeAccountId?: string | null;
-      sellerAccountReady?: boolean;
-    };
-    setStripeAccountId(body.stripeAccountId ?? null);
-    setCompleteStripeAccountSetup(Boolean(body.sellerAccountReady));
+
+    setStripeAccountId(status.stripeAccountId);
+    setCompleteStripeAccountSetup(status.sellerAccountReady);
 
     // Summary cards are Journli DB data — load whenever signed in, not only when
     // Stripe Connect reports "ready" (those states can diverge).
@@ -111,12 +155,24 @@ export default function SellerDashboardPage() {
   }, [router]);
 
   useEffect(() => {
-    void loadDashboard();
+    void loadDashboard({ pollIfReturning: true });
 
     const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) void loadDashboard();
+      // bfcache / mobile back-forward after Stripe onboarding
+      if (e.persisted) void loadDashboard({ pollIfReturning: true });
+    };
+    const onFocus = () => {
+      // Returning from Stripe's in-app browser often restores the tab without a full remount
+      if (
+        typeof window !== "undefined" &&
+        (window.location.search.includes("stripe_return") ||
+          window.location.search.includes("stripe_refresh"))
+      ) {
+        void loadDashboard({ pollIfReturning: true });
+      }
     };
     window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("focus", onFocus);
 
     const supabase = createClient();
     const {
@@ -129,6 +185,7 @@ export default function SellerDashboardPage() {
 
     return () => {
       window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("focus", onFocus);
       subscription.unsubscribe();
     };
   }, [loadDashboard, router]);
@@ -299,21 +356,44 @@ export default function SellerDashboardPage() {
               </p>
             </div>
 
-            {!stripeAccountId || !completeStripeAccountSetup ? (
+            {!stripeAccountId ? (
               <div className="py-16 px-4 text-center">
                 <TrendingUp className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  {!stripeAccountId
-                    ? "Setup your seller account"
-                    : "Complete your seller account"}
+                  Setup your seller account
                 </h3>
                 <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                  {!stripeAccountId
-                    ? "Looks like you're new here! Before you start selling, you'll need to setup your Stripe account."
-                    : "Looks like you're almost there! Before you start selling, you'll need to complete your Stripe account setup."}
+                  Looks like you&apos;re new here! Before you start selling, you&apos;ll need to setup your Stripe account.
                 </p>
                 <StripeAccountButton />
               </div>
+            ) : !completeStripeAccountSetup ? (
+              <>
+                <div className="px-4 sm:px-6 py-6 border-b border-gray-100 text-center sm:text-left">
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    Finishing Stripe setup
+                  </h3>
+                  <p className="text-gray-600 mb-4 max-w-lg text-sm">
+                    Your Stripe account is connected. If you just completed
+                    onboarding, status can take a few seconds to update —
+                    especially on mobile. Refresh, or continue setup if Stripe
+                    still needs information.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center sm:justify-start items-center">
+                    <button
+                      type="button"
+                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                      onClick={() =>
+                        void loadDashboard({ pollIfReturning: true })
+                      }
+                    >
+                      Refresh status
+                    </button>
+                    <StripeAccountButton />
+                  </div>
+                </div>
+                <SellerConnectEmbedded />
+              </>
             ) : (
               <>
                 <SellerConnectEmbedded />

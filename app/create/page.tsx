@@ -91,7 +91,52 @@ const INITIAL_DAY: Day = {
   }
 };
 
-function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disabled, enableDates }: { 
+/** Shift a `YYYY-MM-DD` by `delta` calendar days (avoids local timezone shifts). */
+function addCalendarDays(
+  dateStr: string | null | undefined,
+  delta: number
+): string | null {
+  if (!dateStr || typeof dateStr !== "string") return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr.trim());
+  if (!match) return null;
+  const d = new Date(
+    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  );
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+function nextCalendarDate(dateStr: string | null | undefined): string | null {
+  return addCalendarDays(dateStr, 1);
+}
+
+function hasDateValue(date: string | null | undefined): boolean {
+  return Boolean(date && date !== "");
+}
+
+/**
+ * When the user sets a date on one day and every other day is empty,
+ * fill the rest relative to that day (Day N±k).
+ */
+function fillEmptyDatesFromAnchor(
+  days: { date?: string | null }[],
+  anchorIndex: number,
+  anchorDate: string
+): { date?: string | null }[] | null {
+  if (!hasDateValue(anchorDate)) return null;
+  const othersEmpty = days.every(
+    (day, i) => i === anchorIndex || !hasDateValue(day.date)
+  );
+  if (!othersEmpty) return null;
+
+  return days.map((day, i) => {
+    if (i === anchorIndex) return { ...day, date: anchorDate };
+    const filled = addCalendarDays(anchorDate, i - anchorIndex);
+    return { ...day, date: filled };
+  });
+}
+
+function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disabled, enableDates, onDayDateChange }: { 
   day: any; // Temporarily use any to fix type issues
   index: number;
   form: ReturnType<typeof useForm<FormData>>;
@@ -100,6 +145,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
   userId: string;
   itineraryId: string;
   enableDates: boolean;
+  onDayDateChange?: (index: number, date: string) => void;
 }) {
   const {
     attributes,
@@ -228,7 +274,12 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                   <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Date</Label>
                   <Input
                     type="date"
-                    {...form.register(`days.${index}.date`)}
+                    {...form.register(`days.${index}.date`, {
+                      onChange: (e) => {
+                        const value = e.target.value;
+                        onDayDateChange?.(index, value);
+                      },
+                    })}
                     className="rounded-xl"
                     disabled={disabled}
                   />
@@ -450,7 +501,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                           <div className="flex justify-between items-start mb-4">
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                                <Label className="text-[16px] min-w-[75px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Start Time</Label>
+                                <Label className="text-[16px] min-w-[75px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Start time</Label>
                                 <Input
                                   type="time"
                                   {...form.register(`days.${index}.activities.${activityIndex}.time`, {
@@ -461,7 +512,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                                       return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
                                     }
                                   })}
-                                  className="rounded-xl w-auto sm:w-full"
+                                  className="rounded-xl w-full"
                                   disabled={disabled}
                                 />
                               </div>
@@ -555,7 +606,8 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                                         return (
                                           <SelectItem key={tag.id} value={tag.id.toString()} className="cursor-pointer">
                                             <div className="flex items-center gap-2">
-                                              {IconComponent && <IconComponent />} {tag.name}
+                                              {/* {IconComponent && <IconComponent />} {tag.name} */}
+                                              {tag.name}
                                             </div>
                                           </SelectItem>
                                         );
@@ -1118,6 +1170,18 @@ export default function CreatePage() {
     }
   }
 
+  // First date set while others are empty → fill consecutive dates around it
+  const handleDayDateChange = (anchorIndex: number, date: string) => {
+    if (!hasDateValue(date)) return
+    const days = form.getValues("days")
+    const filled = fillEmptyDatesFromAnchor(days, anchorIndex, date)
+    if (!filled) return
+    form.setValue("days", filled as FormData["days"], {
+      shouldDirty: true,
+      shouldValidate: false,
+    })
+  }
+
   useEffect(() => {
     const init = async () => {
       const itineraryId = searchParams.get('itineraryId')
@@ -1308,13 +1372,15 @@ export default function CreatePage() {
       }
       form.setValue('days', currentDays.slice(0, value))
     } else if (value > currentDays.length) {
-      // Add new days
+      // Add new days; chain dates from the previous day when one is set
       const newDays = [...currentDays]
       for (let i = currentDays.length; i < value; i++) {
+        const nextDate = nextCalendarDate(newDays[i - 1]?.date)
         newDays.push({
           ...INITIAL_DAY,
           id: (i + 1),
-          title: ""
+          title: "",
+          date: nextDate,
         })
       }
       form.setValue('days', newDays)
@@ -1968,6 +2034,7 @@ export default function CreatePage() {
                               userId={user?.id}
                               itineraryId={itineraryId}
                               enableDates={enableDates}
+                              onDayDateChange={handleDayDateChange}
                             />
                           ))}
                         </Accordion>
@@ -1979,9 +2046,17 @@ export default function CreatePage() {
                         type="button"
                         variant="outline"
                         onClick={() => {
-                          const newDayId = (dayFields.length + 1);
-                          appendDay({ ...INITIAL_DAY, id: newDayId })
-                          form.setValue('duration', dayFields.length + 1)
+                          const days = form.getValues("days");
+                          const nextDate = nextCalendarDate(
+                            days[days.length - 1]?.date
+                          );
+                          const newDayId = dayFields.length + 1;
+                          appendDay({
+                            ...INITIAL_DAY,
+                            id: newDayId,
+                            date: nextDate,
+                          });
+                          form.setValue("duration", dayFields.length + 1);
                         }}
                       >
                         <Plus className="h-4 w-4 mr-1" />
@@ -2332,7 +2407,11 @@ export default function CreatePage() {
                               disabled={isFormDisabled}
                             />
                           </div>
-                          <p>Net profit: ${netProfit(priceInDollars)}</p>
+                          {priceInDollars && Number(priceInDollars) > 0 &&
+                            <p className="text-sm text-gray-500 mt-1">Net profit: ${netProfit(priceInDollars)}
+                            <span className="text-xs text-gray-500">(Fees include Stripe processing fees and Journli service fees)</span>
+                            </p>
+                          }
                         </div>
                       )}
                     </div>

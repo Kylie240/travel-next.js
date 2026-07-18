@@ -12,6 +12,7 @@ export default function PurchasePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isGuest = searchParams.get('isGuest')
+  const sessionId = searchParams.get('session_id')
 
   useEffect(() => {
     const supabase = createClient()
@@ -24,6 +25,29 @@ export default function PurchasePage() {
     })
     return () => subscription.unsubscribe()
   }, [router])
+
+  // Backup if the Stripe webhook missed DB writes / emails
+  useEffect(() => {
+    if (!sessionId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/sync-purchase', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId }),
+        })
+        if (!res.ok && !cancelled) {
+          console.error('Purchase sync failed', await res.text())
+        }
+      } catch (e) {
+        if (!cancelled) console.error('Purchase sync error', e)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [sessionId])
 
   return (
     <div className="min-h-screen bg-white">

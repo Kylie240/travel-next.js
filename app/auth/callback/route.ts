@@ -55,11 +55,18 @@ export async function GET(request: NextRequest) {
   }
 
   if (user?.id && user?.email) {
+    // Guest checkouts may store email as buyer_email or customer_email depending on schema
     await supabase
       .from("itinerary_purchases")
       .update({ user_id: user.id })
       .is("user_id", null)
       .eq("buyer_email", user.email);
+
+    await supabase
+      .from("itinerary_purchases")
+      .update({ user_id: user.id })
+      .is("user_id", null)
+      .eq("customer_email", user.email);
   }
 
   return response;

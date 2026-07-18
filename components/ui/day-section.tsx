@@ -91,7 +91,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
         )}
         {duration === day.id}
         {day.id === duration && isBasicTemplate &&
-          <div className="absolute bottom-0 w-[10px] h-[.12rem] bg-black">
+          <div className="absolute bottom-0 w-[10px] left-[-5px] h-[.12rem] bg-black">
           </div>
         }
         
@@ -231,7 +231,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
                       <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity?.time)}</p>
                     </div>
                   ) : !isDiscoverTemplate && !isExploreTemplate && !isWonderTemplate && (
-                    <div className="absolute z-[5] min-w-[65px] flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-63px', top: `${activity?.time && activity?.time !== '' ? '25px' : '25px'}` }}>
+                    <div className="absolute z-[5] min-w-[65px] flex flex-col justify-center items-center p-2 gap-1 bg-white" style={{ left: '-63px', top: `${activity?.time && activity?.time !== '' ? '25px' : '25px'}` }}>
                       <div className="w-5 h-5">
                         {activity?.time && activity?.time !== '' ? (
                           <p className="text-xs md:text-md/80 text-gray-500 tracking-tight">{formatTime(activity?.time)}</p>

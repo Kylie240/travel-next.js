@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/utils/supabase/server-admin";
-import { sendPurchaseConfirmationEmail, sendCreatorPurchaseNotificationEmail } from "@/lib/email";
-import { getItineraryPdfAttachmentForEmail } from "@/lib/itinerary-purchase-pdf";
 import {
   subscriptionEndsAtForUserSettings,
   unixSecondsToIso,
@@ -11,6 +9,7 @@ import {
   syncSubscriptionFromCheckoutSession,
   updateUserSubscriptionSettings,
 } from "@/lib/sync-subscription";
+import { syncItineraryCartPurchase } from "@/lib/sync-itinerary-purchase";
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
@@ -101,284 +100,31 @@ export async function POST(request: NextRequest) {
         
         // Handle itinerary cart purchases (one-time payments)
         if (session.mode === 'payment' && session.metadata?.purchase_type === 'itinerary_cart') {
-          const itineraryIds = session.metadata?.itinerary_ids?.split(',') || [];
-          const itineraryTitles = session.metadata?.itinerary_titles?.split('|') || [];
-          const customerEmail = session.customer_details?.email || session.customer_email;
-          
-          if (itineraryIds.length === 0) {
-            console.error('Missing itinerary IDs in cart checkout metadata');
-            break;
-          }
-
-          const supabase = createClient();
-          
-          // Try to get user ID from metadata, or look up by email
-          let userId = session.metadata?.supabase_user_id;
-          
-          if (!userId && customerEmail) {
-            // Try to find existing user by email
-            const { data: existingUser } = await supabase
-              .from('users')
-              .select('id')
-              .eq('email', customerEmail)
-              .single();
-            
-            if (existingUser) {
-              userId = existingUser.id;
-              console.log(`Found existing user ${userId} for email ${customerEmail}`);
-            }
-          }
-          
-          // Create purchase records for each itinerary
-          // Store user_id if logged in, otherwise store customer_email for guest purchases
-          const purchaseRecords = itineraryIds.map((itineraryId, index) => ({
-            user_id: userId || null,
-            customer_email: userId ? null : customerEmail, // Only store email for guests
-            itinerary_id: itineraryId,
-            stripe_payment_intent_id: session.payment_intent as string,
-            stripe_checkout_session_id: session.id,
-            amount_cents: Math.round((session.amount_total || 0) / itineraryIds.length),
-            purchased_at: new Date().toISOString(),
-            itinerary_title: itineraryTitles[index] ?? 'Itinerary',
-          }));
-
-          const { data: insertedPurchases, error: purchaseError } = await supabase
-            .from('itinerary_purchases')
-            .insert(purchaseRecords)
-            .select('id, itinerary_id');
-
-          if (purchaseError) {
-            console.error('Error creating itinerary_purchases records:', purchaseError);
-            console.error('Session id:', session.id, 'itinerary_ids:', itineraryIds);
-            // Return 500 so Stripe retries; duplicate key (23505) is ok - already recorded
-            const isDuplicate = purchaseError.code === '23505';
-            if (!isDuplicate) {
-              return NextResponse.json(
-                { error: 'Failed to create purchase records', details: purchaseError.message },
-                { status: 500 }
-              );
-            }
-          } else {
-            const userInfo = userId ? `user ${userId}` : `guest (${customerEmail})`;
-            console.log(`Created ${purchaseRecords.length} purchase records for ${userInfo}`);
-
-            // Get creator_id (seller) per itinerary for seller_transactions
-            const { data: itineraryRowsForSellers } = await supabase
-              .from('itineraries')
-              .select('id, creator_id')
-              .in('id', itineraryIds);
-            const sellerIdByItineraryId = Object.fromEntries(
-              (itineraryRowsForSellers || []).map((r) => [r.id, r.creator_id])
+          const result = await syncItineraryCartPurchase(session);
+          if (result.ok === false) {
+            console.error(
+              "Failed to sync itinerary cart purchase",
+              session.id,
+              result.reason
             );
-            const missingSeller = (insertedPurchases || []).find(
-              (p) => !sellerIdByItineraryId[p.itinerary_id]
+            return NextResponse.json(
+              {
+                error: "Failed to sync itinerary purchase",
+                reason: result.reason,
+              },
+              { status: 500 }
             );
-            if (missingSeller) {
-              console.error('Missing creator_id for itinerary:', missingSeller.itinerary_id);
-              return NextResponse.json(
-                { error: 'Missing seller for itinerary', itinerary_id: missingSeller.itinerary_id },
-                { status: 500 }
-              );
-            }
-
-            // Send purchase confirmation email with download links
-            if (customerEmail) {
-              const { data: itineraryRows } = await supabase
-                .from("itineraries")
-                .select("id, title, slug")
-                .in("id", itineraryIds);
-              const itineraries = (itineraryRows || []).map((r) => ({
-                id: r.id,
-                title: r.title || "Itinerary",
-                slug: r.slug ?? null,
-              }));
-              const baseUrl =
-                process.env.NEXT_PUBLIC_SITE_URL ||
-                (process.env.VERCEL_URL
-                  ? `https://${process.env.VERCEL_URL}`
-                  : "https://www.journli.com");
-
-              const firstItineraryId = itineraryIds[0];
-              const sellerId = firstItineraryId
-                ? sellerIdByItineraryId[firstItineraryId]
-                : null;
-              const buyerName =
-                session.customer_details?.name?.trim() || null;
-
-              const [sellerUserRes, buyerUserRes, sellerSettingsRes] =
-                await Promise.all([
-                  sellerId
-                    ? supabase
-                        .from("users")
-                        .select("username")
-                        .eq("id", sellerId)
-                        .maybeSingle()
-                    : Promise.resolve({ data: null }),
-                  userId
-                    ? supabase
-                        .from("users")
-                        .select("username")
-                        .eq("id", userId)
-                        .maybeSingle()
-                    : Promise.resolve({ data: null }),
-                  sellerId
-                    ? supabase
-                        .from("users_settings")
-                        .select("seller_message")
-                        .eq("user_id", sellerId)
-                        .maybeSingle()
-                    : Promise.resolve({ data: null, error: null }),
-                ]);
-
-              if (sellerSettingsRes.error) {
-                console.error(
-                  "Failed to load seller purchase message:",
-                  sellerSettingsRes.error,
-                  "seller_id:",
-                  sellerId
-                );
-              }
-
-              const purchaseThankYou =
-                (
-                  sellerSettingsRes.data as {
-                    seller_message?: string | null;
-                  } | null
-                )?.seller_message?.trim() || null;
-
-              const emailContext = {
-                creatorUsername: sellerUserRes.data?.username ?? null,
-                buyerUsername: buyerUserRes.data?.username ?? null,
-                buyerName,
-                sellerMessage: purchaseThankYou,
-                sellerThankYouMessage: null,
-              };
-              const base = baseUrl.replace(/\/$/, "");
-              const amountPerItem = Math.round(
-                (session.amount_total || 0) / itineraryIds.length
-              );
-
-              const uniqueSellerIds = [
-                ...new Set(
-                  Object.values(sellerIdByItineraryId).filter(
-                    (id): id is string => !!id
-                  )
-                ),
-              ];
-              const { data: sellerUsers } =
-                uniqueSellerIds.length > 0
-                  ? await supabase
-                      .from("users")
-                      .select("id, email, username")
-                      .in("id", uniqueSellerIds)
-                  : { data: [] as { id: string; email: string | null; username: string | null }[] };
-              const sellerById = Object.fromEntries(
-                (sellerUsers || []).map((u) => [u.id, u])
-              );
-
-              for (const it of itineraries) {
-                const pdfAttachment = await getItineraryPdfAttachmentForEmail(
-                  it.id,
-                  it.title
-                );
-                const { success, error } = await sendPurchaseConfirmationEmail(
-                  customerEmail,
-                  it,
-                  base,
-                  emailContext,
-                  pdfAttachment
-                );
-                if (!success) {
-                  console.error(
-                    "Purchase confirmation email failed:",
-                    error,
-                    "itinerary_id:",
-                    it.id
-                  );
-                }
-
-                const itSellerId = sellerIdByItineraryId[it.id];
-                const itSeller = itSellerId ? sellerById[itSellerId] : null;
-                if (
-                  itSeller?.email &&
-                  itSellerId !== userId
-                ) {
-                  const { success: creatorNotifyOk, error: creatorNotifyErr } =
-                    await sendCreatorPurchaseNotificationEmail(
-                      itSeller.email,
-                      base,
-                      {
-                        creatorUsername: itSeller.username,
-                        itineraryTitle: it.title,
-                        itineraryId: it.id,
-                        itinerarySlug: it.slug,
-                        buyerUsername: buyerUserRes.data?.username ?? null,
-                        buyerName,
-                        buyerEmail: customerEmail,
-                        amountCents: amountPerItem,
-                      }
-                    );
-                  if (!creatorNotifyOk) {
-                    console.error(
-                      "Creator purchase notification failed:",
-                      creatorNotifyErr,
-                      "itinerary_id:",
-                      it.id,
-                      "seller_id:",
-                      itSellerId
-                    );
-                  }
-                }
-              }
-            }
-
-            // Use inserted itinerary_purchases ids for purchase_id (one seller_transaction per purchase)
-            // Set payout_status from session: 'paid' => funds captured, seller payout pending; otherwise unpaid
-            const payoutStatus =
-              session.payment_status === 'paid' ? 'pending' : 'unpaid';
-            const amountPerItem = Math.round((session.amount_total || 0) / (insertedPurchases?.length ?? 1));
-            const stripeFee = Math.round(amountPerItem * 0.029 + 30);
-            const platformFee = Math.round((amountPerItem - stripeFee) * 0.1);
-            const netAmount = amountPerItem - platformFee - stripeFee;
-            
-            console.log('test', payoutStatus, amountPerItem);
-            const titleByItineraryId = Object.fromEntries(
-              itineraryIds.map((id, i) => [id, itineraryTitles[i] ?? 'Itinerary'])
-            );
-            const sellerTransactionRecords = (insertedPurchases || []).map((purchase) => ({
-              seller_id: sellerIdByItineraryId[purchase.itinerary_id],
-              buyer_id: userId || null,
-              itinerary_id: purchase.itinerary_id,
-              itinerary_title: titleByItineraryId[purchase.itinerary_id] ?? 'Itinerary',
-              purchase_id: purchase.id,
-              gross_amount_cents: amountPerItem,
-              platform_fee_cents: platformFee,
-              stripe_fee_cents: stripeFee,
-              seller_earnings_cents: netAmount,
-              stripe_payment_intent_id: session.payment_intent as string,
-              payout_status: payoutStatus,
-              created_at: new Date().toISOString(),
-            }));
-
-            const { error: insertError } = await supabase
-              .from('seller_transactions')
-              .insert(sellerTransactionRecords);
-
-            if (insertError) {
-              console.error('Error inserting seller_transactions records:', insertError);
-              return NextResponse.json(
-                { error: 'Failed to insert seller_transactions', details: insertError.message },
-                { status: 500 }
-              );
-            }
           }
-
           break;
         }
         
         // Handle subscription checkouts
         if (session.mode !== 'subscription') {
-          console.log('Not a subscription checkout, skipping');
+          console.log('Not a subscription checkout, skipping', {
+            mode: session.mode,
+            purchase_type: session.metadata?.purchase_type,
+            session_id: session.id,
+          });
           break;
         }
 

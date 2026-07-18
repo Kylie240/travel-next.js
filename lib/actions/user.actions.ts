@@ -645,11 +645,18 @@ export const linkPurchasesToUser = async () => {
 
     if (!user || !user.email) return
 
-    const { error } = await supabase
-      .from("itinerary_purchases")
-      .update({ user_id: user.id })
-      .is("user_id", null)
-      .eq("customer_email", user.email)
+    const linkByEmail = async (column: "buyer_email" | "customer_email") => {
+        return supabase
+            .from("itinerary_purchases")
+            .update({ user_id: user.id })
+            .is("user_id", null)
+            .eq(column, user.email)
+    }
+
+    let { error } = await linkByEmail("buyer_email")
+    if (error) {
+        ({ error } = await linkByEmail("customer_email"))
+    }
 
     if (error) {
         throw new Error(error.message)
