@@ -476,6 +476,7 @@ export async function POST(request: NextRequest) {
         const userId =
           session.metadata?.supabase_user_id ||
           subscription.metadata?.supabase_user_id ||
+          session.client_reference_id ||
           (customerId ? await getUserIdFromCustomer(stripe, customerId) : null);
 
         if (!userId) {
@@ -483,16 +484,25 @@ export async function POST(request: NextRequest) {
             'No user id for subscription checkout (session + subscription metadata empty, customer lookup failed)',
             session.id
           );
-          break;
+          return NextResponse.json(
+            { error: 'Missing supabase user id for subscription checkout' },
+            { status: 400 }
+          );
         }
 
         if (!customerId) {
           console.error('No Stripe customer id on subscription checkout', session.id, subscription.id);
-          break;
+          return NextResponse.json(
+            { error: 'Missing Stripe customer id for subscription checkout' },
+            { status: 400 }
+          );
         }
 
         const priceId = subscription.items.data[0]?.price.id;
         const plan = getPriceToPlanMap()[priceId] || 'standard';
+        console.log(
+          `Subscription checkout completed: session=${session.id}, user=${userId}, price=${priceId}, plan=${plan}`
+        );
 
         await stripe.customers.update(customerId, {
           metadata: { supabase_user_id: userId },
@@ -665,8 +675,11 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error(`Error processing ${event.type}:`, error);
-    // Return 200 to acknowledge receipt even if processing failed
-    // Stripe will retry if we return an error status
+    // Return 500 so Stripe retries — returning 200 hides failed plan syncs.
+    return NextResponse.json(
+      { error: `Failed to process ${event.type}` },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ received: true }, { status: 200 });
