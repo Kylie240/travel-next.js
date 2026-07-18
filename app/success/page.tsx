@@ -4,6 +4,7 @@ import { CheckCircle2, Settings, ArrowRight, Sparkles } from 'lucide-react'
 import { stripe } from '../../lib/stripe'
 import { Button } from '@/components/ui/button'
 import { Metadata } from 'next'
+import { syncSubscriptionFromCheckoutSession } from '@/lib/sync-subscription'
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
@@ -27,6 +28,18 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   const session = await stripe.checkout.sessions.retrieve(session_id, {
     expand: ['line_items', 'payment_intent', 'subscription']
   })
+
+  // Backup sync if the webhook hasn't updated Supabase yet
+  if (session.mode === 'subscription' && session.payment_status === 'paid') {
+    try {
+      const result = await syncSubscriptionFromCheckoutSession(stripe, session)
+      if (!result.ok) {
+        console.error('Success page subscription sync skipped:', result.reason, session_id)
+      }
+    } catch (error) {
+      console.error('Success page subscription sync failed:', error, session_id)
+    }
+  }
 
   const lineItems = session.line_items?.data || []
   const products = lineItems.map((item) => {
@@ -146,4 +159,3 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
     </div>
   )
 }
-

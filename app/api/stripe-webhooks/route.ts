@@ -7,13 +7,20 @@ import {
   subscriptionEndsAtForUserSettings,
   unixSecondsToIso,
 } from "@/lib/stripe-subscription-utils";
+import {
+  syncSubscriptionFromCheckoutSession,
+  updateUserSubscriptionSettings,
+} from "@/lib/sync-subscription";
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
 /** Vercel / long-running webhooks (cart path generates PDFs + email). */
 export const maxDuration = 60
 
-// Map Stripe price IDs to plan names (from env so test/live can differ)
+const SUBSCRIPTION_WEBHOOK_RETRIEVE: Stripe.SubscriptionRetrieveParams = {
+  expand: ["items.data.price"],
+};
+
 function getPriceToPlanMap(): Record<string, string> {
   const map: Record<string, string> = {}
   if (process.env.STANDARD_PRICE_ID) {
@@ -23,78 +30,6 @@ function getPriceToPlanMap(): Record<string, string> {
     map[process.env.PREMIUM_PRICE_ID] = 'premium'
   }
   return map
-}
-
-const SUBSCRIPTION_WEBHOOK_RETRIEVE: Stripe.SubscriptionRetrieveParams = {
-  expand: ["items.data.price"],
-};
-
-async function updateUserSubscription(
-  userId: string,
-  subscriptionData: {
-    stripe_customer_id: string;
-    stripe_subscription_id: string;
-    stripe_subscription_status: string;
-    stripe_subscription_created_date: string;
-    /** Null = no scheduled end (active renewal) or not canceling. */
-    stripe_subscription_ends_at?: string | null;
-    plan: string;
-  }
-) {
-  const supabase = createClient();
-
-  const { stripe_subscription_ends_at: _unusedEnds, ...rest } = subscriptionData;
-  void _unusedEnds;
-  // Patch all columns except `stripe_subscription_ends_at`, then PATCH that column alone so
-  // PostgREST applies JSON `null` and clears the DB column reliably.
-  const { data, error } = await supabase
-    .from("users_settings")
-    .update(rest)
-    .eq("user_id", userId)
-    .select();
-
-  if (error) {
-    console.error("Error updating user subscription:", error);
-    throw error;
-  }
-
-  if (data && data.length > 0) {
-    if (Object.prototype.hasOwnProperty.call(subscriptionData, "stripe_subscription_ends_at")) {
-      const ends = subscriptionData.stripe_subscription_ends_at ?? null;
-      const { data: rowEnds, error: errEnds } = await supabase
-        .from("users_settings")
-        .update({ stripe_subscription_ends_at: ends })
-        .eq("user_id", userId)
-        .select();
-      if (errEnds) {
-        console.error("Error updating stripe_subscription_ends_at:", errEnds);
-        throw errEnds;
-      }
-      console.log("Updated user subscription:", rowEnds);
-      return rowEnds;
-    }
-    console.log("Updated user subscription:", data);
-    return data;
-  }
-
-  // Some accounts never got a users_settings row; update matched 0 rows.
-  const { data: inserted, error: insertError } = await supabase
-    .from('users_settings')
-    .insert({
-      user_id: userId,
-      is_private: false,
-      email_notifications: true,
-      ...subscriptionData,
-    })
-    .select();
-
-  if (insertError) {
-    console.error('Error inserting user subscription (no prior settings row):', insertError);
-    throw insertError;
-  }
-
-  console.log('Inserted user subscription settings:', inserted);
-  return inserted;
 }
 
 async function getUserIdFromCustomer(stripe: Stripe, customerId: string): Promise<string | null> {
@@ -447,78 +382,18 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        if (!session.subscription) {
-          console.error('checkout.session.completed subscription mode but no session.subscription', session.id);
-          break;
-        }
-
-        const subscription = await stripe.subscriptions.retrieve(
-          session.subscription as string,
-          SUBSCRIPTION_WEBHOOK_RETRIEVE
-        );
-
-        const customerId =
-          typeof session.customer === 'string'
-            ? session.customer
-            : session.customer &&
-                typeof session.customer === 'object' &&
-                'id' in session.customer &&
-                !('deleted' in session.customer && (session.customer as { deleted?: boolean }).deleted)
-              ? (session.customer as Stripe.Customer).id
-              : typeof subscription.customer === 'string'
-                ? subscription.customer
-                : subscription.customer &&
-                    typeof subscription.customer === 'object' &&
-                    'id' in subscription.customer
-                  ? (subscription.customer as Stripe.Customer).id
-                  : null;
-
-        const userId =
-          session.metadata?.supabase_user_id ||
-          subscription.metadata?.supabase_user_id ||
-          session.client_reference_id ||
-          (customerId ? await getUserIdFromCustomer(stripe, customerId) : null);
-
-        if (!userId) {
+        const syncResult = await syncSubscriptionFromCheckoutSession(stripe, session);
+        if (!syncResult.ok) {
           console.error(
-            'No user id for subscription checkout (session + subscription metadata empty, customer lookup failed)',
-            session.id
+            'Failed to sync subscription from checkout session',
+            session.id,
+            syncResult.reason
           );
           return NextResponse.json(
-            { error: 'Missing supabase user id for subscription checkout' },
+            { error: 'Failed to sync subscription', reason: syncResult.reason },
             { status: 400 }
           );
         }
-
-        if (!customerId) {
-          console.error('No Stripe customer id on subscription checkout', session.id, subscription.id);
-          return NextResponse.json(
-            { error: 'Missing Stripe customer id for subscription checkout' },
-            { status: 400 }
-          );
-        }
-
-        const priceId = subscription.items.data[0]?.price.id;
-        const plan = getPriceToPlanMap()[priceId] || 'standard';
-        console.log(
-          `Subscription checkout completed: session=${session.id}, user=${userId}, price=${priceId}, plan=${plan}`
-        );
-
-        await stripe.customers.update(customerId, {
-          metadata: { supabase_user_id: userId },
-        });
-
-        const subscriptionPayload: Parameters<typeof updateUserSubscription>[1] = {
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscription.id,
-          stripe_subscription_status: subscription.status,
-          stripe_subscription_created_date: new Date(subscription.created * 1000).toISOString(),
-          plan,
-          stripe_subscription_ends_at:
-            subscriptionEndsAtForUserSettings(subscription),
-        };
-
-        await updateUserSubscription(userId, subscriptionPayload);
 
         break;
       }
@@ -547,7 +422,7 @@ export async function POST(request: NextRequest) {
         const priceId = subscription.items.data[0]?.price.id;
         const plan = getPriceToPlanMap()[priceId] || "standard";
 
-        const subscriptionPayload: Parameters<typeof updateUserSubscription>[1] = {
+        const subscriptionPayload: Parameters<typeof updateUserSubscriptionSettings>[1] = {
           stripe_customer_id: subscription.customer as string,
           stripe_subscription_id: subscription.id,
           stripe_subscription_status: subscription.status,
@@ -557,7 +432,7 @@ export async function POST(request: NextRequest) {
             subscriptionEndsAtForUserSettings(subscription),
         };
 
-        await updateUserSubscription(userId, subscriptionPayload);
+        await updateUserSubscriptionSettings(userId, subscriptionPayload);
 
         console.log(
           `Subscription updated for user ${userId}: status=${subscription.status}, plan=${plan}, cancel_at_period_end=${subscription.cancel_at_period_end}, ends_at=${subscriptionPayload.stripe_subscription_ends_at ?? "null"}`
@@ -578,7 +453,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Downgrade to free plan when subscription is cancelled
-        await updateUserSubscription(userId, {
+        await updateUserSubscriptionSettings(userId, {
           stripe_customer_id: subscription.customer as string,
           stripe_subscription_id: subscription.id,
           stripe_subscription_status: 'canceled',
@@ -622,7 +497,7 @@ export async function POST(request: NextRequest) {
         // Re-sync `stripe_subscription_ends_at` from a live subscription read (covers missed
         // or thin `customer.subscription.updated` webhooks, e.g. local CLI). Same helper as
         // subscription.updated; `cancel_at_period_end` comes from the API, not the event.
-        await updateUserSubscription(userId, {
+        await updateUserSubscriptionSettings(userId, {
           stripe_customer_id: invoice.customer as string,
           stripe_subscription_id: subscription.id,
           stripe_subscription_status: subscription.status,
