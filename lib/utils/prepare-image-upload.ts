@@ -1,12 +1,3 @@
-const EXT_TO_MIME: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  heic: "image/heic",
-  heif: "image/heif",
-}
-
 const UPLOADABLE_TYPES = new Set([
   "image/jpeg",
   "image/jpg",
@@ -16,103 +7,139 @@ const UPLOADABLE_TYPES = new Set([
 
 const UPLOADABLE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"])
 
+let cachedWebpSupport: boolean | null = null
+
 function getExtension(fileName: string): string | null {
   const parts = fileName.split(".")
   if (parts.length < 2) return null
   return parts.pop()?.toLowerCase() ?? null
 }
 
-function needsNormalization(file: File, ext: string | null): boolean {
-  if (!ext || !UPLOADABLE_EXTENSIONS.has(ext)) return true
-  if (!file.type) return true
-  if (file.type === "image/heic" || file.type === "image/heif") return true
-  if (!UPLOADABLE_TYPES.has(file.type)) return true
-  return false
+/** Sync WebP encode check — avoids hanging toBlob probes. */
+export function browserSupportsWebpEncode(): boolean {
+  if (cachedWebpSupport !== null) return cachedWebpSupport
+  if (typeof document === "undefined") {
+    cachedWebpSupport = false
+    return false
+  }
+  try {
+    const canvas = document.createElement("canvas")
+    canvas.width = 1
+    canvas.height = 1
+    cachedWebpSupport = canvas
+      .toDataURL("image/webp")
+      .startsWith("data:image/webp")
+  } catch {
+    cachedWebpSupport = false
+  }
+  return cachedWebpSupport
 }
 
-function convertImageToJpeg(file: File, maxDimension = 4096): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-
-    const cleanup = () => URL.revokeObjectURL(url)
-
-    img.onload = () => {
-      let { width, height } = img
-
-      if (width > maxDimension || height > maxDimension) {
-        const scale = Math.min(maxDimension / width, maxDimension / height)
-        width = Math.round(width * scale)
-        height = Math.round(height * scale)
-      }
-
-      const canvas = document.createElement("canvas")
-      canvas.width = width
-      canvas.height = height
-
-      const ctx = canvas.getContext("2d")
-      if (!ctx) {
-        cleanup()
-        reject(new Error("Could not process image"))
-        return
-      }
-
-      ctx.drawImage(img, 0, 0, width, height)
-      canvas.toBlob(
-        (blob) => {
-          cleanup()
-          if (!blob) {
-            reject(new Error("Could not convert image"))
-            return
-          }
-          resolve(
-            new File([blob], `upload-${Date.now()}.jpg`, { type: "image/jpeg" })
-          )
-        },
-        "image/jpeg",
-        0.92
-      )
-    }
-
-    img.onerror = () => {
-      cleanup()
-      reject(
-        new Error(
-          "Could not read this image. Try saving it as JPG or PNG and upload again."
-        )
-      )
-    }
-
-    img.src = url
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality: number
+): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    // Some browsers never call back — don't hang forever
+    const timer = window.setTimeout(() => resolve(null), 20_000)
+    canvas.toBlob(
+      (blob) => {
+        window.clearTimeout(timer)
+        resolve(blob)
+      },
+      type,
+      quality
+    )
   })
 }
 
-export async function prepareImageForUpload(file: File): Promise<File> {
-  const ext = getExtension(file.name)
-  const mimeFromExt = ext ? EXT_TO_MIME[ext] : null
-  const resolvedMime = file.type || mimeFromExt || ""
+/**
+ * Fast local optimize: resize + WebP (or JPEG), strips EXIF/GPS via canvas redraw.
+ * No server round-trip — avoids the optimize API timeout on large photos.
+ */
+export async function optimizeImageInBrowser(
+  file: File,
+  options: { maxDimension?: number; quality?: number } = {}
+): Promise<File> {
+  const maxDimension = options.maxDimension ?? 1600
+  const quality = options.quality ?? 0.8
+  const preferWebp = browserSupportsWebpEncode()
 
-  if (!needsNormalization(file, ext)) {
-    const uploadExt = ext === "jpeg" ? "jpg" : ext!
-    const normalizedName =
-      ext && file.name.includes(".")
-        ? file.name
-        : `upload-${Date.now()}.${uploadExt}`
+  const objectUrl = URL.createObjectURL(file)
+  try {
+    const img = new Image()
+    img.decoding = "async"
+    img.src = objectUrl
 
-    if (file.type) return file
+    await Promise.race([
+      img.decode(),
+      new Promise<never>((_, reject) =>
+        window.setTimeout(
+          () =>
+            reject(
+              new Error(
+                "This photo took too long to process. Try a smaller image."
+              )
+            ),
+          25_000
+        )
+      ),
+    ])
 
-    return new File([file], normalizedName, { type: resolvedMime })
+    let width = img.naturalWidth || img.width
+    let height = img.naturalHeight || img.height
+    if (!width || !height) {
+      throw new Error("Could not read image dimensions")
+    }
+
+    if (width > maxDimension || height > maxDimension) {
+      const scale = Math.min(maxDimension / width, maxDimension / height)
+      width = Math.max(1, Math.round(width * scale))
+      height = Math.max(1, Math.round(height * scale))
+    }
+
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext("2d", { alpha: false })
+    if (!ctx) throw new Error("Could not process image")
+
+    ctx.drawImage(img, 0, 0, width, height)
+
+    if (preferWebp) {
+      const webp = await canvasToBlob(canvas, "image/webp", quality)
+      if (webp && webp.size > 0) {
+        return new File([webp], `upload-${Date.now()}.webp`, {
+          type: "image/webp",
+        })
+      }
+    }
+
+    const jpeg = await canvasToBlob(canvas, "image/jpeg", quality)
+    if (!jpeg || jpeg.size === 0) {
+      throw new Error("Could not compress image")
+    }
+    return new File([jpeg], `upload-${Date.now()}.jpg`, {
+      type: "image/jpeg",
+    })
+  } catch (e) {
+    const message =
+      e instanceof Error
+        ? e.message
+        : "Could not read this image. Try JPG or PNG."
+    throw new Error(message)
+  } finally {
+    URL.revokeObjectURL(objectUrl)
   }
-
-  return convertImageToJpeg(file)
 }
 
 export function getUploadExtension(file: File): string {
+  if (file.type === "image/webp") return "webp"
+  if (file.type === "image/png") return "png"
   const ext = getExtension(file.name)
   if (ext === "jpeg") return "jpg"
   if (ext && UPLOADABLE_EXTENSIONS.has(ext)) return ext
-  if (file.type === "image/png") return "png"
-  if (file.type === "image/webp") return "webp"
   return "jpg"
 }
 
@@ -134,3 +161,10 @@ export function withTimeout<T>(
       })
   })
 }
+
+/** @deprecated kept for any remaining imports */
+export async function prepareImageForUpload(file: File): Promise<File> {
+  return optimizeImageInBrowser(file)
+}
+
+export { UPLOADABLE_TYPES }

@@ -93,7 +93,7 @@ export default function PurchasePage() {
 
             {isGuest === 'true' && (
               <p className="text-gray-600 text-sm mt-2">
-                Don't have an account? Sign up now to link your purchase <br /> to your account and access your itineraries later.
+                Don't have an account? Sign up now to link your purchase to your account and access your itineraries later.
               </p>
             )}
 

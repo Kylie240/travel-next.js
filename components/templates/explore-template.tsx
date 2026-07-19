@@ -146,7 +146,7 @@ export default function ExploreTemplate({
       </div>
 
       <div className="flex justify-center items-center flex-col">
-        {photos.length > 1 && (
+        {photos.length > 0 && (
           <div className="max-w-6xl w-full pl-12 -mt-[60px] mb-4">
             <div className="flex gap-5 md:gap-6 lg:gap-8 overflow-x-auto no-scrollbar">
               {photos.map((p, index) => (
@@ -167,9 +167,11 @@ export default function ExploreTemplate({
                 </button>
               ))}
             </div>
-            <div className="flex justify-end rounded-2xl overflow-hidden mt-8 max-w-[150px]">
-              <ItineraryGallery photos={photos} template="discover" />
-            </div>
+            {photos.length > 3 && (
+              <div className="flex justify-end rounded-2xl overflow-hidden mt-8 max-w-[150px]">
+                <ItineraryGallery photos={photos} template="discover" />
+              </div>
+            )}
           </div>
         )}
       </div>

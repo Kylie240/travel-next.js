@@ -26,6 +26,7 @@ import { dispatchAvatarUpdate, dispatchProfileUpdate } from "@/lib/utils/avatar-
 import { OnboardingTour } from "@/components/ui/onboarding-tour"
 import type { StripeBillingSummary } from "@/types/stripe-billing"
 import { LuEyeClosed } from "react-icons/lu"
+import { optimizeImageOnServer } from "@/lib/utils/optimize-image-client"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -351,19 +352,20 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
     const supabase = createClient();
     try {
       setUploadingAvatar(true)
-      const MAX_FILE_SIZE = 2 * 1024 * 1024;
+      const MAX_FILE_SIZE = 5 * 1024 * 1024;
       const file = event.target.files?.[0];
       
       if (!file) return;
 
       if (file.size > MAX_FILE_SIZE) {
-        toast.error("File size must be under 2MB");
+        toast.error("File size must be under 5MB");
         return;
       }
 
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const optimizedFile = await optimizeImageOnServer(file, "avatar")
+
       const fileName = `profile-picture-${Date.now()}`;
-      const filePath = `${userData.id}/${fileName}.${fileExt}`;
+      const filePath = `${userData.id}/${fileName}.webp`;
 
       // Delete old avatar if it exists
       if (userData.avatar) {
@@ -382,8 +384,10 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       // Upload new avatar
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, {
+        .upload(filePath, optimizedFile, {
           upsert: true,
+          contentType: "image/webp",
+          cacheControl: "31536000",
         });
         
       if (uploadError) {

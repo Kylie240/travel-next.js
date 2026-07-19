@@ -106,7 +106,7 @@ export default function DiscoverTemplate({
     >
       {/* Full-bleed hero + glass overlay (detail page style) */}
       <div className="mt-2 px-3 md:px-6 w-full md:max-w-6xl md:mx-auto pb-8 pb-[280px] md:pb-[160px]">
-        <div className="relative h-[calc(100svh-600px)] min-h-[calc(100svh-600px)] md:min-h-[520px] md:h-auto rounded-3xl overflow-visible">
+        <div className="relative h-[calc(100svh-600px)] min-h-[400px] md:min-h-[520px] md:h-auto rounded-3xl overflow-visible">
           <div className="absolute inset-0 rounded-3xl overflow-hidden">
             {itinerary.mainImage && (
               <Image
@@ -360,7 +360,9 @@ export default function DiscoverTemplate({
         </div>
       ) : (
       <div className="max-w-6xl mx-auto w-full mt-8 px-6">
-        {itinerary.days && Array.isArray(itinerary.days) && itinerary.days.some(day => day.image) && (
+        {itinerary.days &&
+          Array.isArray(itinerary.days) &&
+          itinerary.days.length > 0 && (
           <>
             <div className="w-full px-4">
               <h2 className="text-xl font-semibold mb-4 text-gray-700">Select a day</h2>

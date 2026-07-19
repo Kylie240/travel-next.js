@@ -49,6 +49,7 @@
     "react-hook-form": "^7.51.0",
     "react-icons": "^5.5.0",
     "resend": "^6.9.2",
+    "sharp": "^0.35.3",
     "sonner": "^2.0.6",
     "stripe": "^20.3.0",
     "swiper": "^11.0.6",

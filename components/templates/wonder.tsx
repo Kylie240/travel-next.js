@@ -290,7 +290,7 @@ export default function WonderTemplate({
             </div>
           </div>
         ) : (
-          <div className="px-4 max-w-[1080px]">
+          <div className="px-4 w-full max-w-[1080px]">
             <div className="sticky w-full top-20 z-50 flex flex-col items-end gap-2">
             <button 
               type="button"
@@ -313,7 +313,7 @@ export default function WonderTemplate({
           </div>
             <div className="flex w-full flex-col">
               {itinerary.days.map((day: Day, index) => (
-                <div key={day.id}>
+                <div className="w-full" key={day.id}>
                   <DaySection
                     key={day.id}
                     day={day}

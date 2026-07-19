@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await syncItineraryCartPurchase(session);
-    if (!result.ok) {
+    if (result.ok === false) {
       console.error("sync-purchase failed", sessionId, result.reason);
       return NextResponse.json(
         { error: "Failed to sync purchase", reason: result.reason },

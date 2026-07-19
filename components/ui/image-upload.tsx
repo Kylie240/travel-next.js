@@ -3,14 +3,14 @@
 import { X, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { useState } from "react"
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from "uuid"
 import Image from "next/image"
 import createClient from "@/utils/supabase/client"
 import {
   getUploadExtension,
-  prepareImageForUpload,
   withTimeout,
 } from "@/lib/utils/prepare-image-upload"
+import { optimizeImageOnServer } from "@/lib/utils/optimize-image-client"
 
 interface ImageUploadProps {
   value?: string
@@ -27,16 +27,18 @@ export function ImageUpload({
   onRemove,
   disabled,
   bucket,
-  folder
+  folder,
 }: ImageUploadProps) {
   const [uploadingImage, setUploadingImage] = useState(false)
   const supabase = createClient()
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const input = event.target
     try {
       setUploadingImage(true)
-      const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+      const MAX_FILE_SIZE = 10 * 1024 * 1024
       const file = input.files?.[0]
 
       if (!file) return
@@ -46,31 +48,28 @@ export function ImageUpload({
         return
       }
 
-      const preparedFile = await prepareImageForUpload(file)
+      const optimizedFile = await optimizeImageOnServer(file, "itinerary")
 
-      if (preparedFile.size > MAX_FILE_SIZE) {
+      if (optimizedFile.size > MAX_FILE_SIZE) {
         toast.error("File size must be under 10MB after processing")
         return
       }
 
-      const fileExt = getUploadExtension(preparedFile)
-
-      let filePath = ''
-      if(bucket === "itinerary-images") { 
-        filePath = `${folder}/${uuidv4()}.${fileExt}`;
+      const fileExt = getUploadExtension(optimizedFile)
+      let filePath = ""
+      if (bucket === "itinerary-images") {
+        filePath = `${folder}/${uuidv4()}.${fileExt}`
       } else {
-        filePath = `${folder}/${Date.now()}/${uuidv4()}.${fileExt}`;
+        filePath = `${folder}/${Date.now()}/${uuidv4()}.${fileExt}`
       }
 
       const { error: uploadError } = await withTimeout(
-        supabase.storage
-          .from(bucket)
-          .upload(filePath, preparedFile, {
-            cacheControl: "3600",
-            upsert: false,
-            contentType: preparedFile.type || "image/jpeg",
-          }),
-        90_000,
+        supabase.storage.from(bucket).upload(filePath, optimizedFile, {
+          cacheControl: "31536000",
+          upsert: false,
+          contentType: optimizedFile.type || "image/webp",
+        }),
+        120_000,
         "Upload timed out. Check your connection and try again."
       )
 
@@ -78,14 +77,14 @@ export function ImageUpload({
         throw new Error(uploadError.message || "Failed to upload image")
       }
 
-      const { data } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath)
+      const { data } = supabase.storage.from(bucket).getPublicUrl(filePath)
 
-      onChange(data.publicUrl);
+      onChange(data.publicUrl)
       toast.success("Image uploaded successfully")
-    } catch (error: any) {
-      toast.error(error.message || "Failed to upload image")
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to upload image"
+      toast.error(message)
     } finally {
       setUploadingImage(false)
       if (input) input.value = ""
@@ -97,12 +96,14 @@ export function ImageUpload({
       <div className="w-full">
         {value && value !== "" ? (
           <div className="relative">
-            <div className={`${folder.includes("main") ? "h-[150px]" : "h-[100px]"} w-[300px] relative`}>
-              <Image 
-                src={value} 
-                alt="Preview" 
+            <div
+              className={`${folder.includes("main") ? "h-[150px]" : "h-[100px]"} w-[300px] relative`}
+            >
+              <Image
+                src={value}
+                alt="Preview"
                 fill
-                className="w-full h-full object-cover rounded-lg" 
+                className="w-full h-full object-cover rounded-lg"
               />
               <button
                 type="button"
@@ -114,17 +115,20 @@ export function ImageUpload({
             </div>
           </div>
         ) : (
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center"
+          <div
+            className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center"
             onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
+              e.preventDefault()
+              e.stopPropagation()
             }}
             onDrop={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const files = Array.from(e.dataTransfer.files);
+              e.preventDefault()
+              e.stopPropagation()
+              const files = Array.from(e.dataTransfer.files)
               if (files[0]) {
-                handleImageUpload({ target: { files: [files[0]] } } as any);
+                handleImageUpload({
+                  target: { files: [files[0]] },
+                } as React.ChangeEvent<HTMLInputElement>)
               }
             }}
           >
@@ -138,15 +142,21 @@ export function ImageUpload({
                   className="hidden"
                   disabled={disabled || uploadingImage}
                 />
-                <span className="bg-white text-sm md:text:md rounded-full font-medium">{uploadingImage ? 'Uploading...' : 'Upload'}</span>
+                <span className="bg-white text-sm md:text:md rounded-full font-medium">
+                  {uploadingImage ? "Processing…" : "Upload"}
+                </span>
               </label>
               <div className="flex flex-col">
-                <span className="text-gray-600 text-[14px] font-medium">Choose images or drag & drop it here.</span>
-                <span className="text-gray-500 text-sm">JPG, JPEG, PNG and WEBP. Max 10 MB.</span>
+                <span className="text-gray-600 text-[14px] font-medium">
+                  Choose images or drag & drop it here.
+                </span>
+                <span className="text-gray-500 text-sm">
+                  JPG, PNG, WEBP. Max 10 MB — compressed automatically.
+                </span>
               </div>
             </div>
           </div>
-          )}
+        )}
       </div>
     </div>
   )

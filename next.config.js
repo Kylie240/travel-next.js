@@ -9,6 +9,10 @@ const nextConfig = {
     ],
     domains: ['images.unsplash.com'],
   },
+  // sharp is a native module — keep it external for the Node server runtime
+  experimental: {
+    serverComponentsExternalPackages: ['sharp'],
+  },
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig
