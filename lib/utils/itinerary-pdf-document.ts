@@ -27,28 +27,91 @@ function imageFormatFromDataUrl(dataUrl: string): "JPEG" | "PNG" | "WEBP" {
   return "JPEG";
 }
 
+/**
+ * jsPDF reads raw pixel dimensions and ignores EXIF orientation, so phone
+ * photos often appear rotated 90°. Re-encode with orientation applied.
+ */
+async function bakeImageOrientation(
+  bytes: ArrayBuffer
+): Promise<string | null> {
+  // Server (purchase email PDF): Sharp .rotate() applies EXIF then strips it
+  if (typeof window === "undefined") {
+    try {
+      const sharp = (await import("sharp")).default;
+      const out = await sharp(Buffer.from(bytes))
+        .rotate()
+        .jpeg({ quality: 90, mozjpeg: true })
+        .toBuffer();
+      return `data:image/jpeg;base64,${out.toString("base64")}`;
+    } catch (e) {
+      console.error("PDF image orientation (sharp):", e);
+      return null;
+    }
+  }
+
+  // Browser (in-app export): decode via ImageBitmap / canvas (honors EXIF)
+  try {
+    const blob = new Blob([bytes]);
+    let bitmap: ImageBitmap | null = null;
+    try {
+      bitmap = await createImageBitmap(blob, {
+        // Ensure EXIF orientation is applied when supported
+        imageOrientation: "from-image",
+      } as ImageBitmapOptions);
+    } catch {
+      bitmap = await createImageBitmap(blob);
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return null;
+    }
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    return dataUrl.startsWith("data:image/jpeg") ? dataUrl : null;
+  } catch (e) {
+    console.error("PDF image orientation (canvas):", e);
+    return null;
+  }
+}
+
 async function fetchImageDataUrl(
   url: string | null | undefined
 ): Promise<string | null> {
   if (!url || typeof url !== "string" || !url.trim()) return null;
-  if (url.startsWith("data:")) return url;
   try {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 15000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(t);
-    if (!res.ok) return null;
-    const buf = await res.arrayBuffer();
-    const mime = res.headers.get("content-type")?.split(";")[0]?.trim() || "";
-    const bytes = new Uint8Array(buf);
+    let bytes: ArrayBuffer;
+    if (url.startsWith("data:")) {
+      const base64 = url.split(",")[1];
+      if (!base64) return url;
+      const binary = atob(base64);
+      const arr = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+      bytes = arr.buffer;
+    } else {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(t);
+      if (!res.ok) return null;
+      bytes = await res.arrayBuffer();
+    }
+
+    const oriented = await bakeImageOrientation(bytes);
+    if (oriented) return oriented;
+
+    // Fallback: original bytes (may still be rotated if bake failed)
+    if (url.startsWith("data:")) return url;
+    const u8 = new Uint8Array(bytes);
     let binary = "";
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-    const base64 = btoa(binary);
-    if (mime === "image/png") return `data:image/png;base64,${base64}`;
-    if (mime === "image/webp") return `data:image/webp;base64,${base64}`;
-    if (mime === "image/jpeg" || mime === "image/jpg")
-      return `data:image/jpeg;base64,${base64}`;
-    return `data:image/jpeg;base64,${base64}`;
+    for (let i = 0; i < u8.length; i++) binary += String.fromCharCode(u8[i]);
+    return `data:image/jpeg;base64,${btoa(binary)}`;
   } catch {
     return null;
   }

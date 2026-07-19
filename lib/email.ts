@@ -81,7 +81,6 @@ export async function sendPurchaseConfirmationEmail(
   const buyerU = context?.buyerUsername?.trim();
   const buyerN = context?.buyerName?.trim();
   const sellerMessage = context?.sellerMessage?.trim();
-  const customIntro = sellerMessage || null;
 
   const greeting =
     buyerU != null && buyerU.length > 0
@@ -90,12 +89,20 @@ export async function sendPurchaseConfirmationEmail(
         ? `Hi ${escapeHtml(buyerN)}`
         : "Hi there";
 
-  const fromLine =
-    customIntro != null && customIntro.length > 0
-      ? `<p style="margin-bottom:16px;color:#4b5563;white-space:pre-wrap;">${escapeHtml(customIntro)}</p>`
-      : creator != null && creator.length > 0
-        ? `<p style="margin-bottom:16px;color:#4b5563;">Thank you for purchasing <strong>${subjectSnippet}</strong> from <strong>@${escapeHtml(creator)}</strong> on Journli. Your download is now ready.</p>`
-        : "";
+  const thankYouLine =
+    creator != null && creator.length > 0
+      ? `<p style="margin-bottom:16px;color:#4b5563;">Thank you for purchasing <strong>${escapeHtml(subjectSnippet)}</strong> from <strong>@${escapeHtml(creator)}</strong> on Journli. Your download is now ready.</p>`
+      : `<p style="margin-bottom:16px;color:#4b5563;">Thank you for your purchase on Journli. Your download is now ready.</p>`;
+
+  const sellerNoteLine =
+    sellerMessage != null && sellerMessage.length > 0
+      ? `<p style="margin-bottom:8px;color:#4b5563;"><strong>A note from the seller${
+          creator != null && creator.length > 0
+            ? ` (@${escapeHtml(creator)})`
+            : ""
+        }:</strong></p>
+      <p style="margin-bottom:16px;color:#4b5563;white-space:pre-wrap;">${escapeHtml(sellerMessage)}</p>`
+      : "";
 
   const linkHtml = `<p style="margin:16px 0;"><a href="${linkUrl}" style="color:#2563eb;text-decoration:underline;font-weight:600;">view itinerary</a></p>`;
 
@@ -107,8 +114,9 @@ export async function sendPurchaseConfirmationEmail(
   <h1 style="font-size:1.5rem;margin-bottom:16px;">Journli</h1>
   <h3 style="font-size:1.5rem;margin-bottom:16px;">Thank you for your purchase</h3>
   <p style="margin-bottom:8px;">${greeting},</p>
-  ${fromLine} 
-  If you purchased from a Journli account, access the itinerary by following the link below or navigating to the 'Purchased' page on your account. 
+  ${thankYouLine}
+  ${sellerNoteLine}
+  <p style="margin-bottom:8px;color:#4b5563;">If you purchased from a Journli account, access the itinerary by following the link below or navigating to the 'Purchased' page on your account.</p>
   ${linkHtml}
   <p style="margin-top:24px;color:#6b7280;font-size:0.875rem;">— The Journli team</p>
 </body>
