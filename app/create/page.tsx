@@ -37,7 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
-import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, updateItineraryTemplate, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
+import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, updateItineraryTemplate, getItineraryPermissionsById, type ItineraryTemplate } from "@/lib/actions/itinerary.actions"
 import { getPermissionPickerUsers } from "@/lib/actions/user.actions"
 import createClient from "@/utils/supabase/client"
 import { CreateItinerary } from "@/types/createItinerary"
@@ -48,6 +48,8 @@ import { supabase } from "@/utils/supabase/superbase-client"
 import { ItineraryStatusEnum, viewPermissionEnum, editPermissionEnum } from "@/enums/itineraryStatusEnum"
 import { ItineraryStatus } from "@/types/itineraryStatus"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
+import { ItineraryPreviewDialog } from "@/components/create/itinerary-preview-dialog"
+import { UserData } from "@/lib/types"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { Followers } from "@/types/followers"
 import { FollowerUserPicker } from "@/components/ui/follower-user-picker"
@@ -933,7 +935,10 @@ export default function CreatePage() {
   
   // User plan and permissions state (for step 4)
   const [userPlan, setUserPlan] = useState<string>('free')
-  const [template, setTemplate] = useState<'basic' | 'discover' | 'explore' | 'journey'>('basic')
+  const [template, setTemplate] = useState<ItineraryTemplate>('basic')
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewFormValues, setPreviewFormValues] = useState<FormData | null>(null)
+  const [creatorPreview, setCreatorPreview] = useState<UserData | null>(null)
   const [viewPermission, setViewPermission] = useState<'public' | 'creator' | 'restricted'>('public')
   const [editPermission, setEditPermission] = useState<'creator' | 'collaborators'>('creator')
   const [allowedViewers, setAllowedViewers] = useState<string[]>([])
@@ -950,6 +955,7 @@ export default function CreatePage() {
   const canAccessStep4 = userPlan !== 'free' && isItineraryCreator
   const totalSteps = canAccessStep4 ? 4 : 3
   const sellingFee = userPlan === 'standard' ? 0.9 : 0.95
+  const sellingFeePercentage = userPlan === 'standard' ? 10 : 15
 
   const netProfit = (priceInDollars: string) => {
     const p = Number(priceInDollars)
@@ -1543,7 +1549,7 @@ export default function CreatePage() {
             is_paid: isPaid,
             price_cents: isPaid ? priceCents : 0
           })
-          await updateItineraryTemplate(itineraryId, template)
+          await updateItineraryTemplate(itineraryId, template as ItineraryTemplate)
         } catch (permError) {
           console.error('Error saving permissions/pricing:', permError)
           // Don't fail the whole save, just log the error
@@ -1617,7 +1623,7 @@ export default function CreatePage() {
               is_paid: isPaid,
               price_cents: isPaid ? priceCents : 0
             })
-            await updateItineraryTemplate(itineraryId, template)
+            await updateItineraryTemplate(itineraryId, template as ItineraryTemplate)
           } catch (permError) {
             console.error('Error saving permissions/pricing:', permError)
             // Don't fail the whole save, just log the error
@@ -1794,6 +1800,42 @@ export default function CreatePage() {
 
   const isFormDisabled = isSubmitting || form.formState.isSubmitting;
 
+  const renderCancelAndPreview = () => (
+    <div className="flex flex-col gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        color="crimson"
+        className="text-red hover:bg-red-500 hover:text-white"
+        disabled={isFormDisabled}
+        onClick={() => {
+          if (
+            confirm(
+              "Are you sure you want to cancel? All changes will be lost."
+            )
+          ) {
+            router.push("/my-itineraries")
+          }
+        }}
+      >
+        <X className="sm:hidden" />
+        <span className="hidden sm:block">Cancel</span>
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        disabled={isFormDisabled}
+        onClick={() => {
+          setPreviewFormValues(form.getValues())
+          setShowPreview(true)
+        }}
+        className="inline-flex items-center justify-center gap-1.5"
+      >
+        <span>Preview</span>
+      </Button>
+    </div>
+  )
+
   return (
     <FormProvider {...form}> 
       <form 
@@ -1825,11 +1867,11 @@ export default function CreatePage() {
                       currentStep === step 
                         ? 'bg-black' 
                         : currentStep > step 
-                          ? 'bg-green-500' 
+                          ? 'bg-cyan-600' 
                           : 'bg-white border border-gray-200'
                     }`}
                   >
-                    <span className={`${currentStep === step ? "text-white" : "text-gray-700"}`}>
+                    <span className={`${currentStep === step ? "text-white" : "text-black"}`}>
                       {step}
                     </span>
                   </div>
@@ -1979,21 +2021,6 @@ export default function CreatePage() {
                           <span className="hidden md:block">: Plan Days</span>
                         </p>
                     </Button>
-                    <Button 
-                      type="button"
-                      variant="outline"
-                      color="crimson"
-                      className="text-red hover:bg-red-500 hover:text-white"
-                      disabled={isFormDisabled}
-                      onClick={(e) => {
-                        if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
-                          router.push('/my-itineraries')
-                        }
-                      }}
-                    >
-                      <X className="sm:hidden"/>
-                      <span className="hidden sm:block">Cancel</span>
-                    </Button>
                   </div>
                 </div>
               )}
@@ -2092,21 +2119,6 @@ export default function CreatePage() {
                           Next
                           <span className="hidden md:block">: Final Details</span>
                         </p>
-                      </Button>
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        color="crimson"
-                        className="text-red hover:bg-red-500 hover:text-white"
-                        disabled={isFormDisabled}
-                        onClick={(e) => {
-                          if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
-                            router.push('/my-itineraries')
-                          }
-                        }}
-                      >
-                        <X className="sm:hidden"/>
-                        <span className="hidden sm:block">Cancel</span>
                       </Button>
                     </div>
                   </div>
@@ -2304,21 +2316,7 @@ export default function CreatePage() {
                           <span className="hidden sm:block">Next: Advanced Settings</span>
                           <ChevronRight className="sm:hidden" />
                         </Button>
-                        <Button 
-                          type="button"
-                          variant="outline"
-                          color="crimson"
-                          className="text-red hover:bg-red-500 hover:text-white"
-                          disabled={isFormDisabled}
-                          onClick={(e) => {
-                            if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
-                              router.push('/my-itineraries')
-                            }
-                          }}
-                        >
-                          <X className="sm:hidden"/>
-                          <span className="hidden sm:block">Cancel</span>
-                        </Button>
+                        {renderCancelAndPreview()}
                       </>
                     ) : (
                       <>
@@ -2339,21 +2337,7 @@ export default function CreatePage() {
                         >
                           {itineraryStatus == ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived ? "Publish" : "Update"}
                         </Button>
-                        <Button 
-                          type="button"
-                          variant="outline"
-                          color="crimson"
-                          className="text-red hover:bg-red-500 hover:text-white"
-                          disabled={isFormDisabled}
-                          onClick={(e) => {
-                            if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
-                              router.push('/my-itineraries')
-                            }
-                          }}
-                        >
-                          <X className="sm:hidden"/>
-                          <span className="hidden sm:block">Cancel</span>
-                        </Button>
+                        {renderCancelAndPreview()}
                       </>
                     )}
                   </div>
@@ -2409,7 +2393,7 @@ export default function CreatePage() {
                           </div>
                           {priceInDollars && Number(priceInDollars) > 0 &&
                             <p className="text-sm text-gray-500 mt-1">Net profit: ${netProfit(priceInDollars)}
-                            <span className="text-xs text-gray-500">(Fees include Stripe processing fees and Journli service fees)</span>
+                            <span className="text-xs text-gray-500 ml-1">(Includes 2.9% + $0.30 processing fee and {sellingFeePercentage}% service fee)</span>
                             </p>
                           }
                         </div>
@@ -2430,7 +2414,12 @@ export default function CreatePage() {
                     <div className="space-y-4">
                     <div className="flex flex-col gap-2">
                         <Label className="text-base font-medium">Template</Label>
-                        <Select value={template} onValueChange={(value) => setTemplate(value as 'basic' | 'discover' | 'explore' | 'journey')}>
+                        <Select
+                          value={template}
+                          onValueChange={(value) =>
+                            setTemplate(value as ItineraryTemplate)
+                          }
+                        >
                           <SelectTrigger className="w-full rounded-xl">
                             <SelectValue />
                           </SelectTrigger>
@@ -2565,21 +2554,7 @@ export default function CreatePage() {
                     >
                       {itineraryStatus == ItineraryStatusEnum.draft || itineraryStatus == ItineraryStatusEnum.archived ? "Publish" : "Update"}
                     </Button>
-                    <Button 
-                      type="button"
-                      variant="outline"
-                      color="crimson"
-                      className="text-red hover:bg-red-500 hover:text-white"
-                      disabled={isFormDisabled}
-                      onClick={(e) => {
-                        if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
-                          router.push('/my-itineraries')
-                        }
-                      }}
-                    >
-                      <X className="sm:hidden"/>
-                      <span className="hidden sm:block">Cancel</span>
-                    </Button>
+                    {renderCancelAndPreview()}
                   </div>
                 </div>
               )}
@@ -2588,6 +2563,21 @@ export default function CreatePage() {
         </div>
       </form>
       
+      <ItineraryPreviewDialog
+        open={showPreview}
+        onOpenChange={setShowPreview}
+        formValues={previewFormValues || form.getValues()}
+        template={template || "basic"}
+        itineraryId={itineraryId}
+        creator={creatorPreview}
+        currentUserId={user?.id || ""}
+        priceCents={
+          isPaid && priceInDollars
+            ? Math.round(Number(priceInDollars) * 100)
+            : 0
+        }
+      />
+
       <UpgradeDialog
         isOpen={showUpgradeDialog}
         setIsOpen={setShowUpgradeDialog}

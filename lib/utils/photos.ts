@@ -24,7 +24,7 @@ export function collectAllPhotos(itinerary: Itinerary): PhotoItem[] {
   }
 
   // Add day images and activity/accommodation photos
-  itinerary.days.forEach((day, dayIndex) => {
+  (itinerary.days ?? []).forEach((day, dayIndex) => {
     // Add day image
     if (day.image) {
       photos.push({

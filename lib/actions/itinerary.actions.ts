@@ -703,7 +703,7 @@ export const updateItineraryPricing = async (
   return { success: true };
 }
 
-export type ItineraryTemplate = "basic" | "discover" | "explore" | "journey";
+export type ItineraryTemplate = "basic" | "discover" | "explore" | "journey" | "wonder";
 
 export const updateItineraryTemplate = async (
   itineraryId: string,

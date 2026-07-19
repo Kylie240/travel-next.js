@@ -400,7 +400,7 @@ export default function MyItinerariesPage() {
                             e.preventDefault()
                             e.stopPropagation()
                           }}
-                          className="absolute top-8 mt-6 right-4">
+                          className="absolute top-8 mt-6 right-4 padding-[5px]">
                             <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="circle" backgroundColor="white" color="black" smallButton={true} />
                         </button>
                       )}

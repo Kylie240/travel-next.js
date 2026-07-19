@@ -67,15 +67,58 @@ const AboutPage = () => {
         </section>
 
         {/* How It Works Section */}
-        <section className="mb-16">
+        <section className="mb-16" id="how-it-works">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 mb-2 md:mb-6">How It Works</h2>
           <div className="prose prose-lg text-gray-600 text-sm sm:text-md md:text-ld">
             <p className="mb-4">
               Our itinerary builder breaks down creating an itinerary into easy to follow steps, where you can provide as little or as much detail as you want.
-              Once you're done creating your itinerary, you can publish it to share with others via link.
+              Once you&apos;re done creating your itinerary, you can publish it to share with others via link.
             </p>
             <p className="mb-4">
-              <a href="https://www.journli.com/profile/journli" target='_blank' className="text-blue-600 hover:text-blue-800">Click here</a> to view a sample of what your profile and itineraries will look like.
+              <a href="https://www.journli.com/profile/journli" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">Click here</a> to view a sample of what your profile and itineraries will look like.
+            </p>
+
+            <h3 className="text-lg md:text-xl font-semibold text-gray-900 mt-8 mb-3 not-prose">
+              Subscribe for more
+            </h3>
+            <p className="mb-4">
+              The free Nomad plan is great for getting started. When you want more room to create and sell,
+              upgrade to the <strong className="font-semibold text-gray-800">Standard</strong> plan from{" "}
+              <a href="/plans" className="text-blue-600 hover:text-blue-800">Plans &amp; Pricing</a>.
+              Subscribers unlock higher itinerary limits, templates, and the ability to price and sell
+              their published itineraries.
+            </p>
+            <p className="mb-4">
+              You can manage or cancel your subscription anytime from Account Settings after you subscribe.
+            </p>
+
+            <h3 className="text-lg md:text-xl font-semibold text-gray-900 mt-8 mb-3 not-prose">
+              Monetize your itineraries
+            </h3>
+            <p className="mb-4">
+              Creators on a paid plan can turn travel know-how into income. After you upgrade:
+            </p>
+            <ol className="list-decimal pl-5 mb-4 space-y-2">
+              <li>
+                Open the <strong className="font-semibold text-gray-800">Seller Dashboard</strong> and connect
+                a Stripe account so you can receive payouts.
+              </li>
+              <li>
+                When publishing (or editing) an itinerary, set a price and choose who can view it.
+              </li>
+              <li>
+                Buyers check out securely through Stripe. You keep the majority of each sale after
+                processing and platform fees; earnings appear in your Stripe Connect balance and Seller Dashboard.
+              </li>
+            </ol>
+            <p className="mb-4">
+              Purchased itineraries are delivered with confirmation email (including a PDF),
+              and buyers with a Journli account can reopen them anytime from Purchased Itineraries.
+            </p>
+            <p>
+              Ready to sell? Start on{" "}
+              <a href="/plans" className="text-blue-600 hover:text-blue-800">Plans &amp; Pricing</a>,
+              then finish Stripe setup from your Seller Dashboard.
             </p>
           </div>
         </section>

@@ -1,11 +1,14 @@
 "use client"
 
-import { Map, MapPin, Send } from "lucide-react"
+import { Bookmark, Eye, Map, MapPin, Send } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { TbWriting } from "react-icons/tb"
+import { TbPigMoney, TbWriting } from "react-icons/tb"
 import ActionButtons from "./action-buttons"
 import { Button } from "@/components/ui/button"
+import { FaMoneyBill } from "react-icons/fa"
+import { LuMousePointerClick } from "react-icons/lu"
+import { FaHeart } from "react-icons/fa6"
 
 export default function LandingPage() {
   return (
@@ -17,7 +20,7 @@ export default function LandingPage() {
             <h1 className="text-3xl md:text-4xl font-medium text-center lg:text-left my-4 lg:my-8 sm:mb-8">
               Welcome To Your New < br /> Travel Journal
             </h1>
-            <p className="lg:text-base text-center lg:text-left font-light mb-4 mx-2 md:mx-0">
+            <p className="lg:text-base text-center lg:text-left font-light mb-4 mx-4 md:mx-0">
               Create and share your travel itineraries with friends and followers. Journli houses your experiences in one place, making it easy to share and discover new travel ideas with one link.
             </p>
             <div className="gap-4 my-4">
@@ -34,26 +37,46 @@ export default function LandingPage() {
               </div>
               <div className="flex flex-col gap-y-4 sm:gap-y-6 lg:gap-y-8 -mt-12 sm:-mt-16 lg:-mt-24">
                 <div className="relative rounded-xl overflow-hidden w-full aspect-[7/10]" style={{ backgroundImage: 'url(https://i.pinimg.com/1200x/ea/9d/1c/ea9d1ca6252b75f5f907b1ad262f255b.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                  <div className="absolute flex justify-center items-center py-2 px-3 bg-white rounded-full z-5 bottom-2 left-2 gap-1 shadow-md shadow-black/10">
-                    <MapPin className="w-5 h-5 text-cyan-700" strokeWidth={3}/>
-                    <p className="text-md font-semibold">Thailand</p>
+                  <div className="absolute flex flex-col justify-center items-center py-1 px-4 bg-white rounded-lg z-5 bottom-3 left-6 shadow-md line-height-1 shadow-black/10">
+                    <p className="text-xs text-gray-500 font-semibold">Next Payout</p>
+                    <p className="text-xl sm:text-2xl font-bold text-cyan-700">$240.00</p>
                   </div>
                 </div>
                 <div className="rounded-xl overflow-hidden w-full aspect-[7/10]" style={{ backgroundImage: 'url(https://i.pinimg.com/736x/44/f4/77/44f4770e83127568b1363448729fb025.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 </div>
               </div>
             </div>
-            <div className="absolute z-5 bottom-[10%] left-[12%] rotate-12 flex justify-center items-center py-2 px-4 bg-white rounded-lg gap-1 shadow-md shadow-black/10">
+            <div className="absolute z-5 rotate-12 bottom-[10%] left-[5%] flex justify-center items-center py-2 px-4 bg-white rounded-lg gap-1 shadow-md shadow-black/10">
               <div className="flex items-start gap-3">
-                <div className="mt-1">
-                  <Image className="w-full h-full object-cover rounded-full" src="https://www.journli.com/_next/image?url=https%3A%2F%2Fxmfqfdxfssaxwjfodzff.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Favatars%2F264ba7c9-7f34-4fd9-ac38-b8ec5a9a2fb9%2Fprofile-picture-1762126834984.png&w=1920&q=75" alt="kylie" width={32} height={32} />
+                <div className="mt-1 bg-cyan-700 rounded-full flex justify-center items-center h-8 w-8 p-1">
+                  <span className="text-white font-medium text-lg">J</span>
                 </div>
                 <div>
                   <p className="text-sm font-medium">journlitravels</p>
-                  <p className="text-sm font-regular leading-1">Share your itinerary with Journli!</p>
-                  <p className="text-xs text-gray-400">2023-04-19 Reply</p>
+                  <p className="text-md font-regular leading-1">Share your itinerary with Journli!</p>
+                  <p className="text-xs text-gray-400">{new Date().toLocaleDateString()} Reply</p>
                 </div>
               </div>
+            </div>
+            <div className="absolute z-5 top-[20%] left-[0%] rotate-12 flex justify-center items-center p-1 bg-white rounded-lg gap-1 shadow-md shadow-black/10">
+              <div className="flex items-center gap-2 bg-teal-800 rounded-lg p-1">
+              <LuMousePointerClick className="w-5 h-5 text-white"/>
+              </div>
+              <p className="text-md font-medium ml-1 mr-2">1,000</p>
+            </div>
+            <div className="hidden lg:block">
+              <div className="absolute z-5 top-[45%] right-[35%] rotate-12 flex justify-center items-center p-1 bg-white rounded-lg gap-1 shadow-md shadow-black/10">
+                <div className="items-center gap-2 bg-teal-800 rounded-lg p-1">
+                <FaHeart className="w-6 h-6 text-white"/>
+                </div>
+                <p className="text-lg font-medium ml-1 mr-2">500</p>
+              </div>
+            </div>
+            <div className="absolute z-5 bottom-[32%] right-[12%] rotate-12 flex justify-center items-center p-1 bg-white rounded-lg gap-1 shadow-md shadow-black/10">
+              <div className="flex items-center gap-2 bg-teal-800 rounded-lg p-1">
+              <Bookmark className="w-4 h-4 text-white"/>
+              </div>
+              <p className="text-sm font-medium ml-1 mr-2">200</p>
             </div>
           </div>
         </div>
@@ -61,12 +84,12 @@ export default function LandingPage() {
 
       <div className="py-12 px-4 bg-gray-100 mt-4">
         <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
-          <p className="text-sm text-gray-800 mb-2">Coming Soon</p>
+          <p className="text-gray-800 mb-2">Monetize Your Travel Expertise</p>
           <h2 className="text-2xl md:text-3xl text-cyan-700 font-bold mb-6">
             Get Paid for Your Travel Expertise
           </h2>
-          <p className="text-md md:text-lg text-black mb-8 px-8">
-            Soon you'll be able to monetize your travel expertise! Create detailed itineraries and sell them to fellow travelers looking for insider tips and curated experiences. Click <Link href="/plans" className="text-cyan-700 text-bold">here</Link> to learn more.
+          <p className="text-md md:text-lg text-gray-800 mb-8 px-8">
+            Create detailed itineraries and sell them to fellow travelers looking for insider tips and curated experiences. Click <Link href="/about#how-it-works" className="text-cyan-700 text-bold">here</Link> to learn more.
           </p>
         </div>
       </div>

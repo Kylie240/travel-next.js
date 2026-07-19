@@ -3,6 +3,9 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Metadata } from "next"
 import createClient from "@/utils/supabase/server"
+import { PiPersonSimpleHikeBold } from "react-icons/pi"
+import { BiWorld } from "react-icons/bi"
+import { FaPlane } from "react-icons/fa6"
 
 export const metadata: Metadata = {
   title: "Plans & Pricing - Journli",
@@ -46,8 +49,8 @@ export default async function PlansPage() {
           <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-gray-200 hover:border-gray-300 transition-all">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
-                <Circle className="w-5 h-5 text-black" strokeWidth={1.5} />
-                <h2 className="text-2xl font-bold text-gray-900">Free</h2>
+                <PiPersonSimpleHikeBold className="w-5 h-5 text-black" strokeWidth={1.5} />
+                <h2 className="text-2xl font-bold text-gray-900">Nomad <span className="text-gray-600 font-normal text-sm">(Free)</span></h2>
               </div>
               <p className="text-gray-600">Perfect for the casual traveler and occasional trip planner</p>
             </div>
@@ -120,8 +123,8 @@ export default async function PlansPage() {
 
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-6 h-6 text-cyan-600" />
-                <h2 className="text-2xl font-bold text-gray-900">Standard</h2>
+                <BiWorld className="w-6 h-6 text-cyan-600" />
+                <h2 className="text-2xl font-bold text-gray-900">Explorer <span className="text-gray-600 font-normal text-sm">(Standard)</span></h2>
               </div>
               <p className="text-gray-600">Ideal for frequent travelers who want more features</p>
             </div>
@@ -196,8 +199,8 @@ export default async function PlansPage() {
 
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
-                <Lock className="w-6 h-6 text-purple-600" />
-                <h2 className="text-2xl font-bold text-gray-900">Pro</h2>
+                <FaPlane className="w-6 h-6 text-purple-600" />
+                <h2 className="text-2xl font-bold text-gray-900">Jet-Setter <span className="text-gray-600 font-normal text-sm">(Pro)</span></h2>
               </div>
               <p className="text-gray-600">Advanced capabilities for creators looking to monetize their content</p>
             </div>
@@ -294,7 +297,7 @@ export default async function PlansPage() {
                   </tr>
                   <tr>
                     <td className="py-4 px-6 text-gray-700">Photo Gallery</td>
-                    <td className="py-4 px-6 text-center">Limited</td>
+                    <td className="py-4 px-6 text-center text-sm text-gray-500">Limited</td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                   </tr>
@@ -318,7 +321,7 @@ export default async function PlansPage() {
                   </tr>
                   <tr>
                     <td className="py-4 px-6 text-gray-700">Content Visibility Controls</td>
-                    <td className="py-4 px-6 text-center text-gray-400">Limited</td>
+                    <td className="py-4 px-6 text-center text-sm text-gray-500">Limited</td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                     <td className="py-4 px-6 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                   </tr>
@@ -352,6 +355,18 @@ export default async function PlansPage() {
                     <td colSpan={4} className="py-3 px-6 font-semibold text-sm text-gray-700 uppercase">
                       Monetization & Growth
                     </td>
+                  </tr>
+                  <tr>
+                    <td className="py-4 px-6 text-gray-700">Processing Fee</td>
+                    <td className="py-4 px-6 text-center text-gray-400">—</td>
+                    <td className="py-4 px-6 text-center text-sm text-gray-500">2.9% + $0.30</td>
+                    <td className="py-4 px-6 text-center text-sm text-gray-500">2.9% + $0.30</td>
+                  </tr>
+                  <tr>
+                    <td className="py-4 px-6 text-gray-700">Service Fee</td>
+                    <td className="py-4 px-6 text-center text-gray-400">—</td>
+                    <td className="py-4 px-6 text-center text-sm text-gray-500">10%</td>
+                    <td className="py-4 px-6 text-center text-sm text-gray-500">15%</td>
                   </tr>
                   <tr>
                     <td className="py-4 px-6 text-gray-700">Analytics Dashboard</td>
