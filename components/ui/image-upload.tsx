@@ -32,16 +32,10 @@ export function ImageUpload({
   const [uploadingImage, setUploadingImage] = useState(false)
   const supabase = createClient()
 
-  const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const input = event.target
+  const processFile = async (file: File) => {
     try {
       setUploadingImage(true)
       const MAX_FILE_SIZE = 10 * 1024 * 1024
-      const file = input.files?.[0]
-
-      if (!file) return
 
       if (file.size > MAX_FILE_SIZE) {
         toast.error("File size must be under 10MB")
@@ -87,7 +81,19 @@ export function ImageUpload({
       toast.error(message)
     } finally {
       setUploadingImage(false)
-      if (input) input.value = ""
+    }
+  }
+
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const input = event.target
+    const file = input.files?.[0]
+    if (!file) return
+    try {
+      await processFile(file)
+    } finally {
+      input.value = ""
     }
   }
 
@@ -124,12 +130,8 @@ export function ImageUpload({
             onDrop={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              const files = Array.from(e.dataTransfer.files)
-              if (files[0]) {
-                handleImageUpload({
-                  target: { files: [files[0]] },
-                } as React.ChangeEvent<HTMLInputElement>)
-              }
+              const file = e.dataTransfer.files?.[0]
+              if (file) void processFile(file)
             }}
           >
             <div className="flex flex-col items-center gap-3">
