@@ -84,7 +84,7 @@ export default function LandingPage() {
 
       <div className="py-12 px-4 bg-gray-100 mt-4">
         <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
-          <p className="text-gray-800 mb-2">Monetize Your Travel Expertise</p>
+          <p className="text-gray-800 mb-2">Monetize Your Content</p>
           <h2 className="text-2xl md:text-3xl text-cyan-700 font-bold mb-6">
             Get Paid for Your Travel Expertise
           </h2>

@@ -3,12 +3,14 @@
 import { cookies } from "next/headers";
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { revalidatePath } from "next/cache";
-import { CreateItinerary } from "@/types/createItinerary";
+import { CreateItinerary, type ItineraryTemplate } from "@/types/createItinerary";
 import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
 import { ItinerarySummary } from "@/types/ItinerarySummary";
 import { SavedItinerary } from "@/types/savedItinerary";
 import createClient from "@/utils/supabase/server";
 import { syncItinerarySlug } from "@/lib/utils/itinerary-slug";
+
+export type { ItineraryTemplate };
 
 export const getItineraries = async (options?: GetItineraryOptions) => {
     const supabase = await createClient()
@@ -702,8 +704,6 @@ export const updateItineraryPricing = async (
 
   return { success: true };
 }
-
-export type ItineraryTemplate = "basic" | "discover" | "explore" | "journey" | "wonder";
 
 export const updateItineraryTemplate = async (
   itineraryId: string,

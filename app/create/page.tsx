@@ -37,10 +37,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
-import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, updateItineraryTemplate, getItineraryPermissionsById, type ItineraryTemplate } from "@/lib/actions/itinerary.actions"
+import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, updateItineraryTemplate, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
 import { getPermissionPickerUsers } from "@/lib/actions/user.actions"
 import createClient from "@/utils/supabase/client"
-import { CreateItinerary } from "@/types/createItinerary"
+import { CreateItinerary, type ItineraryTemplate } from "@/types/createItinerary"
 import { Day } from "@/types/Day"
 import { Note } from "@/types/Note"
 import { Activity } from "@/types/Activity"
@@ -957,6 +957,22 @@ export default function CreatePage() {
   const sellingFee = userPlan === 'standard' ? 0.9 : 0.95
   const sellingFeePercentage = userPlan === 'standard' ? 10 : 15
 
+  /** Free plan always saves as basic; paid creators use the selected template. */
+  const resolveTemplateForSave = (): ItineraryTemplate => {
+    if (userPlan === "free") return "basic"
+    const t = template || "basic"
+    if (
+      t === "basic" ||
+      t === "discover" ||
+      t === "explore" ||
+      t === "journey" ||
+      t === "wonder"
+    ) {
+      return t
+    }
+    return "basic"
+  }
+
   const netProfit = (priceInDollars: string) => {
     const p = Number(priceInDollars)
     const stripeFee = p * 0.029 + .30
@@ -1199,7 +1215,6 @@ export default function CreatePage() {
           const itinerary = await getItineraryById(itineraryId) as CreateItinerary & {
             creatorId?: string
           }
-          console.log(itinerary)
           setItineraryStatus(itinerary.status)
 
           const { data: { user: currentUser } } = await supabase.auth.getUser()
@@ -1291,7 +1306,8 @@ export default function CreatePage() {
                   permData.template === 'basic' ||
                   permData.template === 'discover' ||
                   permData.template === 'explore' ||
-                  permData.template === 'journey'
+                  permData.template === 'journey' ||
+                  permData.template === 'wonder'
                 ) {
                   setTemplate(permData.template)
                 }
@@ -1462,18 +1478,18 @@ export default function CreatePage() {
     }
   }
 
-  const buildItineraryData = () => {
+  const buildItineraryData = (): CreateItinerary => {
       const formData = form.getValues();
     return {
-        id: itineraryId,
+        id: itineraryId!,
         status: formData.status as number,
         title: formData.title,
         shortDescription: formData.shortDescription,
         mainImage: formData.mainImage,
         detailedOverview: formData.detailedOverview,
         duration: formData.duration,
-        provinces: formData.provinces,
-        cities: formData.cities.map(city => ({
+        template: resolveTemplateForSave(),
+        cities: (formData.cities || []).map(city => ({
           city: city.city,
           country: city.country
         })),
@@ -1512,7 +1528,7 @@ export default function CreatePage() {
           } as Day;
         }),
         itineraryTags: formData.itineraryTags,
-        notes: formData.notes.map(note => ({
+        notes: (formData.notes || []).map(note => ({
           id: note.id,
           title: note.title || '',
           content: note.content || '',
@@ -1521,6 +1537,15 @@ export default function CreatePage() {
         budget: formData.budget
     };
   };
+
+  const persistItineraryTemplate = async (id: string | null | undefined) => {
+    if (!id) return
+    try {
+      await updateItineraryTemplate(id, resolveTemplateForSave())
+    } catch (e) {
+      console.error("Error saving itinerary template:", e)
+    }
+  }
 
   const saveItineraryAsDraft = async () => {
     setIsSubmitting(true);
@@ -1536,6 +1561,8 @@ export default function CreatePage() {
       } else {
         await createItinerary(itineraryData);
       }
+
+      await persistItineraryTemplate(itineraryId)
       
       // Save permissions and pricing for paid users (step 4)
       if (canAccessStep4 && itineraryId) {
@@ -1549,7 +1576,6 @@ export default function CreatePage() {
             is_paid: isPaid,
             price_cents: isPaid ? priceCents : 0
           })
-          await updateItineraryTemplate(itineraryId, template as ItineraryTemplate)
         } catch (permError) {
           console.error('Error saving permissions/pricing:', permError)
           // Don't fail the whole save, just log the error
@@ -1610,6 +1636,8 @@ export default function CreatePage() {
           response = await createItinerary(itineraryData)
           toast.success('Itinerary created successfully')
         }
+
+        await persistItineraryTemplate(itineraryId)
         
         // Save permissions and pricing for paid users (step 4)
         if (canAccessStep4 && itineraryId) {
@@ -1623,7 +1651,6 @@ export default function CreatePage() {
               is_paid: isPaid,
               price_cents: isPaid ? priceCents : 0
             })
-            await updateItineraryTemplate(itineraryId, template as ItineraryTemplate)
           } catch (permError) {
             console.error('Error saving permissions/pricing:', permError)
             // Don't fail the whole save, just log the error
@@ -1708,12 +1735,8 @@ export default function CreatePage() {
         return
       }
 
-      const formData = form.getValues()
-      const itineraryData: CreateItinerary = {
-        ...formData,
-        id: itineraryId,
-        status: ItineraryStatusEnum.draft
-      }
+      const itineraryData = buildItineraryData()
+      itineraryData.status = ItineraryStatusEnum.draft
 
       let response = null;
       if (initialItineraryId) {
@@ -1722,6 +1745,8 @@ export default function CreatePage() {
       } else {
         response = await createItinerary(itineraryData)
       }
+
+      await persistItineraryTemplate(itineraryId)
       
       if (response) {
         toast.success('Itinerary saved successfully')

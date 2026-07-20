@@ -131,7 +131,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
               onClick={() => hasExpandableContent && onToggle()}
               disabled={!hasExpandableContent}
             >
-              <div className="z-[5] min-w-0 flex-1 text-left h-full flex flex-col justify-between p-4">
+              <div className="z-[5] min-w-0 flex-1 text-left h-full flex flex-col justify-start p-4">
                 <div className="mb-2 border bg-gray-800 text-white rounded-2xl max-w-fit px-3 py-1 flex items-center justify-center gap-1">
                   {day.date ? (
                     <p className="text-xs lg:text-[14px] font-normal">{formatDateToText(day.date)}</p>
@@ -142,13 +142,13 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
                     {[day.cityName, day.countryName].filter(Boolean).join(", ")}
                   </p>
                 )}
-                <h2 className="text-xl md:text-2xl leading-5 font-semibold mb-1">{day.title}</h2>
+                <h2 className="text-lg sm:text-xl md:text-2xl line-height-1 leading-5 font-semibold mb-1">{day.title}</h2>
                 {day.description && (
                   <p className="text-sm text-gray-500 font-thin line-clamp-1 max-w-[70%]">{day.description}</p>
                 )}
               </div>
               {day.image && (
-                <div className="relative h-full aspect-square shrink-0 self-center overflow-hidden rounded-xl">
+                <div className="relative h-full aspect-[7/10] sm:aspect-square shrink-0 self-center overflow-hidden rounded-xl">
                   <Image
                     src={day.image}
                     alt={day.title}
