@@ -4,103 +4,380 @@ import { cookies } from "next/headers";
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
 import { revalidatePath } from "next/cache";
 import { CreateItinerary, type ItineraryTemplate } from "@/types/createItinerary";
-import { ItineraryStatusEnum } from "@/enums/itineraryStatusEnum";
+import { ItineraryStatusEnum, viewPermissionEnum } from "@/enums/itineraryStatusEnum";
 import { ItinerarySummary } from "@/types/ItinerarySummary";
 import { SavedItinerary } from "@/types/savedItinerary";
 import createClient from "@/utils/supabase/server";
 import { syncItinerarySlug } from "@/lib/utils/itinerary-slug";
+import type { GetItineraryOptions } from "@/types/GetItineraryOptions";
+import type { ExplorePageDto } from "@/dtos/ExplorePageDto";
+import type { ExploreItinerariesResult } from "@/types/explore";
+import { itineraryTagsMap } from "@/lib/constants/tags";
 
 export type { ItineraryTemplate };
 
-export const getItineraries = async (options?: GetItineraryOptions) => {
-    const supabase = await createClient()
-    const page = options?.pagination?.page || 1;
-    const pageSize = options?.pagination?.pageSize || 10;
-    const firstItemIndex = (page - 1) * pageSize;
-    const lastItemIndex = firstItemIndex + pageSize - 1;
-    const {destination, durationMin, durationMax, budgetMin, budgetMax, continents, activityTags, itineraryTags, countries, sort, quickFilter} = options?.filters ?? {};
-
-    let query = supabase.from('itineraries').select(
-        'id, title, slug, duration, short_description, main_image, countries, cities, itinerary_tags, activity_tags, featured_categories, creator_id, creator_name, creator_image'
-    )
-
-         if (destination) {
-            query = query.contains('countries', [destination])
-         }
-         if (durationMin !== null && durationMin !== undefined) {
-            query = query.gte('duration', durationMin)
-         }
-         if (durationMax !== null && durationMax !== undefined) {
-            query = query.lte('duration', durationMax)
-         }
-         // find how to query actiivty tags
-        //  if (activityTags) {
-        //     query = query.in('duration', activityTags)
-        //  }
-         if (itineraryTags) {
-            query = query.contains('itineraryTags', itineraryTags)
-         }
-         if (countries) {
-            query = query.contains('countries', countries)
-         }
-        //  // Not Yet Using
-        //  if (budgetMin) {
-        //     query = query.gte('budget', durationMin)
-        //  }
-        //  if (budgetMax) {
-        //     query = query.lte('budget', durationMax)
-        //  }
-        //  if (continents) {
-        //     query = query.in('continents', continents)
-        //  }
-
-        //  //Sort Handling
-        //  if (sort) {
-        //     switch(sort) {
-        //         case 'most-recent':
-        //             query = query.order('updated', { ascending: false });
-        //             break;
-        //         case 'most-viewed':
-        //             query = query.order('views', { ascending: false });
-        //             break;
-        //         case 'best-rated':
-        //             query = query.order('rating', { ascending: false });
-        //             break;
-        //         case 'price-low':
-        //             query = query.order('price', { ascending: true });
-        //             break;
-        //         case 'price-high':
-        //             query = query.order('price', { ascending: false });
-        //             break;
-        //         default:
-        //             query = query.order('updated', { ascending: false });
-        //     }
-        //  } else {
-        //     query = query.order('updated', { ascending: false })
-        //  }
-        //  // add logic
-        //  if (quickFilter) {
-        //     // logic
-        //  }
-
-    try {
-         const { data, error } = await query
-         .range(firstItemIndex, lastItemIndex)
-         .eq('status', ItineraryStatusEnum.published);
-         if (error) throw error
-
-         const total = data.length;
-
-         return {
-            data,
-            total,
-            totalPages: Math.ceil(total / pageSize),
-            currentPage: page
-        }
-    } catch (error) {
-        throw new Error(`Failed to get itineraries: ${error instanceof Error ? error.message : String(error)}`);
-    }
+function parseDurationRange(duration?: string): {
+  min?: number
+  max?: number
+} {
+  if (!duration) return {}
+  if (duration.endsWith("+")) {
+    const min = parseInt(duration.replace("+", ""), 10)
+    return Number.isFinite(min) ? { min } : {}
+  }
+  const [a, b] = duration.split("-").map((n) => parseInt(n, 10))
+  if (Number.isFinite(a) && Number.isFinite(b)) return { min: a, max: b }
+  if (Number.isFinite(a)) return { min: a, max: a }
+  return {}
 }
+
+function tagNamesToIds(
+  tags: Array<string | number> | undefined,
+  map: Array<{ id: number; name: string }>
+): number[] {
+  if (!tags?.length) return []
+  return tags
+    .map((t) => {
+      if (typeof t === "number") return t
+      const asNum = parseInt(t, 10)
+      if (Number.isFinite(asNum) && String(asNum) === t) return asNum
+      return map.find((m) => m.name.toLowerCase() === t.toLowerCase())?.id
+    })
+    .filter((id): id is number => typeof id === "number")
+}
+
+function tagIdsToNames(
+  ids: unknown,
+  map: Array<{ id: number; name: string }>
+): string[] {
+  if (!Array.isArray(ids)) return []
+  return ids
+    .map((id) => {
+      const num = typeof id === "number" ? id : parseInt(String(id), 10)
+      return map.find((m) => m.id === num)?.name
+    })
+    .filter((n): n is string => Boolean(n))
+}
+
+function parseBudgetLabel(budget?: string): { min?: number; max?: number } {
+  if (!budget?.trim()) return {}
+  switch (budget.trim().toLowerCase()) {
+    case "budget friendly":
+      return { max: 1000 }
+    case "standard":
+      return { min: 1000, max: 2500 }
+    case "mid-range":
+      return { min: 2500, max: 5000 }
+    case "upscale":
+      return { min: 5000, max: 10000 }
+    case "luxury":
+      return { min: 10000 }
+    default:
+      return parseDurationRange(budget) // numeric ranges if ever passed as "1000-2500"
+  }
+}
+
+function resolveSort(sort?: string, quickFilter?: string): string {
+  if (sort && sort !== "most-recent") return sort
+  switch (quickFilter) {
+    case "Most Viewed":
+    case "Popular":
+    case "Trending":
+      return "most-viewed"
+    case "Best Rated":
+      return "best-rated"
+    case "Budget Friendly":
+      return "price-low"
+    case "Luxury":
+      return "price-high"
+    case "New":
+    default:
+      return sort || "most-recent"
+  }
+}
+
+/** Maps the UI sort key to an actual DB column on `itineraries`. */
+function dbSort(sort: string): { column: string; ascending: boolean } {
+  switch (sort) {
+    case "duration-short":
+      return { column: "duration", ascending: true }
+    case "duration-long":
+      return { column: "duration", ascending: false }
+    case "price-low":
+      return { column: "budget", ascending: true }
+    case "price-high":
+      return { column: "budget", ascending: false }
+    // `views` isn't stored and best-rated needs an aggregate; fall back to recency.
+    case "most-viewed":
+    case "best-rated":
+    case "most-recent":
+    default:
+      return { column: "updated_at", ascending: false }
+  }
+}
+
+function intersectSets(
+  current: Set<string> | null,
+  next: Set<string>
+): Set<string> {
+  if (current === null) return next
+  const out = new Set<string>()
+  for (const id of next) if (current.has(id)) out.add(id)
+  return out
+}
+
+/**
+ * Public explore feed: published itineraries with public view permission.
+ *
+ * Schema notes: `countries`/`cities` are NOT columns on `itineraries`; they are
+ * derived from `itinerary_days`. Tags live in `itinerary_tags`, and likes in
+ * `interactions_likes`. We therefore pre-filter ids from those tables, then
+ * batch-hydrate the current page.
+ */
+export const getItineraries = async (
+  options?: GetItineraryOptions
+): Promise<ExploreItinerariesResult> => {
+  const supabase = await createClient()
+  const page = Math.max(1, options?.pagination?.page || 1)
+  const pageSize = Math.min(48, Math.max(1, options?.pagination?.pageSize || 12))
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+
+  const emptyResult: ExploreItinerariesResult = {
+    data: [],
+    total: 0,
+    totalPages: 1,
+    currentPage: page,
+  }
+
+  const filters = options?.filters ?? {}
+  const {
+    destination,
+    duration,
+    durationMin,
+    durationMax,
+    budgetMin,
+    budgetMax,
+    itineraryTags,
+    countries,
+    sort,
+    quickFilter,
+    q,
+  } = filters
+
+  const durationRange = parseDurationRange(duration)
+  const budgetRange = parseBudgetLabel(filters.budget)
+  const minDuration = durationMin ?? durationRange.min
+  const maxDuration = durationMax ?? durationRange.max
+  const maxBudget =
+    budgetMax ??
+    budgetRange.max ??
+    (quickFilter === "Budget Friendly" ? 1000 : undefined)
+  const minBudget =
+    budgetMin ??
+    budgetRange.min ??
+    (quickFilter === "Luxury" ? 10000 : undefined)
+  const itineraryTagIds = tagNamesToIds(
+    itineraryTags as Array<string | number> | undefined,
+    itineraryTagsMap
+  )
+  const resolvedSort = resolveSort(sort, quickFilter)
+
+  // Pre-filter ids from related tables when a derived filter is requested.
+  const countryList = [
+    ...(destination?.trim() ? [destination.trim()] : []),
+    ...(countries ?? []),
+  ]
+  let restrictIds: Set<string> | null = null
+
+  if (countryList.length) {
+    const { data: dayRows } = await supabase
+      .from("itinerary_days")
+      .select("itinerary_id, country")
+      .in("country", countryList)
+    restrictIds = intersectSets(
+      restrictIds,
+      new Set((dayRows || []).map((r) => String(r.itinerary_id)))
+    )
+    if (restrictIds.size === 0) return emptyResult
+  }
+
+  if (itineraryTagIds.length) {
+    const { data: tagRows } = await supabase
+      .from("itinerary_tags")
+      .select("itinerary_id, tag_id")
+      .in("tag_id", itineraryTagIds)
+    restrictIds = intersectSets(
+      restrictIds,
+      new Set((tagRows || []).map((r) => String(r.itinerary_id)))
+    )
+    if (restrictIds.size === 0) return emptyResult
+  }
+
+  let query = supabase
+    .from("itineraries")
+    .select(
+      "id, title, slug, short_description, main_image, duration, budget, creator_id, updated_at",
+      { count: "exact" }
+    )
+    .eq("status", ItineraryStatusEnum.published)
+    .eq("view_permission", viewPermissionEnum.public)
+
+  if (minDuration != null) query = query.gte("duration", minDuration)
+  if (maxDuration != null) query = query.lte("duration", maxDuration)
+  if (minBudget != null) query = query.gte("budget", minBudget)
+  if (maxBudget != null) query = query.lte("budget", maxBudget)
+  if (q?.trim()) {
+    const term = q.trim().replace(/[%,]/g, "")
+    if (term) {
+      query = query.or(
+        `title.ilike.%${term}%,short_description.ilike.%${term}%`
+      )
+    }
+  }
+  if (restrictIds) {
+    query = query.in("id", [...restrictIds])
+  }
+
+  const sortSpec = dbSort(resolvedSort)
+  query = query.order(sortSpec.column, {
+    ascending: sortSpec.ascending,
+    nullsFirst: false,
+  })
+
+  const { data, error, count } = await query.range(from, to)
+
+  if (error) {
+    throw new Error(`Failed to get itineraries: ${error.message}`)
+  }
+
+  const rows = data || []
+  if (rows.length === 0) {
+    const total = count ?? 0
+    return {
+      data: [],
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      currentPage: page,
+    }
+  }
+
+  const ids = rows.map((r) => String(r.id))
+  const creatorIds = [
+    ...new Set(
+      rows
+        .map((r) => r.creator_id as string | null)
+        .filter((id): id is string => Boolean(id))
+    ),
+  ]
+
+  const [daysRes, tagsRes, likesRes, creatorsRes] = await Promise.all([
+    supabase
+      .from("itinerary_days")
+      .select("itinerary_id, country, city, day_number")
+      .in("itinerary_id", ids),
+    supabase
+      .from("itinerary_tags")
+      .select("itinerary_id, tag_id")
+      .in("itinerary_id", ids),
+    supabase
+      .from("interactions_likes")
+      .select("itinerary_id")
+      .in("itinerary_id", ids),
+    creatorIds.length
+      ? supabase
+          .from("users")
+          .select("id, name, username, avatar")
+          .in("id", creatorIds)
+      : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+  ])
+
+  const countriesById = new Map<string, string[]>()
+  const citiesById = new Map<string, string[]>()
+  for (const row of daysRes.data || []) {
+    const key = String(row.itinerary_id)
+    if (row.country) {
+      const arr = countriesById.get(key) || []
+      if (!arr.includes(String(row.country))) arr.push(String(row.country))
+      countriesById.set(key, arr)
+    }
+    if (row.city) {
+      const arr = citiesById.get(key) || []
+      if (!arr.includes(String(row.city))) arr.push(String(row.city))
+      citiesById.set(key, arr)
+    }
+  }
+
+  const tagIdsById = new Map<string, number[]>()
+  for (const row of tagsRes.data || []) {
+    const key = String(row.itinerary_id)
+    const arr = tagIdsById.get(key) || []
+    const tagId = Number(row.tag_id)
+    if (Number.isFinite(tagId) && !arr.includes(tagId)) arr.push(tagId)
+    tagIdsById.set(key, arr)
+  }
+
+  const likesById = new Map<string, number>()
+  for (const row of likesRes.data || []) {
+    const key = String(row.itinerary_id)
+    likesById.set(key, (likesById.get(key) || 0) + 1)
+  }
+
+  const creatorById = new Map<
+    string,
+    { name?: string | null; username?: string | null; avatar?: string | null }
+  >()
+  for (const c of (creatorsRes.data as Array<Record<string, unknown>>) || []) {
+    creatorById.set(String(c.id), {
+      name: c.name as string | null,
+      username: c.username as string | null,
+      avatar: c.avatar as string | null,
+    })
+  }
+
+  const mapped: ExplorePageDto[] = rows.map((row) => {
+    const id = String(row.id)
+    const itineraryTagNames = tagIdsToNames(
+      tagIdsById.get(id) || [],
+      itineraryTagsMap
+    )
+    const creator = creatorById.get(String(row.creator_id))
+    return {
+      id,
+      title: String(row.title || "Untitled"),
+      slug: (row.slug as string | null) ?? null,
+      duration: Number(row.duration) || 1,
+      shortDescription: String(row.short_description || ""),
+      mainImage: String(row.main_image || ""),
+      countries: countriesById.get(id) || [],
+      cities: citiesById.get(id) || [],
+      itineraryTags: itineraryTagNames,
+      activityTags: [],
+      featuredCategories: itineraryTagNames.slice(0, 1),
+      views: 0,
+      rating: null,
+      price:
+        row.budget != null && String(row.budget) !== ""
+          ? Number(row.budget)
+          : null,
+      likes: likesById.get(id) || 0,
+      creatorId: String(row.creator_id || ""),
+      creatorName:
+        creator?.name?.trim() ||
+        (creator?.username ? `@${creator.username}` : "Traveler"),
+      creatorImage: creator?.avatar || "",
+    }
+  })
+
+  const total = count ?? mapped.length
+  return {
+    data: mapped,
+    total,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    currentPage: page,
+  }
+}
+
 
 export const getItineraryDataByUserId = async (userId: string, currentUserId: string) => {
     const supabase = await createClient()

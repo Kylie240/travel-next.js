@@ -22,7 +22,6 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
   const userSettings = await getUserSettingsById()
 
   const stripeBilling =
-    userSettings.plan !== "free" &&
     userSettings.stripe_customer_id &&
     userSettings.stripe_subscription_id
       ? await getStripeBillingSummary(

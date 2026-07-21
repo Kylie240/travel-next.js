@@ -8,8 +8,8 @@ import { FiEdit2, FiLock } from 'react-icons/fi';
 
 const newestFeatures = [
   {
-    title: "Standard Plan",
-    description: "You can now upgrade to the standard plan to access all features and monetize your itineraries.",
+    title: "Pro Plan",
+    description: "You can now upgrade to the Pro plan to access all features and monetize your itineraries.",
     date: "July 18, 2026",
     icon: <GrMoney className="w-6 h-6" />
   },

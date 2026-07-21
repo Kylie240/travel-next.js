@@ -9,10 +9,7 @@ import {
 function getPriceToPlanMap(): Record<string, string> {
   const map: Record<string, string> = {}
   if (process.env.STANDARD_PRICE_ID) {
-    map[process.env.STANDARD_PRICE_ID] = "standard"
-  }
-  if (process.env.PREMIUM_PRICE_ID) {
-    map[process.env.PREMIUM_PRICE_ID] = "premium"
+    map[process.env.STANDARD_PRICE_ID] = "pro"
   }
   return map
 }
@@ -143,7 +140,7 @@ export async function syncSubscriptionFromCheckoutSession(
   }
 
   const priceId = subscription.items.data[0]?.price.id
-  const plan = getPriceToPlanMap()[priceId] || "standard"
+  const plan = getPriceToPlanMap()[priceId] || "pro"
 
   await stripe.customers.update(customerId, {
     metadata: { supabase_user_id: userId },

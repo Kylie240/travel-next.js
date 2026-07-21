@@ -1,359 +1,251 @@
-import { Suspense } from "react";
-import FiltersForm from "./filters-form";
-import Link from "next/link";
-import Image from "next/image";
-import BookmarkElement from "../../components/ui/bookmark-element"
-import { getItineraries } from "@/lib/actions/itinerary.actions";
-import { Itinerary } from "@/types/itinerary";
-import { ExplorePageDto } from "@/dtos/ExplorePageDto";
-import { Button } from "@/components/ui/button";
-import { Globe2, PenSquare } from "lucide-react";
+import { Suspense } from "react"
+import FiltersForm from "./filters-form"
+import Link from "next/link"
+import Image from "next/image"
+import { getItineraries } from "@/lib/actions/itinerary.actions"
+import type { ExplorePageDto } from "@/dtos/ExplorePageDto"
+import type { GetItineraryOptions } from "@/types/GetItineraryOptions"
+import { Button } from "@/components/ui/button"
+import { Globe2 } from "lucide-react"
+import { getItineraryPath } from "@/lib/utils/itinerary-url"
+
+function parseListParam(value: unknown): string[] | undefined {
+  if (!value) return undefined
+  if (Array.isArray(value)) {
+    return value.map(String).filter(Boolean)
+  }
+  const str = String(value)
+  if (!str.trim()) return undefined
+  return str.split(",").map((s) => s.trim()).filter(Boolean)
+}
+
+function parseOptionalInt(value: unknown): number | undefined {
+  if (value == null || value === "") return undefined
+  const n = parseInt(String(value), 10)
+  return Number.isFinite(n) ? n : undefined
+}
 
 export default async function ExplorePage({
-searchParams
-} : {
-    searchParams: Promise<any>
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-    const searchParamsValues = await searchParams;
-    const page = searchParamsValues.page;
-    const sort = searchParamsValues.sort;
-    const quickFilter = searchParamsValues.quickFilter;
-    const destination = searchParamsValues.destination;
-    const duration = searchParamsValues?.duration;
-    const durationMin = searchParamsValues?.durationMin;
-    const durationMax = searchParamsValues?.durationMax;
-    const budgetMin = searchParamsValues?.budgetMin;
-    const budgetMax = searchParamsValues?.budgetMax;
-    const itineraryTags = searchParamsValues.itineraryTags;
-    const activityTags = searchParamsValues.activityTags;
-    const continents = searchParamsValues.continents;
+  const params = await searchParams
+  const page = parseOptionalInt(params.page) || 1
+  const sort = typeof params.sort === "string" ? params.sort : undefined
+  const quickFilter =
+    typeof params.quickFilter === "string" ? params.quickFilter : undefined
+  const destination =
+    typeof params.destination === "string" ? params.destination : undefined
+  const duration =
+    typeof params.duration === "string" ? params.duration : undefined
+  const q =
+    typeof params.q === "string"
+      ? params.q
+      : typeof params.query === "string"
+        ? params.query
+        : undefined
 
-    const searchFilters: GetItineraryOptions = {
-        pagination: {
-            page: parseInt(page || "1"),
-            pageSize: 10
-        },
-        filters: {
-            sort,
-            quickFilter,
-            destination,
-            duration,
-            durationMin,
-            durationMax,
-            budgetMin,
-            budgetMax,
-            itineraryTags,
-            activityTags,
-            continents,
-        },
+  const budget =
+    typeof params.budget === "string" ? params.budget : undefined
+
+  const searchFilters: GetItineraryOptions = {
+    pagination: {
+      page,
+      pageSize: 12,
+    },
+    filters: {
+      sort,
+      quickFilter,
+      destination,
+      duration,
+      durationMin: parseOptionalInt(params.durationMin),
+      durationMax: parseOptionalInt(params.durationMax),
+      budget,
+      budgetMin: parseOptionalInt(params.budgetMin),
+      budgetMax: parseOptionalInt(params.budgetMax),
+      itineraryTags: parseListParam(params.itineraryTags),
+      activityTags: parseListParam(params.activityTags),
+      continents: parseListParam(params.continents),
+      q,
+    },
+  }
+
+  let itineraryData: Awaited<ReturnType<typeof getItineraries>>
+  try {
+    itineraryData = await getItineraries(searchFilters)
+  } catch (e) {
+    console.error("Explore page failed to load itineraries:", e)
+    itineraryData = {
+      data: [],
+      total: 0,
+      totalPages: 1,
+      currentPage: page,
     }
+  }
 
-    const itineraryData : {
-      data: ExplorePageDto[],
-      total: number,
-      totalPages: number,
-      currentPage: number
-    } = {
-            data: [
-              {
-                id: '1',
-                title: 'East Asian Island Hopping Journey',
-                duration: 12,
-                shortDescription: 'A trip across east asian countries. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.',
-                mainImage: '',
-                countries: ['Singapore', 'Thailand', 'Vietnam'],
-                cities: ['Phuket', 'Phi Phi Islands', 'Ho Chi Min'],
-                itineraryTags: ['Adventure', 'Roadtrip', 'History'],
-                activityTags: ['Boating', 'Hiking'],
-                featuredCategories: [],
-                views: 289,
-                rating: 4.2,
-                price: 1400,
-                likes: 29,
-                creatorId: '328',
-                creatorName: 'Kylie',
-                creatorImage: '',
-              },
-              {
-                id: '2',
-                title: 'North American Roadtrip',
-                duration: 4,
-                shortDescription: 'A trip across North America',
-                mainImage: '',
-                countries: ['Canada', 'United States'],
-                cities: ['Montreal', 'New York', 'Miami'],
-                itineraryTags: ['Adventure', 'Roadtrip', 'History'],
-                activityTags: ['Boating', 'Hiking'],
-                featuredCategories: [],
-                views: 289,
-                rating: 3.0,
-                price: null,
-                likes: 29,
-                creatorId: '328',
-                creatorName: 'Kylie',
-                creatorImage: '',
-              },
-              {
-                id: '3',
-                title: 'Day Trip To Chicago',
-                duration: 1,
-                shortDescription: 'A trip across North America',
-                mainImage: '',
-                countries: ['United States'],
-                cities: ['Chicago'],
-                itineraryTags: ['Day Trip', 'Solo'],
-                activityTags: ['Boating', 'Foodie'],
-                featuredCategories: ['Popular'],
-                views: 2,
-                rating: null,
-                price: 200,
-                likes: 0,
-                creatorId: '328',
-                creatorName: 'Kylie',
-                creatorImage: '',
-              },
-              {
-                id: '1',
-                title: 'East Asian Island Hopping Journey',
-                duration: 12,
-                shortDescription: 'A trip across east asian countries. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.',
-                mainImage: '',
-                countries: ['Singapore', 'Thailand', 'Vietnam'],
-                cities: ['Phuket', 'Phi Phi Islands', 'Ho Chi Min'],
-                itineraryTags: ['Adventure', 'Roadtrip', 'History'],
-                activityTags: ['Boating', 'Hiking'],
-                featuredCategories: [],
-                views: 289,
-                rating: 4.2,
-                price: 1400,
-                likes: 29,
-                creatorId: '328',
-                creatorName: 'Kylie',
-                creatorImage: '',
-              },
-              {
-                id: '2',
-                title: 'North American Roadtrip',
-                duration: 4,
-                shortDescription: 'A trip across North America',
-                mainImage: '',
-                countries: ['Canada', 'United States'],
-                cities: ['Montreal', 'New York', 'Miami'],
-                itineraryTags: ['Adventure', 'Roadtrip', 'History'],
-                activityTags: ['Boating', 'Hiking'],
-                featuredCategories: [],
-                views: 289,
-                rating: 3.0,
-                price: null,
-                likes: 29,
-                creatorId: '328',
-                creatorName: 'Kylie',
-                creatorImage: '',
-              },
-              {
-                id: '3',
-                title: 'Day Trip To Chicago',
-                duration: 1,
-                shortDescription: 'A trip across North America',
-                mainImage: '',
-                countries: ['United States'],
-                cities: ['Chicago'],
-                itineraryTags: ['Day Trip', 'Solo'],
-                activityTags: ['Boating', 'Foodie'],
-                featuredCategories: ['Popular'],
-                views: 2,
-                rating: null,
-                price: 200,
-                likes: 0,
-                creatorId: '328',
-                creatorName: 'Kylie',
-                creatorImage: '',
-              },
-              {
-                id: '1',
-                title: 'East Asian Island Hopping Journey',
-                duration: 12,
-                shortDescription: 'A trip across east asian countries. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.',
-                mainImage: '',
-                countries: ['Singapore', 'Thailand', 'Vietnam'],
-                cities: ['Phuket', 'Phi Phi Islands', 'Ho Chi Min'],
-                itineraryTags: ['Adventure', 'Roadtrip', 'History'],
-                activityTags: ['Boating', 'Hiking'],
-                featuredCategories: [],
-                views: 289,
-                rating: 4.2,
-                price: 1400,
-                likes: 29,
-                creatorId: '328',
-                creatorName: 'Kylie',
-                creatorImage: '',
-              },
-              {
-                id: '2',
-                title: 'North American Roadtrip',
-                duration: 4,
-                shortDescription: 'A trip across North America',
-                mainImage: '',
-                countries: ['Canada', 'United States'],
-                cities: ['Montreal', 'New York', 'Miami'],
-                itineraryTags: ['Adventure', 'Roadtrip', 'History'],
-                activityTags: ['Boating', 'Hiking'],
-                featuredCategories: [],
-                views: 289,
-                rating: 3.0,
-                price: null,
-                likes: 29,
-                creatorId: '328',
-                creatorName: 'Kylie',
-                creatorImage: '',
-              },
-              {
-                id: '3',
-                title: 'Day Trip To Chicago',
-                duration: 1,
-                shortDescription: 'A trip across North America',
-                mainImage: '',
-                countries: ['United States'],
-                cities: ['Chicago'],
-                itineraryTags: ['Day Trip', 'Solo'],
-                activityTags: ['Boating', 'Foodie'],
-                featuredCategories: ['Popular'],
-                views: 2,
-                rating: null,
-                price: 200,
-                likes: 0,
-                creatorId: '328',
-                creatorName: 'Kylie',
-                creatorImage: '',
-              },
-              ],
-            total: 2,
-            totalPages: 1,
-            currentPage: 1
-          }
+  const hasResults = itineraryData.data.length > 0
 
-    // const itineraryData: {
-    //         data: ExplorePageDto[],
-    //         total: number,
-    //         totalPages: number,
-    //         currentPage: number
-    //     } = await getItineraries(searchFilters)
-    
-    return (
-        // <div className="min-h-screen bg-white py-8">
-        //     <div className="container mx-auto px-4">
-        //         <h2 className="text-2xl font-semibold mb-4">Search Results</h2>
-        //         {/* Filters Bar */}
-        //         <div className="flex flex-col mb-8">
-        //             <Suspense fallback={<div>Loading...</div>}>
-        //                 <FiltersForm />
-        //             </Suspense>
-        //         </div>
-        //         {/* Itineraries Grid */}
-        //       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
-        //         {itineraryData.data.map((itinerary: ExplorePageDto) => (
-        //           <Link href={`/itinerary/${itinerary.id}`} className="block relative" key={itinerary.id}>
-        //             <div>
-        //               {/* Image Container */}
-        //               <div className="relative aspect-[3/2] md:aspect-[4/5] rounded-2xl overflow-hidden">
-        //                   <Image
-        //                     src={itinerary.mainImage}
-        //                     alt={itinerary.title}
-        //                     fill
-        //                     className="object-cover"
-        //                   />
-        //                 <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-        //                 {/* Badges */}
-        //                 {itinerary.featuredCategories.length && (
-        //                   <div className="absolute top-4 left-4 z-20">
-        //                     <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-xl capitalize">
-        //                       {/* {itinerary.rating === "highly rated" ? "Top Rated" :
-        //                       itinerary.status === "most viewed" ? "Trending" :
-        //                       "Popular"} */}
-        //                       {itinerary.featuredCategories[0]}
-        //                     </span>
-        //                   </div>
-        //                 )}
-        //                 <div className="absolute top-4 right-4">
-        //                   <BookmarkElement itineraryId={itinerary.id} currentUserId={user?.id || ''} />
-        //                 </div>
-        //                 <div className="p-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
-        //                   <h4 className="font-bold text-2xl mb-1">{itinerary.title}</h4>
-        //                   <span className="text-sm text-white/80 truncate">
-        //                     {itinerary.countries.map(country => country).join(' · ')}
-        //                     {/* change to citiies */}
-        //                   </span>
-        //                 </div>
-        //               </div>
-
-        //               {/* Content Container */}
-        //               <div className="py-2 px-4">
-        //                 <div className="flex items-center gap-4 text-sm">
-        //                   <div className="flex items-center flex-1">
-        //                   </div>
-        //                 </div>
-                        
-        //                 <div className="flex text-[20px] font-medium my-1">
-        //                   {/* change field to duration */}
-        //                   <div className="mx-1 flex gap-2">
-        //                     {itinerary.duration}
-        //                     {itinerary.countries.length <= 2 ? itinerary.duration > 1 ? ' Days In ' : ' Day In ' : ' Day '}
-        //                     {itinerary.countries.length > 2 
-        //                       ? "Multi-Country Trip"
-        //                       : itinerary.countries.map(country => country).join(' & ')}
-        //                   </div>
-        //                 </div>
-        //                 <p className="text-gray-600 line-clamp-4 leading-5 text-md mb-2">{itinerary.shortDescription}</p>
-
-        //                 <div className="flex flex-col gap-2">
-        //                   <div className="flex justify-start gap-2">
-        //                     {itinerary.itineraryTags && itinerary.itineraryTags.map((tag) => (
-        //                       <span 
-        //                         key={tag}
-        //                         className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize"
-        //                       >
-        //                         {tag}
-        //                       </span>
-        //                     ))}
-        //                   </div>
-        //                   <div className="flex mt-1 justify-end">
-        //                     {itinerary.price && (
-        //                       <span className="px-2 py-1 max-h-[32px] gap-2 bg-black text-white text-md rounded-xl">
-        //                         Est. ${itinerary.price}/pp
-        //                       </span>
-        //                     )}
-        //                   </div>
-        //                 </div>
-        //               </div>
-        //             </div>
-        //           </Link>
-        //         ))}
-        //       </div>
-        //     </div>
-        // </div>
-        <div className="flex justify-center h-[calc(100vh-64px)] items-center">
-          <div className="mx-6 md:mx-8 max-w-[800px] text-center py-12 px-4 rounded-xl border-2 border-dashed w-full">
-            <div className="mb-4">
-              <Globe2 className="h-12 w-12 mx-auto text-gray-400" />
-            </div>
-            <h3 className="text-2xl font-medium text-gray-900 mb-4">Explore Page Coming Soon</h3>
-              <div> 
-              <p className="text-gray-600 mb-4">We’re building something exciting! Soon, you’ll be able to explore itineraries from travelers around the world! Get inspired, discover new destinations, and plan your next adventure with ease.</p>
-              <p className="text-gray-600 mb-4">Check back soon or <a href="#newsletter" className="text-blue-500">subscribe to our newsletter</a> to get notified when it’s live!</p>
-              <div className="flex justify-center mt-4 gap-4">
-                <Link href="/">
-                  <Button variant="outline">
-                    Return Home
-                  </Button>
-                </Link>
-                <Link href="/about">
-                  <Button variant="outline">
-                    More Info
-                  </Button>
-                </Link>
-              </div>
-              </div>
-          </div>
+  return (
+    <div className="min-h-screen bg-white py-8">
+      <div className="container mx-auto px-4">
+        <h2 className="text-2xl font-semibold mb-4">Explore itineraries</h2>
+        <div className="flex flex-col mb-8">
+          <Suspense fallback={<div>Loading filters…</div>}>
+            <FiltersForm resultsCount={itineraryData.total} />
+          </Suspense>
         </div>
-    )
+
+        {!hasResults ? (
+          <div className="mx-auto max-w-[800px] text-center py-16 px-4 rounded-xl border-2 border-dashed">
+            <Globe2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
+              No public itineraries found
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Try adjusting your filters, or check back soon as travelers publish
+              new trips.
+            </p>
+            <Link href="/explore">
+              <Button variant="outline">Clear search</Button>
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
+              {itineraryData.data.map((itinerary: ExplorePageDto) => (
+                <Link
+                  href={getItineraryPath(itinerary)}
+                  className="block relative"
+                  key={itinerary.id}
+                >
+                  <div>
+                    <div className="relative aspect-[3/2] md:aspect-[4/5] rounded-2xl overflow-hidden bg-gray-200">
+                      {itinerary.mainImage ? (
+                        <Image
+                          src={itinerary.mainImage}
+                          alt={itinerary.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 25vw"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                          <Globe2 className="h-10 w-10" />
+                        </div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                      {itinerary.featuredCategories?.length > 0 && (
+                        <div className="absolute top-4 left-4 z-20">
+                          <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-xl capitalize">
+                            {itinerary.featuredCategories[0]}
+                          </span>
+                        </div>
+                      )}
+                      <div className="p-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                        <h4 className="font-bold text-2xl mb-1 line-clamp-2">
+                          {itinerary.title}
+                        </h4>
+                        <span className="text-sm text-white/80 truncate block">
+                          {itinerary.countries.length > 0
+                            ? itinerary.countries.join(" · ")
+                            : itinerary.creatorName}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="py-2 px-4">
+                      <div className="flex text-[20px] font-medium my-1">
+                        <div className="mx-1 flex gap-2 flex-wrap">
+                          <span>
+                            {itinerary.duration}
+                            {itinerary.countries.length <= 2
+                              ? itinerary.duration > 1
+                                ? " Days In "
+                                : " Day In "
+                              : " Day "}
+                          </span>
+                          <span>
+                            {itinerary.countries.length > 2
+                              ? "Multi-Country Trip"
+                              : itinerary.countries.length > 0
+                                ? itinerary.countries.join(" & ")
+                                : "Somewhere amazing"}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-gray-600 line-clamp-4 leading-5 text-md mb-2">
+                        {itinerary.shortDescription}
+                      </p>
+
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-start gap-2 flex-wrap">
+                          {itinerary.itineraryTags?.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex mt-1 justify-between items-center">
+                          <span className="text-xs text-gray-500 truncate">
+                            by {itinerary.creatorName}
+                          </span>
+                          {itinerary.price != null && itinerary.price > 0 && (
+                            <span className="px-2 py-1 max-h-[32px] gap-2 bg-black text-white text-md rounded-xl">
+                              Est. ${itinerary.price}/pp
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {itineraryData.totalPages > 1 && (
+              <div className="flex justify-center gap-3 mt-10">
+                {page > 1 && (
+                  <Link
+                    href={`/explore?${new URLSearchParams({
+                      ...Object.fromEntries(
+                        Object.entries(params).map(([k, v]) => [
+                          k,
+                          Array.isArray(v) ? v.join(",") : String(v ?? ""),
+                        ])
+                      ),
+                      page: String(page - 1),
+                    }).toString()}`}
+                  >
+                    <Button variant="outline">Previous</Button>
+                  </Link>
+                )}
+                <span className="flex items-center text-sm text-gray-600">
+                  Page {itineraryData.currentPage} of {itineraryData.totalPages}
+                </span>
+                {page < itineraryData.totalPages && (
+                  <Link
+                    href={`/explore?${new URLSearchParams({
+                      ...Object.fromEntries(
+                        Object.entries(params).map(([k, v]) => [
+                          k,
+                          Array.isArray(v) ? v.join(",") : String(v ?? ""),
+                        ])
+                      ),
+                      page: String(page + 1),
+                    }).toString()}`}
+                  >
+                    <Button variant="outline">Next</Button>
+                  </Link>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
 }

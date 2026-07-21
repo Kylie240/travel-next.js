@@ -26,7 +26,11 @@ const formSchema = z.object({
     quickFilter: z.string().optional(),
 })
 
-export default function FiltersForm() {
+export default function FiltersForm({
+  resultsCount,
+}: {
+  resultsCount?: number
+}) {
     const router = useRouter();
     const searchParams = useSearchParams();
     
@@ -202,7 +206,11 @@ export default function FiltersForm() {
                 </div>
             </div>
             <div className="flex justify-between items-center mb-8">
-                <p>1000 Results</p>
+                <p>
+                  {typeof resultsCount === "number"
+                    ? `${resultsCount} result${resultsCount === 1 ? "" : "s"}`
+                    : "Results"}
+                </p>
                 <div className="flex items-center gap-2">
                     <p>Sort By:</p>
                     <select

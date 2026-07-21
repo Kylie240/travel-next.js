@@ -124,7 +124,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const planDetails = [
     {
       title: "free",
-      description: "Perfect for the casual traveler and occasional trip planner",
+      description: "Perfect for the casual traveler and occasional trip planner.",
       features: [
         "Up to 20 shareable itineraries",
         "Access to day-by-day planner",
@@ -135,8 +135,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       ]
     },
     {
-      title: "standard",
-      description: "Ideal for frequent travelers who want more features",
+      title: "pro",
+      description: "Perfect for frequent travelers who want unlimited creation and advanced features.",
       features: [
         "Access to day-by-day planner",
         "Share itineraries with anyone",
@@ -149,28 +149,6 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
         "Collaborative editing",
         "Custom themes and templates",
         "Monetization capabilities",
-      ]
-    },
-    {
-      title: "premium",
-      description: "Advanced capabilities for creators looking to monetize their content",
-      features: [
-        "Access to day-by-day planner",
-        "Share itineraries with anyone",
-        "Save and bookmark favorites",
-        "Follow other travelers",
-        "Profile customization",
-        "Unlimited itinerary creation",
-        "Added control over content visibility",
-        "Offline access to itineraries",
-        "Collaborative editing",
-        "Custom themes and templates",
-        "Monetization capabilities",
-        "Analytics dashboard",
-        "Affiliate program",
-        "Explore Page boost",
-        "Monetization capabilities",
-        "Reduced selling fee",
       ]
     }
   ]
@@ -866,11 +844,9 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                   const nextBilling = nextFromStripe ?? nextFromDb
                   const priceText =
                     stripeBilling?.priceLabel ??
-                    (userSettings.plan === "standard"
+                    (userSettings.plan === "pro"
                       ? "$6.00 per month"
-                      : userSettings.plan === "premium"
-                        ? "$14.00 per month"
-                        : null)
+                      : null)
                   return (
                     <>
                       Your next billing date is{" "}
@@ -908,35 +884,19 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                 </div>
               ))}
           </div>
-          { userSettings.plan !== 'premium' && (
+          { userSettings.plan === 'free' && (
           <div className="mt-12">
-            <label className="block text-md font-semibold mb-2">{userSettings.plan === 'free' ? 'Upgrade and subsribe' : 'Upgrade to Premium'}</label>
+            <label className="block text-md font-semibold mb-2">{userSettings.plan === 'free' ? 'Upgrade and subsribe' : 'Upgrade to Pro'}</label>
             {userSettings.plan === 'free' && (
               <>
                 <p className="text-sm text-gray-600 mb-4">
-                  Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, monetize your content, and more.
+                  Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, sell for a reduced fee, and more.
                 </p>
                 <form action="api/checkout-session" method="POST">
                   <Button className="bg-cyan-600" type="submit">
-                    Upgrade to Standard
+                    Upgrade to Pro
                   </Button>
                 </form>
-              </>
-            )}
-            {userSettings.plan === 'standard' && (
-              <>
-                <p className="text-sm text-gray-600 mb-4">
-                  Upgrading to Premium will give you access to all features and allow you to create unlimited itineraries.
-                </p>
-                <Button disabled className="bg-gray-400 cursor-not-allowed">
-                    Upgrade to Premium (Coming Soon)
-                  </Button>
-                {/* Uncomment when premium available */}
-                {/* <form action="api/checkout-session" method="POST">
-                  <Button className="bg-cyan-600" type="submit">
-                    Upgrade to Premium (Coming Soon)
-                  </Button>
-                </form> */}
               </>
             )}
           </div>

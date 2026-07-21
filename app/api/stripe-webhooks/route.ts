@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
         }
 
         const priceId = subscription.items.data[0]?.price.id;
-        const plan = getPriceToPlanMap()[priceId] || "standard";
+        const plan = getPriceToPlanMap()[priceId] || "pro";
 
         const subscriptionPayload: Parameters<typeof updateUserSubscriptionSettings>[1] = {
           stripe_customer_id: subscription.customer as string,

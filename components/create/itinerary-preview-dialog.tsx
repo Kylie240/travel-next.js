@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, type MouseEvent, type FormEvent } from "react"
 import { X } from "lucide-react"
 import {
   Dialog,
@@ -207,7 +207,19 @@ export function ItineraryPreviewDialog({
             </Button>
           </DialogClose>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto bg-white">{TemplateView}</div>
+        <div
+          className="flex-1 overflow-y-auto bg-white [&_button]:cursor-not-allowed [&_a]:cursor-not-allowed"
+          onClickCapture={(event: MouseEvent<HTMLDivElement>) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }}
+          onSubmitCapture={(event: FormEvent<HTMLDivElement>) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }}
+        >
+          {TemplateView}
+        </div>
       </DialogContent>
     </Dialog>
   )

@@ -31,7 +31,7 @@ export function UserMenu() {
   const [billingPlan, setBillingPlan] = useState<string | null>(null)
 
   const showSellerDashboard =
-    billingPlan === "standard" || billingPlan === "premium"
+    billingPlan === "pro"
 
   // Track the last fetched user ID to prevent unnecessary refetches
   const lastFetchedUserIdRef = useRef<string | null>(null)
