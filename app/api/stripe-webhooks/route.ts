@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
         }
 
         const syncResult = await syncStripeConnectAccountById(connectedAccountId);
-        if (!syncResult.ok) {
+        if (syncResult.ok === false) {
           console.error(
             `Failed to sync Connect account after ${event.type}:`,
             connectedAccountId,
@@ -351,7 +351,7 @@ export async function POST(request: NextRequest) {
         }
 
         const syncResult = await syncStripeConnectAccountById(connectedAccountId);
-        if (!syncResult.ok && syncResult.reason !== "user_not_found") {
+        if (syncResult.ok === false && syncResult.reason !== "user_not_found") {
           return NextResponse.json(
             { error: "Failed to sync Connect account from person.updated" },
             { status: 500 }
@@ -374,7 +374,7 @@ export async function POST(request: NextRequest) {
           connectedAccountId,
           payout
         );
-        if (!payoutResult.ok && payoutResult.reason !== "user_not_found") {
+        if (payoutResult.ok === false && payoutResult.reason !== "user_not_found") {
           return NextResponse.json(
             { error: "Failed to record payout failure" },
             { status: 500 }
