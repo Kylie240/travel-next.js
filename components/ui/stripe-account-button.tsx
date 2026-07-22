@@ -3,7 +3,13 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-export function StripeAccountButton() {
+export function StripeAccountButton({
+  label = "Connect Stripe",
+  variant = "outline",
+}: {
+  label?: string
+  variant?: "outline" | "default"
+}) {
   const [loading, setLoading] = useState(false);
 
   const handleConnectStripe = async () => {
@@ -31,14 +37,19 @@ export function StripeAccountButton() {
   return (
     <Button
       type="button"
-      variant="outline"
+      variant={variant}
+      className={
+        variant === "default"
+          ? "bg-gray-900 text-white hover:bg-gray-800"
+          : undefined
+      }
       onClick={handleConnectStripe}
       disabled={loading}
     >
       {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden />
       ) : null}
-      Connect Stripe
+      {loading ? "Redirecting…" : label}
     </Button>
   );
 }

@@ -29,6 +29,7 @@ export function UserMenu() {
   const [profileError, setProfileError] = useState<string | null>(null)
   const { loading, error, user } = useUser()
   const [billingPlan, setBillingPlan] = useState<string | null>(null)
+  const [isSeller, setIsSeller] = useState(false)
 
   const showSellerDashboard =
     billingPlan === "pro"
@@ -43,18 +44,20 @@ export function UserMenu() {
   const fetchBillingPlan = useCallback(async () => {
     if (!user?.id || isAuthFlowPage) {
       setBillingPlan(null)
+      setIsSeller(false)
       return
     }
 
     const { data } = await supabase
       .from("users_settings")
-      .select("plan")
+      .select("plan, stripe_account_id")
       .eq("user_id", user.id)
       .maybeSingle()
 
     const plan =
       typeof data?.plan === "string" ? data.plan.trim().toLowerCase() : "free"
     setBillingPlan(plan)
+    setIsSeller(Boolean(data?.stripe_account_id))
   }, [user?.id, isAuthFlowPage, supabase])
 
   // Function to fetch user profile
@@ -226,10 +229,14 @@ export function UserMenu() {
 
                 <DropdownMenu.Item
                   className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                  onClick={() => router.push('/seller-dashboard')}
+                  onClick={() =>
+                    router.push(
+                      isSeller ? "/seller-dashboard" : "/become-a-seller"
+                    )
+                  }
                 >
                   <AiOutlineDashboard className="mr-2" size={18} strokeWidth={.75} />
-                  Seller Dashboard
+                  {isSeller ? "Seller Dashboard" : "Become a Seller"}
                 </DropdownMenu.Item>
 
               <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
