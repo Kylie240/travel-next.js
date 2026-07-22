@@ -20,7 +20,7 @@ import { FaUserLarge } from "react-icons/fa6"
 import { AddToCartButton } from "../ui/add-to-cart-button";
 import { PurchaseButton } from "../ui/purchase-button";
 
-export default function BasicTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId, isRestrictedView = false, priceCents = 0 }: { 
+export default function BasicTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId, isRestrictedView = false, priceCents = 0, sellerPurchasesEnabled = true }: { 
     itinerary: Itinerary, 
     countries: string[], 
     photos: PhotoItem[], 
@@ -33,6 +33,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
     currentUserId: string
     isRestrictedView?: boolean
     priceCents?: number
+    sellerPurchasesEnabled?: boolean
  }) {
     // Early return if essential data is missing
     if (!itinerary || !creator) {
@@ -316,6 +317,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                           creatorUsername: creator.username || "",
                           creatorId: creator.id || "",
                         }}
+                        purchasesEnabled={sellerPurchasesEnabled}
                       />
                       {/* {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
                         <AddToCartButton

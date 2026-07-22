@@ -48,6 +48,7 @@ export type ExploreTemplateProps = {
   currentUserId: string
   isRestrictedView?: boolean
   priceCents?: number
+  sellerPurchasesEnabled?: boolean
 }
 
 function LocationLine({ countries }: { countries: string[] }) {
@@ -76,6 +77,7 @@ export default function ExploreTemplate({
   isRestrictedView = false,
   priceCents = 0,
   paidUser: _paidUser = false,
+  sellerPurchasesEnabled = true,
 }: ExploreTemplateProps) {
   void _paidUser
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
@@ -307,6 +309,7 @@ export default function ExploreTemplate({
                   creatorUsername: creator.username || "",
                   creatorId: creator.id || "",
                 }}
+                purchasesEnabled={sellerPurchasesEnabled}
               />
             </div>
           </div>

@@ -47,6 +47,7 @@ export type JourneyTemplateProps = {
   currentUserId: string
   isRestrictedView?: boolean
   priceCents?: number
+  sellerPurchasesEnabled?: boolean
 }
 
 function LocationLine({ countries }: { countries: string[] }) {
@@ -75,8 +76,10 @@ export default function JourneyTemplate({
   isRestrictedView = false,
   priceCents = 0,
   paidUser: _paidUser = false,
+  sellerPurchasesEnabled: _sellerPurchasesEnabled = true,
 }: JourneyTemplateProps) {
   void _paidUser
+  void _sellerPurchasesEnabled
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0)
 
   if (!itinerary || !creator) {

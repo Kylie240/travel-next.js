@@ -7,6 +7,12 @@ import {
   sendCreatorPurchaseNotificationEmail,
 } from "@/lib/email";
 import { getItineraryPdfAttachmentForEmail } from "@/lib/itinerary-purchase-pdf";
+import {
+  calculatePlatformFeeCents,
+  estimateStripeFeeCents,
+  getPlatformFeeRateForPlan,
+  parsePlatformFeeRateFromMetadata,
+} from "@/lib/seller-fees";
 
 function stripeId(
   value: string | Stripe.PaymentIntent | null | undefined
@@ -251,8 +257,29 @@ export async function syncItineraryCartPurchase(
     const amountPerItem = Math.round(
       (session.amount_total || 0) / insertedPurchases.length
     );
-    const stripeFee = Math.round(amountPerItem * 0.029 + 30);
-    const platformFee = Math.round((amountPerItem - stripeFee) * 0.1);
+
+    // Prefer the rate locked at checkout; fall back to seller plan if missing.
+    let platformFeeRate = parsePlatformFeeRateFromMetadata(
+      session.metadata?.platform_fee_rate
+    );
+    if (platformFeeRate == null) {
+      const sellerId = sellerIdByItineraryId[purchasesNeedingTx[0].itinerary_id];
+      const { data: sellerSettings } = await supabase
+        .from("users_settings")
+        .select("plan")
+        .eq("user_id", sellerId)
+        .maybeSingle();
+      platformFeeRate = getPlatformFeeRateForPlan(
+        (sellerSettings?.plan as string | null | undefined) ??
+          session.metadata?.seller_plan
+      );
+    }
+
+    const stripeFee = estimateStripeFeeCents(amountPerItem);
+    const platformFee = calculatePlatformFeeCents(
+      amountPerItem,
+      platformFeeRate
+    );
     const netAmount = amountPerItem - platformFee - stripeFee;
     const titleByItineraryId = Object.fromEntries(
       itineraryIds.map((id, i) => [id, itineraryTitles[i] ?? "Itinerary"])

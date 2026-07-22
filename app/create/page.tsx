@@ -57,6 +57,7 @@ import { v4 as uuidv4 } from "uuid"
 import { countries } from "@/lib/constants/countries"
 import { TbTemplate } from "react-icons/tb"
 import { TemplateEnum, TemplateMap } from "@/enums/templateEnum"
+import { SELLER_PLATFORM_FEE_RATE } from "@/lib/seller-fees"
 
 type City = { city: string; country: string };
 type FormData = {
@@ -957,8 +958,12 @@ export default function CreatePage() {
   const canAccessStep4 = isItineraryCreator && hasActiveStripeAccount
   const totalSteps = canAccessStep4 ? 4 : 3
   const isProUser = userPlan.trim().toLowerCase() === 'pro'
-  const sellingFee = isProUser ? 0.95 : 0.85
-  const sellingFeePercentage = isProUser ? 5 : 15
+  const sellingFee = isProUser
+    ? 1 - SELLER_PLATFORM_FEE_RATE.pro
+    : 1 - SELLER_PLATFORM_FEE_RATE.free
+  const sellingFeePercentage = isProUser
+    ? SELLER_PLATFORM_FEE_RATE.pro * 100
+    : SELLER_PLATFORM_FEE_RATE.free * 100
 
   /** Free plan always saves as basic; paid creators use the selected template. */
   const resolveTemplateForSave = (): ItineraryTemplate => {

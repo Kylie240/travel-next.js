@@ -3,6 +3,11 @@ import { headers } from 'next/headers'
 import createClient from '@/utils/supabase/server'
 import { createClient as createAdminClient } from '@/utils/supabase/server-admin'
 import { stripe } from '@/lib/stripe'
+import {
+  calculateApplicationFeeCents,
+  getPlatformFeeRateForPlan,
+} from '@/lib/seller-fees'
+import { getSellerStripeStatusForUser } from '@/lib/stripe-seller-status'
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
@@ -66,16 +71,27 @@ export async function POST(request: NextRequest) {
     }
 
     const sellerUserId = sellerIds[0]
-    let sellerStripeAccountId: string | null = null
-    if (sellerUserId) {
-      const { data: sellerSettings } = await adminSupabase
-        .from('users_settings')
-        .select('stripe_account_id')
-        .eq('user_id', sellerUserId)
-        .maybeSingle()
-      sellerStripeAccountId =
-        (sellerSettings?.stripe_account_id as string | null | undefined) ?? null
+    if (!sellerUserId) {
+      return NextResponse.json(
+        { error: 'Could not determine itinerary seller' },
+        { status: 400 }
+      )
     }
+
+    const sellerStatus = await getSellerStripeStatusForUser(sellerUserId)
+    if (!sellerStatus.stripeAccountId || !sellerStatus.sellerAccountReady) {
+      return NextResponse.json(
+        {
+          error:
+            'Purchases from this seller are temporarily unavailable. Their payout account needs attention.',
+        },
+        { status: 400 }
+      )
+    }
+
+    const sellerStripeAccountId = sellerStatus.stripeAccountId
+    const sellerPlan = sellerStatus.plan
+    const platformFeeRate = getPlatformFeeRateForPlan(sellerPlan)
 
     // If user is logged in, check they haven't already purchased any of these
     if (user) {
@@ -117,8 +133,7 @@ export async function POST(request: NextRequest) {
     // Platform application fee in cents — always integers (Stripe rejects floats)
     const applicationFeeTotalCents = itineraries.reduce((sum, it) => {
       const p = Math.round(Number(it.price_cents))
-      const stripeFee = Math.round(p * 0.029 + 30)
-      return sum + Math.round(stripeFee + ((p - stripeFee) * 0.1))
+      return sum + calculateApplicationFeeCents(p, platformFeeRate)
     }, 0)
 
     const sessionConfig: any = {
@@ -132,6 +147,15 @@ export async function POST(request: NextRequest) {
           .map((i) => (i.title ?? 'Itinerary').replace(/\|/g, ' '))
           .join('|'),
         purchase_type: 'itinerary_cart',
+        seller_id: sellerUserId ?? '',
+        seller_plan: sellerPlan ?? 'free',
+        platform_fee_rate: String(platformFeeRate),
+      },
+      payment_intent_data: {
+        application_fee_amount: Math.max(0, applicationFeeTotalCents),
+        transfer_data: {
+          destination: sellerStripeAccountId,
+        },
       },
     }
 
@@ -139,15 +163,6 @@ export async function POST(request: NextRequest) {
     if (user) {
       sessionConfig.customer_email = user.email
       sessionConfig.metadata.supabase_user_id = user.id
-    }
-
-    if (sellerStripeAccountId) {
-      sessionConfig.payment_intent_data = {
-        application_fee_amount: Math.max(0, applicationFeeTotalCents),
-        transfer_data: {
-          destination: sellerStripeAccountId,
-        },
-      }
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig)

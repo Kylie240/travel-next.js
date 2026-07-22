@@ -24,6 +24,7 @@ import {
 } from "@/lib/itinerary-route"
 import { getItineraryPath } from "@/lib/utils/itinerary-url"
 import WonderTemplate from "@/components/templates/wonder"
+import { getCachedSellerSalesEnabled } from "@/lib/sync-stripe-connect-account"
 
 type PageParams = { id: string; slug: string }
 
@@ -189,6 +190,14 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
     initialIsFollowing = !!followData
   }
 
+  // Use cached Connect status for UI (webhooks keep this fresh). Checkout still live-checks.
+  let sellerPurchasesEnabled = true
+  if (isRestricted && itineraryMeta.creator_id) {
+    sellerPurchasesEnabled = await getCachedSellerSalesEnabled(
+      itineraryMeta.creator_id
+    )
+  }
+
   const templateProps = {
     itinerary,
     countries,
@@ -202,6 +211,7 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
     currentUserId: currentUserId ?? "",
     isRestrictedView: isRestricted,
     priceCents: itineraryMeta.price_cents || 0,
+    sellerPurchasesEnabled,
   }
 
   // return <ExploreTemplate {...templateProps} />

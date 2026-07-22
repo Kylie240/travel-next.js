@@ -10,6 +10,10 @@ import {
   updateUserSubscriptionSettings,
 } from "@/lib/sync-subscription";
 import { syncItineraryCartPurchase } from "@/lib/sync-itinerary-purchase";
+import {
+  recordStripePayoutFailure,
+  syncStripeConnectAccountById,
+} from "@/lib/sync-stripe-connect-account";
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
@@ -288,6 +292,97 @@ export async function POST(request: NextRequest) {
           .eq('user_id', userId);
 
         console.log(`Payment failed for user ${userId}, subscription past_due`);
+        break;
+      }
+
+      // Connected account status changes (marketplace sellers)
+      case "account.updated":
+      case "capability.updated":
+      case "account.external_account.updated": {
+        const connectedAccountId =
+          (typeof event.account === "string" && event.account) ||
+          (event.type === "account.updated"
+            ? (event.data.object as Stripe.Account).id
+            : null) ||
+          (event.type === "capability.updated"
+            ? ((event.data.object as Stripe.Capability).account as string)
+            : null) ||
+          (event.type === "account.external_account.updated"
+            ? ((event.data.object as Stripe.BankAccount | Stripe.Card)
+                .account as string | undefined) || null
+            : null);
+
+        if (!connectedAccountId) {
+          console.error(`No connected account id for ${event.type}`);
+          break;
+        }
+
+        const syncResult = await syncStripeConnectAccountById(connectedAccountId);
+        if (!syncResult.ok) {
+          console.error(
+            `Failed to sync Connect account after ${event.type}:`,
+            connectedAccountId,
+            syncResult.reason
+          );
+          // Don't 500 on unknown accounts (e.g. test noise); retry only on real write errors
+          if (syncResult.reason !== "user_not_found") {
+            return NextResponse.json(
+              { error: "Failed to sync Connect account" },
+              { status: 500 }
+            );
+          }
+        } else {
+          console.log(
+            `Connect account synced (${event.type}) user=${syncResult.userId} status=${syncResult.status} sales=${syncResult.salesEnabled}`
+          );
+        }
+        break;
+      }
+
+      case "person.updated": {
+        const person = event.data.object as Stripe.Person;
+        const connectedAccountId =
+          (typeof event.account === "string" && event.account) ||
+          (typeof person.account === "string" ? person.account : null);
+
+        if (!connectedAccountId) {
+          console.error("person.updated missing account id");
+          break;
+        }
+
+        const syncResult = await syncStripeConnectAccountById(connectedAccountId);
+        if (!syncResult.ok && syncResult.reason !== "user_not_found") {
+          return NextResponse.json(
+            { error: "Failed to sync Connect account from person.updated" },
+            { status: 500 }
+          );
+        }
+        break;
+      }
+
+      case "payout.failed": {
+        const payout = event.data.object as Stripe.Payout;
+        const connectedAccountId =
+          (typeof event.account === "string" && event.account) || null;
+
+        if (!connectedAccountId) {
+          console.error("payout.failed missing connected account id");
+          break;
+        }
+
+        const payoutResult = await recordStripePayoutFailure(
+          connectedAccountId,
+          payout
+        );
+        if (!payoutResult.ok && payoutResult.reason !== "user_not_found") {
+          return NextResponse.json(
+            { error: "Failed to record payout failure" },
+            { status: 500 }
+          );
+        }
+        console.log(
+          `Recorded payout.failed for Connect account ${connectedAccountId}`
+        );
         break;
       }
 

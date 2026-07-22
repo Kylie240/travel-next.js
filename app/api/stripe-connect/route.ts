@@ -104,7 +104,15 @@ export async function POST(_request: NextRequest) {
       const { error: updateError } = await supabase
         .from("users_settings")
         .upsert(
-          { user_id: user.id, stripe_account_id: accountId },
+          {
+            user_id: user.id,
+            stripe_account_id: accountId,
+            stripe_connect_sales_enabled: false,
+            stripe_connect_payouts_enabled: false,
+            stripe_connect_details_submitted: false,
+            stripe_connect_status: "incomplete",
+            stripe_connect_synced_at: new Date().toISOString(),
+          },
           { onConflict: "user_id" }
         );
 

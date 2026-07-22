@@ -48,6 +48,7 @@ export type DiscoverTemplateProps = {
   currentUserId: string
   isRestrictedView?: boolean
   priceCents?: number
+  sellerPurchasesEnabled?: boolean
 }
 
 function LocationLine({ countries }: { countries: string[] }) {
@@ -76,6 +77,7 @@ export default function DiscoverTemplate({
   isRestrictedView = false,
   priceCents = 0,
   paidUser: _paidUser = false,
+  sellerPurchasesEnabled = true,
 }: DiscoverTemplateProps) {
   void _paidUser
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0)
@@ -340,6 +342,7 @@ export default function DiscoverTemplate({
                   creatorUsername: creator.username || "",
                   creatorId: creator.id || "",
                 }}
+                purchasesEnabled={sellerPurchasesEnabled}
               />
               {/* {process.env.NEXT_PUBLIC_ENABLE_CART === 'true' && (
                 <AddToCartButton

@@ -51,6 +51,7 @@ export type WonderTemplateProps = {
   currentUserId: string
   isRestrictedView?: boolean
   priceCents?: number
+  sellerPurchasesEnabled?: boolean
 }
 
 function LocationLine({ countries }: { countries: string[] }) {
@@ -79,6 +80,7 @@ export default function WonderTemplate({
   isRestrictedView = false,
   priceCents = 0,
   paidUser: _paidUser = false,
+  sellerPurchasesEnabled = true,
 }: WonderTemplateProps) {
   void _paidUser
   const [openDays, setOpenDays] = useState<Set<number>>(new Set())
@@ -286,6 +288,7 @@ export default function WonderTemplate({
                   creatorUsername: creator.username || "",
                   creatorId: creator.id || "",
                 }}
+                purchasesEnabled={sellerPurchasesEnabled}
               />
             </div>
           </div>
