@@ -942,17 +942,16 @@ export const updateItineraryPricing = async (
 
   if (!user) throw new Error("Not authenticated")
 
-  // Verify the user is the creator and has a paid plan
+  // Pricing requires an active Stripe Connect seller account (not a paid plan).
   const { data: userSettings, error: settingsError } = await supabase
     .from('users_settings')
-    .select('plan')
+    .select('stripe_account_id')
     .eq('user_id', user.id)
     .single()
 
-  if (settingsError) throw new Error("Could not verify user plan")
-  
-  if (userSettings.plan !== 'standard' && userSettings.plan !== 'premium') {
-    throw new Error("You need a Standard or Premium plan to set pricing")
+  if (settingsError) throw new Error("Could not verify seller account")
+  if (!userSettings?.stripe_account_id) {
+    throw new Error("Connect a Stripe seller account before setting pricing")
   }
 
   // Verify the user is the creator
@@ -965,12 +964,16 @@ export const updateItineraryPricing = async (
   if (fetchError) throw new Error("Itinerary not found")
   if (itinerary.creator_id !== user.id) throw new Error("You are not authorized to update this itinerary")
 
+  if (pricing.is_paid && (!Number.isFinite(pricing.price_cents) || pricing.price_cents < 50)) {
+    throw new Error("Paid itineraries need a price of at least $0.50")
+  }
+
   // Update the pricing
   const { error } = await supabase
     .from('itineraries')
     .update({
       is_paid: pricing.is_paid,
-      price_cents: pricing.price_cents,
+      price_cents: pricing.is_paid ? pricing.price_cents : 0,
     })
     .eq('id', itineraryId)
 

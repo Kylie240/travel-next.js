@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input, Textarea } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload, ChevronLeft, ChevronRight, CalendarPlus, PencilRuler, Flag, Loader2, Eye, Edit, DollarSign } from "lucide-react"
+import { Plus, Minus, GripVertical, Trash2, ChevronDown, ChevronUp, X, Check, Upload, ChevronLeft, ChevronRight, CalendarPlus, PencilRuler, Flag, Loader2, Eye, Edit, DollarSign, Lock } from "lucide-react"
 import { BlackBanner } from "@/components/ui/black-banner"
 import { PenSquare } from "lucide-react"
 import { useForm, useFieldArray, FormProvider } from "react-hook-form"
@@ -950,10 +950,13 @@ export default function CreatePage() {
   const [isPaid, setIsPaid] = useState(false)
   const [priceInDollars, setPriceInDollars] = useState('')
   const [isItineraryCreator, setIsItineraryCreator] = useState(!initialItineraryId)
+  const [hasActiveStripeAccount, setHasActiveStripeAccount] = useState(false)
+  const [stripeStatusLoading, setStripeStatusLoading] = useState(true)
   
-  // Step 4: paid creators only (not collaborators editing shared itineraries)
-  const canAccessStep4 = userPlan !== 'free' && isItineraryCreator
+  // Step 4: only itinerary creators with a ready Stripe seller account.
+  const canAccessStep4 = isItineraryCreator && hasActiveStripeAccount
   const totalSteps = canAccessStep4 ? 4 : 3
+  const isProUser = userPlan.trim().toLowerCase() === 'pro'
   const sellingFee = userPlan === 'standard' ? 0.9 : 0.95
   const sellingFeePercentage = userPlan === 'standard' ? 10 : 15
 
@@ -1035,6 +1038,55 @@ export default function CreatePage() {
     }
   }, [supabase])
 
+  useEffect(() => {
+    let cancelled = false
+
+    const loadStripeStatus = async () => {
+      if (!user?.id) {
+        setHasActiveStripeAccount(false)
+        setStripeStatusLoading(false)
+        return
+      }
+
+      setStripeStatusLoading(true)
+      try {
+        const response = await fetch(
+          `/api/stripe-connect/status?t=${Date.now()}`,
+          {
+            credentials: "same-origin",
+            cache: "no-store",
+          }
+        )
+        if (!response.ok) {
+          throw new Error("Could not load Stripe account status")
+        }
+
+        const status = (await response.json()) as {
+          stripeAccountId?: string | null
+          sellerAccountReady?: boolean
+        }
+        if (!cancelled) {
+          setHasActiveStripeAccount(
+            Boolean(status.stripeAccountId && status.sellerAccountReady)
+          )
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to check Stripe account status:", error)
+          setHasActiveStripeAccount(false)
+        }
+      } finally {
+        if (!cancelled) setStripeStatusLoading(false)
+      }
+    }
+
+    void loadStripeStatus()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
+
   const refreshPermissionUsers = useCallback(async () => {
     const needsFollowers =
       viewPermission === "restricted" || editPermission === "collaborators"
@@ -1093,10 +1145,14 @@ export default function CreatePage() {
   })
 
   useEffect(() => {
-    if (currentStep === 4 && !canAccessStep4) {
+    if (
+      currentStep === 4 &&
+      !stripeStatusLoading &&
+      !canAccessStep4
+    ) {
       setCurrentStep(3)
     }
-  }, [currentStep, canAccessStep4])
+  }, [currentStep, canAccessStep4, stripeStatusLoading])
 
   useEffect(() => {
     if (currentStep !== 4) return
@@ -1564,7 +1620,7 @@ export default function CreatePage() {
 
       await persistItineraryTemplate(itineraryId)
       
-      // Save permissions and pricing for paid users (step 4)
+      // Save permissions and pricing for sellers with step 4 access
       if (canAccessStep4 && itineraryId) {
         try {
           // Save permissions
@@ -1578,7 +1634,12 @@ export default function CreatePage() {
           })
         } catch (permError) {
           console.error('Error saving permissions/pricing:', permError)
-          // Don't fail the whole save, just log the error
+          toast.error(
+            permError instanceof Error
+              ? permError.message
+              : 'Itinerary saved, but pricing/permissions failed to update'
+          )
+          return false
         }
       }
       
@@ -1639,7 +1700,7 @@ export default function CreatePage() {
 
         await persistItineraryTemplate(itineraryId)
         
-        // Save permissions and pricing for paid users (step 4)
+        // Save permissions and pricing for sellers with step 4 access
         if (canAccessStep4 && itineraryId) {
           try {
             // Save permissions
@@ -1653,7 +1714,12 @@ export default function CreatePage() {
             })
           } catch (permError) {
             console.error('Error saving permissions/pricing:', permError)
-            // Don't fail the whole save, just log the error
+            toast.error(
+              permError instanceof Error
+                ? permError.message
+                : 'Itinerary saved, but pricing/permissions failed to update'
+            )
+            return
           }
         }
         
@@ -2426,126 +2492,167 @@ export default function CreatePage() {
                     </div>
                   </div>
 
-                  {/* Pricing */}
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="flex items-center gap-3">
-                      <TbTemplate className="h-5 w-5 text-gray-700" />
-                      <h3 className="text-lg font-semibold text-gray-900">Template</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Select the layout for this itinerary
-                    </p>
+                  <div className="relative space-y-6">
+                    {!isProUser && (
+                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/70 backdrop-blur-[1px]">
+                        <div className="mx-4 max-w-sm rounded-xl border border-gray-200 bg-white/95 px-5 py-4 text-center shadow-sm">
+                          <Lock className="mx-auto mb-2 h-5 w-5 text-gray-700" />
+                          <p className="text-sm font-medium text-gray-900">
+                            Upgrade to Pro to unlock these features
+                          </p>
+                          <p className="mt-1 text-xs text-gray-600">
+                            Templates and advanced sharing controls are available on Pro.
+                          </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="mt-3"
+                            onClick={() => router.push('/plans')}
+                          >
+                            Upgrade to Pro
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
-                    <div className="space-y-4">
-                    <div className="flex flex-col gap-2">
-                        <Label className="text-base font-medium">Template</Label>
-                        <Select
-                          value={template}
-                          onValueChange={(value) =>
-                            setTemplate(value as ItineraryTemplate)
-                          }
-                        >
-                          <SelectTrigger className="w-full rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.keys(TemplateMap).map((template) => (
-                              <SelectItem key={template} value={template}>
-                                {TemplateMap[template as keyof typeof TemplateMap]}
+                    {/* Template */}
+                    <div className={`bg-gray-50 rounded-xl p-6 ${!isProUser ? "pointer-events-none select-none" : ""}`}>
+                      <div className="flex items-center gap-3">
+                        <TbTemplate className="h-5 w-5 text-gray-700" />
+                        <h3 className="text-lg font-semibold text-gray-900">Template</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Select the layout for this itinerary
+                      </p>
+
+                      <div className="space-y-4">
+                      <div className="flex flex-col gap-2">
+                          <Label className="text-base font-medium">Template</Label>
+                          <Select
+                            value={template}
+                            onValueChange={(value) =>
+                              setTemplate(value as ItineraryTemplate)
+                            }
+                            disabled={!isProUser || isFormDisabled}
+                          >
+                            <SelectTrigger className="w-full rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.keys(TemplateMap).map((template) => (
+                                <SelectItem key={template} value={template}>
+                                  {TemplateMap[template as keyof typeof TemplateMap]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* View Permissions */}
+                    <div className={`bg-gray-50 rounded-xl p-6 ${!isProUser ? "pointer-events-none select-none" : ""}`}>
+                      <div className="flex items-center gap-3">
+                        <Eye className="h-5 w-5 text-gray-700" />
+                        <h3 className="text-lg font-semibold text-gray-900">Who Can View</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Control who can see this itinerary
+                      </p>
+
+                      <div className="space-y-4">
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-base font-medium">View Permission</Label>
+                          <Select
+                            value={viewPermission}
+                            onValueChange={(value) =>
+                              setViewPermission(
+                                value as 'public' | 'creator' | 'restricted'
+                              )
+                            }
+                            disabled={!isProUser || isFormDisabled}
+                          >
+                            <SelectTrigger className="w-full rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="public">
+                                Public - Anyone can view
                               </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                              <SelectItem value="creator">
+                                Private - Only you can view
+                              </SelectItem>
+                              <SelectItem value="restricted">
+                                Restricted - Only selected users
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {viewPermission === 'restricted' && (
+                          <FollowerUserPicker
+                            label="Select Users Who Can View"
+                            subLabel="People you follow and anyone already added appear here"
+                            followers={followers}
+                            loadingFollowers={loadingFollowers}
+                            selectedUserIds={allowedViewers}
+                            searchTerm={viewerSearchTerm}
+                            onSearchTermChange={setViewerSearchTerm}
+                            onToggle={handleToggleViewer}
+                            disabled={!isProUser || isFormDisabled}
+                          />
+                        )}
                       </div>
                     </div>
-                  </div>
 
-                  {/* View Permissions */}
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="flex items-center gap-3">
-                      <Eye className="h-5 w-5 text-gray-700" />
-                      <h3 className="text-lg font-semibold text-gray-900">Who Can View</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Control who can see this itinerary
-                    </p>
-
-                    <div className="space-y-4">
-                      <div className="flex flex-col gap-2">
-                        <Label className="text-base font-medium">View Permission</Label>
-                        <Select value={viewPermission} onValueChange={(value) => setViewPermission(value as 'public' | 'creator' | 'restricted')}>
-                          <SelectTrigger className="w-full rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="public">
-                              Public - Anyone can view
-                            </SelectItem>
-                            <SelectItem value="creator">
-                              Private - Only you can view
-                            </SelectItem>
-                            <SelectItem value="restricted">
-                              Restricted - Only selected users
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                    {/* Edit Permissions */}
+                    <div className={`bg-gray-50 rounded-xl p-6 ${!isProUser ? "pointer-events-none select-none" : ""}`}>
+                      <div className="flex items-center gap-3">
+                        <Edit className="h-5 w-5 text-gray-700" />
+                        <h3 className="text-lg font-semibold text-gray-900">Who Can Edit</h3>
                       </div>
-                      {viewPermission === 'restricted' && (
-                        <FollowerUserPicker
-                          label="Select Users Who Can View"
-                          subLabel="People you follow and anyone already added appear here"
-                          followers={followers}
-                          loadingFollowers={loadingFollowers}
-                          selectedUserIds={allowedViewers}
-                          searchTerm={viewerSearchTerm}
-                          onSearchTermChange={setViewerSearchTerm}
-                          onToggle={handleToggleViewer}
-                          disabled={isFormDisabled}
-                        />
-                      )}
-                    </div>
-                  </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Control who can make changes to this itinerary
+                      </p>
 
-                  {/* Edit Permissions */}
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="flex items-center gap-3">
-                      <Edit className="h-5 w-5 text-gray-700" />
-                      <h3 className="text-lg font-semibold text-gray-900">Who Can Edit</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Control who can make changes to this itinerary
-                    </p>
-
-                    <div className="space-y-4">
-                      <div className="flex flex-col gap-2">
-                        <Label className="text-base font-medium">Edit Permission</Label>
-                        <Select value={editPermission} onValueChange={(value) => setEditPermission(value as 'creator' | 'collaborators')}>
-                          <SelectTrigger className="w-full rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="creator">
-                              Creator Only - Only you can edit
-                            </SelectItem>
-                            <SelectItem value="collaborators">
-                              Collaborators - Selected users can edit
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <div className="space-y-4">
+                        <div className="flex flex-col gap-2">
+                          <Label className="text-base font-medium">Edit Permission</Label>
+                          <Select
+                            value={editPermission}
+                            onValueChange={(value) =>
+                              setEditPermission(
+                                value as 'creator' | 'collaborators'
+                              )
+                            }
+                            disabled={!isProUser || isFormDisabled}
+                          >
+                            <SelectTrigger className="w-full rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="creator">
+                                Creator Only - Only you can edit
+                              </SelectItem>
+                              <SelectItem value="collaborators">
+                                Collaborators - Selected users can edit
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {editPermission === 'collaborators' && (
+                          <FollowerUserPicker
+                            label="Select Users Who Can Edit"
+                            subLabel="People you follow and anyone already added appear here"
+                            followers={followers}
+                            loadingFollowers={loadingFollowers}
+                            selectedUserIds={allowedEditors}
+                            searchTerm={editorSearchTerm}
+                            onSearchTermChange={setEditorSearchTerm}
+                            onToggle={handleToggleEditor}
+                            disabled={!isProUser || isFormDisabled}
+                          />
+                        )}
                       </div>
-                      {editPermission === 'collaborators' && (
-                        <FollowerUserPicker
-                          label="Select Users Who Can Edit"
-                          subLabel="People you follow and anyone already added appear here"
-                          followers={followers}
-                          loadingFollowers={loadingFollowers}
-                          selectedUserIds={allowedEditors}
-                          searchTerm={editorSearchTerm}
-                          onSearchTermChange={setEditorSearchTerm}
-                          onToggle={handleToggleEditor}
-                          disabled={isFormDisabled}
-                        />
-                      )}
                     </div>
                   </div>
 

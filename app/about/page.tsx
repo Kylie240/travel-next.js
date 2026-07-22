@@ -8,8 +8,14 @@ import { FiEdit2, FiLock } from 'react-icons/fi';
 
 const newestFeatures = [
   {
+    title: "Monetization Features",
+    description: "Sell your itineraries now without a paid plan.",
+    date: "July 21, 2026",
+    icon: <GrMoney className="w-6 h-6" />
+  },
+  {
     title: "Pro Plan",
-    description: "You can now upgrade to the Pro plan to access all features and monetize your itineraries.",
+    description: "You can now upgrade to the Pro plan to access more features.",
     date: "July 18, 2026",
     icon: <GrMoney className="w-6 h-6" />
   },
@@ -19,24 +25,6 @@ const newestFeatures = [
     date: "June 24, 2026",
     icon: <FiLock className="w-6 h-6" />
   },
-  {
-    title: "Edit Published Itineraries",
-    description: "You can now edit your published itineraries.",
-    date: "February 6, 2026",
-    icon: <FiEdit2 className="w-6 h-6" />
-  },
-  {
-    title: "Travel Dates",
-    description: "Optional date fields for each day of your itinerary.",
-    date: "November 28, 2025",
-    icon: <CiCalendarDate className="w-7 h-7" />
-  },
-  {
-    title: "Search Page",
-    description: "Search for other users by name or username.",
-    date: "December 2, 2025",
-    icon: <IoDocumentOutline className="w-6 h-6" />
-  }
 ]
 
 const AboutPage = () => {
@@ -83,10 +71,10 @@ const AboutPage = () => {
             </h3>
             <p className="mb-4">
               The free Nomad plan is great for getting started. When you want more room to create and sell,
-              upgrade to the <strong className="font-semibold text-gray-800">Standard</strong> plan from{" "}
-              <a href="/plans" className="text-blue-600 hover:text-blue-800">Plans &amp; Pricing</a>.
-              Subscribers unlock higher itinerary limits, templates, and the ability to price and sell
-              their published itineraries.
+              upgrade to the <strong className="font-semibold text-gray-800">Pro</strong> plan from{" "}
+              <a href="/plans" className="text-blue-600 hover:text-blue-800">here</a>.
+              Subscribers unlock unlimited itineraries, more templates, and the ability to price and sell
+              their published itineraries for a reduced fee.
             </p>
             <p className="mb-4">
               You can manage or cancel your subscription anytime from Account Settings after you subscribe.
@@ -96,7 +84,7 @@ const AboutPage = () => {
               Monetize your itineraries
             </h3>
             <p className="mb-4">
-              Creators on a paid plan can turn travel know-how into income. After you upgrade:
+              Creators on the free and pro plans can turn travel know-how into income. How to get started:
             </p>
             <ol className="list-decimal pl-5 mb-4 space-y-2">
               <li>
@@ -116,8 +104,8 @@ const AboutPage = () => {
               and buyers with a Journli account can reopen them anytime from Purchased Itineraries.
             </p>
             <p>
-              Ready to sell? Start on{" "}
-              <a href="/plans" className="text-blue-600 hover:text-blue-800">Plans &amp; Pricing</a>,
+              Ready to sell? Visit the {" "}
+              <a href="/seller-dashboard" className="text-blue-600 hover:text-blue-800">Seller Dashboard</a> to get started,
               then finish Stripe setup from your Seller Dashboard.
             </p>
           </div>

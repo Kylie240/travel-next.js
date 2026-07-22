@@ -224,7 +224,6 @@ export function UserMenu() {
                   Settings
                 </DropdownMenu.Item>
 
-              {showSellerDashboard && (
                 <DropdownMenu.Item
                   className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                   onClick={() => router.push('/seller-dashboard')}
@@ -232,7 +231,6 @@ export function UserMenu() {
                   <AiOutlineDashboard className="mr-2" size={18} strokeWidth={.75} />
                   Seller Dashboard
                 </DropdownMenu.Item>
-                )}
 
               <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
               

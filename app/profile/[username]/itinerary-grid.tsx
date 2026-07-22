@@ -129,28 +129,32 @@ export default function ItineraryGrid({
                   </div>
                 </div>
               </div>
-              {!isCurrentUser && currentUserId &&
-                <div className="absolute top-4 left-4 right-4">
-                  <div className="flex justify-between items-center">
-                      {itinerary.isPaid && !itinerary.isPurchased && (
-                        <span className={`px-3 py-2 gap-1.5 flex items-center rounded-full text-sm md:text-md font-semibold capitalize bg-lime-500/70 text-white`}>
-                          <FaLock />
-                          ${itinerary.priceCents / 100}
-                        </span>
-                      )}
-                      {itinerary.isPaid && itinerary.isPurchased && (
-                        <span className={`px-3 py-2 gap-1.5 flex items-center rounded-full text-sm md:text-md font-semibold capitalize bg-gray-700/80 text-white`}>
-                          <FaUnlock />
-                          Purchased
-                        </span>
-                      )}
-                      {!itinerary.isPaid && (
-                        <></>
-                      )}
-                    <BookmarkElement itineraryId={itinerary.id} currentUserId={currentUserId} color="white" savedList={savedList} />
+              <div className="absolute top-4 left-4 right-4">
+                <div className="flex justify-between items-center">
+                  {!isCurrentUser && itinerary.isPaid && !itinerary.isPurchased && (
+                    <span className="px-3 py-2 gap-1.5 flex items-center rounded-full text-sm md:text-md font-semibold capitalize bg-lime-500/70 text-white">
+                      <FaLock />
+                      ${itinerary.priceCents / 100}
+                    </span>
+                  )}
+                  {!isCurrentUser && itinerary.isPaid && itinerary.isPurchased && (
+                    <span className="px-3 py-2 gap-1.5 flex items-center rounded-full text-sm md:text-md font-semibold capitalize bg-gray-700/80 text-white">
+                      <FaUnlock />
+                      Purchased
+                    </span>
+                  )}
+                  <div className="ml-auto">
+                    {!isCurrentUser && currentUserId && (
+                      <BookmarkElement
+                        itineraryId={itinerary.id}
+                        currentUserId={currentUserId}
+                        color="white"
+                        savedList={savedList}
+                      />
+                    )}
                   </div>
                 </div>
-              }
+              </div>
             </div>
           ))
         )}
