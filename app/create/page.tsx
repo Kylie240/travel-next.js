@@ -957,8 +957,8 @@ export default function CreatePage() {
   const canAccessStep4 = isItineraryCreator && hasActiveStripeAccount
   const totalSteps = canAccessStep4 ? 4 : 3
   const isProUser = userPlan.trim().toLowerCase() === 'pro'
-  const sellingFee = userPlan === 'standard' ? 0.9 : 0.95
-  const sellingFeePercentage = userPlan === 'standard' ? 10 : 15
+  const sellingFee = isProUser ? 0.95 : 0.85
+  const sellingFeePercentage = isProUser ? 5 : 15
 
   /** Free plan always saves as basic; paid creators use the selected template. */
   const resolveTemplateForSave = (): ItineraryTemplate => {

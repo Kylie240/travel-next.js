@@ -44,7 +44,7 @@ export function ItinerarySettingsContent({ itinerary, userId, userPlan }: Itiner
   // Pricing state (only for standard/premium users)
   const [isPaid, setIsPaid] = useState(false)
   const [priceInDollars, setPriceInDollars] = useState('')
-  const canSetPricing = userPlan === 'standard' || userPlan === 'premium'
+  const canSetPricing = userPlan.trim().toLowerCase() === 'pro'
 
   // Monitor authentication state and redirect if user logs out
   useEffect(() => {
@@ -561,8 +561,8 @@ export function ItinerarySettingsContent({ itinerary, userId, userPlan }: Itiner
                         className="pl-7"
                       />
                     </div>
-                    {userPlan === 'standard' && (
-                      <Link href="/plans" className="text-cyan-700 text-sm font-medium hover:underline">Upgrade to our Premium plan to unlock more features and reduced selling fee.</Link>
+                    {userPlan === 'free' && (
+                      <Link href="/plans" className="text-cyan-700 text-sm font-medium hover:underline">Upgrade to our Pro plan to unlock more features and reduced selling fee.</Link>
                     )}
                   </div>
                 )}

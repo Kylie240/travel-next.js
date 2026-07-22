@@ -52,17 +52,17 @@ export function OnboardingTour({ userName, userId }: OnboardingTourProps) {
 
     const pendingKey = `journli_onboarding_pending_${userId}`
     const completedKey = `journli_onboarding_completed_${userId}`
-    const firstVisitKey = `journli_settings_first_visit_${userId}`
 
-    // Show tour if signup marked it pending OR this is first settings visit.
-    const isPending = localStorage.getItem(pendingKey) === "true" || localStorage.getItem("journli_onboarding_pending") === "true"
-    const hasSeenTour = localStorage.getItem(completedKey)
-    const hasVisitedSettings = localStorage.getItem(firstVisitKey)
-    const shouldOpen = !hasSeenTour && (isPending || !hasVisitedSettings)
+    // Only show for users who just signed up on this device (pending flag set at signup).
+    // Do not use "first settings visit" — that wrongly triggers for existing users on a new device.
+    const isPending =
+      localStorage.getItem(pendingKey) === "true" ||
+      localStorage.getItem("journli_onboarding_pending") === "true"
+    const hasSeenTour = localStorage.getItem(completedKey) === "true"
+    const shouldOpen = !hasSeenTour && isPending
 
     if (shouldOpen) {
       setIsOpen(true)
-      localStorage.setItem(firstVisitKey, "true")
       localStorage.removeItem(pendingKey)
       localStorage.removeItem("journli_onboarding_pending")
     }

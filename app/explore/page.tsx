@@ -30,6 +30,44 @@ export default async function ExplorePage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
+  // Production gate: only show the live explore feed in development.
+  if (process.env.NEXT_PUBLIC_ENV !== "development") {
+    return (
+      <div className="flex justify-center h-[calc(100vh-64px)] items-center">
+        <div className="mx-6 md:mx-8 max-w-[800px] text-center py-12 px-4 rounded-xl border-2 border-dashed w-full">
+          <div className="mb-4">
+            <Globe2 className="h-12 w-12 mx-auto text-gray-400" />
+          </div>
+          <h3 className="text-2xl font-medium text-gray-900 mb-4">
+            Explore Page Coming Soon
+          </h3>
+          <div>
+            <p className="text-gray-600 mb-4">
+              We’re building something exciting! Soon, you’ll be able to explore
+              itineraries from travelers around the world! Get inspired, discover
+              new destinations, and plan your next adventure with ease.
+            </p>
+            <p className="text-gray-600 mb-4">
+              Check back soon or{" "}
+              <a href="#newsletter" className="text-blue-500">
+                subscribe to our newsletter
+              </a>{" "}
+              to get notified when it’s live!
+            </p>
+            <div className="flex justify-center mt-4 gap-4">
+              <Link href="/">
+                <Button variant="outline">Return Home</Button>
+              </Link>
+              <Link href="/about">
+                <Button variant="outline">More Info</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const params = await searchParams
   const page = parseOptionalInt(params.page) || 1
   const sort = typeof params.sort === "string" ? params.sort : undefined
