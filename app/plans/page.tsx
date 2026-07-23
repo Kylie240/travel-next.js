@@ -7,8 +7,11 @@ import { PiPersonSimpleHikeBold } from "react-icons/pi"
 import { BiWorld } from "react-icons/bi"
 
 export const metadata: Metadata = {
-  title: "Plans & Pricing - Journli",
+  title: "Plans & Pricing",
   description: "Choose the perfect plan for your travel planning needs. Start free forever or upgrade to Pro for advanced features.",
+  alternates: {
+    canonical: "/plans",
+  },
 }
 
 export default async function PlansPage() {

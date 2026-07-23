@@ -25,6 +25,7 @@ import {
 import { getItineraryPath } from "@/lib/utils/itinerary-url"
 import WonderTemplate from "@/components/templates/wonder"
 import { getCachedSellerSalesEnabled } from "@/lib/sync-stripe-connect-account"
+import { JsonLd, buildItineraryJsonLd } from "@/lib/seo/json-ld"
 
 type PageParams = { id: string; slug: string }
 
@@ -214,21 +215,44 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
     sellerPurchasesEnabled,
   }
 
-  // return <ExploreTemplate {...templateProps} />
+  const jsonLd =
+    itineraryMeta.status === ItineraryStatusEnum.published &&
+    viewPermission === viewPermissionEnum.public
+      ? buildItineraryJsonLd({
+          id: itineraryMeta.id,
+          title: itineraryMeta.title || itinerary.title,
+          slug: itineraryMeta.slug,
+          shortDescription:
+            itineraryMeta.short_description || itinerary.shortDescription,
+          mainImage: itineraryMeta.main_image || itinerary.mainImage,
+          countries,
+          duration: itinerary.duration,
+          isPaid: itineraryMeta.is_paid,
+          priceCents: itineraryMeta.price_cents,
+          creatorName: creator.name,
+          creatorUsername: creator.username,
+          updatedAt: itinerary.updated,
+        })
+      : null
+
   const template = itineraryMeta.template || "basic"
+  let TemplateView = <BasicTemplate {...templateProps} />
   if (template === "discover") {
-    return <DiscoverTemplate {...templateProps} />
+    TemplateView = <DiscoverTemplate {...templateProps} />
+  } else if (template === "explore") {
+    TemplateView = <ExploreTemplate {...templateProps} />
+  } else if (template === "journey") {
+    TemplateView = <JourneyTemplate {...templateProps} />
+  } else if (template === "wonder") {
+    TemplateView = <WonderTemplate {...templateProps} />
   }
-  if (template === "explore") {
-    return <ExploreTemplate {...templateProps} />
-  }
-  if (template === "journey") {
-    return <JourneyTemplate {...templateProps} />
-  }
-  if (template === "wonder") {
-    return <WonderTemplate {...templateProps} />
-  }
-  return <BasicTemplate {...templateProps} />
+
+  return (
+    <>
+      {jsonLd ? <JsonLd data={jsonLd} /> : null}
+      {TemplateView}
+    </>
+  )
 }
 
 function buildMetadataFromMeta(meta: ItineraryRouteMeta): Metadata {
@@ -245,7 +269,7 @@ function buildMetadataFromMeta(meta: ItineraryRouteMeta): Metadata {
   const isPublished = meta.status === ItineraryStatusEnum.published
 
   return {
-    title: `${meta.title ?? "Itinerary"} | Journli`,
+    title: meta.title ?? "Itinerary",
     description,
     alternates: {
       canonical: canonicalPath,
