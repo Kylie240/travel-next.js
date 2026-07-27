@@ -8,4 +8,11 @@ export interface ProfileData {
   followingCount: number
   isFollowing: boolean
   avatar: string
+  isPrivate?: boolean
+  facebook?: string
+  instagram?: string
+  twitter?: string
+  pinterest?: string
+  tiktok?: string
+  youtube?: string
 }

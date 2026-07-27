@@ -122,3 +122,35 @@ export function buildItineraryJsonLd(input: ItineraryJsonLdInput) {
 
   return base
 }
+
+type PersonJsonLdInput = {
+  name: string
+  username: string
+  bio?: string | null
+  avatar?: string | null
+  sameAs?: (string | null | undefined)[]
+}
+
+export function buildPersonJsonLd(input: PersonJsonLdInput) {
+  const site = getSiteUrl()
+  const profilePath = `/profile/${encodeURIComponent(input.username)}`
+  const url = `${site}${profilePath}`
+
+  const sameAs = (input.sameAs || []).filter(
+    (link): link is string => typeof link === "string" && link.trim().length > 0
+  )
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: input.name,
+    alternateName: input.username,
+    description:
+      input.bio?.trim() ||
+      `${input.name} (@${input.username}) on Journli — travel itineraries.`,
+    url,
+    mainEntityOfPage: url,
+    image: input.avatar || undefined,
+    sameAs: sameAs.length ? sameAs : undefined,
+  }
+}
