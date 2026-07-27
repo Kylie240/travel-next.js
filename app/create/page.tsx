@@ -1896,6 +1896,8 @@ export default function CreatePage() {
 
   const isFormDisabled = isSubmitting || form.formState.isSubmitting;
 
+  const hasMainImage = Boolean(form.watch("mainImage")?.trim())
+
   const renderCancelAndPreview = () => (
     <div className="flex flex-col gap-2">
       <Button
@@ -1917,18 +1919,20 @@ export default function CreatePage() {
         <X className="sm:hidden" />
         <span className="hidden sm:block">Cancel</span>
       </Button>
-      <Button
-        type="button"
-        variant="outline"
-        disabled={isFormDisabled}
-        onClick={() => {
-          setPreviewFormValues(form.getValues())
-          setShowPreview(true)
-        }}
-        className="inline-flex items-center justify-center gap-1.5"
-      >
-        <span>Preview</span>
-      </Button>
+      {hasMainImage ? (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isFormDisabled}
+          onClick={() => {
+            setPreviewFormValues(form.getValues())
+            setShowPreview(true)
+          }}
+          className="inline-flex items-center justify-center gap-1.5"
+        >
+          <span>Preview</span>
+        </Button>
+      ) : null}
     </div>
   )
 
