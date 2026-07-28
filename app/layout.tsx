@@ -14,10 +14,12 @@ import {
   buildOrganizationJsonLd,
   buildWebsiteJsonLd,
 } from "@/lib/seo/json-ld";
+import { getDefaultOgImages } from "@/lib/seo/og";
 
 const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 const siteUrl = getSiteUrl();
+const defaultOgImages = getDefaultOgImages();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -39,12 +41,14 @@ export const metadata: Metadata = {
     title: "Journli | Create and Share Travel Itineraries",
     description:
       "Discover, create, and share travel itineraries with fellow travelers around the world.",
+    images: defaultOgImages,
   },
   twitter: {
     card: "summary_large_image",
     title: "Journli | Create and Share Travel Itineraries",
     description:
       "Discover, create, and share travel itineraries with fellow travelers around the world.",
+    images: defaultOgImages.map((img) => img.url),
   },
   icons: {
     icon: "/favicon.ico",

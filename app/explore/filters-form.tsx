@@ -9,7 +9,8 @@ import { activityTagsMap, itineraryTagsMap, quickFilters, sortOptions } from "@/
 import { Button } from "@/components/ui/button"
 import { useRouter, useSearchParams } from "next/navigation"
 import { QuickFilterList } from "@/components/ui/quick-filter-list"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { SearchIcon } from "lucide-react"
 
 const formSchema = z.object({
     destination: z.string().optional(),
@@ -26,45 +27,128 @@ const formSchema = z.object({
     quickFilter: z.string().optional(),
 })
 
+type FormValues = z.infer<typeof formSchema>
+
+type AdvancedFiltersState = {
+    itineraryTags: string[]
+    activityTags: string[]
+    regions: string[]
+    continents: string[]
+    accommodation: string[]
+    transportation: string[]
+    rating: string
+    sort: string
+    quickFilter: string
+}
+
+function splitParam(value: string | null): string[] {
+    if (!value?.trim()) return []
+    return value.split(",").map((s) => s.trim()).filter(Boolean)
+}
+
+type SearchParamsLike = {
+    get: (name: string) => string | null
+}
+
+function readAdvancedFilters(searchParams: SearchParamsLike): AdvancedFiltersState {
+    const itineraryTags = splitParam(searchParams.get("itineraryTags"))
+    const activityTags = splitParam(searchParams.get("activityTags"))
+
+    return {
+        itineraryTags:
+            itineraryTags.length > 0
+                ? itineraryTags
+                : splitParam(searchParams.get("itineraryTagsMap")),
+        activityTags:
+            activityTags.length > 0
+                ? activityTags
+                : splitParam(searchParams.get("activityTagsMap")),
+        regions: splitParam(searchParams.get("regions")),
+        continents: splitParam(searchParams.get("continents")),
+        accommodation: splitParam(searchParams.get("accommodation")),
+        transportation: splitParam(searchParams.get("transportation")),
+        rating: searchParams.get("rating") || "",
+        sort: searchParams.get("sort") || "most-recent",
+        quickFilter: searchParams.get("quickFilter") || "All",
+    }
+}
+
+function readFormValues(searchParams: SearchParamsLike): FormValues {
+    const advanced = readAdvancedFilters(searchParams)
+    return {
+        destination: searchParams.get("destination") || "",
+        duration: searchParams.get("duration") || "",
+        budget: searchParams.get("budget") || "",
+        itineraryTags: advanced.itineraryTags,
+        activityTags: advanced.activityTags,
+        sort: advanced.sort,
+        continents: advanced.continents,
+        regions: advanced.regions,
+        accommodation: advanced.accommodation,
+        transportation: advanced.transportation,
+        rating: advanced.rating,
+        quickFilter: advanced.quickFilter,
+    }
+}
+
+const EMPTY_ADVANCED_FILTERS: AdvancedFiltersState = {
+    itineraryTags: [],
+    activityTags: [],
+    regions: [],
+    continents: [],
+    accommodation: [],
+    transportation: [],
+    rating: "",
+    sort: "most-recent",
+    quickFilter: "All",
+}
+
+const EMPTY_FORM_VALUES: FormValues = {
+    destination: "",
+    duration: "",
+    budget: "",
+    itineraryTags: [],
+    activityTags: [],
+    sort: "most-recent",
+    continents: [],
+    regions: [],
+    accommodation: [],
+    transportation: [],
+    rating: "",
+    quickFilter: "All",
+}
+
 export default function FiltersForm({
   resultsCount,
+  destinations = [],
 }: {
   resultsCount?: number
+  destinations?: string[]
 }) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    
-    const [advancedFilters, setAdvancedFilters] = useState({
-        itineraryTags: searchParams.get("itineraryTagsMap")?.split(",") || [],
-        activityTags: searchParams.get("activityTagsMap")?.split(",") || [],
-        regions: searchParams.get("regions")?.split(",") || [],
-        continents: searchParams.get("continents")?.split(",") || [],
-        accommodation: searchParams.get("accommodation")?.split(",") || [],
-        transportation: searchParams.get("transportation")?.split(",") || [],
-        rating: searchParams.get("rating") || "",
-        sort: searchParams.get("sort") || "most-recent",
-        quickFilter: searchParams.get("quickFilter") || "All"
-    });
+    const searchKey = searchParams.toString()
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const [advancedFilters, setAdvancedFilters] = useState(() =>
+        readAdvancedFilters(searchParams)
+    );
+
+    const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            destination: searchParams.get("destination") || "",
-            duration: searchParams.get("duration") || "",
-            budget: searchParams.get("budget") || "",
-            itineraryTags: advancedFilters.itineraryTags,
-            activityTags: advancedFilters.activityTags,
-            sort: advancedFilters.sort,
-            continents: advancedFilters.continents,
-            regions: advancedFilters.regions,
-            accommodation: advancedFilters.accommodation,
-            transportation: advancedFilters.transportation,
-            rating: advancedFilters.rating,
-            quickFilter: advancedFilters.quickFilter
-        }
+        defaultValues: readFormValues(searchParams),
     })
 
-    const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    // Keep selects in sync when Clear search (or any URL change) updates query params.
+    useEffect(() => {
+        const nextAdvanced = readAdvancedFilters(searchParams)
+        const nextValues = readFormValues(searchParams)
+        setAdvancedFilters(nextAdvanced)
+        form.reset(nextValues)
+        // form.reset is stable enough; only re-run when the query string changes.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchKey])
+
+    const onSubmit = async (data: FormValues) => {
         const newSearchParams = new URLSearchParams();
         if (data.destination) newSearchParams.set("destination", data.destination);
         if (data.duration) newSearchParams.set("duration", data.duration);
@@ -84,25 +168,33 @@ export default function FiltersForm({
     }
 
     const handleAdvancedFilterChange = (filters: typeof advancedFilters) => {
-        setAdvancedFilters(filters);
-        
-        // Update form values
-        form.setValue("itineraryTags", filters.itineraryTags);
-        form.setValue("activityTags", filters.activityTags);
-        form.setValue("regions", filters.regions);
-        form.setValue("continents", filters.continents);
-        form.setValue("accommodation", filters.accommodation);
-        form.setValue("transportation", filters.transportation);
-        form.setValue("rating", filters.rating);
-        form.setValue("sort", filters.sort);
-        form.setValue("quickFilter", filters.quickFilter);
+        setAdvancedFilters(filters)
 
-        // Trigger form submission
-        form.handleSubmit(onSubmit)();
+        const nextValues: FormValues = {
+            ...form.getValues(),
+            itineraryTags: filters.itineraryTags,
+            activityTags: filters.activityTags,
+            regions: filters.regions,
+            continents: filters.continents,
+            accommodation: filters.accommodation,
+            transportation: filters.transportation,
+            rating: filters.rating,
+            sort: filters.sort,
+            quickFilter: filters.quickFilter,
+        }
+
+        form.reset(nextValues)
+        void onSubmit(nextValues)
+    };
+
+    const handleClearAll = () => {
+        setAdvancedFilters(EMPTY_ADVANCED_FILTERS)
+        form.reset(EMPTY_FORM_VALUES)
+        router.push("/explore")
     };
 
     const filters = {
-        destinations: ["Japan", "Italy", "Costa Rica", "Thailand", "Greece", "Switzerland"],
+        destinations,
         duration: [
             {label: "1-3 days", value: "1-3"},
             {label: "4-7 days", value: "4-7"},
@@ -120,9 +212,9 @@ export default function FiltersForm({
     return <FormProvider {...form}> 
         <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="flex flex-col mb-8">     
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
                     <Select
-                        value={form.watch("destination")}
+                        value={form.watch("destination") || "all"}
                         onValueChange={(value) =>
                         form.setValue("destination", value === "all" ? "" : value)
                         }
@@ -142,7 +234,7 @@ export default function FiltersForm({
                     </Select>
 
                     <Select
-                        value={form.watch("duration")}
+                        value={form.watch("duration") || "all"}
                         onValueChange={(value) =>
                         form.setValue("duration", value === "all" ? "" : value)
                         }
@@ -162,7 +254,7 @@ export default function FiltersForm({
                     </Select>
 
                     <Select
-                        value={form.watch("budget")}
+                        value={form.watch("budget") || "all"}
                         onValueChange={(value) =>
                         form.setValue("budget", value === "all" ? "" : value)
                         }
@@ -180,8 +272,8 @@ export default function FiltersForm({
                         ))}
                         </SelectContent>
                     </Select>
-                    <div className="flex justify-between">
-                        <div className="flex justify-end rounded-xl">
+                    <div className="flex justify-between items-center gap-2">
+                        <div className="flex justify-end">
                             <AdvancedFilterDialog
                                 itineraryTags={filters.itineraryTagsMap}
                                 activityTags={filters.activityTagsMap}
@@ -189,7 +281,17 @@ export default function FiltersForm({
                                 onFilterChange={handleAdvancedFilterChange}
                             />
                         </div>
-                        <Button type="submit" className="bg-gray-900 text-white rounded-xl px-4 py-2">Search</Button>
+                        <div className="flex justify-end rounded-xl gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleClearAll}
+                            >
+                              Clear all
+                            </Button>
+                            <Button type="submit" className="bg-gray-900 hidden sm:block md:hidden xl:block text-white px-4 py-2">Search</Button>
+                            <Button type="submit" className="bg-gray-900 text-white px-4 py-2 block sm:hidden md:block xl:hidden"><SearchIcon /></Button>
+                        </div>
                     </div>
                 </div>
                 <div className="hidden justify-between items-center max-w-screen-lg mx-auto gap-2">
@@ -212,7 +314,7 @@ export default function FiltersForm({
                     : "Results"}
                 </p>
                 <div className="flex items-center gap-2">
-                    <p>Sort By:</p>
+                    {/* <p>Sort By:</p>
                     <select
                         className="px-4 py-2 cursor-pointer border rounded-lg focus:outline-none focus:ring-2 focus:ring-travel-900 bg-white"
                         value={form.watch("sort")}
@@ -225,7 +327,7 @@ export default function FiltersForm({
                             {option.label}
                         </option>
                         ))}
-                    </select>
+                    </select> */}
                 </div>
             </div>
         </form>

@@ -5,12 +5,27 @@ import { Metadata } from "next"
 import createClient from "@/utils/supabase/server"
 import { PiPersonSimpleHikeBold } from "react-icons/pi"
 import { BiWorld } from "react-icons/bi"
+import { getDefaultOgImages } from "@/lib/seo/og"
+
+const ogImages = getDefaultOgImages()
 
 export const metadata: Metadata = {
   title: "Plans & Pricing",
   description: "Choose the perfect plan for your travel planning needs. Start free forever or upgrade to Pro for advanced features.",
   alternates: {
     canonical: "/plans",
+  },
+  openGraph: {
+    title: "Plans & Pricing",
+    description: "Choose the perfect plan for your travel planning needs. Start free forever or upgrade to Pro for advanced features.",
+    url: "/plans",
+    images: ogImages,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Plans & Pricing",
+    description: "Choose the perfect plan for your travel planning needs. Start free forever or upgrade to Pro for advanced features.",
+    images: ogImages.map((img) => img.url),
   },
 }
 

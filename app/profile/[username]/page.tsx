@@ -14,6 +14,7 @@ import { AiOutlineYoutube } from "react-icons/ai";
 import { redirect } from "next/navigation";
 import ProfileActions from "./profile-actions";
 import { JsonLd, buildPersonJsonLd } from "@/lib/seo/json-ld";
+import { resolveOgImages, resolveOgImageUrls } from "@/lib/seo/og";
 
 type ProfilePageParams = { username: string };
 
@@ -64,13 +65,13 @@ function buildProfileMetadata(profile: ProfileSeoFields): Metadata {
       description,
       url: canonicalPath,
       type: "profile",
-      images: !isPrivate && profile.avatar ? [{ url: profile.avatar }] : [],
+      images: resolveOgImages(!isPrivate ? profile.avatar : null),
     },
     twitter: {
-      card: profile.avatar && !isPrivate ? "summary" : "summary",
+      card: "summary_large_image",
       title: `${name} (@${username})`,
       description,
-      images: !isPrivate && profile.avatar ? [profile.avatar] : [],
+      images: resolveOgImageUrls(!isPrivate ? profile.avatar : null),
     },
   };
 }

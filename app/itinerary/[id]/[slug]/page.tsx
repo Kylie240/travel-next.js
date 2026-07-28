@@ -26,6 +26,12 @@ import { getItineraryPath } from "@/lib/utils/itinerary-url"
 import WonderTemplate from "@/components/templates/wonder"
 import { getCachedSellerSalesEnabled } from "@/lib/sync-stripe-connect-account"
 import { JsonLd, buildItineraryJsonLd } from "@/lib/seo/json-ld"
+import { resolveOgImages, resolveOgImageUrls } from "@/lib/seo/og"
+import { Breadcrumbs } from "@/components/seo/breadcrumbs"
+import {
+  buildBreadcrumbJsonLd,
+  buildItineraryBreadcrumbs,
+} from "@/lib/seo/breadcrumbs"
 
 type PageParams = { id: string; slug: string }
 
@@ -247,9 +253,20 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
     TemplateView = <WonderTemplate {...templateProps} />
   }
 
+  const breadcrumbItems = buildItineraryBreadcrumbs({
+    title: itineraryMeta.title || itinerary.title,
+    id: itineraryMeta.id,
+    slug: itineraryMeta.slug,
+    countries,
+  })
+
   return (
     <>
       {jsonLd ? <JsonLd data={jsonLd} /> : null}
+      <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
+      <div className="container mx-auto px-4 pt-4 pb-2">
+        <Breadcrumbs items={breadcrumbItems} className="mb-0" />
+      </div>
       {TemplateView}
     </>
   )
@@ -281,14 +298,14 @@ function buildMetadataFromMeta(meta: ItineraryRouteMeta): Metadata {
       title: meta.title ?? "Itinerary",
       description,
       url: canonicalPath,
-      images: meta.main_image ? [{ url: meta.main_image }] : [],
+      images: resolveOgImages(meta.main_image),
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
       title: meta.title ?? "Itinerary",
       description,
-      images: meta.main_image ? [meta.main_image] : [],
+      images: resolveOgImageUrls(meta.main_image),
     },
   }
 }

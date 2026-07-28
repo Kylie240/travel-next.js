@@ -12,7 +12,8 @@ import { syncItinerarySlug } from "@/lib/utils/itinerary-slug";
 import type { GetItineraryOptions } from "@/types/GetItineraryOptions";
 import type { ExplorePageDto } from "@/dtos/ExplorePageDto";
 import type { ExploreItinerariesResult } from "@/types/explore";
-import { itineraryTagsMap } from "@/lib/constants/tags";
+import { itineraryTagsMap, activityTagsMap } from "@/lib/constants/tags";
+import { getCountryNamesForContinents } from "@/lib/constants/country-continents";
 
 export type { ItineraryTemplate };
 
@@ -127,6 +128,127 @@ function intersectSets(
 }
 
 /**
+ * Resolve itinerary ids that include at least one activity of the given types.
+ * Tries common table shapes; returns null if activity storage can't be queried
+ * (caller should skip the filter rather than return zero results).
+ */
+async function getItineraryIdsByActivityTypes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  typeIds: number[]
+): Promise<Set<string> | null> {
+  if (!typeIds.length) return null
+
+  const typeSet = new Set(typeIds)
+
+  // Most likely shape for create_itinerary JSON: activities embedded on days.
+  {
+    const { data: days, error } = await supabase
+      .from("itinerary_days")
+      .select("itinerary_id, activities")
+
+    if (!error) {
+      const ids = new Set<string>()
+      for (const day of days || []) {
+        const activities = (day as { activities?: unknown }).activities
+        if (!Array.isArray(activities)) continue
+        const match = activities.some((activity) => {
+          if (!activity || typeof activity !== "object") return false
+          const type = Number((activity as { type?: unknown }).type)
+          return Number.isFinite(type) && typeSet.has(type)
+        })
+        if (match) {
+          const id = String(
+            (day as { itinerary_id?: unknown }).itinerary_id || ""
+          )
+          if (id) ids.add(id)
+        }
+      }
+      return ids
+    }
+  }
+
+  // Normalized activity tables (if the RPC writes them separately).
+  for (const table of [
+    "itinerary_activities",
+    "day_activities",
+    "itinerary_day_activities",
+  ]) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("itinerary_id, type")
+      .in("type", typeIds)
+
+    if (!error) {
+      return new Set(
+        (data || [])
+          .map((row) =>
+            String((row as { itinerary_id?: unknown }).itinerary_id || "")
+          )
+          .filter(Boolean)
+      )
+    }
+  }
+
+  console.warn(
+    "Activity tag filter skipped; no readable activity storage found."
+  )
+  return null
+}
+
+/**
+ * Unique country names from days on published, public itineraries —
+ * used for the Explore destinations dropdown.
+ */
+export const getPublicDestinationCountries = async (): Promise<string[]> => {
+  const supabase = await createClient()
+
+  const { data: itineraries, error: itinerariesError } = await supabase
+    .from("itineraries")
+    .select("id")
+    .eq("status", ItineraryStatusEnum.published)
+    .eq("view_permission", viewPermissionEnum.public)
+    .limit(5000)
+
+  if (itinerariesError) {
+    console.error(
+      "Failed to load public itineraries for destinations:",
+      itinerariesError.message
+    )
+    return []
+  }
+
+  const ids = (itineraries || []).map((row) => String(row.id)).filter(Boolean)
+  if (ids.length === 0) return []
+
+  const countries = new Set<string>()
+  const chunkSize = 200
+
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize)
+    const { data: dayRows, error: daysError } = await supabase
+      .from("itinerary_days")
+      .select("country")
+      .in("itinerary_id", chunk)
+      .not("country", "is", null)
+
+    if (daysError) {
+      console.error(
+        "Failed to load countries for destinations:",
+        daysError.message
+      )
+      continue
+    }
+
+    for (const row of dayRows || []) {
+      const name = String(row.country || "").trim()
+      if (name) countries.add(name)
+    }
+  }
+
+  return [...countries].sort((a, b) => a.localeCompare(b))
+}
+
+/**
  * Public explore feed: published itineraries with public view permission.
  *
  * Schema notes: `countries`/`cities` are NOT columns on `itineraries`; they are
@@ -159,6 +281,8 @@ export const getItineraries = async (
     budgetMin,
     budgetMax,
     itineraryTags,
+    activityTags,
+    continents,
     countries,
     sort,
     quickFilter,
@@ -181,24 +305,47 @@ export const getItineraries = async (
     itineraryTags as Array<string | number> | undefined,
     itineraryTagsMap
   )
+  const activityTagIds = tagNamesToIds(
+    activityTags as Array<string | number> | undefined,
+    activityTagsMap
+  )
   const resolvedSort = resolveSort(sort, quickFilter)
 
   // Pre-filter ids from related tables when a derived filter is requested.
-  const countryList = [
+  const explicitCountries = [
     ...(destination?.trim() ? [destination.trim()] : []),
     ...(countries ?? []),
-  ]
+  ].filter(Boolean)
+  const continentCountries = getCountryNamesForContinents(continents ?? [])
   let restrictIds: Set<string> | null = null
 
-  if (countryList.length) {
+  if (explicitCountries.length) {
     const { data: dayRows } = await supabase
       .from("itinerary_days")
       .select("itinerary_id, country")
-      .in("country", countryList)
+      .in("country", [...new Set(explicitCountries)])
     restrictIds = intersectSets(
       restrictIds,
       new Set((dayRows || []).map((r) => String(r.itinerary_id)))
     )
+    if (restrictIds.size === 0) return emptyResult
+  }
+
+  if (continentCountries.length) {
+    // Chunk large IN lists (e.g. selecting multiple continents).
+    const continentIds = new Set<string>()
+    const chunkSize = 100
+    for (let i = 0; i < continentCountries.length; i += chunkSize) {
+      const chunk = continentCountries.slice(i, i + chunkSize)
+      const { data: dayRows } = await supabase
+        .from("itinerary_days")
+        .select("itinerary_id, country")
+        .in("country", chunk)
+      for (const row of dayRows || []) {
+        continentIds.add(String(row.itinerary_id))
+      }
+    }
+    restrictIds = intersectSets(restrictIds, continentIds)
     if (restrictIds.size === 0) return emptyResult
   }
 
@@ -212,6 +359,17 @@ export const getItineraries = async (
       new Set((tagRows || []).map((r) => String(r.itinerary_id)))
     )
     if (restrictIds.size === 0) return emptyResult
+  }
+
+  if (activityTagIds.length) {
+    const activityIds = await getItineraryIdsByActivityTypes(
+      supabase,
+      activityTagIds
+    )
+    if (activityIds) {
+      restrictIds = intersectSets(restrictIds, activityIds)
+      if (restrictIds.size === 0) return emptyResult
+    }
   }
 
   let query = supabase

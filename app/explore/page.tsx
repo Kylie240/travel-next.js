@@ -1,13 +1,18 @@
+import type { Metadata } from "next"
 import { Suspense } from "react"
 import FiltersForm from "./filters-form"
 import Link from "next/link"
 import Image from "next/image"
-import { getItineraries } from "@/lib/actions/itinerary.actions"
+import { getItineraries, getPublicDestinationCountries } from "@/lib/actions/itinerary.actions"
 import type { ExplorePageDto } from "@/dtos/ExplorePageDto"
 import type { GetItineraryOptions } from "@/types/GetItineraryOptions"
 import { Button } from "@/components/ui/button"
 import { Globe2 } from "lucide-react"
 import { getItineraryPath } from "@/lib/utils/itinerary-url"
+import { buildExploreMetadata } from "@/lib/seo/explore-metadata"
+import { Breadcrumbs } from "@/components/seo/breadcrumbs"
+import { JsonLd } from "@/lib/seo/json-ld"
+import { buildBreadcrumbJsonLd, buildExploreBreadcrumbs } from "@/lib/seo/breadcrumbs"
 
 function parseListParam(value: unknown): string[] | undefined {
   if (!value) return undefined
@@ -25,49 +30,22 @@ function parseOptionalInt(value: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined
 }
 
+type ExploreSearchParams = Record<string, string | string[] | undefined>
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<ExploreSearchParams>
+}): Promise<Metadata> {
+  const params = await searchParams
+  return buildExploreMetadata(params)
+}
+
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
+  searchParams: Promise<ExploreSearchParams>
 }) {
-  // Production gate: only show the live explore feed in development.
-  if (process.env.NEXT_PUBLIC_ENV !== "development") {
-    return (
-      <div className="flex justify-center h-[calc(100vh-64px)] items-center">
-        <div className="mx-6 md:mx-8 max-w-[800px] text-center py-12 px-4 rounded-xl border-2 border-dashed w-full">
-          <div className="mb-4">
-            <Globe2 className="h-12 w-12 mx-auto text-gray-400" />
-          </div>
-          <h3 className="text-2xl font-medium text-gray-900 mb-4">
-            Explore Page Coming Soon
-          </h3>
-          <div>
-            <p className="text-gray-600 mb-4">
-              We’re building something exciting! Soon, you’ll be able to explore
-              itineraries from travelers around the world! Get inspired, discover
-              new destinations, and plan your next adventure with ease.
-            </p>
-            <p className="text-gray-600 mb-4">
-              Check back soon or{" "}
-              <a href="#newsletter" className="text-blue-500">
-                subscribe to our newsletter
-              </a>{" "}
-              to get notified when it’s live!
-            </p>
-            <div className="flex justify-center mt-4 gap-4">
-              <Link href="/">
-                <Button variant="outline">Return Home</Button>
-              </Link>
-              <Link href="/about">
-                <Button variant="outline">More Info</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   const params = await searchParams
   const page = parseOptionalInt(params.page) || 1
   const sort = typeof params.sort === "string" ? params.sort : undefined
@@ -109,11 +87,19 @@ export default async function ExplorePage({
     },
   }
 
+  const [itineraryResult, destinationsResult] = await Promise.allSettled([
+    getItineraries(searchFilters),
+    getPublicDestinationCountries(),
+  ])
+
   let itineraryData: Awaited<ReturnType<typeof getItineraries>>
-  try {
-    itineraryData = await getItineraries(searchFilters)
-  } catch (e) {
-    console.error("Explore page failed to load itineraries:", e)
+  if (itineraryResult.status === "fulfilled") {
+    itineraryData = itineraryResult.value
+  } else {
+    console.error(
+      "Explore page failed to load itineraries:",
+      itineraryResult.reason
+    )
     itineraryData = {
       data: [],
       total: 0,
@@ -122,15 +108,46 @@ export default async function ExplorePage({
     }
   }
 
+  let destinations: string[] =
+    destinationsResult.status === "fulfilled" ? destinationsResult.value : []
+  if (destinationsResult.status === "rejected") {
+    console.error(
+      "Explore page failed to load destinations:",
+      destinationsResult.reason
+    )
+  }
+
+  // Keep an active destination filter visible even if it dropped out of the list.
+  if (
+    destination?.trim() &&
+    !destinations.some(
+      (c) => c.toLowerCase() === destination.trim().toLowerCase()
+    )
+  ) {
+    destinations = [...destinations, destination.trim()].sort((a, b) =>
+      a.localeCompare(b)
+    )
+  }
+
   const hasResults = itineraryData.data.length > 0
+  const breadcrumbItems = buildExploreBreadcrumbs(destination)
 
   return (
     <div className="min-h-screen bg-white py-8">
+      <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
       <div className="container mx-auto px-4">
-        <h2 className="text-2xl font-semibold mb-4">Explore itineraries</h2>
+        <Breadcrumbs items={breadcrumbItems} />
+        <h1 className="text-2xl font-semibold mb-4">
+          {destination?.trim()
+            ? `${destination.trim()} itineraries`
+            : "Explore itineraries"}
+        </h1>
         <div className="flex flex-col mb-8">
           <Suspense fallback={<div>Loading filters…</div>}>
-            <FiltersForm resultsCount={itineraryData.total} />
+            <FiltersForm
+              resultsCount={itineraryData.total}
+              destinations={destinations}
+            />
           </Suspense>
         </div>
 
@@ -173,21 +190,20 @@ export default async function ExplorePage({
                         </div>
                       )}
                       <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                      {itinerary.featuredCategories?.length > 0 && (
+                      {/* {itinerary.featuredCategories?.length > 0 && (
                         <div className="absolute top-4 left-4 z-20">
                           <span className="px-4 py-1.5 bg-black/80 text-white text-sm rounded-xl capitalize">
                             {itinerary.featuredCategories[0]}
                           </span>
                         </div>
-                      )}
+                      )} */}
                       <div className="p-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
+                        <p className="text-sm text-gray-200/50">@{itinerary.creatorName}</p>
                         <h4 className="font-bold text-2xl mb-1 line-clamp-2">
                           {itinerary.title}
                         </h4>
                         <span className="text-sm text-white/80 truncate block">
-                          {itinerary.countries.length > 0
-                            ? itinerary.countries.join(" · ")
-                            : itinerary.creatorName}
+                          {itinerary.countries.length > 0 && itinerary.countries.join(" · ")}
                         </span>
                       </div>
                     </div>
@@ -212,7 +228,7 @@ export default async function ExplorePage({
                           </span>
                         </div>
                       </div>
-                      <p className="text-gray-600 line-clamp-4 leading-5 text-md mb-2">
+                      <p className="text-gray-600 line-clamp-2 leading-5 text-md mb-2">
                         {itinerary.shortDescription}
                       </p>
 
@@ -229,7 +245,6 @@ export default async function ExplorePage({
                         </div>
                         <div className="flex mt-1 justify-between items-center">
                           <span className="text-xs text-gray-500 truncate">
-                            by {itinerary.creatorName}
                           </span>
                           {itinerary.price != null && itinerary.price > 0 && (
                             <span className="px-2 py-1 max-h-[32px] gap-2 bg-black text-white text-md rounded-xl">
