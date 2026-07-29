@@ -264,7 +264,7 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
     <>
       {jsonLd ? <JsonLd data={jsonLd} /> : null}
       <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
-      <div className="container mx-auto px-4 pt-4 pb-2">
+      <div className="container mx-auto px-2 md:px-8 pt-4 pb-2">
         <Breadcrumbs items={breadcrumbItems} className="mb-0" />
       </div>
       {TemplateView}

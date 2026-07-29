@@ -1,12 +1,15 @@
 import React from 'react'
-import { Globe2 } from 'lucide-react'
-import { IoDocumentOutline } from "react-icons/io5";
-import { GoPeople } from "react-icons/go";
 import { GrAppsRounded, GrMoney } from "react-icons/gr";
-import { CiCalendarDate } from 'react-icons/ci';
-import { FiEdit2, FiLock } from 'react-icons/fi';
+import { FiLock } from 'react-icons/fi';
+import { Globe2 } from 'lucide-react';
 
 const newestFeatures = [
+  {
+    title: "Explore Page",
+    description: "You can now easily discover itineraries from other travelers and get inspired.",
+    date: "July 29, 2026",
+    icon: <Globe2 className="w-6 h-6" />
+  },
   {
     title: "Monetization Features",
     description: "Sell your itineraries now without a paid plan.",
@@ -103,11 +106,6 @@ const AboutPage = () => {
               Purchased itineraries are delivered with confirmation email (including a PDF),
               and buyers with a Journli account can reopen them anytime from Purchased Itineraries.
             </p>
-            <p>
-              Ready to sell? Visit the {" "}
-              <a href="/seller-dashboard" className="text-blue-600 hover:text-blue-800">Seller Dashboard</a> to get started,
-              then finish Stripe setup from your Seller Dashboard.
-            </p>
           </div>
         </section>
 
@@ -116,13 +114,6 @@ const AboutPage = () => {
           <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 mb-2 md:mb-6">Coming Soon</h2>
           <p className="text-gray-600 mb-6 text-sm md:text-md">While we are currently in beta, we are working on the following features to make your travel planning experience even better:</p>
           <div className="grid sm:grid-cols-2 gap-6">
-  
-            <div className="border border-gray-500 border-1 p-6 rounded-lg">
-              <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><Globe2 strokeWidth={1} width={20} height={20} /> Explore Page</h3>
-              <p className="text-gray-600 text-sm md:text-md">
-                Explore itineraries from other travelers and get inspired.
-              </p>
-            </div>
             <div className="border border-gray-500 border-1 p-6 rounded-lg">
               <h3 className="text-sm md:text-lg lg:text-xl font-semibold mb-3 items-center flex gap-2"><GrAppsRounded /> Mobile App</h3>
               <p className="text-gray-600 text-sm md:text-md"> 

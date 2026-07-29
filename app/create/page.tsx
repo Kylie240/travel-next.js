@@ -1,7 +1,7 @@
  "use client"
 
  import React from "react"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input, Textarea } from "@/components/ui/input"
@@ -139,6 +139,50 @@ function fillEmptyDatesFromAnchor(
   });
 }
 
+function SortableActivityItem({
+  id,
+  disabled,
+  children,
+}: {
+  id: string
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className="border rounded-lg px-4">
+      <div className="flex items-start gap-2">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing hover:text-gray-600 pt-5 shrink-0 touch-none"
+          aria-label="Drag to reorder activity"
+          disabled={disabled}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical size={20} />
+        </button>
+        <div className="flex-1 min-w-0">{children}</div>
+      </div>
+    </div>
+  )
+}
+
 function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disabled, enableDates, onDayDateChange }: { 
   day: any; // Temporarily use any to fix type issues
   index: number;
@@ -159,10 +203,71 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
     isDragging
   } = useSortable({ id: day.id });
 
-  const { fields: activityFields, append: appendActivity, remove: removeActivity } = useFieldArray({
+  const { fields: activityFields, append: appendActivity, remove: removeActivity, move: moveActivity } = useFieldArray({
     control: form.control,
     name: `days.${index}.activities`
   });
+
+  const activitySensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const renumberActivities = () => {
+    const activities = form.getValues(`days.${index}.activities`) || []
+    activities.forEach((_, activityIndex) => {
+      form.setValue(
+        `days.${index}.activities.${activityIndex}.id`,
+        activityIndex + 1,
+        { shouldDirty: true }
+      )
+      form.setValue(
+        `days.${index}.activities.${activityIndex}.activityNumber`,
+        activityIndex + 1,
+        { shouldDirty: true }
+      )
+    })
+  }
+
+  const handleActivityDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = activityFields.findIndex((activity) => activity.id === active.id)
+    const newIndex = activityFields.findIndex((activity) => activity.id === over.id)
+    if (oldIndex < 0 || newIndex < 0) return
+
+    moveActivity(oldIndex, newIndex)
+    // Renumber after the field-array move settles.
+    queueMicrotask(() => {
+      renumberActivities()
+    })
+  }
+
+  const handleRemoveActivity = (activityIndex: number) => {
+    removeActivity(activityIndex)
+    queueMicrotask(() => {
+      renumberActivities()
+    })
+  }
+
+  const handleAddActivity = () => {
+    const nextNumber = activityFields.length + 1
+    appendActivity({
+      id: nextNumber,
+      activityNumber: nextNumber,
+      title: '',
+      description: '',
+      type: undefined as unknown as number | undefined,
+      link: '',
+      time: undefined,
+      duration: null,
+    })
+  }
 
   // Get the list of unique countries from step 1
   const existingCities = form.getValues('cities') || [];
@@ -274,7 +379,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {enableDates && (
                 <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                  <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Date</Label>
+                  <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Date</Label>
                   <Input
                     type="date"
                     {...form.register(`days.${index}.date`, {
@@ -289,7 +394,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                 </div>
               )}
               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">City*</Label>
+                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">City*</Label>
                 <Input
                   {...form.register(`days.${index}.cityName`)}
                   className="rounded-xl"
@@ -301,7 +406,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                 )}
               </div>
               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">State / Province</Label>
+                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">State / Province</Label>
                 <Input
                   {...form.register(`days.${index}.provinceName`)}
                   className="rounded-xl"
@@ -310,7 +415,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                 />
               </div>
               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Country*</Label>
+                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Country*</Label>
                   <Select
                   value={form.watch(`days.${index}.countryName`) || ''}
                     onValueChange={(value: string) => {
@@ -403,7 +508,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
             </div>
             
             <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Title*</Label>
+              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Title*</Label>
               <Input
                 {...form.register(`days.${index}.title`)}
                 className="rounded-xl"
@@ -421,7 +526,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
             </div>
             
             <div>
-              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Cover Image</Label>
+              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Cover Image</Label>
               <ImageUpload
                 value={form.watch(`days.${index}.image`)}
                 onChange={(url) => form.setValue(`days.${index}.image`, url)}
@@ -433,7 +538,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
             </div>
 
             <div>
-              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Description</Label>
+              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Description</Label>
               <Textarea
                 {...form.register(`days.${index}.description`)}
                 placeholder="Add a description of your day"
@@ -449,22 +554,14 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
             <div className="py-4">
               <div className="flex justify-between items-end mb-2">
                 <div className="ml-1">
-                  <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Activities</Label>
+                  <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Activities</Label>
                   <p className="text-sm text-gray-500">Add activities to your day, providing as much detail as you want.</p>
                 </div>
                 {(activityFields.length === 0 || !activityFields) && <Button 
                   type="button" 
                   variant="outline" 
                   size="sm"
-                  onClick={() => appendActivity({
-                    id: activityFields.length + 1,
-                    title: '',
-                    description: '',
-                    type: undefined as unknown as number | undefined,
-                    link: '',
-                    time: undefined,
-                    duration: null
-                  })}
+                  onClick={handleAddActivity}
                   className="rounded-xl"
                   disabled={disabled}
                 >
@@ -473,46 +570,65 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                 </Button>}
               </div>
 
-              <div className="space-y-4">
-                {activityFields.map((activity, activityIndex) => (
-                  <div key={activity.id} className="border rounded-lg px-4">
-                    <AccordionItem value={activity.id}>
-                      <div className="flex-1">
-                        <AccordionTrigger>
-                          <div className="flex w-full justify-between ml-2">
-                            <p className="text-lg font-thin text-left line-clamp-1">{`${form.watch(`days.${index}.activities.${activityIndex}.title`)}` ? `${form.watch(`days.${index}.activities.${activityIndex}.title`)}` : `Activity ${activityIndex + 1}`}</p>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={(event) => {
-                                  event.stopPropagation()
-                                  if (confirm('Are you sure you want to delete this activity?')) {
-                                    removeActivity(activityIndex)
-                                  }
-                                }}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                disabled={disabled}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+              <DndContext
+                sensors={activitySensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleActivityDragEnd}
+              >
+                <SortableContext
+                  items={activityFields.map((activity) => activity.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-4">
+                    {activityFields.map((activity, activityIndex) => (
+                      <SortableActivityItem
+                        key={activity.id}
+                        id={activity.id}
+                        disabled={disabled}
+                      >
+                        <AccordionItem value={activity.id} className="border-0">
+                          <div className="flex-1">
+                            <AccordionTrigger>
+                              <div className="flex w-full justify-between ml-2">
+                                <p className="text-lg font-thin text-left line-clamp-1">{`${form.watch(`days.${index}.activities.${activityIndex}.title`)}` ? `${form.watch(`days.${index}.activities.${activityIndex}.title`)}` : `Activity ${activityIndex + 1}`}</p>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(event) => {
+                                      event.stopPropagation()
+                                      if (confirm('Are you sure you want to delete this activity?')) {
+                                        handleRemoveActivity(activityIndex)
+                                      }
+                                    }}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    disabled={disabled}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                              </div>
+                            </AccordionTrigger>
                           </div>
-                        </AccordionTrigger>
-                      </div>
-                      <AccordionContent>
-                        <div key={activity.id} className="p-2 sm:p-4">
+                          <AccordionContent>
+                            <div key={activity.id} className="p-2 sm:p-4">
                           <div className="flex justify-between items-start mb-4">
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                                <Label className="text-[16px] min-w-[75px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Start time</Label>
+                                <Label className="text-[16px] min-w-[75px] font-thin sm:mb-1 md:mb-2 leading-none">Start time</Label>
                                 <Input
                                   type="time"
+                                  step={600}
                                   {...form.register(`days.${index}.activities.${activityIndex}.time`, {
                                     setValueAs: (value) => {
                                       if (!value) return undefined;
-                                      // Ensure the time is in HH:MM:SS format for PostgreSQL
-                                      const [hours, minutes] = value.split(':');
-                                      return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
+                                      // Ensure the time is in HH:MM:SS format for PostgreSQL,
+                                      // snapped to 10-minute increments.
+                                      const [hours, minutes] = value.split(':').map(Number);
+                                      const snappedMinutes = Math.round((minutes || 0) / 10) * 10;
+                                      const carryHours = snappedMinutes === 60 ? 1 : 0;
+                                      const finalMinutes = snappedMinutes === 60 ? 0 : snappedMinutes;
+                                      const finalHours = ((hours || 0) + carryHours) % 24;
+                                      return `${finalHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}:00`;
                                     }
                                   })}
                                   className="rounded-xl w-full"
@@ -520,7 +636,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                                 />
                               </div>
                               <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Duration</Label>
+                                <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Duration</Label>
                                 <div className="flex gap-2 items-center w-full">
                                   <div className="relative flex-1 flex flex-col gap-1">
                                     <Input
@@ -577,7 +693,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                                 </div>
                               </div>
                                 <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                                  <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Type</Label>
+                                  <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Type</Label>
                                   <Select key={activity.id}
                                     value={form.watch(`days.${index}.activities.${activityIndex}.type`)?.toString()}
                                     onValueChange={(value: string) => {
@@ -622,7 +738,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                           </div>
                           <div className="space-y-4">
                             <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Title*</Label>
+                              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Title*</Label>
                               <Input
                                 {...form.register(`days.${index}.activities.${activityIndex}.title`)}
                                 placeholder="Activity title"
@@ -641,7 +757,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                               )}
                             </div>
                             <div>
-                              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Description</Label>
+                              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Description</Label>
                               <textarea
                                 {...form.register(`days.${index}.activities.${activityIndex}.description`)}
                                 placeholder="Activity description"
@@ -655,7 +771,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                               )}
                             </div>
                             <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Location</Label>
+                              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Location</Label>
                               <Input
                                 {...form.register(`days.${index}.activities.${activityIndex}.location`)}
                                 placeholder="Location"
@@ -669,7 +785,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                               )}
                             </div>
                             <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Link</Label>
+                              <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Link</Label>
                               <Input
                                 {...form.register(`days.${index}.activities.${activityIndex}.link`)}
                                 placeholder="Add booking link, or a link to a website with more information"
@@ -686,23 +802,17 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                           </div>
                         </div>
                       </AccordionContent>
-                    </AccordionItem>
+                        </AccordionItem>
+                      </SortableActivityItem>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
               {activityFields.length > 0 && <Button 
                   type="button" 
                   variant="outline" 
                   size="sm"
-                  onClick={() => appendActivity({
-                    id: activityFields.length + 1,
-                    title: '',
-                    description: '',
-                    type: undefined,
-                    link: '',
-                    time: undefined,
-                    duration: null
-                  })}
+                  onClick={handleAddActivity}
                   className="rounded-xl mt-2"
                   disabled={disabled}
                 >
@@ -714,7 +824,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
             <div>
               <div className="flex justify-between items-end mb-2">
                 <div className="ml-1">
-                  <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none">Accommodation</Label>
+                  <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none">Accommodation</Label>
                   <p className="text-sm text-gray-500">Add where you're staying during this day.</p>
                 </div>
                 <Button
@@ -923,7 +1033,8 @@ export default function CreatePage() {
   const initialStep = searchParams.get('step')
   const [itineraryId, setItineraryId] = useState<string | null>(initialItineraryId)
   const [itineraryStatus, setItineraryStatus] = useState<number>(ItineraryStatusEnum.draft)
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
+  const supabase = supabaseRef.current
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -997,52 +1108,68 @@ export default function CreatePage() {
   }, []) // Only run once on mount to generate ID if needed
 
   useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        setUser(user)
-        
-        // Fetch user plan
-        if (user) {
-          const { data: settings } = await supabase
-            .from('users_settings')
-            .select('plan')
-            .eq('user_id', user.id)
-            .single()
-          
-          if (settings?.plan) {
-            setUserPlan(settings.plan)
-          }
-        }
-      } catch (error) {
-        setUser(null)
-      } 
-    }
-    getUser()
+    let cancelled = false
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-      
-      // Fetch user plan when auth state changes
-      if (session?.user) {
+    const loadUserPlan = async (userId: string) => {
+      try {
         const { data: settings } = await supabase
-          .from('users_settings')
-          .select('plan')
-          .eq('user_id', session.user.id)
+          .from("users_settings")
+          .select("plan")
+          .eq("user_id", userId)
           .single()
-        
-        if (settings?.plan) {
+
+        if (!cancelled && settings?.plan) {
           setUserPlan(settings.plan)
         }
+      } catch (error) {
+        console.error("Error fetching user plan:", error)
       }
+    }
+
+    const getUser = async () => {
+      try {
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser()
+        if (cancelled) return
+        setUser(currentUser)
+        if (currentUser) {
+          await loadUserPlan(currentUser.id)
+        }
+      } catch (error) {
+        if (!cancelled) setUser(null)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void getUser()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled || event === "INITIAL_SESSION") return
+      setUser(session?.user ?? null)
+      // Never await supabase calls directly inside this callback (deadlock risk).
+      // Token refresh should not block the create UI.
+      if (event === "TOKEN_REFRESHED") return
+      setTimeout(() => {
+        if (cancelled) return
+        if (session?.user) {
+          void loadUserPlan(session.user.id)
+        }
+      }, 0)
     })
 
     return () => {
+      cancelled = true
       subscription.unsubscribe()
     }
   }, [supabase])
 
+  const goToMyItineraries = useCallback(() => {
+    // Hard navigation avoids soft-nav hangs after long create sessions.
+    window.location.assign("/my-itineraries")
+  }, [])
   useEffect(() => {
     let cancelled = false
 
@@ -1320,9 +1447,18 @@ export default function CreatePage() {
           itinerary.cities = Array.from(cities);
 
           // Set showAccommodation to true for days that have accommodation data
+          // and ensure activities have sequential activity numbers.
           itinerary.days = itinerary.days.map(day => ({
             ...day,
-            showAccommodation: !!(day.accommodation && day.accommodation.name)
+            showAccommodation: !!(day.accommodation && day.accommodation.name),
+            activities: (day.activities || []).map((activity, activityIndex) => ({
+              ...activity,
+              id: activityIndex + 1,
+              activityNumber:
+                (activity as Activity).activityNumber ||
+                (activity as Activity & { activity_number?: number }).activity_number ||
+                activityIndex + 1,
+            })),
           }));
 
           // Check if any day has a date and enable dates if so
@@ -1477,8 +1613,10 @@ export default function CreatePage() {
     try {
       // Clean up and validate days
       const nonEmptyDays = data.days.map((day, index) => {
-        const activities = (day.activities || []).map(activity => ({
-          id: activity.id,
+        const activities = (day.activities || []).map((activity, activityIndex) => ({
+          id: activityIndex + 1,
+          activityNumber: activityIndex + 1,
+          activity_number: activityIndex + 1,
           time: activity.time || '',
           duration: activity.duration || null,
           image: activity.image || '',
@@ -1489,7 +1627,7 @@ export default function CreatePage() {
           photos: activity.photos || [],
           price: activity.price || 0,
           location: activity.location || null,
-        } as Activity));
+        } as Activity & { activity_number: number }));
 
           return {
             ...day,
@@ -1555,8 +1693,10 @@ export default function CreatePage() {
           country: city.country
         })),
         days: formData.days.map((day, dayIndex) => {
-          const activities = (day.activities || []).map(activity => ({
-            id: activity.id,
+          const activities = (day.activities || []).map((activity, activityIndex) => ({
+            id: activityIndex + 1,
+            activityNumber: activityIndex + 1,
+            activity_number: activityIndex + 1,
             time: activity.time || null,
             duration: activity.duration || null,
             image: activity.image || '',
@@ -1567,7 +1707,7 @@ export default function CreatePage() {
             photos: activity.photos || [],
             price: activity.price || 0,
             location: activity.location || null
-          } as Activity));
+          } as Activity & { activity_number: number }));
 
           // Explicitly get the date value from the form
           const dayDate = form.getValues(`days.${dayIndex}.date`);
@@ -1672,7 +1812,7 @@ export default function CreatePage() {
     setShowUpgradeDialog(false);
     const saved = await saveItineraryAsDraft();
     if (saved) {
-      router.push('/my-itineraries');
+      goToMyItineraries();
     }
   };
 
@@ -1728,7 +1868,7 @@ export default function CreatePage() {
           }
         }
         
-        router.push('/my-itineraries')
+        goToMyItineraries()
       } catch (error) {
         if (error instanceof Error && error.message === 'Unauthorized') {
           throw error;
@@ -1821,7 +1961,7 @@ export default function CreatePage() {
       
       if (response) {
         toast.success('Itinerary saved successfully')
-        router.push('/my-itineraries')
+        goToMyItineraries()
       } else {
         throw new Error('Failed to save itinerary')
       }
@@ -1834,7 +1974,9 @@ export default function CreatePage() {
   }
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -1912,7 +2054,7 @@ export default function CreatePage() {
               "Are you sure you want to cancel? All changes will be lost."
             )
           ) {
-            router.push("/my-itineraries")
+            goToMyItineraries()
           }
         }}
       >
@@ -2026,7 +2168,7 @@ export default function CreatePage() {
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none" htmlFor="title">Trip Name*</Label>
+                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none" htmlFor="title">Trip Name*</Label>
                     <Input
                       id="title"
                       {...form.register("title")}
@@ -2045,7 +2187,7 @@ export default function CreatePage() {
                   </div>
 
                   <div >
-                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none" htmlFor="shortDescription">Short Description*</Label>
+                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none" htmlFor="shortDescription">Short Description*</Label>
                     <textarea
                       id="shortDescription"
                       {...form.register("shortDescription")}
@@ -2064,7 +2206,7 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none" htmlFor="mainImage">Cover Image*</Label>
+                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none" htmlFor="mainImage">Cover Image*</Label>
                     <ImageUpload
                       value={form.watch("mainImage")}
                       onChange={(url) => form.setValue("mainImage", url)}
@@ -2079,7 +2221,7 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading none" htmlFor="detailedOverview">Detailed Overview</Label>
+                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading none" htmlFor="detailedOverview">Detailed Overview</Label>
                     <textarea
                       id="detailedOverview"
                       {...form.register("detailedOverview")}
@@ -2090,7 +2232,7 @@ export default function CreatePage() {
                   </div>
 
                   <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
-                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 ml-1 leading-none" htmlFor="length">Number of Days</Label>
+                    <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none" htmlFor="length">Number of Days</Label>
                     <Input
                       id="length"
                       type="number"

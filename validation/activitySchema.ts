@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const activitySchema = z.object({
     id: z.number(),
+    activityNumber: z.number().optional(),
     time: z.string().nullable().optional(),
     duration: z.number().nullable().optional(),
     image: z.string().nullable().optional(),

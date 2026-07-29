@@ -50,15 +50,21 @@ export default function MyItinerariesPage() {
 
   useEffect(() => {
     let mounted = true
+    let requestId = 0
 
-    const fetchUserData = async (currentUser: User | null) => {
+    const fetchUserData = async (currentUser: User | null, options?: { showLoading?: boolean }) => {
+      const currentRequest = ++requestId
       if (!mounted) return
+
+      if (options?.showLoading !== false) {
+        setLoading(true)
+      }
 
       if (!currentUser) {
         setUser(null)
         setItinerarySummaries(null)
         setFilteredItinerarySummaries(null)
-        setLoading(false)
+        if (mounted && currentRequest === requestId) setLoading(false)
         return
       }
 
@@ -70,45 +76,63 @@ export default function MyItinerariesPage() {
           .select("plan")
           .eq("user_id", currentUser.id)
           .maybeSingle()
-        if (!mounted) return
+        if (!mounted || currentRequest !== requestId) return
         setUserPlan(data?.plan || "free")
       } catch (error) {
         console.error("Error fetching user plan:", error)
-        if (!mounted) return
+        if (!mounted || currentRequest !== requestId) return
         setUserPlan("free")
       }
 
       try {
         const userItineraries = await getItinerarySummaries(currentUser.id)
-        if (!mounted) return
+        if (!mounted || currentRequest !== requestId) return
         setItinerarySummaries(userItineraries as ItinerarySummary[])
         setFilteredItinerarySummaries(userItineraries as ItinerarySummary[])
       } catch (error) {
         console.error("Error fetching itineraries:", error)
-        if (!mounted) return
+        if (!mounted || currentRequest !== requestId) return
         toast.error("Failed to load itineraries")
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted && currentRequest === requestId) setLoading(false)
       }
     }
 
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      await fetchUserData(session?.user ?? null)
+      try {
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser()
+        await fetchUserData(currentUser ?? null)
+      } catch (error) {
+        console.error("Error initializing my itineraries:", error)
+        if (mounted) {
+          setUser(null)
+          setLoading(false)
+        }
+      }
     }
 
     void init()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!mounted || event === "INITIAL_SESSION") return
-        setLoading(true)
-        // Defer to avoid Supabase auth deadlock when calling supabase from within callback
-        setTimeout(() => {
-          if (mounted) void fetchUserData(session?.user ?? null)
-        }, 0)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted || event === "INITIAL_SESSION") return
+
+      // Token refresh should not remount the page into a loading spinner.
+      if (event === "TOKEN_REFRESHED") {
+        if (session?.user) setUser(session.user)
+        return
       }
-    )
+
+      // Defer to avoid Supabase auth deadlock when calling supabase from within callback
+      setTimeout(() => {
+        if (mounted) {
+          void fetchUserData(session?.user ?? null, { showLoading: true })
+        }
+      }, 0)
+    })
 
     return () => {
       mounted = false

@@ -4,6 +4,12 @@ import { useEffect, useState } from "react"
 import * as Dialog from "@radix-ui/react-dialog"
 import { X, SlidersHorizontal, Check } from "lucide-react"
 import { Button } from "./button"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./accordion"
 
 interface FilterOption {
   id: number
@@ -120,12 +126,12 @@ export function AdvancedFilterDialog({
             </div>
           </div>
 
-          <div className="p-6 space-y-8 overflow-y-auto">
-            <div>
+          <div className="p-6 overflow-y-auto ">
+            <div className="border-b border-1 border-gray-300 pb-6">
               <label className="block text-lg font-semibold text-gray-900 mb-2">
                 Continents
               </label>
-              <div className="grid grid-cols-3 gap-2 space-y-1">
+              <div className="grid md:grid-cols-3 grid-cols-2 gap-2 space-y-1">
                 {continents.map((continent) => {
                   const isSelected = draft.continents.includes(continent)
                   return (
@@ -151,69 +157,85 @@ export function AdvancedFilterDialog({
               </div>
             </div>
 
-            <div className="border-b border-1 border-gray-300"></div>
+            <Accordion type="multiple" className="w-full">
+              <AccordionItem value="itinerary-tags" className="border-b py-3">
+                <AccordionTrigger className="text-lg font-semibold text-gray-900 hover:no-underline py-3">
+                  <span className="flex items-center gap-2">
+                    Itinerary Tags
+                    {draft.itineraryTags.length > 0 ? (
+                      <span className="text-sm font-normal text-gray-500">
+                        ({draft.itineraryTags.length})
+                      </span>
+                    ) : null}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {itineraryTags.map((tag) => {
+                      const Icon = tag.icon
+                      const isSelected = draft.itineraryTags.includes(tag.name)
+                      return (
+                        <div
+                          key={tag.name}
+                          onClick={() =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              itineraryTags: toggleValue(
+                                prev.itineraryTags,
+                                tag.name
+                              ),
+                            }))
+                          }
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
+                        >
+                          {Icon && <Icon className="h-5 w-5" />}
+                          {tag.name}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
 
-            <div>
-              <label className="block text-lg font-semibold text-gray-900 mb-3">
-                Itinerary Tags
-              </label>
-              <div className="flex flex-wrap gap-2 space-y-1">
-                {itineraryTags.map((tag) => {
-                  const Icon = tag.icon
-                  const isSelected = draft.itineraryTags.includes(tag.name)
-                  return (
-                    <div
-                      key={tag.name}
-                      onClick={() =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          itineraryTags: toggleValue(
-                            prev.itineraryTags,
-                            tag.name
-                          ),
-                        }))
-                      }
-                      className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
-                    >
-                      {Icon && <Icon className="h-5 w-5" />}
-                      {tag.name}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="border-b border-1 border-gray-300"></div>
-
-            <div>
-              <label className="block text-lg font-semibold text-gray-900 mb-5">
-                Activity Tags
-              </label>
-              <div className="flex flex-wrap gap-2 space-y-1">
-                {activityTags.map((tag) => {
-                  const Icon = tag.icon
-                  const isSelected = draft.activityTags.includes(tag.name)
-                  return (
-                    <div
-                      key={tag.name}
-                      onClick={() =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          activityTags: toggleValue(
-                            prev.activityTags,
-                            tag.name
-                          ),
-                        }))
-                      }
-                      className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
-                    >
-                      {Icon && <Icon className="h-5 w-5" />}
-                      {tag.name}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
+              <AccordionItem value="activity-tags" className="border-b py-3">
+                <AccordionTrigger className="text-lg font-semibold text-gray-900 hover:no-underline py-3">
+                  <span className="flex items-center gap-2">
+                    Activity Tags
+                    {draft.activityTags.length > 0 ? (
+                      <span className="text-sm font-normal text-gray-500">
+                        ({draft.activityTags.length})
+                      </span>
+                    ) : null}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {activityTags.map((tag) => {
+                      const Icon = tag.icon
+                      const isSelected = draft.activityTags.includes(tag.name)
+                      return (
+                        <div
+                          key={tag.name}
+                          onClick={() =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              activityTags: toggleValue(
+                                prev.activityTags,
+                                tag.name
+                              ),
+                            }))
+                          }
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-md font-regular cursor-pointer border border-1 border-gray-300 hover:bg-gray-200 ${isSelected ? "bg-gray-100 ring-2 ring-gray-700" : ""}`}
+                        >
+                          {Icon && <Icon className="h-5 w-5" />}
+                          {tag.name}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
 
           <div className="mt-6 flex justify-between gap-3 border-t border-1 border-gray-300 p-6">

@@ -1,5 +1,7 @@
 export type Activity = {
     id: number,
+    /** 1-based display/order index within a day */
+    activityNumber?: number,
     time?: string,
     duration?: number,
     image?: string,

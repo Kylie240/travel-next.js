@@ -135,12 +135,12 @@ export default async function ExplorePage({
   return (
     <div className="min-h-screen bg-white py-8">
       <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
-      <div className="container mx-auto px-4">
-        <Breadcrumbs items={breadcrumbItems} />
+      <div className="container mx-auto px-4 md:px-12">
+        <Breadcrumbs className="mt-4" items={breadcrumbItems} />
         <h1 className="text-2xl font-semibold mb-4">
           {destination?.trim()
             ? `${destination.trim()} itineraries`
-            : "Explore itineraries"}
+            : "Explore Itineraries"}
         </h1>
         <div className="flex flex-col mb-8">
           <Suspense fallback={<div>Loading filters…</div>}>
@@ -167,7 +167,7 @@ export default async function ExplorePage({
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
               {itineraryData.data.map((itinerary: ExplorePageDto) => (
                 <Link
                   href={getItineraryPath(itinerary)}
@@ -175,7 +175,7 @@ export default async function ExplorePage({
                   key={itinerary.id}
                 >
                   <div>
-                    <div className="relative aspect-[3/2] md:aspect-[4/5] rounded-2xl overflow-hidden bg-gray-200">
+                    <div className="relative sm:aspect-[4/5] aspect-[1/1] rounded-2xl overflow-hidden bg-gray-200">
                       {itinerary.mainImage ? (
                         <Image
                           src={itinerary.mainImage}
@@ -199,7 +199,7 @@ export default async function ExplorePage({
                       )} */}
                       <div className="p-3 m-3 rounded-xl absolute bottom-0 left-0 right-0 text-white">
                         <p className="text-sm text-gray-200/50">@{itinerary.creatorName}</p>
-                        <h4 className="font-bold text-2xl mb-1 line-clamp-2">
+                        <h4 className="font-bold text-2xl mb-1 line-clamp-2 line-height-1">
                           {itinerary.title}
                         </h4>
                         <span className="text-sm text-white/80 truncate block">
@@ -208,27 +208,29 @@ export default async function ExplorePage({
                       </div>
                     </div>
 
-                    <div className="py-2 px-4">
+                    <div className="pt-2 px-4">
                       <div className="flex text-[20px] font-medium my-1">
-                        <div className="mx-1 flex gap-2 flex-wrap">
-                          <span>
+                        <div className="flex flex-wrap" style={{ lineHeight: "1.2" }}>
+                          <span className="mr-1">
                             {itinerary.duration}
                             {itinerary.countries.length <= 2
                               ? itinerary.duration > 1
                                 ? " Days In "
                                 : " Day In "
                               : " Day "}
-                          </span>
-                          <span>
                             {itinerary.countries.length > 2
                               ? "Multi-Country Trip"
                               : itinerary.countries.length > 0
-                                ? itinerary.countries.join(" & ")
+                                ? itinerary.countries.map((country) =>
+                                    country.startsWith("United")
+                                      ? `The ${country}`
+                                      : country
+                                  ).join(" & ")
                                 : "Somewhere amazing"}
                           </span>
                         </div>
                       </div>
-                      <p className="text-gray-600 line-clamp-2 leading-5 text-md mb-2">
+                      <p className="text-gray-600 line-clamp-2 leading-5 text-sm my-3 pb-1">
                         {itinerary.shortDescription}
                       </p>
 
@@ -237,7 +239,7 @@ export default async function ExplorePage({
                           {itinerary.itineraryTags?.slice(0, 3).map((tag) => (
                             <span
                               key={tag}
-                              className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs capitalize"
+                              className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs capitalize"
                             >
                               {tag}
                             </span>
