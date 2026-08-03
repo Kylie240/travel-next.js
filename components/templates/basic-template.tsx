@@ -254,12 +254,6 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
               {/* Left Column - Schedule */}
               <div className="lg:col-span-2 flex flex-col gap-4 md:gap-8">
                 <div className="flex flex-col lg:mb-0">
-                  <div className="flex flex-col gap-3">
-                    {breadcrumbItems?.length ? (
-                      <div>
-                        <Breadcrumbs items={breadcrumbItems} className="mb-0" />
-                      </div>
-                    ) : null}
                     <div className="w-full justify-between items-center gap-4 hidden lg:flex min-w-0">
                         {(itinerary.detailedOverview && itinerary.detailedOverview.length > 0 || itinerary.itineraryTags.length > 0) ? (
                           <h2 className="text-2xl md:text-2xl font-semibold mb-2 shrink min-w-0">Overview</h2>
@@ -287,7 +281,6 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                         }
                       </div>
                     </div>
-                  </div>
                   <div className="hidden flex-wrap gap-2 mb-2 lg:flex">
                     {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => {
                         const tagData = itineraryTagsMap.find(t => t.id === tag);

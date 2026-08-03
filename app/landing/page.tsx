@@ -1,12 +1,11 @@
 "use client"
 
-import { Bookmark, Eye, Map, MapPin, Send } from "lucide-react"
+import { Bookmark, Map, Send } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { TbPigMoney, TbWriting } from "react-icons/tb"
+import { TbWriting } from "react-icons/tb"
 import ActionButtons from "./action-buttons"
 import { Button } from "@/components/ui/button"
-import { FaMoneyBill } from "react-icons/fa"
 import { LuMousePointerClick } from "react-icons/lu"
 import { FaHeart } from "react-icons/fa6"
 
@@ -228,7 +227,7 @@ export default function LandingPage() {
               </button>
               <div className="max-h-0 overflow-hidden transition-all duration-300">
                 <p className="p-4 text-gray-600 border-t">
-                  Yes! Journli is completely free to use. Create unlimited itineraries, share with friends, and view other travelers' journeys all without any cost.
+                  Yes! Journli is completely free to use. Create itineraries, share with friends, and view other travelers' journeys all without any cost.
                 </p>
               </div>
             </div>
@@ -264,7 +263,7 @@ export default function LandingPage() {
                   content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
                 }}
               >
-                <span className="font-medium text-left">Do I need to create an account to view shared itineraries?</span>
+                <span className="font-medium text-left">Do I need to create an account?</span>
                 <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -286,36 +285,14 @@ export default function LandingPage() {
                   content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
                 }}
               >
-                <span className="font-medium text-left">Can I collaborate with others on an itinerary?</span>
+                <span className="font-medium text-left">How do I start selling my itineraries?</span>
                 <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
               <div className="max-h-0 overflow-hidden transition-all duration-300">
                 <p className="p-4 text-gray-600 border-t">
-                  Currently, itineraries can be shared for viewing. We're working on collaborative editing features that will be available soon!
-                </p>
-              </div>
-            </div>
-
-            {/* Question 4 */}
-            <div className="border border-gray-200 bg-white">
-              <button
-                className="w-full flex justify-between items-center p-4 hover:bg-gray-50"
-                onClick={(e) => {
-                  const content = e.currentTarget.nextElementSibling as HTMLElement
-                  const isOpen = content.style.maxHeight
-                  content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
-                }}
-              >
-                <span className="font-medium text-left">How detailed can my itineraries be?</span>
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div className="max-h-0 overflow-hidden transition-all duration-300">
-                <p className="p-4 text-gray-600 border-t">
-                  Very detailed! Add day-by-day activities, accommodations, travel notes, photos, and more. You can include as much or as little detail as you'd like.
+                  To become a seller, you need to create an account on Journli, then create or connect your Stripe account by visiting the Become a Seller page. Once you ceate an itinerary, you can sell it to other travelers using our free our paid plan.
                 </p>
               </div>
             </div>
