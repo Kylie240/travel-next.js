@@ -33,6 +33,8 @@ import { useState } from "react"
 import { DaySection } from "@/components/ui/day-section";
 import BioSection from "@/app/itinerary/[id]/bio-section";
 import PhotoGallery from "@/components/ui/photo-gallery";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
+import type { BreadcrumbItem } from "@/lib/seo/breadcrumbs";
 
 export type DiscoverTemplateProps = {
   itinerary: Itinerary
@@ -49,6 +51,7 @@ export type DiscoverTemplateProps = {
   isRestrictedView?: boolean
   priceCents?: number
   sellerPurchasesEnabled?: boolean
+  breadcrumbItems?: BreadcrumbItem[]
 }
 
 function LocationLine({ countries }: { countries: string[] }) {
@@ -78,6 +81,7 @@ export default function DiscoverTemplate({
   priceCents = 0,
   paidUser: _paidUser = false,
   sellerPurchasesEnabled = true,
+  breadcrumbItems,
 }: DiscoverTemplateProps) {
   void _paidUser
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0)
@@ -151,6 +155,9 @@ export default function DiscoverTemplate({
             <div
               className={`mx-auto relative max-w-2xl rounded-3xl px-5 py-5 text-gray-900 shadow-2xl sm:px-6 sm:py-6 bg-white`}
             >
+              {breadcrumbItems?.length ? (
+                <Breadcrumbs items={breadcrumbItems} className="mb-3" />
+              ) : null}
               <h1 className="mt-2 ml-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 {itinerary.title}
               </h1>

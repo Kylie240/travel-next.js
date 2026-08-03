@@ -1,5 +1,5 @@
+import { getContinentForCountry } from "@/lib/constants/country-continents"
 import { getSiteUrl } from "@/lib/site-url"
-import { getItineraryPath } from "@/lib/utils/itinerary-url"
 
 export type BreadcrumbItem = {
   name: string
@@ -44,33 +44,28 @@ export function buildExploreBreadcrumbs(
   return items
 }
 
-/** Home > Destinations > [Country] > Itinerary title */
+/** Destinations > [Continent] > [Country] */
 export function buildItineraryBreadcrumbs(input: {
-  title: string
-  id: string
-  slug?: string | null
   countries?: string[]
 }): BreadcrumbItem[] {
   const primaryCountry = input.countries?.find((c) => c?.trim())?.trim()
   const items: BreadcrumbItem[] = [
-    { name: "Home", href: "/" },
     { name: "Destinations", href: "/explore" },
   ]
 
-  if (primaryCountry) {
+  if (!primaryCountry) return items
+
+  const continent = getContinentForCountry(primaryCountry)
+  if (continent) {
     items.push({
-      name: primaryCountry,
-      href: `/explore?destination=${encodeURIComponent(primaryCountry)}`,
+      name: continent,
+      href: `/explore?continents=${encodeURIComponent(continent)}`,
     })
   }
 
   items.push({
-    name: input.title.trim() || "Itinerary",
-    href: getItineraryPath({
-      id: input.id,
-      slug: input.slug,
-      title: input.title,
-    }),
+    name: primaryCountry,
+    href: `/explore?destination=${encodeURIComponent(primaryCountry)}`,
   })
 
   return items

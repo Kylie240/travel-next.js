@@ -32,6 +32,8 @@ import ScheduleSection from "@/app/itinerary/[id]/schedule-section"
 import { useState } from "react"
 import { DaySection } from "@/components/ui/day-section";
 import BioSection from "@/app/itinerary/[id]/bio-section";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
+import type { BreadcrumbItem } from "@/lib/seo/breadcrumbs";
 
 export type JourneyTemplateProps = {
   itinerary: Itinerary
@@ -48,6 +50,7 @@ export type JourneyTemplateProps = {
   isRestrictedView?: boolean
   priceCents?: number
   sellerPurchasesEnabled?: boolean
+  breadcrumbItems?: BreadcrumbItem[]
 }
 
 function LocationLine({ countries }: { countries: string[] }) {
@@ -77,6 +80,7 @@ export default function JourneyTemplate({
   priceCents = 0,
   paidUser: _paidUser = false,
   sellerPurchasesEnabled: _sellerPurchasesEnabled = true,
+  breadcrumbItems,
 }: JourneyTemplateProps) {
   void _paidUser
   void _sellerPurchasesEnabled
@@ -112,7 +116,7 @@ export default function JourneyTemplate({
       </div>
 
       {/* Full-bleed hero + glass overlay (detail page style) */}
-      <div className="mt-2 px-3 md:px-6 w-full md:max-w-6xl md:mx-auto pb-8 pb-[210px] md:pb-[160px]">
+      <div className="mt-2 px-3 md:px-6 w-full md:max-w-6xl md:mx-auto pb-4">
         <div className="relative h-[calc(100svh-600px)] min-h-[calc(100svh-600px)] md:min-h-[520px] md:h-auto rounded-3xl overflow-visible">
           <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-lg">
             {itinerary.mainImage && (
@@ -247,6 +251,12 @@ export default function JourneyTemplate({
               </div>
           </div> */}
         </div>
+
+        {breadcrumbItems?.length ? (
+          <div className="mt-3">
+            <Breadcrumbs items={breadcrumbItems} className="mb-0" />
+          </div>
+        ) : null}
       </div>
 
       {itinerary.detailedOverview && (

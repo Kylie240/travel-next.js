@@ -27,7 +27,6 @@ import WonderTemplate from "@/components/templates/wonder"
 import { getCachedSellerSalesEnabled } from "@/lib/sync-stripe-connect-account"
 import { JsonLd, buildItineraryJsonLd } from "@/lib/seo/json-ld"
 import { resolveOgImages, resolveOgImageUrls } from "@/lib/seo/og"
-import { Breadcrumbs } from "@/components/seo/breadcrumbs"
 import {
   buildBreadcrumbJsonLd,
   buildItineraryBreadcrumbs,
@@ -205,6 +204,10 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
     )
   }
 
+  const breadcrumbItems = buildItineraryBreadcrumbs({
+    countries,
+  })
+
   const templateProps = {
     itinerary,
     countries,
@@ -219,6 +222,7 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
     isRestrictedView: isRestricted,
     priceCents: itineraryMeta.price_cents || 0,
     sellerPurchasesEnabled,
+    breadcrumbItems,
   }
 
   const jsonLd =
@@ -253,20 +257,10 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
     TemplateView = <WonderTemplate {...templateProps} />
   }
 
-  const breadcrumbItems = buildItineraryBreadcrumbs({
-    title: itineraryMeta.title || itinerary.title,
-    id: itineraryMeta.id,
-    slug: itineraryMeta.slug,
-    countries,
-  })
-
   return (
     <>
       {jsonLd ? <JsonLd data={jsonLd} /> : null}
       <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
-      <div className="container mx-auto px-2 md:px-8 pt-4 pb-2">
-        <Breadcrumbs items={breadcrumbItems} className="mb-0" />
-      </div>
       {TemplateView}
     </>
   )

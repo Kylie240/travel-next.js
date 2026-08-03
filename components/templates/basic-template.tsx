@@ -19,8 +19,10 @@ import NoteSection from "@/app/itinerary/[id]/note-section";
 import { FaUserLarge } from "react-icons/fa6"
 import { AddToCartButton } from "../ui/add-to-cart-button";
 import { PurchaseButton } from "../ui/purchase-button";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
+import type { BreadcrumbItem } from "@/lib/seo/breadcrumbs";
 
-export default function BasicTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId, isRestrictedView = false, priceCents = 0, sellerPurchasesEnabled = true }: { 
+export default function BasicTemplate({ itinerary, countries, photos, canEdit, paidUser, initialIsLiked, initialIsSaved, initialIsFollowing, creator, currentUserId, isRestrictedView = false, priceCents = 0, sellerPurchasesEnabled = true, breadcrumbItems }: { 
     itinerary: Itinerary, 
     countries: string[], 
     photos: PhotoItem[], 
@@ -34,6 +36,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
     isRestrictedView?: boolean
     priceCents?: number
     sellerPurchasesEnabled?: boolean
+    breadcrumbItems?: BreadcrumbItem[]
  }) {
     // Early return if essential data is missing
     if (!itinerary || !creator) {
@@ -92,30 +95,37 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
             </div>
     
             {/* Mobile Items List */}
-            <div className="flex mt-4 flex-col h-full lg:hidden justify-between px-4 md:pt-4">
+            <div className="flex mt-2 flex-col h-full lg:hidden justify-between px-4">
               <div className="mb-2">
-                <div className="flex w-full justify-between items-center mb-1">
-                  <h2 className="text-xl flex items-center font-semibold">Overview</h2>
-                  <div className="flex items-center">
-                      {currentUserId !== itinerary.creatorId && (
-                        <InteractionButtons 
-                          itineraryId={itinerary.id} 
-                          initialIsLiked={initialIsLiked}
-                          initialIsSaved={initialIsSaved}
-                        />
-                      )}
-                      {canEdit &&
-                        <Link href={`/create?itineraryId=${itinerary.id}`}>
-                          <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
-                        </Link>
-                      }
-                      {(!isRestrictedView || canEdit) && (
-                        <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
-                      )}
-                      {itinerary.status === ItineraryStatusEnum.published && 
-                        <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
-                      }
-                    </div>
+                <div className="flex flex-col gap-2">
+                    {breadcrumbItems?.length ? (
+                      <div>
+                        <Breadcrumbs items={breadcrumbItems} className="mb-0" />
+                      </div>
+                    ) : null}
+                  <div className="flex w-full justify-between items-center mb-1">
+                    <h2 className="text-xl flex items-center font-semibold">Overview</h2>
+                    <div className="flex items-center">
+                        {currentUserId !== itinerary.creatorId && (
+                          <InteractionButtons 
+                            itineraryId={itinerary.id} 
+                            initialIsLiked={initialIsLiked}
+                            initialIsSaved={initialIsSaved}
+                          />
+                        )}
+                        {canEdit &&
+                          <Link href={`/create?itineraryId=${itinerary.id}`}>
+                            <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
+                          </Link>
+                        }
+                        {(!isRestrictedView || canEdit) && (
+                          <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                        )}
+                        {itinerary.status === ItineraryStatusEnum.published && 
+                          <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
+                        }
+                      </div>
+                  </div>
                 </div>
                 <div className="flex justify-center w-full text-sm sm:text-base px-2 sm:px-4">
                   {/* <div className="flex mb-2 px-1 justify-between sm:hidden w-full max-w-[500px]">
@@ -238,37 +248,44 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
             </div>
           </div>
     
-          <div className="container mx-auto px-6 lg:px-[3rem] xl:px-[6rem] py-8">
+          <div className="container mx-auto px-6 lg:px-[3rem] xl:px-[6rem] pb-8">
             {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-2 md:px-8">
               {/* Left Column - Schedule */}
               <div className="lg:col-span-2 flex flex-col gap-4 md:gap-8">
                 <div className="flex flex-col lg:mb-0">
-                  <div className="w-full justify-between items-center gap-4 hidden lg:flex min-w-0">
-                    {(itinerary.detailedOverview && itinerary.detailedOverview.length > 0 || itinerary.itineraryTags.length > 0) ? (
-                      <h2 className="text-2xl md:text-2xl font-semibold mb-2 shrink min-w-0">Overview</h2>
-                    ) : (
-                      <h2 className="text-2xl md:text-2xl font-semibold mb-2 shrink min-w-0"> </h2>
-                    )}
-                    <div className="flex shrink-0 flex-nowrap items-center">
-                      {currentUserId !== itinerary.creatorId && (
-                        <InteractionButtons 
-                          itineraryId={itinerary.id} 
-                          initialIsLiked={initialIsLiked}
-                          initialIsSaved={initialIsSaved}
-                        />
-                      )}
-                      {canEdit &&
-                        <Link href={`/create?itineraryId=${itinerary.id}`}>
-                          <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
-                        </Link>
-                      }
-                      {(!isRestrictedView || canEdit) && (
-                          <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
-                      )}
-                      {itinerary.status === ItineraryStatusEnum.published && 
-                        <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
-                      }
+                  <div className="flex flex-col gap-3">
+                    {breadcrumbItems?.length ? (
+                      <div>
+                        <Breadcrumbs items={breadcrumbItems} className="mb-0" />
+                      </div>
+                    ) : null}
+                    <div className="w-full justify-between items-center gap-4 hidden lg:flex min-w-0">
+                        {(itinerary.detailedOverview && itinerary.detailedOverview.length > 0 || itinerary.itineraryTags.length > 0) ? (
+                          <h2 className="text-2xl md:text-2xl font-semibold mb-2 shrink min-w-0">Overview</h2>
+                        ) : (
+                          <h2 className="text-2xl md:text-2xl font-semibold mb-2 shrink min-w-0"> </h2>
+                        )}
+                      <div className="flex shrink-0 flex-nowrap items-center">
+                        {currentUserId !== itinerary.creatorId && (
+                          <InteractionButtons 
+                            itineraryId={itinerary.id} 
+                            initialIsLiked={initialIsLiked}
+                            initialIsSaved={initialIsSaved}
+                          />
+                        )}
+                        {canEdit &&
+                          <Link href={`/create?itineraryId=${itinerary.id}`}>
+                            <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
+                          </Link>
+                        }
+                        {(!isRestrictedView || canEdit) && (
+                            <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                        )}
+                        {itinerary.status === ItineraryStatusEnum.published && 
+                          <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
+                        }
+                      </div>
                     </div>
                   </div>
                   <div className="hidden flex-wrap gap-2 mb-2 lg:flex">
@@ -287,7 +304,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                   </div>
                   {itinerary?.detailedOverview && 
                   <>
-                    <h2 className="text-xl lg:hidden font-semibold">Details</h2>
+                    <h2 className="text-xl lg:hidden font-semibold mt-6">Details</h2>
                     <p className="my-4 text-sm md:text-md">
                       {itinerary.detailedOverview}
                     </p>

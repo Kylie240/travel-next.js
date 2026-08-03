@@ -36,6 +36,8 @@ import { DaySection } from "@/components/ui/day-section";
 import BioSection from "@/app/itinerary/[id]/bio-section";
 import { Day } from "@/types/Day";
 import PhotoGallery from "@/components/ui/photo-gallery";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
+import type { BreadcrumbItem } from "@/lib/seo/breadcrumbs";
 
 export type WonderTemplateProps = {
   itinerary: Itinerary
@@ -52,6 +54,7 @@ export type WonderTemplateProps = {
   isRestrictedView?: boolean
   priceCents?: number
   sellerPurchasesEnabled?: boolean
+  breadcrumbItems?: BreadcrumbItem[]
 }
 
 function LocationLine({ countries }: { countries: string[] }) {
@@ -81,6 +84,7 @@ export default function WonderTemplate({
   priceCents = 0,
   paidUser: _paidUser = false,
   sellerPurchasesEnabled = true,
+  breadcrumbItems,
 }: WonderTemplateProps) {
   void _paidUser
   const [openDays, setOpenDays] = useState<Set<number>>(new Set())
@@ -187,6 +191,12 @@ export default function WonderTemplate({
             </div>
           </div>
         </div>
+
+        {breadcrumbItems?.length ? (
+          <div className="mt-3 px-4 md:px-0">
+            <Breadcrumbs items={breadcrumbItems} className="mb-0" />
+          </div>
+        ) : null}
       </div>
 
       <div className="w-full md:px-6 md:max-w-6xl md:mx-auto">

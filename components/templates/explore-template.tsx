@@ -22,6 +22,8 @@ import { DaySection } from "../ui/day-section"
 import { useState } from "react";
 import BioSection from "@/app/itinerary/[id]/bio-section";
 import PhotoGallery from "@/components/ui/photo-gallery";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
+import type { BreadcrumbItem } from "@/lib/seo/breadcrumbs";
 
 const BRAND = {
   surface: "bg-slate-50",
@@ -49,6 +51,7 @@ export type ExploreTemplateProps = {
   isRestrictedView?: boolean
   priceCents?: number
   sellerPurchasesEnabled?: boolean
+  breadcrumbItems?: BreadcrumbItem[]
 }
 
 function LocationLine({ countries }: { countries: string[] }) {
@@ -78,6 +81,7 @@ export default function ExploreTemplate({
   priceCents = 0,
   paidUser: _paidUser = false,
   sellerPurchasesEnabled = true,
+  breadcrumbItems,
 }: ExploreTemplateProps) {
   void _paidUser
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
@@ -177,6 +181,12 @@ export default function ExploreTemplate({
           </div>
         )}
       </div>
+
+      {breadcrumbItems?.length ? (
+        <div className="max-w-6xl mx-auto w-full px-8 mt-2 mb-2 relative z-10">
+          <Breadcrumbs items={breadcrumbItems} className="mb-0" />
+        </div>
+      ) : null}
 
       {isGalleryOpen && (
         <PhotoGallery
