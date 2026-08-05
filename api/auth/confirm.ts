@@ -1,9 +1,12 @@
 import { type EmailOtpType } from '@supabase/supabase-js'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import createClient from '@/utils/supabase/api'
+import { safeRelativePath } from '@/lib/auth/trusted-url'
+
 function stringOrFirstString(item: string | string[] | undefined) {
   return Array.isArray(item) ? item[0] : item
 }
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     res.status(405).appendHeader('Allow', 'GET').end()
@@ -22,8 +25,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error) {
       console.error(error)
     } else {
-      next = stringOrFirstString(queryParams.next) || '/'
+      next = safeRelativePath(stringOrFirstString(queryParams.next), '/')
     }
   }
-  res.redirect(next)
+  // Only relative paths — never redirect to an absolute external URL
+  res.redirect(safeRelativePath(next, '/error'))
 }

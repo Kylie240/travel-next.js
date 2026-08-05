@@ -10,6 +10,7 @@ import { ProfileData } from "@/types/profileData";
 import createClient from "@/utils/supabase/server";
 import { createClient as createAdminClient, createClientIfConfigured } from "@/utils/supabase/server-admin"
 import { sendPasswordResetEmail } from "@/lib/email";
+import { getTrustedAppBaseUrl } from "@/lib/auth/trusted-url";
 
 export const getUserDataById = async () => {
     const supabase = await createClient()
@@ -490,13 +491,14 @@ export const setProfileData = async (
       } = await supabase.auth.getUser()
     
       if (!user) throw new Error("Not authenticated")
+      if (user.id !== userId) throw new Error("Forbidden")
     
         const { data, error } = await supabase
           .from("users")
           .update({
             ...updatedUserData,
           })
-          .eq("id", userId)
+          .eq("id", user.id)
           .select()
     
         if (error) return error
@@ -516,13 +518,14 @@ export const setContentData = async (
       } = await supabase.auth.getUser()
     
       if (!user) throw new Error("Not authenticated")
+      if (user.id !== userId) throw new Error("Forbidden")
     
         const { data, error } = await supabase
           .from("users_settings")
           .update({
             ...updatedContentData,
           })
-          .eq("user_id", userId)
+          .eq("user_id", user.id)
           .select()
     
         if (error) throw error
@@ -542,13 +545,14 @@ export const setNotificationData = async (
       } = await supabase.auth.getUser()
     
       if (!user) throw new Error("Not authenticated")
+      if (user.id !== userId) throw new Error("Forbidden")
         
         const { data, error } = await supabase
           .from("users_settings")
           .update({
             ...updatedContentData,
           })
-          .eq("user_id", userId)
+          .eq("user_id", user.id)
           .select()
     
         if (error) throw error
@@ -556,24 +560,33 @@ export const setNotificationData = async (
         return data
 }
 
-export const deleteAccount = async (userId: string) => {
-    const supabase = await createAdminClient()
+export const deleteAccount = async (userId?: string) => {
+    const supabase = await createClient()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
 
-        const { error: authError } = await supabase.auth.admin.deleteUser(userId)
-        if (authError) {
-            throw new Error(`Failed to delete account: ${authError.message}`);
-        }
-        
-        const { data, error } = await supabase
+    if (!user) throw new Error("Not authenticated")
+    if (userId && user.id !== userId) throw new Error("Forbidden")
+
+    const admin = createAdminClient()
+    const targetId = user.id
+
+    const { error: authError } = await admin.auth.admin.deleteUser(targetId)
+    if (authError) {
+        throw new Error(`Failed to delete account: ${authError.message}`);
+    }
+
+    const { data, error } = await admin
         .from('users')
         .delete()
-        .eq('id', userId);
+        .eq('id', targetId);
 
-        if (error) {
-            throw new Error(error.message);
-        }
+    if (error) {
+        throw new Error(error.message);
+    }
 
-        return data;
+    return data;
 }
 
 export const setUserAvatar = async (userId: string, avatar: string) => {
@@ -583,11 +596,12 @@ export const setUserAvatar = async (userId: string, avatar: string) => {
       } = await supabase.auth.getUser()
     
       if (!user) throw new Error("Not authenticated")
+      if (user.id !== userId) throw new Error("Forbidden")
 
         const { data, error } = await supabase
         .from('users')
         .update({ avatar: avatar })
-        .eq('id', userId)
+        .eq('id', user.id)
         .select()
 
     if (error) {
@@ -664,21 +678,7 @@ export const linkPurchasesToUser = async () => {
 }
 
 function getAppBaseUrl(requestOrigin?: string) {
-    const origin = requestOrigin?.trim().replace(/\/$/, "")
-    if (origin) return origin
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "")
-    if (siteUrl) return siteUrl
-
-    if (process.env.NODE_ENV === "development") {
-        return `http://localhost:${process.env.PORT || 3000}`
-    }
-
-    if (process.env.VERCEL_URL) {
-        return `https://${process.env.VERCEL_URL}`
-    }
-
-    return "http://localhost:3000"
+    return getTrustedAppBaseUrl(requestOrigin)
 }
 
 /** Generate a Supabase recovery link and send it via Resend (no Supabase email). */

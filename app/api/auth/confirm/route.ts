@@ -2,6 +2,7 @@ import { type EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { ensureUserProfile } from "@/lib/auth/ensure-user-profile"
+import { safeRelativePath } from "@/lib/auth/trusted-url"
 
 function stringOrFirstString(item: string | string[] | null) {
   return Array.isArray(item) ? item[0] : item
@@ -12,14 +13,17 @@ export async function GET(request: NextRequest) {
 
   const token_hash = stringOrFirstString(searchParams.get("token_hash"))
   const type = stringOrFirstString(searchParams.get("type"))
-  const next = stringOrFirstString(searchParams.get("next"))
+  const next = safeRelativePath(
+    stringOrFirstString(searchParams.get("next")),
+    "/?welcome=true"
+  )
 
   if (!token_hash || !type) {
     return NextResponse.redirect(`${origin}/login?error=auth_confirm_failed`)
   }
 
   const redirectPath =
-    type === "recovery" ? "/auth/reset-password" : next || "/?welcome=true"
+    type === "recovery" ? "/auth/reset-password" : next
   const response = NextResponse.redirect(`${origin}${redirectPath}`)
 
   const supabase = createServerClient(

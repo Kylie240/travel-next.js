@@ -8,6 +8,7 @@ import {
   getPlatformFeeRateForPlan,
 } from '@/lib/seller-fees'
 import { getSellerStripeStatusForUser } from '@/lib/stripe-seller-status'
+import { getTrustedAppBaseUrl } from '@/lib/auth/trusted-url'
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
@@ -24,7 +25,7 @@ type CartItem = {
 export async function POST(request: NextRequest) {
   try {
     const headersList = await headers()
-    const origin = headersList.get('origin')
+    const origin = getTrustedAppBaseUrl(headersList.get('origin'))
 
     // Get the current user from Supabase (optional - guests can checkout too)
     const supabase = await createClient()

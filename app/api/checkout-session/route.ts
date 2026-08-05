@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import createClient from '@/utils/supabase/server'
 
 import { stripe } from '../../../lib/stripe'
+import { getTrustedAppBaseUrl } from '@/lib/auth/trusted-url'
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
@@ -10,7 +11,7 @@ export const dynamic = 'force-dynamic'
 export async function POST() {
   try {
     const headersList = await headers()
-    const origin = headersList.get('origin')
+    const origin = getTrustedAppBaseUrl(headersList.get('origin'))
 
     const standardPriceId = process.env.STANDARD_PRICE_ID
     if (!standardPriceId) {

@@ -2,16 +2,14 @@ import { NextResponse } from "next/server"
 import { headers } from "next/headers"
 import createClient from "@/utils/supabase/server"
 import { stripe } from "@/lib/stripe"
+import { getTrustedAppBaseUrl } from "@/lib/auth/trusted-url"
 
 export const dynamic = "force-dynamic"
 
 export async function POST() {
   try {
     const headersList = await headers()
-    const origin =
-      headersList.get("origin") ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      "https://journli.com"
+    const origin = getTrustedAppBaseUrl(headersList.get("origin"))
 
     const supabase = await createClient()
     const {

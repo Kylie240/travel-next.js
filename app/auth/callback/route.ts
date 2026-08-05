@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { ensureUserProfile } from "@/lib/auth/ensure-user-profile";
+import { safeRelativePath } from "@/lib/auth/trusted-url";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
 
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+  const next = safeRelativePath(searchParams.get("next"), "/");
   const type = searchParams.get("type");
 
   if (!code) {

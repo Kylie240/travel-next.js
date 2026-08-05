@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import type Stripe from "stripe";
 import createClient from "@/utils/supabase/server";
 import { stripe } from "@/lib/stripe";
+import { getTrustedAppBaseUrl } from "@/lib/auth/trusted-url";
 
 export const dynamic = "force-dynamic";
 
@@ -52,13 +53,7 @@ function marketplaceConnectedAccountParams(
 export async function POST(_request: NextRequest) {
   try {
     const headersList = await headers();
-    const origin =
-      headersList.get("origin") ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000");
-    const base = origin.replace(/\/$/, "");
+    const base = getTrustedAppBaseUrl(headersList.get("origin"));
 
     const supabase = await createClient();
     const {
