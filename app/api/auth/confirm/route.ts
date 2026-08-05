@@ -1,6 +1,7 @@
 import { type EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
+import { ensureUserProfile } from "@/lib/auth/ensure-user-profile"
 
 function stringOrFirstString(item: string | string[] | null) {
   return Array.isArray(item) ? item[0] : item
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
   }
 
   const redirectPath =
-    type === "recovery" ? "/auth/reset-password" : next || "/"
+    type === "recovery" ? "/auth/reset-password" : next || "/?welcome=true"
   const response = NextResponse.redirect(`${origin}${redirectPath}`)
 
   const supabase = createServerClient(
@@ -46,6 +47,31 @@ export async function GET(request: NextRequest) {
   if (error) {
     console.error("Error verifying OTP:", error)
     return NextResponse.redirect(`${origin}/login?error=auth_confirm_failed`)
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (user && type !== "recovery") {
+    const profileResult = await ensureUserProfile(supabase, user)
+    if (profileResult.error) {
+      console.error("Failed to ensure user profile:", profileResult.error)
+    }
+
+    if (user.email) {
+      await supabase
+        .from("itinerary_purchases")
+        .update({ user_id: user.id })
+        .is("user_id", null)
+        .eq("buyer_email", user.email)
+
+      await supabase
+        .from("itinerary_purchases")
+        .update({ user_id: user.id })
+        .is("user_id", null)
+        .eq("customer_email", user.email)
+    }
   }
 
   return response

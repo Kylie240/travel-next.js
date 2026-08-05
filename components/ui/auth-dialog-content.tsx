@@ -12,8 +12,11 @@ import { useRouter } from "next/navigation"
 import { createClientComponentClient, Session } from "@supabase/auth-helpers-nextjs"
 import { toast } from "sonner"
 import Image from "next/image"
-import { createClient as createClient2 } from "@supabase/supabase-js"
 import { linkPurchasesToUser, requestPasswordReset } from "@/lib/actions/user.actions"
+import {
+  TurnstileField,
+  isClientTurnstileEnabled,
+} from "@/components/ui/turnstile-field"
 
 const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
@@ -36,20 +39,27 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [confirmPassword, setConfirmPassword] = useState("")
-  
+  const [captchaToken, setCaptchaToken] = useState("")
+  const [captchaKey, setCaptchaKey] = useState(0)
+  const turnstileEnabled = isClientTurnstileEnabled()
+
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema)
   })
-  
+
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema)
   })
-  
+
   const currentForm = isSignUp ? signUpForm : signInForm
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = currentForm
+  const { handleSubmit, formState: { isSubmitting } } = currentForm
+
+  const resetCaptcha = () => {
+    setCaptchaToken("")
+    setCaptchaKey((k) => k + 1)
+  }
 
   const setSessionCookie = async (session: Session) => {
-    const token = await supabase.auth.getSession();
     document.cookie = `sb-access-token=${session?.access_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
     document.cookie = `sb-refresh-token=${session?.refresh_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
   }
@@ -60,43 +70,54 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     const username = 'username' in data ? data.username : undefined
     setAuthError("")
     try {
+      if (turnstileEnabled && !captchaToken) {
+        setAuthError("Please complete the captcha challenge.")
+        return
+      }
+
       if (isSignUp) {
-        const { error, data: { user } } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              name,
-              username
-            }
-          }
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            username,
+            email,
+            password,
+            captchaToken: captchaToken || undefined,
+          }),
         })
-        if (error) {
-          setAuthError(error.message)
+        const result = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          setAuthError(result.error || "Signup failed. Please try again.")
+          resetCaptcha()
           return
-        } else {
-          await supabase.from('users').insert({
-            id: user.id,
-            name: name,
-            username: username.toLowerCase(),
-            email: email,
-            avatar: "",
-            location: "",
-            bio: "",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          await supabase.from('users_settings').insert({
-            user_id: user.id,
-            is_private: false,
-            email_notifications: true
-          })
         }
+
         setIsOpen(false)
         signUpForm.reset()
         signInForm.reset()
-        localStorage.setItem("journli_onboarding_pending", "true")
-        localStorage.setItem(`journli_onboarding_pending_${user.id}`, "true")
+        setConfirmPassword("")
+        resetCaptcha()
+
+        if (result.needsConfirmation) {
+          sessionStorage.setItem(
+            "journli_pending_signup_email",
+            email.trim().toLowerCase()
+          )
+          if (result.userId) {
+            localStorage.setItem("journli_onboarding_pending", "true")
+            localStorage.setItem(`journli_onboarding_pending_${result.userId}`, "true")
+          }
+          toast.success("Check your email to confirm your account")
+          router.push("/auth/confirm-email")
+          return
+        }
+
+        if (result.userId) {
+          localStorage.setItem("journli_onboarding_pending", "true")
+          localStorage.setItem(`journli_onboarding_pending_${result.userId}`, "true")
+        }
         await linkPurchasesToUser()
         toast.success("Account created successfully")
         router.push("/?welcome=true")
@@ -104,26 +125,40 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         const { error, data: userCredential } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: {
+            captchaToken: captchaToken || undefined,
+          },
         })
         if (error) {
           setAuthError(error.message)
+          resetCaptcha()
           return
         }
+
+        if (userCredential.user && !userCredential.user.email_confirmed_at) {
+          setIsOpen(false)
+          resetCaptcha()
+          router.push("/auth/confirm-email")
+          return
+        }
+
         setSessionCookie(userCredential.session)
         setIsOpen(false)
         signUpForm.reset()
         signInForm.reset()
+        resetCaptcha()
         await linkPurchasesToUser()
         router.refresh()
         toast.success("Successfully signed in")
       }
     } catch (error: any) {
       setAuthError(error.message)
+      resetCaptcha()
     }
   }
 
   const handleGoogleSignIn = async () => {
-    setAuthError("") // Clear any previous errors
+    setAuthError("")
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -148,31 +183,51 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     }
 
     try {
+      if (turnstileEnabled && !captchaToken) {
+        setAuthError("Please complete the captcha challenge.")
+        return
+      }
+
+      const protectRes = await fetch("/api/auth/protect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ captchaToken: captchaToken || undefined }),
+      })
+      const protectData = await protectRes.json().catch(() => ({}))
+      if (!protectRes.ok) {
+        setAuthError(protectData.error || "Too many attempts. Please try again later.")
+        resetCaptcha()
+        return
+      }
+
       const result = await requestPasswordReset(email, window.location.origin)
       if (!result.success) {
         setAuthError(result.error ?? "Failed to send reset email")
+        resetCaptcha()
         return
       }
+      resetCaptcha()
       toast.success("Password reset email sent. Check your inbox.")
       setIsOpen(false)
     } catch (error) {
       console.error("Forgot password error:", error)
       setAuthError("Failed to send reset email. Please try again.")
+      resetCaptcha()
     }
   }
 
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-      <Dialog.Content 
-        className="fixed left-[50%] top-[50%] max-h-[90vh] w-[80vw] max-w-[450px] translate-x-[-50%] translate-y-[-50%] rounded-xl bg-white p-6 md:p-12 shadow-lg z-[10000]"
+      <Dialog.Content
+        className="fixed left-[50%] top-[50%] max-h-[90vh] w-[80vw] max-w-[450px] translate-x-[-50%] translate-y-[-50%] rounded-xl bg-white p-6 md:p-12 shadow-lg z-[10000] overflow-y-auto"
         onInteractOutside={(e) => e.preventDefault()}
       >
         <Dialog.Title className="text-lg sm:text-2xl text-center font-bold">
           Welcome{isSignUp ? " " : " back"} to Journli
         </Dialog.Title>
         <Dialog.Description className="sm:mt-2 text-sm text-gray-500 text-center">
-          {isSignUp 
+          {isSignUp
             ? "Join now to start creating"
             : "Log in to access your account"
           }
@@ -186,10 +241,10 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
                 <Input
                   type="text"
                   placeholder="Name"
-                  {...(isSignUp ? signUpForm.register("name") : {})}
-                  className={isSignUp && signUpForm.formState.errors.name ? "border-red-500" : ""}
+                  {...signUpForm.register("name")}
+                  className={signUpForm.formState.errors.name ? "border-red-500" : ""}
                 />
-                {isSignUp && signUpForm.formState.errors.name && (
+                {signUpForm.formState.errors.name && (
                   <p className="mt-1 text-xs text-red-500">{signUpForm.formState.errors.name.message}</p>
                 )}
               </div>
@@ -198,10 +253,10 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
               <Input
                 type="text"
                 placeholder="Username"
-                  {...(isSignUp ? signUpForm.register("username") : {})}
-                className={isSignUp && signUpForm.formState.errors.username ? "border-red-500" : ""}
+                  {...signUpForm.register("username")}
+                className={signUpForm.formState.errors.username ? "border-red-500" : ""}
               />
-              {isSignUp && signUpForm.formState.errors.username && (
+              {signUpForm.formState.errors.username && (
                 <p className="mt-1 text-xs text-red-500">{signUpForm.formState.errors.username.message}</p>
               )}
               </div>
@@ -241,11 +296,22 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className={signUpForm.formState.errors.password ? "border-red-500" : ""}
               />
-              {confirmPassword !== (isSignUp ? signUpForm.watch("password") : signInForm.watch("password")) && (
+              {confirmPassword !== signUpForm.watch("password") && (
                 <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
               )}
             </div>
           )}
+
+          {turnstileEnabled ? (
+            <div className="flex justify-center">
+              <TurnstileField
+                key={captchaKey}
+                onToken={setCaptchaToken}
+                onExpire={() => setCaptchaToken("")}
+              />
+            </div>
+          ) : null}
+
           {authError && (
             <p className="text-sm text-red-500">{authError}</p>
           )}
@@ -261,7 +327,11 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
           <Button
             type="submit"
             className="w-full"
-            disabled={isSubmitting || (isSignUp && confirmPassword !== signUpForm.watch("password"))}
+            disabled={
+              isSubmitting ||
+              (isSignUp && confirmPassword !== signUpForm.watch("password")) ||
+              (turnstileEnabled && !captchaToken)
+            }
           >
             {isSignUp ? "Sign Up" : "Log In"}
           </Button>
@@ -293,13 +363,14 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
               signUpForm.reset()
               signInForm.reset()
               setConfirmPassword("")
+              resetCaptcha()
             }}
           >
             {isSignUp ? "Log in" : "Sign up"}
           </button>
         </div>
         <div className="flex justify-center mt-2">
-          <span className="text-gray-500 text-xs text-center">By continuing, you agree to Journli's <a href="/legal/terms" target="_blank" className="underline">Terms of Service</a> and acknowledge that you have read our <a href="/legal/privacy" target="_blank" className="underline">Privacy Policy</a></span>
+          <span className="text-gray-500 text-xs text-center">By continuing, you agree to Journli&apos;s <a href="/legal/terms" target="_blank" className="underline">Terms of Service</a> and acknowledge that you have read our <a href="/legal/privacy" target="_blank" className="underline">Privacy Policy</a></span>
         </div>
 
         <Dialog.Close asChild>

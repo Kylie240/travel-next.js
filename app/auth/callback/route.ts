@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { ensureUserProfile } from "@/lib/auth/ensure-user-profile";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -52,6 +53,13 @@ export async function GET(request: NextRequest) {
 
   if (user && !user.email_confirmed_at && !isRecovery) {
     return NextResponse.redirect(`${origin}/auth/confirm-email`);
+  }
+
+  if (user) {
+    const profileResult = await ensureUserProfile(supabase, user);
+    if (profileResult.error) {
+      console.error("Failed to ensure user profile:", profileResult.error);
+    }
   }
 
   if (user?.id && user?.email) {

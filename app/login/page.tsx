@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { X, Eye, EyeOff } from "lucide-react"
+import { useState } from "react"
+import { Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -11,9 +11,12 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Session } from "@supabase/supabase-js"
 import { toast } from "sonner"
 import Image from "next/image"
-import Link from "next/link"
 import createClient from "@/utils/supabase/client"
 import { linkPurchasesToUser, requestPasswordReset } from "@/lib/actions/user.actions"
+import {
+  TurnstileField,
+  isClientTurnstileEnabled,
+} from "@/components/ui/turnstile-field"
 
 const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
@@ -40,21 +43,28 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  
-  
+  const [captchaToken, setCaptchaToken] = useState("")
+  const [captchaKey, setCaptchaKey] = useState(0)
+
+  const turnstileEnabled = isClientTurnstileEnabled()
+
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema)
   })
-  
+
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema)
   })
-  
+
   const currentForm = isSignUp ? signUpForm : signInForm
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = currentForm
+  const { handleSubmit, formState: { isSubmitting } } = currentForm
+
+  const resetCaptcha = () => {
+    setCaptchaToken("")
+    setCaptchaKey((k) => k + 1)
+  }
 
   const setSessionCookie = async (session: Session) => {
-    const token = await supabase.auth.getSession();
     document.cookie = `sb-access-token=${session?.access_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
     document.cookie = `sb-refresh-token=${session?.refresh_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
   }
@@ -65,42 +75,53 @@ export default function LoginPage() {
     const username = 'username' in data ? data.username : undefined
     setAuthError("")
     try {
+      if (turnstileEnabled && !captchaToken) {
+        setAuthError("Please complete the captcha challenge.")
+        return
+      }
+
       if (isSignUp) {
-        const { error, data: { user } } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              name,
-              username,
-            }
-          }
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            username,
+            email,
+            password,
+            captchaToken: captchaToken || undefined,
+          }),
         })
-        if (error) {
-          setAuthError(error.message)
+        const result = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          setAuthError(result.error || "Signup failed. Please try again.")
+          resetCaptcha()
           return
-        } else {
-          await supabase.from('users').insert({
-            id: user.id,
-            name: name,
-            username: username.toLowerCase(),
-            email: email,
-            avatar: "",
-            location: "",
-            bio: "",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          await supabase.from('users_settings').insert({
-            user_id: user.id,
-            is_private: false,
-            email_notifications: true
-          })
         }
+
         signUpForm.reset()
         signInForm.reset()
-        localStorage.setItem("journli_onboarding_pending", "true")
-        localStorage.setItem(`journli_onboarding_pending_${user.id}`, "true")
+        setConfirmPassword("")
+        resetCaptcha()
+
+        if (result.needsConfirmation) {
+          sessionStorage.setItem(
+            "journli_pending_signup_email",
+            email.trim().toLowerCase()
+          )
+          if (result.userId) {
+            localStorage.setItem("journli_onboarding_pending", "true")
+            localStorage.setItem(`journli_onboarding_pending_${result.userId}`, "true")
+          }
+          toast.success("Check your email to confirm your account")
+          router.push("/auth/confirm-email")
+          return
+        }
+
+        if (result.userId) {
+          localStorage.setItem("journli_onboarding_pending", "true")
+          localStorage.setItem(`journli_onboarding_pending_${result.userId}`, "true")
+        }
         await linkPurchasesToUser()
         toast.success("Account created successfully")
         router.push("/?welcome=true")
@@ -108,26 +129,38 @@ export default function LoginPage() {
         const { error, data: userCredential } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: {
+            captchaToken: captchaToken || undefined,
+          },
         })
         if (error) {
           setAuthError(error.message)
+          resetCaptcha()
           return
         }
+
+        if (userCredential.user && !userCredential.user.email_confirmed_at) {
+          resetCaptcha()
+          router.push("/auth/confirm-email")
+          return
+        }
+
         setSessionCookie(userCredential.session)
         signUpForm.reset()
         signInForm.reset()
+        resetCaptcha()
         await linkPurchasesToUser()
         toast.success("Successfully signed in")
-        // Use window.location for full page reload to ensure state is refreshed
         window.location.href = "/"
       }
     } catch (error: any) {
       setAuthError(error.message)
+      resetCaptcha()
     }
   }
 
   const handleGoogleSignIn = async () => {
-    setAuthError("") // Clear any previous errors
+    setAuthError("")
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -151,15 +184,35 @@ export default function LoginPage() {
     }
 
     try {
+      if (turnstileEnabled && !captchaToken) {
+        setAuthError("Please complete the captcha challenge.")
+        return
+      }
+
+      const protectRes = await fetch("/api/auth/protect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ captchaToken: captchaToken || undefined }),
+      })
+      const protectData = await protectRes.json().catch(() => ({}))
+      if (!protectRes.ok) {
+        setAuthError(protectData.error || "Too many attempts. Please try again later.")
+        resetCaptcha()
+        return
+      }
+
       const { success, error } = await requestPasswordReset(email, window.location.origin)
       if (!success || error) {
         setAuthError(error ?? "Failed to send reset email")
+        resetCaptcha()
         return
       }
+      resetCaptcha()
       toast.success("Password reset email sent. Check your inbox.")
     } catch (error) {
       console.error("Forgot password error:", error)
       setAuthError("Failed to send reset email. Please try again.")
+      resetCaptcha()
     }
   }
 
@@ -172,7 +225,7 @@ export default function LoginPage() {
             Welcome{isSignUp ? " " : " back"} to Journli
           </h1>
           <p className="text-sm text-gray-500 text-center mb-6">
-            {isSignUp 
+            {isSignUp
               ? "Join now to start creating"
               : "Log in to access your account"
             }
@@ -186,10 +239,10 @@ export default function LoginPage() {
                   <Input
                     type="text"
                     placeholder="Name"
-                    {...(isSignUp ? signUpForm.register("name") : {})}
-                    className={isSignUp && signUpForm.formState.errors.name ? "border-red-500" : ""}
+                    {...signUpForm.register("name")}
+                    className={signUpForm.formState.errors.name ? "border-red-500" : ""}
                   />
-                  {isSignUp && signUpForm.formState.errors.name && (
+                  {signUpForm.formState.errors.name && (
                     <p className="mt-1 text-xs text-red-500">{signUpForm.formState.errors.name.message}</p>
                   )}
                 </div>
@@ -198,10 +251,10 @@ export default function LoginPage() {
                   <Input
                     type="text"
                     placeholder="Username"
-                    {...(isSignUp ? signUpForm.register("username") : {})}
-                    className={isSignUp && signUpForm.formState.errors.username ? "border-red-500" : ""}
+                    {...signUpForm.register("username")}
+                    className={signUpForm.formState.errors.username ? "border-red-500" : ""}
                   />
-                  {isSignUp && signUpForm.formState.errors.username && (
+                  {signUpForm.formState.errors.username && (
                     <p className="mt-1 text-xs text-red-500">{signUpForm.formState.errors.username.message}</p>
                   )}
                 </div>
@@ -261,11 +314,22 @@ export default function LoginPage() {
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {confirmPassword !== (isSignUp ? signUpForm.watch("password") : signInForm.watch("password")) && (
+                {confirmPassword !== signUpForm.watch("password") && (
                   <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
                 )}
               </div>
             )}
+
+            {turnstileEnabled ? (
+              <div className="flex justify-center">
+                <TurnstileField
+                  key={captchaKey}
+                  onToken={setCaptchaToken}
+                  onExpire={() => setCaptchaToken("")}
+                />
+              </div>
+            ) : null}
+
             {authError && (
               <p className="text-sm text-red-500">{authError}</p>
             )}
@@ -281,7 +345,11 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isSubmitting || (isSignUp && confirmPassword !== signUpForm.watch("password"))}
+              disabled={
+                isSubmitting ||
+                (isSignUp && confirmPassword !== signUpForm.watch("password")) ||
+                (turnstileEnabled && !captchaToken)
+              }
             >
               {isSignUp ? "Sign Up" : "Log In"}
             </Button>
@@ -313,13 +381,14 @@ export default function LoginPage() {
                 signUpForm.reset()
                 signInForm.reset()
                 setConfirmPassword("")
+                resetCaptcha()
               }}
             >
               {isSignUp ? "Log in" : "Sign up"}
             </button>
           </div>
           <div className="flex justify-center mt-4">
-            <span className="text-gray-500 text-xs text-center">By continuing, you agree to Journli's <a href="/legal/terms" target="_blank" className="underline">Terms of Service</a> and acknowledge that you have read our <a href="/legal/privacy" target="_blank" className="underline">Privacy Policy</a></span>
+            <span className="text-gray-500 text-xs text-center">By continuing, you agree to Journli&apos;s <a href="/legal/terms" target="_blank" className="underline">Terms of Service</a> and acknowledge that you have read our <a href="/legal/privacy" target="_blank" className="underline">Privacy Policy</a></span>
           </div>
         </div>
       </div>

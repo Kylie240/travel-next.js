@@ -30,6 +30,10 @@ export default async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+  const isAuthRoute =
+    path.startsWith("/auth") || path.startsWith("/api/auth");
+  const isConfirmEmailPage = path.startsWith("/auth/confirm-email");
+  const emailConfirmed = Boolean(user?.email_confirmed_at);
 
   // Redirect unauthenticated users on seller-dashboard to homepage (no login prompt)
   if (!user && path.startsWith("/seller-dashboard")) {
@@ -38,18 +42,25 @@ export default async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Signed in but email not confirmed → confirm-email page only
+  if (user && !emailConfirmed && !isConfirmEmailPage && !isAuthRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/confirm-email";
+    return NextResponse.redirect(url);
+  }
+
   // Redirect unauthenticated users to login, except for auth routes
-  if (!user && !path.startsWith(LOGIN_PATH) && !path.startsWith("/auth")) {
+  if (!user && !path.startsWith(LOGIN_PATH) && !isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = LOGIN_PATH;
     url.searchParams.set("next", path);
     return NextResponse.redirect(url);
   }
 
-  // Prevent authenticated users from accessing the login page
+  // Prevent authenticated (confirmed) users from accessing the login page
   if (user && path.startsWith(LOGIN_PATH)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = emailConfirmed ? "/" : "/auth/confirm-email";
     return NextResponse.redirect(url);
   }
 

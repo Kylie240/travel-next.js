@@ -17,5 +17,6 @@ export const config = {
     '/search/:path*',
     '/purchased/:path*',
     '/seller-dashboard/:path*',
+    '/auth/confirm-email',
   ],
 };
