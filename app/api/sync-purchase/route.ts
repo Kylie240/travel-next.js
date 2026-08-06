@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   try {
     pruneRateLimitBuckets();
     const ip = clientIp(request);
-    const ipLimit = checkRateLimit({
+    const ipLimit = await checkRateLimit({
       key: `sync-purchase:ip:${ip}`,
       limit: 20,
       windowMs: 60 * 60 * 1000,
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionLimit = checkRateLimit({
+    const sessionLimit = await checkRateLimit({
       key: `sync-purchase:session:${sessionId}`,
       limit: 10,
       windowMs: 60 * 60 * 1000,

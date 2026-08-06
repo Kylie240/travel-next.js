@@ -324,10 +324,11 @@ export default function MyItinerariesPage() {
                                         toast.success('Itinerary published successfully')
                                         refreshItineraries()
                                     } catch (error) {
-                                      if (error.message.includes("Maximum number of itineraries reached")) {
+                                      const message = error instanceof Error ? error.message : ""
+                                      if (message.includes("Maximum number of itineraries reached")) {
                                         setShowUpgradeDialog(true);
                                       } else {
-                                        toast.error('Failed to publish itinerary')
+                                        toast.error(message || 'Failed to publish itinerary')
                                       }
                                     }
                                   }}

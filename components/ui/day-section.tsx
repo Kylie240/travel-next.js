@@ -218,7 +218,7 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
               return (
                 <div key={activity.id || index} className="relative mb-2">
                   {!isDiscoverTemplate && !isExploreTemplate && !isWonderTemplate && activity?.type ? (
-                    <div className="absolute z-[5] min-w-[65px] flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity?.time && activity?.time !== '' ? '14px' : '14px'}` }}>
+                    <div className="absolute z-[5] bg-white min-w-[65px] flex flex-col justify-center items-center p-2 gap-1" style={{ left: '-67px', top: `${activity?.time && activity?.time !== '' ? '14px' : '14px'}` }}>
                       {(() => {
                         const tag = activityTagsMap.find(t => t.id === activity.type);
                         const IconComponent = tag?.icon;

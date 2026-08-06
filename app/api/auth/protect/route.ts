@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   pruneRateLimitBuckets()
   const ip = clientIp(request)
 
-  const ipLimit = checkRateLimit({
+  const ipLimit = await checkRateLimit({
     key: `auth-protect:ip:${ip}`,
     limit: 10,
     windowMs: 60 * 60 * 1000,

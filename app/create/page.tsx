@@ -1669,9 +1669,13 @@ export default function CreatePage() {
 
       await handleSaveItinerary()
     } catch (error) {
-      if (error instanceof Error && !error.message.includes('Maximum number of itineraries reached.')) {
-      toast.error('Error submitting form')
-    }
+      if (error instanceof Error && error.message.includes('Maximum number of itineraries reached.')) {
+        // upgrade dialog handled elsewhere
+      } else if (error instanceof Error) {
+        toast.error(error.message)
+      } else {
+        toast.error('Error submitting form')
+      }
     } finally {
       setIsSubmitting(false);
     }

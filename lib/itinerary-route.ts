@@ -8,6 +8,10 @@ import {
   syncItinerarySlug,
 } from "@/lib/utils/itinerary-slug"
 import { getItineraryPath } from "@/lib/utils/itinerary-url"
+import {
+  ItineraryStatusEnum,
+  viewPermissionEnum,
+} from "@/enums/itineraryStatusEnum"
 
 export type ItineraryRouteMeta = {
   id: string
@@ -26,6 +30,52 @@ export type ItineraryRouteMeta = {
 
 const ROUTE_META_SELECT =
   "id, slug, title, short_description, main_image, status, is_paid, price_cents, creator_id, view_permission, edit_permission, template"
+
+function parseViewPermission(value: number | string | null | undefined): number | null {
+  if (value == null) return null
+  if (typeof value === "number") return value
+  const parsed = parseInt(value, 10)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+/** App-side mirror of itinerary_route_meta_is_visible (blocks admin-client leaks). */
+function isPublicRouteMeta(meta: ItineraryRouteMeta): boolean {
+  if (meta.status === ItineraryStatusEnum.deleted) return false
+  const viewPermission = parseViewPermission(meta.view_permission)
+  return (
+    meta.status === ItineraryStatusEnum.published &&
+    viewPermission === viewPermissionEnum.public
+  )
+}
+
+function isCreatorRouteMeta(
+  meta: ItineraryRouteMeta,
+  userId?: string | null
+): boolean {
+  return Boolean(userId && meta.creator_id === userId)
+}
+
+function isRestrictedPublished(meta: ItineraryRouteMeta): boolean {
+  const viewPermission = parseViewPermission(meta.view_permission)
+  return (
+    meta.status === ItineraryStatusEnum.published &&
+    viewPermission === viewPermissionEnum.restricted
+  )
+}
+
+async function viewerHasRestrictedAccess(
+  supabase: SupabaseClient,
+  itineraryId: string,
+  userId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("permission_view")
+    .select("user_id")
+    .eq("itinerary_id", itineraryId)
+    .eq("user_id", userId)
+    .maybeSingle()
+  return Boolean(data)
+}
 
 function parseRouteMeta(data: unknown): ItineraryRouteMeta | null {
   if (!data || typeof data !== "object") return null
@@ -169,11 +219,22 @@ async function fetchMetaByPrefixOnlyDirect(
 }
 
 async function resolveMeta(
-  fetchers: Array<() => Promise<ItineraryRouteMeta | null>>
+  supabase: SupabaseClient,
+  fetchers: Array<() => Promise<ItineraryRouteMeta | null>>,
+  userId?: string | null
 ): Promise<ItineraryRouteMeta | null> {
   for (const fetch of fetchers) {
     const meta = await fetch()
-    if (meta) return await ensureSlugOnMeta(meta)
+    if (!meta) continue
+    if (meta.status === ItineraryStatusEnum.deleted) continue
+    if (isCreatorRouteMeta(meta, userId) || isPublicRouteMeta(meta)) {
+      return await ensureSlugOnMeta(meta)
+    }
+    if (userId && isRestrictedPublished(meta)) {
+      if (await viewerHasRestrictedAccess(supabase, meta.id, userId)) {
+        return await ensureSlugOnMeta(meta)
+      }
+    }
   }
   return null
 }
@@ -183,15 +244,22 @@ export async function resolveItineraryByFullId(
 ): Promise<ItineraryRouteMeta | null> {
   const sessionClient = await createClient()
   const adminClient = createClientIfConfigured()
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser()
 
-  return resolveMeta([
-    () => fetchMetaByIdRpc(sessionClient, itineraryId),
-    () =>
-      adminClient
-        ? fetchMetaByIdDirect(adminClient, itineraryId)
-        : Promise.resolve(null),
-    () => fetchMetaByIdDirect(sessionClient, itineraryId),
-  ])
+  return resolveMeta(
+    sessionClient,
+    [
+      () => fetchMetaByIdRpc(sessionClient, itineraryId),
+      () =>
+        adminClient
+          ? fetchMetaByIdDirect(adminClient, itineraryId)
+          : Promise.resolve(null),
+      () => fetchMetaByIdDirect(sessionClient, itineraryId),
+    ],
+    user?.id
+  )
 }
 
 export async function resolveItineraryByPrefixAndSlug(
@@ -200,15 +268,22 @@ export async function resolveItineraryByPrefixAndSlug(
 ): Promise<ItineraryRouteMeta | null> {
   const sessionClient = await createClient()
   const adminClient = createClientIfConfigured()
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser()
 
-  return resolveMeta([
-    () => fetchMetaByPrefixSlugRpc(sessionClient, idPrefix, slug),
-    () =>
-      adminClient
-        ? fetchMetaByPrefixSlugDirect(adminClient, idPrefix, slug)
-        : Promise.resolve(null),
-    () => fetchMetaByPrefixSlugDirect(sessionClient, idPrefix, slug),
-  ])
+  return resolveMeta(
+    sessionClient,
+    [
+      () => fetchMetaByPrefixSlugRpc(sessionClient, idPrefix, slug),
+      () =>
+        adminClient
+          ? fetchMetaByPrefixSlugDirect(adminClient, idPrefix, slug)
+          : Promise.resolve(null),
+      () => fetchMetaByPrefixSlugDirect(sessionClient, idPrefix, slug),
+    ],
+    user?.id
+  )
 }
 
 export async function resolveItineraryByPrefixOnly(
@@ -216,15 +291,22 @@ export async function resolveItineraryByPrefixOnly(
 ): Promise<ItineraryRouteMeta | null> {
   const sessionClient = await createClient()
   const adminClient = createClientIfConfigured()
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser()
 
-  return resolveMeta([
-    () => fetchMetaByPrefixOnlyRpc(sessionClient, idPrefix),
-    () =>
-      adminClient
-        ? fetchMetaByPrefixOnlyDirect(adminClient, idPrefix)
-        : Promise.resolve(null),
-    () => fetchMetaByPrefixOnlyDirect(sessionClient, idPrefix),
-  ])
+  return resolveMeta(
+    sessionClient,
+    [
+      () => fetchMetaByPrefixOnlyRpc(sessionClient, idPrefix),
+      () =>
+        adminClient
+          ? fetchMetaByPrefixOnlyDirect(adminClient, idPrefix)
+          : Promise.resolve(null),
+      () => fetchMetaByPrefixOnlyDirect(sessionClient, idPrefix),
+    ],
+    user?.id
+  )
 }
 
 async function ensureSlugOnMeta(

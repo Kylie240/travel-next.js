@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import type Stripe from "stripe";
 import createClient from "@/utils/supabase/server";
+import { createClient as createAdminClient } from "@/utils/supabase/server-admin";
 import { stripe } from "@/lib/stripe";
 import { getTrustedAppBaseUrl } from "@/lib/auth/trusted-url";
 
@@ -96,7 +97,9 @@ export async function POST(_request: NextRequest) {
 
       accountId = account.id;
 
-      const { error: updateError } = await supabase
+      // Service role required: billing/Stripe columns are locked for authenticated clients.
+      const admin = createAdminClient();
+      const { error: updateError } = await admin
         .from("users_settings")
         .upsert(
           {

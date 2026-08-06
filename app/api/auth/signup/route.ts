@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
   const ip = clientIp(request)
 
-  const ipLimit = checkRateLimit({
+  const ipLimit = await checkRateLimit({
     key: `signup:ip:${ip}`,
     limit: 5,
     windowMs: 60 * 60 * 1000,
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   const normalizedEmail = email.trim().toLowerCase()
   const normalizedUsername = username.trim().toLowerCase()
 
-  const emailLimit = checkRateLimit({
+  const emailLimit = await checkRateLimit({
     key: `signup:email:${normalizedEmail}`,
     limit: 3,
     windowMs: 60 * 60 * 1000,

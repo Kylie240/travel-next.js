@@ -14,6 +14,7 @@ import type { ExplorePageDto } from "@/dtos/ExplorePageDto";
 import type { ExploreItinerariesResult } from "@/types/explore";
 import { itineraryTagsMap, activityTagsMap } from "@/lib/constants/tags";
 import { getCountryNamesForContinents } from "@/lib/constants/country-continents";
+import { assertItineraryNotSpam } from "@/lib/moderation/itinerary-spam";
 
 export type { ItineraryTemplate };
 
@@ -561,6 +562,9 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
     
       if (!user) throw new Error("Not authenticated")
 
+      // Block phone/SEO spam (especially on publish; also on draft to stop mass spam saves)
+      assertItineraryNotSpam(itinerary)
+
         const { data, error } = await supabase.rpc("create_itinerary", {
             p_itinerary: itinerary,
             p_creator_id: user.id,
@@ -591,7 +595,9 @@ export const updateItinerary = async (id: string, itinerary: CreateItinerary) =>
       } = await supabase.auth.getUser()
     
       if (!user) throw new Error("Not authenticated")
-        console.log("itinerary", itinerary)
+
+      assertItineraryNotSpam(itinerary)
+
       const { error } = await supabase.rpc("update_itinerary", {
           p_itinerary: itinerary,
           p_user_id: user.id,
@@ -685,6 +691,22 @@ export const updateItineraryStatus = async (itineraryId: string, status: number,
     
       if (!user) throw new Error("Not authenticated")
 
+    if (status === ItineraryStatusEnum.published) {
+      const { data: existing, error: loadError } = await supabase.rpc("get_itinerary", {
+        p_itinerary_id: itineraryId,
+      })
+      if (loadError) throw new Error(loadError.message)
+      if (existing) {
+        assertItineraryNotSpam({
+          title: existing.title,
+          shortDescription: existing.shortDescription ?? existing.short_description,
+          detailedOverview: existing.detailedOverview ?? existing.detailed_overview,
+          days: existing.days,
+          notes: existing.notes,
+        })
+      }
+    }
+
     const { data, error } = await supabase.rpc("update_itinerary_status", {
         p_creator_id: creatorId,
         p_itinerary_id: itineraryId,
@@ -776,13 +798,26 @@ export const deleteItinerary = async (itineraryId: string) => {
     const {
         data: { user },
       } = await supabase.auth.getUser()
-    
+
       if (!user) throw new Error("Not authenticated")
+
+        const { data: existing, error: fetchError } = await supabase
+        .from('itineraries')
+        .select('id, creator_id')
+        .eq('id', itineraryId)
+        .maybeSingle()
+
+        if (fetchError) throw fetchError
+        if (!existing) throw new Error("Itinerary not found")
+        if (existing.creator_id !== user.id) {
+            throw new Error("You are not authorized to delete this itinerary")
+        }
 
         const { error: itineraryError } = await supabase
         .from('itineraries')
         .delete()
-        .eq('id', itineraryId);
+        .eq('id', itineraryId)
+        .eq('creator_id', user.id);
 
         if (itineraryError) {
             throw itineraryError;
