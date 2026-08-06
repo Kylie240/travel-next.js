@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
-import { isDisposableEmail } from "@/lib/auth/disposable-email"
+import { isSuspiciousSignupEmail } from "@/lib/auth/disposable-email"
 import {
   checkRateLimit,
   pruneRateLimitBuckets,
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (isDisposableEmail(normalizedEmail)) {
+  if (isSuspiciousSignupEmail(normalizedEmail)) {
     return NextResponse.json(
       {
         error:
