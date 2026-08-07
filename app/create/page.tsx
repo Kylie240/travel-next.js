@@ -1769,26 +1769,35 @@ export default function CreatePage() {
 
       await persistItineraryTemplate(itineraryId)
       
-      // Save permissions and pricing for sellers with step 4 access
       if (canAccessStep4 && itineraryId) {
         try {
-          // Save permissions
           await updateItineraryPermissions(itineraryId, buildPermissionsPayload())
-          
-          // Save pricing
+        } catch (permError) {
+          console.error('Error saving permissions:', permError)
+          toast.error(
+            permError instanceof Error
+              ? permError.message
+              : 'Itinerary saved, but permissions failed to update'
+          )
+          return false
+        }
+
+        try {
           const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
           await updateItineraryPricing(itineraryId, {
             is_paid: isPaid,
             price_cents: isPaid ? priceCents : 0
           })
-        } catch (permError) {
-          console.error('Error saving permissions/pricing:', permError)
-          toast.error(
-            permError instanceof Error
-              ? permError.message
-              : 'Itinerary saved, but pricing/permissions failed to update'
-          )
-          return false
+        } catch (priceError) {
+          console.error('Error saving pricing:', priceError)
+          if (isPaid) {
+            toast.error(
+              priceError instanceof Error
+                ? priceError.message
+                : 'Itinerary saved, but pricing failed to update'
+            )
+            return false
+          }
         }
       }
       
@@ -1852,23 +1861,34 @@ export default function CreatePage() {
         // Save permissions and pricing for sellers with step 4 access
         if (canAccessStep4 && itineraryId) {
           try {
-            // Save permissions
             await updateItineraryPermissions(itineraryId, buildPermissionsPayload())
-            
-            // Save pricing
+          } catch (permError) {
+            console.error('Error saving permissions:', permError)
+            toast.error(
+              permError instanceof Error
+                ? permError.message
+                : 'Itinerary saved, but permissions failed to update'
+            )
+            return
+          }
+
+          try {
             const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
             await updateItineraryPricing(itineraryId, {
               is_paid: isPaid,
               price_cents: isPaid ? priceCents : 0
             })
-          } catch (permError) {
-            console.error('Error saving permissions/pricing:', permError)
-            toast.error(
-              permError instanceof Error
-                ? permError.message
-                : 'Itinerary saved, but pricing/permissions failed to update'
-            )
-            return
+          } catch (priceError) {
+            console.error('Error saving pricing:', priceError)
+            // Free / unpaid itineraries should still publish if permissions succeeded
+            if (isPaid) {
+              toast.error(
+                priceError instanceof Error
+                  ? priceError.message
+                  : 'Itinerary saved, but pricing failed to update'
+              )
+              return
+            }
           }
         }
         

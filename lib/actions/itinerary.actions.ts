@@ -553,8 +553,12 @@ export const getItineraryDataByUserId = async (userId: string, currentUserId: st
 }
 
 export const createItinerary = async (itinerary: CreateItinerary) => {
-    itinerary.days.forEach((x, i) => x.id = i + 1)
-    // Mey need to check if the user is authenticated
+    const days = Array.isArray(itinerary.days) ? itinerary.days : []
+    days.forEach((x, i) => {
+      if (x && typeof x === "object") x.id = i + 1
+    })
+    itinerary.days = days
+
     const supabase = await createClient()
     const {
         data: { user },
@@ -562,8 +566,10 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
     
       if (!user) throw new Error("Not authenticated")
 
-      // Block phone/SEO spam (especially on publish; also on draft to stop mass spam saves)
-      assertItineraryNotSpam(itinerary)
+      // Only block spam on publish — drafts must always be saveable
+      if (itinerary.status === ItineraryStatusEnum.published) {
+        assertItineraryNotSpam(itinerary)
+      }
 
         const { data, error } = await supabase.rpc("create_itinerary", {
             p_itinerary: itinerary,
@@ -579,13 +585,18 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
             ? data
             : data && typeof data === "object" && "id" in data
               ? String((data as { id: string }).id)
-              : null
+              : itinerary.id || null
 
-        if (itineraryId && itinerary.title) {
-          await syncItinerarySlug(supabase, itineraryId, itinerary.title)
+        if (itineraryId && itinerary.title?.trim()) {
+          try {
+            await syncItinerarySlug(supabase, itineraryId, itinerary.title)
+          } catch (slugError) {
+            console.error("Slug sync failed after create:", slugError)
+          }
         }
 
-        return data;
+        // Return a plain object — raw RPC payloads can fail Server Action serialization
+        return { success: true, id: itineraryId };
 }
 
 export const updateItinerary = async (id: string, itinerary: CreateItinerary) => {
@@ -596,7 +607,9 @@ export const updateItinerary = async (id: string, itinerary: CreateItinerary) =>
     
       if (!user) throw new Error("Not authenticated")
 
-      assertItineraryNotSpam(itinerary)
+      if (itinerary.status === ItineraryStatusEnum.published) {
+        assertItineraryNotSpam(itinerary)
+      }
 
       const { error } = await supabase.rpc("update_itinerary", {
           p_itinerary: itinerary,
@@ -606,8 +619,12 @@ export const updateItinerary = async (id: string, itinerary: CreateItinerary) =>
 
       if (error) throw new Error(error.message);
 
-      if (itinerary.title) {
-        await syncItinerarySlug(supabase, id, itinerary.title)
+      if (itinerary.title?.trim()) {
+        try {
+          await syncItinerarySlug(supabase, id, itinerary.title)
+        } catch (slugError) {
+          console.error("Slug sync failed after update:", slugError)
+        }
       }
 
       revalidatePath(`/itinerary/[id]/[slug]`, "page")
@@ -1135,16 +1152,18 @@ export const updateItineraryPricing = async (
 
   if (!user) throw new Error("Not authenticated")
 
-  // Pricing requires an active Stripe Connect seller account (not a paid plan).
-  const { data: userSettings, error: settingsError } = await supabase
-    .from('users_settings')
-    .select('stripe_account_id')
-    .eq('user_id', user.id)
-    .single()
+  // Paid pricing requires Stripe Connect; unpaid/free listings do not.
+  if (pricing.is_paid) {
+    const { data: userSettings, error: settingsError } = await supabase
+      .from('users_settings')
+      .select('stripe_account_id')
+      .eq('user_id', user.id)
+      .single()
 
-  if (settingsError) throw new Error("Could not verify seller account")
-  if (!userSettings?.stripe_account_id) {
-    throw new Error("Connect a Stripe seller account before setting pricing")
+    if (settingsError) throw new Error("Could not verify seller account")
+    if (!userSettings?.stripe_account_id) {
+      throw new Error("Connect a Stripe seller account before setting pricing")
+    }
   }
 
   // Verify the user is the creator
