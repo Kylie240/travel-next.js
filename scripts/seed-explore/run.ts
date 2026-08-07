@@ -12,7 +12,7 @@
  *   npm run seed:explore -- --clean-users    # delete seed itineraries + seed auth users
  */
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js"
 import { randomUUID } from "crypto"
 import { readFileSync, existsSync } from "fs"
 import { resolve } from "path"
@@ -71,14 +71,22 @@ function slugify(title: string): string {
   )
 }
 
+async function findAuthUserByEmail(
+  admin: SupabaseClient,
+  email: string
+): Promise<User | undefined> {
+  const target = email.toLowerCase()
+  const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+  if (error) throw new Error(`listUsers failed: ${error.message}`)
+  const users = (data?.users ?? []) as User[]
+  return users.find((u) => (u.email || "").toLowerCase() === target)
+}
+
 async function ensureSeedAccount(
   admin: SupabaseClient,
   account: SeedAccount
 ): Promise<string> {
-  const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
-  const existing = listed?.users?.find(
-    (u) => u.email?.toLowerCase() === account.email.toLowerCase()
-  )
+  const existing = await findAuthUserByEmail(admin, account.email)
 
   let userId = existing?.id
 
@@ -94,6 +102,7 @@ async function ensureSeedAccount(
       },
     })
     if (error) throw new Error(`Create auth user ${account.username}: ${error.message}`)
+    if (!data.user?.id) throw new Error(`Create auth user ${account.username}: missing user id`)
     userId = data.user.id
     console.log(`  + auth user @${account.username}`)
   } else {
@@ -298,10 +307,7 @@ async function cleanSeed(admin: SupabaseClient, removeUsers: boolean) {
 
   console.log("Cleaning seed auth users…")
   for (const account of SEED_ACCOUNTS) {
-    const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
-    const user = listed?.users?.find(
-      (u) => u.email?.toLowerCase() === account.email.toLowerCase()
-    )
+    const user = await findAuthUserByEmail(admin, account.email)
     if (!user) continue
     await admin.from("users_settings").delete().eq("user_id", user.id)
     await admin.from("users").delete().eq("id", user.id)
