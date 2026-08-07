@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:explore": "npx tsx scripts/seed-explore/run.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

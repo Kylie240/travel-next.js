@@ -46,6 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select("id, title, slug, updated_at")
       .eq("status", ItineraryStatusEnum.published)
       .eq("view_permission", viewPermissionEnum.public)
+      .eq("is_searchable", true)
       .order("updated_at", { ascending: false })
       .limit(5000)
 

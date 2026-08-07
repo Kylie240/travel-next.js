@@ -208,6 +208,7 @@ export const getPublicDestinationCountries = async (): Promise<string[]> => {
     .select("id")
     .eq("status", ItineraryStatusEnum.published)
     .eq("view_permission", viewPermissionEnum.public)
+    .eq("is_searchable", true)
     .limit(5000)
 
   if (itinerariesError) {
@@ -381,6 +382,7 @@ export const getItineraries = async (
     )
     .eq("status", ItineraryStatusEnum.published)
     .eq("view_permission", viewPermissionEnum.public)
+    .eq("is_searchable", true)
 
   if (minDuration != null) query = query.gte("duration", minDuration)
   if (maxDuration != null) query = query.lte("duration", maxDuration)
@@ -522,8 +524,9 @@ export const getItineraries = async (
       likes: likesById.get(id) || 0,
       creatorId: String(row.creator_id || ""),
       creatorName:
+        creator?.username?.trim() ||
         creator?.name?.trim() ||
-        (creator?.username ? `@${creator.username}` : "Traveler"),
+        "Traveler",
       creatorImage: creator?.avatar || "",
     }
   })
@@ -1231,3 +1234,38 @@ export const updateItineraryTemplate = async (
 
   return { success: true };
 };
+
+export const updateItinerarySearchable = async (
+  itineraryId: string,
+  isSearchable: boolean
+) => {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) throw new Error("Not authenticated")
+
+  const { data: itinerary, error: fetchError } = await supabase
+    .from("itineraries")
+    .select("creator_id")
+    .eq("id", itineraryId)
+    .single()
+
+  if (fetchError) throw new Error("Itinerary not found")
+  if (itinerary.creator_id !== user.id) {
+    throw new Error("You are not authorized to update this itinerary")
+  }
+
+  const { error } = await supabase
+    .from("itineraries")
+    .update({ is_searchable: isSearchable })
+    .eq("id", itineraryId)
+
+  if (error) {
+    console.error("Update searchable error:", error)
+    throw new Error(error.message)
+  }
+
+  return { success: true }
+}

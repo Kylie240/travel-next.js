@@ -37,7 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { accommodations } from "@/lib/constants/accommodations"
 import { Accommodation } from "@/types/Accommodation"
-import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, updateItineraryTemplate, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
+import { createItinerary, getItineraryById, updateItinerary, updateItineraryPermissions, updateItineraryPricing, updateItineraryTemplate, updateItinerarySearchable, getItineraryPermissionsById } from "@/lib/actions/itinerary.actions"
 import { getPermissionPickerUsers } from "@/lib/actions/user.actions"
 import createClient from "@/utils/supabase/client"
 import { CreateItinerary, type ItineraryTemplate } from "@/types/createItinerary"
@@ -1048,6 +1048,7 @@ export default function CreatePage() {
   // User plan and permissions state (for step 4)
   const [userPlan, setUserPlan] = useState<string>('free')
   const [template, setTemplate] = useState<ItineraryTemplate>('basic')
+  const [isSearchable, setIsSearchable] = useState(true)
   const [showPreview, setShowPreview] = useState(false)
   const [previewFormValues, setPreviewFormValues] = useState<FormData | null>(null)
   const [creatorPreview, setCreatorPreview] = useState<UserData | null>(null)
@@ -1468,6 +1469,31 @@ export default function CreatePage() {
           }
 
           form.reset(itinerary);
+
+          // Load explore visibility (available to all creators on step 3)
+          try {
+            const { data: searchableRow } = await supabase
+              .from('itineraries')
+              .select('is_searchable, template')
+              .eq('id', itineraryId)
+              .single()
+            if (searchableRow) {
+              if (typeof searchableRow.is_searchable === 'boolean') {
+                setIsSearchable(searchableRow.is_searchable)
+              }
+              if (
+                searchableRow.template === 'basic' ||
+                searchableRow.template === 'discover' ||
+                searchableRow.template === 'explore' ||
+                searchableRow.template === 'journey' ||
+                searchableRow.template === 'wonder'
+              ) {
+                setTemplate(searchableRow.template)
+              }
+            }
+          } catch (searchableErr) {
+            console.error('Failed to load searchable setting:', searchableErr)
+          }
           
           // Load permissions and pricing for paid users when editing
           if (canAccessStep4) {
@@ -1752,6 +1778,15 @@ export default function CreatePage() {
     }
   }
 
+  const persistItinerarySearchable = async (id: string | null | undefined) => {
+    if (!id) return
+    try {
+      await updateItinerarySearchable(id, isSearchable)
+    } catch (e) {
+      console.error("Error saving itinerary searchable setting:", e)
+    }
+  }
+
   const saveItineraryAsDraft = async () => {
     setIsSubmitting(true);
     try {
@@ -1768,6 +1803,7 @@ export default function CreatePage() {
       }
 
       await persistItineraryTemplate(itineraryId)
+      await persistItinerarySearchable(itineraryId)
       
       if (canAccessStep4 && itineraryId) {
         try {
@@ -1857,6 +1893,7 @@ export default function CreatePage() {
         }
 
         await persistItineraryTemplate(itineraryId)
+        await persistItinerarySearchable(itineraryId)
         
         // Save permissions and pricing for sellers with step 4 access
         if (canAccessStep4 && itineraryId) {
@@ -1982,6 +2019,7 @@ export default function CreatePage() {
       }
 
       await persistItineraryTemplate(itineraryId)
+      await persistItinerarySearchable(itineraryId)
       
       if (response) {
         toast.success('Itinerary saved successfully')
@@ -2394,7 +2432,19 @@ export default function CreatePage() {
               {currentStep === 3 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-lg font-thin sm:mb-1 md:mb-2 ml-1">Estimated Expense</h2>
+                    <h2 className="text-lg font-thin sm:mb-1 md:mb-2">Show on Explore</h2>
+                    <p className="text-xs sm:text-sm p-1 sm:p-0">When on, this itinerary can appear in Explore search and destination filters. Turn off to keep it shareable by link only.</p>
+                    <Switch
+                      id="is-searchable"
+                      checked={isSearchable}
+                      onCheckedChange={setIsSearchable}
+                      disabled={isFormDisabled}
+                      className="mt-1 shrink-0"
+                    />
+                  </div>
+
+                  <div>
+                    <h2 className="text-lg font-thin sm:mb-1 md:mb-2">Estimated Expense</h2>
                     <p className="text-xs sm:text-sm p-1 sm:p-0">Help other travelers budget their trip</p>
                       <Input
                         {...form.register('budget', {
@@ -2407,7 +2457,7 @@ export default function CreatePage() {
                   </div>
 
                   <div>
-                    <h2 className="text-lg font-medium mb-3 ml-1">Categories <span className="text-gray-500 text-sm">(select up to 5)</span></h2>
+                    <h2 className="text-lg font-medium mb-3">Categories <span className="text-gray-500 text-sm">(select up to 5)</span></h2>
                     <div className="md:grid-cols-4 grid grid-cols-2 sm:grid-cols-3 gap-3 w-full">
                       {itineraryTags.map((category) => {
                         const currentTags = form.watch('itineraryTags') || []
