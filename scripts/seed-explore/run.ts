@@ -76,6 +76,17 @@ async function findAuthUserByEmail(
   email: string
 ): Promise<User | undefined> {
   const target = email.toLowerCase()
+
+  // Prefer public.users (works even when Auth Hooks break admin.createUser)
+  const { data: profile } = await admin
+    .from("users")
+    .select("id, email")
+    .eq("email", target)
+    .maybeSingle()
+  if (profile?.id) {
+    return { id: profile.id, email: profile.email } as User
+  }
+
   const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
   if (error) throw new Error(`listUsers failed: ${error.message}`)
   const users = (data?.users ?? []) as User[]
@@ -101,12 +112,20 @@ async function ensureSeedAccount(
         is_seed: true,
       },
     })
-    if (error) throw new Error(`Create auth user ${account.username}: ${error.message}`)
-    if (!data.user?.id) throw new Error(`Create auth user ${account.username}: missing user id`)
+    if (error) {
+      throw new Error(
+        `Seed account @${account.username} is missing and Auth createUser failed (${error.message}).\n` +
+          `Your Supabase "Before User Created" hook is likely returning 500 (this also blocks normal signups).\n` +
+          `Fix: run supabase/migrations/20260807_seed_explore_users.sql in the SQL Editor, then re-run npm run seed:explore.`
+      )
+    }
+    if (!data.user?.id) {
+      throw new Error(`Create auth user ${account.username}: missing user id`)
+    }
     userId = data.user.id
     console.log(`  + auth user @${account.username}`)
   } else {
-    console.log(`  = auth user @${account.username} (exists)`)
+    console.log(`  = account @${account.username} (exists)`)
   }
 
   const now = new Date().toISOString()

@@ -62,7 +62,11 @@ BEGIN
     NEW.stripe_connect_payouts_enabled := coalesce(NEW.stripe_connect_payouts_enabled, false);
     NEW.stripe_connect_details_submitted := coalesce(NEW.stripe_connect_details_submitted, false);
     NEW.stripe_connect_disabled_reason := NULL;
-    NEW.stripe_connect_requirements_currently_due := NULL;
+    -- Must be empty array, not NULL (column is NOT NULL)
+    NEW.stripe_connect_requirements_currently_due := coalesce(
+      NEW.stripe_connect_requirements_currently_due,
+      '{}'::text[]
+    );
     NEW.stripe_connect_status := NULL;
     NEW.stripe_connect_synced_at := NULL;
     NEW.stripe_connect_last_payout_failed_at := NULL;

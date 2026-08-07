@@ -50,7 +50,7 @@ const SEED_PASSWORD = "JournliSeed2026!"
 export const SEED_ACCOUNTS: SeedAccount[] = [
   {
     key: "tokyo-walks",
-    email: "seed.tokyo.walks@journli.seed",
+    email: "tokyo.walks@seed.journli.com",
     password: SEED_PASSWORD,
     name: "Tokyo Walks",
     username: "tokyo.walks",
@@ -60,7 +60,7 @@ export const SEED_ACCOUNTS: SeedAccount[] = [
   },
   {
     key: "italian-trails",
-    email: "seed.italian.trails@journli.seed",
+    email: "italian.trails@seed.journli.com",
     password: SEED_PASSWORD,
     name: "Italian Trails",
     username: "italian.trails",
@@ -70,7 +70,7 @@ export const SEED_ACCOUNTS: SeedAccount[] = [
   },
   {
     key: "nordic-escape",
-    email: "seed.nordic.escape@journli.seed",
+    email: "nordic.escape@seed.journli.com",
     password: SEED_PASSWORD,
     name: "Nordic Escape",
     username: "nordic.escape",
@@ -80,7 +80,7 @@ export const SEED_ACCOUNTS: SeedAccount[] = [
   },
   {
     key: "coastal-trips",
-    email: "seed.coastal.trips@journli.seed",
+    email: "coastal.trips@seed.journli.com",
     password: SEED_PASSWORD,
     name: "Coastal Trips",
     username: "coastal.trips",
@@ -90,7 +90,7 @@ export const SEED_ACCOUNTS: SeedAccount[] = [
   },
   {
     key: "journli-guides",
-    email: "seed.journli.guides@journli.seed",
+    email: "guides@seed.journli.com",
     password: SEED_PASSWORD,
     name: "Journli Guides",
     username: "journli.guides",

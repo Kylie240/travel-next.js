@@ -74,6 +74,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({}, { status: 200 })
   }
 
+  // Editorial seed accounts used by scripts/seed-explore
+  if (email.toLowerCase().endsWith("@seed.journli.com")) {
+    return NextResponse.json({}, { status: 200 })
+  }
+
   // OAuth (Google) already verified the mailbox — still block known disposables.
   if (isSuspiciousSignupEmail(email)) {
     console.warn("Blocked signup via auth hook", {
