@@ -3,6 +3,7 @@ import Link from "next/link"
 import { ArrowRight, Globe2 } from "lucide-react"
 import type { ExplorePageDto } from "@/dtos/ExplorePageDto"
 import { getItineraryPath } from "@/lib/utils/itinerary-url"
+import { Button } from "@/components/ui/button"
 
 export function PopularItinerariesSection({
   itineraries,
@@ -33,7 +34,7 @@ export function PopularItinerariesSection({
                 href={getItineraryPath(itinerary)}
                 className="block group w-[72vw] max-w-[280px] shrink-0 snap-start lg:w-auto lg:max-w-none lg:shrink"
               >
-                <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-gray-200">
+                <div className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-gray-200">
                   {itinerary.mainImage ? (
                     <Image
                       src={itinerary.mainImage}
@@ -67,12 +68,11 @@ export function PopularItinerariesSection({
           </div>
         </div>
 
-        <Link
-          href="/explore"
-          className="inline-flex items-center gap-2 mt-6 text-gray-900 font-medium hover:underline"
-        >
-          View all on Explore
-          <ArrowRight className="w-4 h-4" />
+        <Link href="/explore">
+          <Button size="default" className="bg-black flex rounded-full items-center text-white px-8 text-md h-10 py-4 mt-4">
+            View All
+            <ArrowRight className="w-4 h-4" />
+          </Button>
         </Link>
       </div>
     </section>

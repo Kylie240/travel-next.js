@@ -251,6 +251,68 @@ export const getPublicDestinationCountries = async (): Promise<string[]> => {
 }
 
 /**
+ * Trip counts per country from published, public, searchable itineraries.
+ * Count is unique itineraries that include that country on any day.
+ */
+export const getDestinationTripCounts = async (): Promise<
+  Array<{ country: string; count: number }>
+> => {
+  const supabase = await createClient()
+
+  const { data: itineraries, error: itinerariesError } = await supabase
+    .from("itineraries")
+    .select("id")
+    .eq("status", ItineraryStatusEnum.published)
+    .eq("view_permission", viewPermissionEnum.public)
+    .eq("is_searchable", true)
+    .limit(5000)
+
+  if (itinerariesError) {
+    console.error(
+      "Failed to load itineraries for destination counts:",
+      itinerariesError.message
+    )
+    return []
+  }
+
+  const ids = (itineraries || []).map((row) => String(row.id)).filter(Boolean)
+  if (ids.length === 0) return []
+
+  const itinerariesByCountry = new Map<string, Set<string>>()
+  const chunkSize = 200
+
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize)
+    const { data: dayRows, error: daysError } = await supabase
+      .from("itinerary_days")
+      .select("itinerary_id, country")
+      .in("itinerary_id", chunk)
+      .not("country", "is", null)
+
+    if (daysError) {
+      console.error(
+        "Failed to load days for destination counts:",
+        daysError.message
+      )
+      continue
+    }
+
+    for (const row of dayRows || []) {
+      const country = String(row.country || "").trim()
+      const itineraryId = String(row.itinerary_id || "")
+      if (!country || !itineraryId) continue
+      const set = itinerariesByCountry.get(country) || new Set<string>()
+      set.add(itineraryId)
+      itinerariesByCountry.set(country, set)
+    }
+  }
+
+  return [...itinerariesByCountry.entries()]
+    .map(([country, set]) => ({ country, count: set.size }))
+    .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country))
+}
+
+/**
  * Public explore feed: published itineraries with public view permission.
  *
  * Schema notes: `countries`/`cities` are NOT columns on `itineraries`; they are

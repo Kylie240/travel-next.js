@@ -13,8 +13,10 @@ import type { ReactNode } from "react"
 
 export default function LandingClient({
   children,
+  destinations,
 }: {
   children?: ReactNode
+  destinations?: ReactNode
 }) {
   return (
     <div className="bg-white">
@@ -96,20 +98,20 @@ export default function LandingClient({
         </div>
       </div>
 
-      <div className="py-12 px-4 bg-gray-100 mt-4 mb-12">
-        <div className="max-w-4xl flex flex-col md:flex-row gap-8 md:gap-0 items-center justify-between mx-auto text-center">
-          <div className="flex flex-col items-center justify-center gap-3">
-            <h3 className="flex items-center gap-2 text-cyan-700 text-xl font-bold"><FaSuitcase /> Planning a Trip?</h3>
-            <p className="text-sm md:text-md text-gray-800 mb-2 px-8">
+      <div className="p-12 bg-gray-100 mt-4 mb-12">
+        <div className="flex flex-col md:flex-row gap-8 items-center justify-center text-center">
+          <div className="flex flex-col items-center justify-center gap-3 bg-white p-4 rounded-lg">
+            <h3 className="flex items-center gap-2 text-cyan-700 text-xl md:text-2xl font-bold"><FaSuitcase /> Planning a Trip?</h3>
+            <p className="text-base lg:text-lg text-gray-800 mb-2 px-8">
               Skip hours of research and let real travelers share their expertise. Discover detailed itineraries created by travelers and get the exact plans, tips, and recommendations you need for your next trip.
             </p>
             <Link href="/explore" className="flex items-center gap-2 hover:font-semibold">
               Explore Itineraries <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="flex flex-col items-center justify-center gap-3">
-            <h3 className="flex items-center gap-2 text-cyan-700 text-xl font-bold"><FaPlane /> Have Travel Experience?</h3>
-            <p className="text-sm md:text-md text-gray-800 mb-2 px-8">
+          <div className="flex flex-col items-center justify-center gap-3 bg-white p-4 rounded-lg">
+            <h3 className="flex items-center gap-2 text-cyan-700 text-xl md:text-2xl font-bold"><FaPlane /> Have Travel Experience?</h3>
+            <p className="text-base lg:text-lg text-gray-800 mb-2 px-8">
               Share your travel expertise and earn money by creating and selling your own itineraries. Get paid for your knowledge and experiences, and help other travelers plan their perfect trips.
             </p>
             <Link href="/become-a-creator" className="flex items-center gap-2 hover:font-semibold">
@@ -123,13 +125,13 @@ export default function LandingClient({
       {children}
 
       {/* Features Section */}
-      <div className="py-12 px-12 mt-12">
+      <div className="py-12 px-12 my-12">
         <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col items-center justify-center mb-16">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl px-8 sm:px-6 font-bold text-center mb-2">
+          <div className="flex flex-col items-center justify-center mb-10">
+            <h2 className="text-3xl lg:text-4xl font-bold text-center mb-2">
               Your Trip Can Inspire Others
             </h2>
-            <p className="text-gray-600 text-sm md:text-lg px-4 text-center">You've already done the research. Turn your travel knowledge into an itinerary other travelers can purchase.</p>
+            <p className="text-gray-600 text-lg lg:text-xl text-center max-w-xl">You've already done the research. Turn your travel knowledge into an itinerary other travelers can purchase.</p>
           </div>
           
           <div className="flex flex-col items-center justify-center space-y-16">
@@ -211,6 +213,9 @@ export default function LandingClient({
           </div>
         </div>
       </div>
+
+      {/* Where do you want to go */}
+      {destinations}
 
       <div className="py-12 px-4 bg-gray-900">
         <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
@@ -340,6 +345,27 @@ export default function LandingClient({
               <div className="max-h-0 overflow-hidden transition-all duration-300">
                 <p className="p-4 text-gray-600 border-t">
                   Yes! You can export your itineraries to PDF format, making them easily accessible offline on any device.
+                </p>
+              </div>
+            </div>
+
+            <div className="border border-gray-200 bg-white">
+              <button
+                className="w-full flex justify-between items-center p-4 hover:bg-gray-50"
+                onClick={(e) => {
+                  const content = e.currentTarget.nextElementSibling as HTMLElement
+                  const isOpen = content.style.maxHeight
+                  content.style.maxHeight = isOpen ? '' : content.scrollHeight + 'px'
+                }}
+              >
+                <span className="font-medium text-left">How much does it cost to sell an itinerary?</span>
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="max-h-0 overflow-hidden transition-all duration-300">
+                <p className="p-4 text-gray-600 border-t">
+                  It depends on the plan you choose. You can sell your itinerary for free or sign up for Pro to sell with a reduced seller fee. Current selling fees can be found on the <Link href="/pricing" className="text-cyan-700 hover:underline">Pricing Page</Link>.
                 </p>
               </div>
             </div>
