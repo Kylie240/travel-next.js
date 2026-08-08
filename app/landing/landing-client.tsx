@@ -214,9 +214,6 @@ export default function LandingClient({
         </div>
       </div>
 
-      {/* Where do you want to go */}
-      {destinations}
-
       <div className="py-12 px-4 bg-gray-900">
         <div className="max-w-4xl flex flex-col items-center justify-center mx-auto text-center">
           <h2 className="text-2xl md:text-3xl text-white font-bold mb-2">
@@ -232,6 +229,9 @@ export default function LandingClient({
           </Link>
         </div>
       </div>
+
+      {/* Where do you want to go */}
+      {destinations}
 
       {/* FAQ Section */}
       <div className="py-12 px-4 md:px-8 bg-gray-50">
