@@ -31,11 +31,15 @@ const ActionButtons = () => {
 
     // Set up auth state listener first - this fires immediately with current session
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (mounted) {
+      if (!mounted) return
+      // INITIAL_SESSION is the mount hydrate — do not refresh or we loop with loading.tsx
+      if (event === "INITIAL_SESSION") {
         setCurrentUser(!!session?.user)
-        if (event === 'SIGNED_IN') {
-          router.refresh()
-        }
+        return
+      }
+      setCurrentUser(!!session?.user)
+      if (event === "SIGNED_IN") {
+        router.refresh()
       }
     })
     subscription = authSubscription

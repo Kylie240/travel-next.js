@@ -232,7 +232,7 @@ async function seedItinerary(
     .maybeSingle()
 
   if (existing?.id) {
-    console.log(`  = itinerary "${seed.title}" (exists)`)
+    console.log(`  ~ itinerary "${seed.title}" (refreshing media/flags)`)
     await admin
       .from("itineraries")
       .update({
@@ -243,9 +243,12 @@ async function seedItinerary(
         edit_permission: EDIT_CREATOR,
         slug: slugify(seed.title),
         template: seed.template,
+        main_image: seed.mainImage,
+        short_description: seed.shortDescription,
+        budget: seed.budget,
       })
       .eq("id", existing.id)
-    return "skipped"
+    return "updated"
   }
 
   const id = randomUUID()
@@ -359,7 +362,7 @@ async function main() {
 
   console.log("\nSeeding itineraries…")
   let created = 0
-  let skipped = 0
+  let updated = 0
   for (const itinerary of SEED_ITINERARIES) {
     const creatorId = accountIds.get(itinerary.accountKey)
     if (!creatorId) {
@@ -367,11 +370,11 @@ async function main() {
     }
     const result = await seedItinerary(admin, itinerary, creatorId)
     if (result === "created") created++
-    else skipped++
+    else if (result === "updated") updated++
   }
 
-  console.log(`\nDone. created=${created} skipped=${skipped} total=${SEED_ITINERARIES.length}`)
-  console.log("Open /explore to verify. Re-run is safe (idempotent by title + creator).")
+  console.log(`\nDone. created=${created} updated=${updated} total=${SEED_ITINERARIES.length}`)
+  console.log("Open /explore to verify. Re-run refreshes cover images on existing seed trips.")
 }
 
 main().catch((err) => {

@@ -49,6 +49,8 @@ import { ItineraryStatusEnum, viewPermissionEnum, editPermissionEnum } from "@/e
 import { ItineraryStatus } from "@/types/itineraryStatus"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
 import { ItineraryPreviewDialog } from "@/components/create/itinerary-preview-dialog"
+import { ImportItineraryDialog } from "@/components/create/import-itinerary-dialog"
+import type { ImportedItineraryDraft } from "@/lib/import/itinerary-draft-schema"
 import { UserData } from "@/lib/types"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { Followers } from "@/types/followers"
@@ -1050,6 +1052,7 @@ export default function CreatePage() {
   const [template, setTemplate] = useState<ItineraryTemplate>('basic')
   const [isSearchable, setIsSearchable] = useState(true)
   const [showPreview, setShowPreview] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
   const [previewFormValues, setPreviewFormValues] = useState<FormData | null>(null)
   const [creatorPreview, setCreatorPreview] = useState<UserData | null>(null)
   const [viewPermission, setViewPermission] = useState<'public' | 'creator' | 'restricted'>('public')
@@ -1787,6 +1790,76 @@ export default function CreatePage() {
     }
   }
 
+  const applyImportedDraft = (
+    draft: ImportedItineraryDraft,
+    meta: { source: string; warnings: string[] }
+  ) => {
+    const days: Day[] = draft.days.map((day, index) => ({
+      ...INITIAL_DAY,
+      id: index + 1,
+      title: day.title || `Day ${index + 1}`,
+      cityName: day.cityName === "Unknown" ? "" : day.cityName,
+      countryName: day.countryName === "Unknown" ? "" : day.countryName,
+      description: day.description || "",
+      activities: (day.activities || []).map((activity, activityIndex) => ({
+        id: activityIndex + 1,
+        activityNumber: activityIndex + 1,
+        title: activity.title || "Activity",
+        description: activity.description || "",
+        time: activity.time || "",
+        duration: null,
+        image: "",
+        type: activity.type ?? undefined,
+        link: "",
+        photos: [],
+        price: 0,
+        location: activity.location || "",
+      })),
+    }))
+
+    const cityMap = new Map<string, City>()
+    for (const day of days) {
+      if (day.cityName && day.countryName) {
+        const key = `${day.cityName}|${day.countryName}`
+        if (!cityMap.has(key)) {
+          cityMap.set(key, { city: day.cityName, country: day.countryName })
+        }
+      }
+    }
+
+    form.setValue("title", draft.title.slice(0, 50))
+    form.setValue("shortDescription", draft.shortDescription.slice(0, 300))
+    form.setValue("detailedOverview", draft.detailedOverview || "")
+    form.setValue("duration", Math.max(1, days.length))
+    form.setValue("days", days.length > 0 ? days : [{ ...INITIAL_DAY }])
+    form.setValue("cities", [...cityMap.values()])
+    form.setValue("itineraryTags", (draft.itineraryTags || []).slice(0, 5))
+    form.setValue(
+      "notes",
+      (draft.notes || []).map((note, i) => ({
+        id: i + 1,
+        title: note.title || "",
+        content: note.content || "",
+        expanded: true,
+      }))
+    )
+    if (draft.budget != null && Number.isFinite(draft.budget)) {
+      form.setValue("budget", draft.budget)
+    }
+    form.setValue("status", ItineraryStatusEnum.draft)
+
+    setCurrentStep(1)
+    scrollToTop()
+    toast.success(
+      meta.source === "ai"
+        ? "Trip imported — review and add a cover photo"
+        : "Draft imported — review carefully (simple parser)"
+    )
+    for (const warning of meta.warnings.slice(0, 3)) {
+      toast.message(warning)
+    }
+  }
+
   const saveItineraryAsDraft = async () => {
     setIsSubmitting(true);
     try {
@@ -2221,6 +2294,24 @@ export default function CreatePage() {
                       </div>
                     </div>
                   </div>
+
+                  <div className="rounded-2xl border border-dashed border-gray-300 bg-white/80 p-4 sm:p-5 mt-2">
+                    <p className="text-base font-medium text-gray-900">Already have this trip written down?</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Import from a blog, Notes, Google Doc, TikTok caption, or public URL — then edit before you publish.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-3 rounded-xl"
+                      onClick={() => setShowImportDialog(true)}
+                      disabled={!!isFormDisabled}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Import trip notes
+                    </Button>
+                  </div>
+
                   <div className="flex justify-center mx-10 pt-4">
                     <Button className="w-full md:w-[300px]" onClick={() => setCurrentStep(1)}>Get Started</Button>
                   </div>
@@ -2229,6 +2320,21 @@ export default function CreatePage() {
 
               {currentStep === 1 && (
                 <div className="space-y-6">
+                  {!initialItineraryId && (
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-xl text-gray-600"
+                        onClick={() => setShowImportDialog(true)}
+                        disabled={isFormDisabled}
+                      >
+                        <Upload className="h-4 w-4 mr-1.5" />
+                        Import notes
+                      </Button>
+                    </div>
+                  )}
                   <div className="flex sm:flex-col gap-2 items-center sm:items-start sm:gap-0">
                     <Label className="text-[16px] font-thin sm:mb-1 md:mb-2 leading-none" htmlFor="title">Trip Name*</Label>
                     <Input
@@ -2920,6 +3026,12 @@ export default function CreatePage() {
         </div>
       </form>
       
+      <ImportItineraryDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        onImported={applyImportedDraft}
+      />
+
       <ItineraryPreviewDialog
         open={showPreview}
         onOpenChange={setShowPreview}

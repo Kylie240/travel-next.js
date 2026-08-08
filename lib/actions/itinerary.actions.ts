@@ -540,6 +540,146 @@ export const getItineraries = async (
   }
 }
 
+/**
+ * Top public Explore itineraries by like count (falls back to recency when ties / no likes).
+ */
+export const getPopularItineraries = async (
+  limit = 4
+): Promise<ExplorePageDto[]> => {
+  const take = Math.min(12, Math.max(1, limit))
+  const supabase = await createClient()
+
+  const { data: rows, error } = await supabase
+    .from("itineraries")
+    .select(
+      "id, title, slug, short_description, main_image, duration, budget, creator_id, updated_at"
+    )
+    .eq("status", ItineraryStatusEnum.published)
+    .eq("view_permission", viewPermissionEnum.public)
+    .eq("is_searchable", true)
+    .order("updated_at", { ascending: false })
+    .limit(120)
+
+  if (error) {
+    console.error("getPopularItineraries:", error.message)
+    return []
+  }
+
+  const candidates = rows || []
+  if (candidates.length === 0) return []
+
+  const ids = candidates.map((r) => String(r.id))
+  const creatorIds = [
+    ...new Set(
+      candidates
+        .map((r) => r.creator_id as string | null)
+        .filter((id): id is string => Boolean(id))
+    ),
+  ]
+
+  const [likesRes, daysRes, tagsRes, creatorsRes] = await Promise.all([
+    supabase.from("interactions_likes").select("itinerary_id").in("itinerary_id", ids),
+    supabase
+      .from("itinerary_days")
+      .select("itinerary_id, country, city")
+      .in("itinerary_id", ids),
+    supabase
+      .from("itinerary_tags")
+      .select("itinerary_id, tag_id")
+      .in("itinerary_id", ids),
+    creatorIds.length
+      ? supabase
+          .from("users")
+          .select("id, name, username, avatar")
+          .in("id", creatorIds)
+      : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+  ])
+
+  const likesById = new Map<string, number>()
+  for (const row of likesRes.data || []) {
+    const key = String(row.itinerary_id)
+    likesById.set(key, (likesById.get(key) || 0) + 1)
+  }
+
+  const countriesById = new Map<string, string[]>()
+  const citiesById = new Map<string, string[]>()
+  for (const row of daysRes.data || []) {
+    const key = String(row.itinerary_id)
+    if (row.country) {
+      const arr = countriesById.get(key) || []
+      if (!arr.includes(String(row.country))) arr.push(String(row.country))
+      countriesById.set(key, arr)
+    }
+    if (row.city) {
+      const arr = citiesById.get(key) || []
+      if (!arr.includes(String(row.city))) arr.push(String(row.city))
+      citiesById.set(key, arr)
+    }
+  }
+
+  const tagIdsById = new Map<string, number[]>()
+  for (const row of tagsRes.data || []) {
+    const key = String(row.itinerary_id)
+    const arr = tagIdsById.get(key) || []
+    const tagId = Number(row.tag_id)
+    if (Number.isFinite(tagId) && !arr.includes(tagId)) arr.push(tagId)
+    tagIdsById.set(key, arr)
+  }
+
+  const creatorById = new Map<
+    string,
+    { name?: string | null; username?: string | null; avatar?: string | null }
+  >()
+  for (const c of (creatorsRes.data as Array<Record<string, unknown>>) || []) {
+    creatorById.set(String(c.id), {
+      name: c.name as string | null,
+      username: c.username as string | null,
+      avatar: c.avatar as string | null,
+    })
+  }
+
+  const mapped: ExplorePageDto[] = candidates.map((row) => {
+    const id = String(row.id)
+    const itineraryTagNames = tagIdsToNames(
+      tagIdsById.get(id) || [],
+      itineraryTagsMap
+    )
+    const creator = creatorById.get(String(row.creator_id))
+    return {
+      id,
+      title: String(row.title || "Untitled"),
+      slug: (row.slug as string | null) ?? null,
+      duration: Number(row.duration) || 1,
+      shortDescription: String(row.short_description || ""),
+      mainImage: String(row.main_image || ""),
+      countries: countriesById.get(id) || [],
+      cities: citiesById.get(id) || [],
+      itineraryTags: itineraryTagNames,
+      activityTags: [],
+      featuredCategories: itineraryTagNames.slice(0, 1),
+      views: 0,
+      rating: null,
+      price:
+        row.budget != null && String(row.budget) !== ""
+          ? Number(row.budget)
+          : null,
+      likes: likesById.get(id) || 0,
+      creatorId: String(row.creator_id || ""),
+      creatorName:
+        creator?.username?.trim() ||
+        creator?.name?.trim() ||
+        "Traveler",
+      creatorImage: creator?.avatar || "",
+    }
+  })
+
+  mapped.sort((a, b) => {
+    if (b.likes !== a.likes) return b.likes - a.likes
+    return 0
+  })
+
+  return mapped.slice(0, take)
+}
 
 export const getItineraryDataByUserId = async (userId: string, currentUserId: string) => {
     const supabase = await createClient()

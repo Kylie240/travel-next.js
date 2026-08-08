@@ -142,35 +142,35 @@ FROM (VALUES
   (
     'a1000000-0000-4000-8000-000000000001'::uuid,
     'Tokyo Walks', 'tokyo.walks', 'tokyo.walks@seed.journli.com',
-    'https://api.dicebear.com/7.x/shapes/svg?seed=tokyo.walks&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/shapes/png?seed=tokyo.walks&size=256&backgroundColor=b6e3f4',
     'Tokyo, Japan',
     'Editorial guide account for Journli. Neighborhood walks, food alleys, and quiet temples.'
   ),
   (
     'a1000000-0000-4000-8000-000000000002'::uuid,
     'Italian Trails', 'italian.trails', 'italian.trails@seed.journli.com',
-    'https://api.dicebear.com/7.x/shapes/svg?seed=italian.trails&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/shapes/png?seed=italian.trails&size=256&backgroundColor=c0aede',
     'Rome, Italy',
     'Editorial guide account for Journli. Classic Italy itineraries with room to wander.'
   ),
   (
     'a1000000-0000-4000-8000-000000000003'::uuid,
     'Nordic Escape', 'nordic.escape', 'nordic.escape@seed.journli.com',
-    'https://api.dicebear.com/7.x/shapes/svg?seed=nordic.escape&backgroundColor=d1d4f9',
+    'https://api.dicebear.com/7.x/shapes/png?seed=nordic.escape&size=256&backgroundColor=d1d4f9',
     'Reykjavík, Iceland',
     'Editorial guide account for Journli. Nordic cities, coasts, and slow travel days.'
   ),
   (
     'a1000000-0000-4000-8000-000000000004'::uuid,
     'Coastal Trips', 'coastal.trips', 'coastal.trips@seed.journli.com',
-    'https://api.dicebear.com/7.x/shapes/svg?seed=coastal.trips&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/shapes/png?seed=coastal.trips&size=256&backgroundColor=ffd5dc',
     'Lisbon, Portugal',
     'Editorial guide account for Journli. Seaside cities, cafés, and sunset viewpoints.'
   ),
   (
     'a1000000-0000-4000-8000-000000000005'::uuid,
     'Journli Guides', 'journli.guides', 'guides@seed.journli.com',
-    'https://api.dicebear.com/7.x/shapes/svg?seed=journli.guides&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/shapes/png?seed=journli.guides&size=256&backgroundColor=ffdfbf',
     'Worldwide',
     'Official editorial guides from Journli. Sample trips to help travelers get started.'
   )

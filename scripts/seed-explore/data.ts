@@ -56,7 +56,7 @@ export const SEED_ACCOUNTS: SeedAccount[] = [
     username: "tokyo.walks",
     location: "Tokyo, Japan",
     bio: "Editorial guide account for Journli. Neighborhood walks, food alleys, and quiet temples.",
-    avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=tokyo.walks&backgroundColor=b6e3f4",
+    avatar: "https://api.dicebear.com/7.x/shapes/png?seed=tokyo.walks&size=256&backgroundColor=b6e3f4",
   },
   {
     key: "italian-trails",
@@ -66,7 +66,7 @@ export const SEED_ACCOUNTS: SeedAccount[] = [
     username: "italian.trails",
     location: "Rome, Italy",
     bio: "Editorial guide account for Journli. Classic Italy itineraries with room to wander.",
-    avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=italian.trails&backgroundColor=c0aede",
+    avatar: "https://api.dicebear.com/7.x/shapes/png?seed=italian.trails&size=256&backgroundColor=c0aede",
   },
   {
     key: "nordic-escape",
@@ -76,7 +76,7 @@ export const SEED_ACCOUNTS: SeedAccount[] = [
     username: "nordic.escape",
     location: "Reykjavík, Iceland",
     bio: "Editorial guide account for Journli. Nordic cities, coasts, and slow travel days.",
-    avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=nordic.escape&backgroundColor=d1d4f9",
+    avatar: "https://api.dicebear.com/7.x/shapes/png?seed=nordic.escape&size=256&backgroundColor=d1d4f9",
   },
   {
     key: "coastal-trips",
@@ -86,7 +86,7 @@ export const SEED_ACCOUNTS: SeedAccount[] = [
     username: "coastal.trips",
     location: "Lisbon, Portugal",
     bio: "Editorial guide account for Journli. Seaside cities, cafés, and sunset viewpoints.",
-    avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=coastal.trips&backgroundColor=ffd5dc",
+    avatar: "https://api.dicebear.com/7.x/shapes/png?seed=coastal.trips&size=256&backgroundColor=ffd5dc",
   },
   {
     key: "journli-guides",
@@ -96,7 +96,7 @@ export const SEED_ACCOUNTS: SeedAccount[] = [
     username: "journli.guides",
     location: "Worldwide",
     bio: "Official editorial guides from Journli. Sample trips to help travelers get started.",
-    avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=journli.guides&backgroundColor=ffdfbf",
+    avatar: "https://api.dicebear.com/7.x/shapes/png?seed=journli.guides&size=256&backgroundColor=ffdfbf",
   },
 ]
 
@@ -570,7 +570,7 @@ export const SEED_ITINERARIES: SeedItinerary[] = [
     detailedOverview:
       "A relaxed Copenhagen weekend: Nyhavn photos without lingering too long, Nørrebro coffee, and a long waterfront walk. Rent bikes if weather cooperates.",
     mainImage:
-      "https://images.unsplash.com/photo-1513622470522-26c3c8a1a0be?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1509356843151-3e7d96241e11?auto=format&fit=crop&w=1600&q=80",
     duration: 2,
     budget: 700,
     itineraryTags: [1, 17, 11],
@@ -847,7 +847,7 @@ export const SEED_ITINERARIES: SeedItinerary[] = [
     detailedOverview:
       "Split time between Ubud's calmer pace and a coastal base. Hire drivers for longer transfers. Build in rest—humidity and traffic make ambitious day stacks exhausting.",
     mainImage:
-      "https://images.unsplash.com/photo-1537996194471-e66772346ae3?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1555400038-63f5ba517a47?auto=format&fit=crop&w=1600&q=80",
     duration: 6,
     budget: 1200,
     itineraryTags: [7, 1, 2],
