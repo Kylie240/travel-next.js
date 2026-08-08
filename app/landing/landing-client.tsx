@@ -103,19 +103,19 @@ export default function LandingClient({
           <div className="flex flex-col items-center justify-center gap-3 bg-white p-4 rounded-lg">
             <h3 className="flex items-center gap-2 text-cyan-700 text-xl md:text-2xl font-bold"><FaSuitcase /> Planning a Trip?</h3>
             <p className="text-base lg:text-lg text-gray-800 mb-2 px-8">
-              Skip hours of research and let real travelers share their expertise. Discover detailed itineraries created by travelers and get the exact plans, tips, and recommendations you need for your next trip.
+              Discover detailed itineraries created by real travelers and get the exact plans, tips, and recommendations you need for your next trip.
             </p>
-            <Link href="/explore" className="flex items-center gap-2 hover:font-semibold">
+            <Link href="/explore" className="flex items-center gap-2 hover:font-medium">
               Explore Itineraries <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="flex flex-col items-center justify-center gap-3 bg-white p-4 rounded-lg">
             <h3 className="flex items-center gap-2 text-cyan-700 text-xl md:text-2xl font-bold"><FaPlane /> Have Travel Experience?</h3>
             <p className="text-base lg:text-lg text-gray-800 mb-2 px-8">
-              Share your travel expertise and earn money by creating and selling your own itineraries. Get paid for your knowledge and experiences, and help other travelers plan their perfect trips.
+              Get paid for your knowledge and experiences, and earn money by creating and selling your own itineraries.
             </p>
-            <Link href="/become-a-creator" className="flex items-center gap-2 hover:font-semibold">
-              Become a Creator <ArrowRight className="w-4 h-4" />
+            <Link href="/become-a-creator" className="flex items-center gap-2 hover:font-medium">
+              Become a Founding Creator <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
@@ -123,6 +123,9 @@ export default function LandingClient({
 
       {/* Popular itineraries (server-fetched slot) */}
       {children}
+
+      {/* Where do you want to go */}
+      {destinations}
 
       {/* Features Section */}
       <div className="py-12 px-12 my-12">
@@ -181,7 +184,7 @@ export default function LandingClient({
                 <h3 className="text-xl md:text-2xl font-semibold mb-2">Earn</h3>
               </div>
                 <p className="text-gray-600 text-base">
-                  Your itinerary can continue generating sales after you've published it. Put your expertise to work by sharing insider tips and recommendations with other travelers.
+                Set your own price, share your itinerary or let buyers come to you, and earn whenever another traveler purchases your itinerary.
                 </p>
               </div>
             </div>
@@ -220,7 +223,7 @@ export default function LandingClient({
             Create Your First Itinerary for Free
           </h2>
           <p className="text-md md:text-lg text-white mb-6 px-8">
-            Sell your itineraries with no upfront costs. Start earning today.
+            Sell your itineraries with no upfront costs. Sell with no upfront costs.
           </p>
           <Link href="/about">
             <Button className="bg-white text-gray-900 px-8 text-md h-10 py-4 flex justify-center items-center w-full hover:bg-gray-100">
@@ -229,9 +232,6 @@ export default function LandingClient({
           </Link>
         </div>
       </div>
-
-      {/* Where do you want to go */}
-      {destinations}
 
       {/* FAQ Section */}
       <div className="py-12 px-4 md:px-8 bg-gray-50">
@@ -260,7 +260,7 @@ export default function LandingClient({
               </button>
               <div className="max-h-0 overflow-hidden transition-all duration-300">
                 <p className="p-4 text-gray-600 border-t">
-                  Yes! Journli is completely free to use. Create itineraries, share with friends, and view other travelers' journeys all without any cost.
+                  Yes! Creating an account and creating itineraries is free. You can also sell itineraries with no upfront cost, while Pro offers a reduced seller fee and additional benefits.
                 </p>
               </div>
             </div>
@@ -323,7 +323,7 @@ export default function LandingClient({
               </button>
               <div className="max-h-0 overflow-hidden transition-all duration-300">
                 <p className="p-4 text-gray-600 border-t">
-                  To become a seller, you need to create an account on Journli, then create or connect your Stripe account by visiting the Become a Seller page. Once you ceate an itinerary, you can sell it to other travelers using our free our paid plan.
+                  To become a seller, you need to create an account on Journli, then create or connect your Stripe account by visiting the Become a Seller page. Once you create an itinerary, you can sell it to other travelers using our free or paid plan.
                 </p>
               </div>
             </div>

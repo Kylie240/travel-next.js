@@ -17,6 +17,7 @@ const STATIC_PATHS: Array<{
   { path: "/about", changeFrequency: "monthly", priority: 0.8 },
   { path: "/plans", changeFrequency: "monthly", priority: 0.8 },
   { path: "/become-a-seller", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/become-a-creator", changeFrequency: "monthly", priority: 0.8 },
   { path: "/landing", changeFrequency: "monthly", priority: 0.6 },
   { path: "/legal/terms", changeFrequency: "yearly", priority: 0.3 },
   { path: "/legal/privacy", changeFrequency: "yearly", priority: 0.3 },

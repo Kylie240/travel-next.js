@@ -407,3 +407,259 @@ export async function sendFeedbackNotificationEmail(
     return { success: false, error: message };
   }
 }
+
+function wrapJournliEmail(bodyHtml: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:0 auto;padding:24px;">
+  <h1 style="font-size:1.5rem;margin-bottom:16px;">Journli</h1>
+  ${bodyHtml}
+  <p style="margin-top:24px;color:#6b7280;font-size:0.875rem;">— The Journli team</p>
+</body>
+</html>
+  `.trim();
+}
+
+function customMessageBlock(message?: string | null): string {
+  const trimmed = message?.trim();
+  if (!trimmed) return "";
+  return `
+  <p style="margin:16px 0 8px;color:#4b5563;"><strong>A note from Journli:</strong></p>
+  <p style="margin-bottom:16px;color:#4b5563;white-space:pre-wrap;">${escapeHtml(trimmed)}</p>`;
+}
+
+export type FoundingCreatorEmailPerson = {
+  email: string;
+  name?: string | null;
+  username?: string | null;
+};
+
+/**
+ * Confirms to the applicant that their founding creator claim was received.
+ */
+export async function sendFoundingCreatorClaimConfirmationEmail(
+  person: FoundingCreatorEmailPerson,
+  baseUrl: string,
+  customMessage?: string | null
+): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set, skipping founding claim confirmation");
+    return { success: false, error: "Resend not configured" };
+  }
+
+  const to = person.email?.trim();
+  if (!to) return { success: false, error: "Missing applicant email" };
+
+  const greetingName =
+    person.username?.trim() || person.name?.trim() || "there";
+  const adminUrl = `${baseUrl.replace(/\/$/, "")}/become-a-creator`;
+
+  const html = wrapJournliEmail(`
+  <h2 style="font-size:1.25rem;margin-bottom:16px;">We received your founding creator claim</h2>
+  <p style="margin-bottom:8px;">Hi ${escapeHtml(greetingName)},</p>
+  <p style="margin-bottom:16px;color:#4b5563;">
+    Thanks for applying to the Journli founding creator program. Your claim is in our review queue.
+    We’ll email you again once it’s approved or if we need changes.
+  </p>
+  ${customMessageBlock(customMessage)}
+  <p style="margin:16px 0;"><a href="${adminUrl}" style="color:#0e7490;text-decoration:underline;font-weight:600;">View founding creator page</a></p>
+  `);
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "We received your founding creator claim – Journli",
+      html,
+    });
+    if (error) {
+      console.error("Resend founding claim confirmation error:", error);
+      return { success: false, error: error.message };
+    }
+    console.log("Founding claim confirmation sent:", data?.id, "to", to);
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Resend founding claim confirmation failed:", message);
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Notifies admins that a new founding creator claim was submitted.
+ */
+export async function sendFoundingCreatorAdminClaimNotificationEmail(
+  adminEmails: string[],
+  applicant: FoundingCreatorEmailPerson & { userId: string },
+  baseUrl: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set, skipping founding admin notification");
+    return { success: false, error: "Resend not configured" };
+  }
+
+  const recipients = adminEmails
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (!recipients.length) {
+    return { success: false, error: "No admin emails configured" };
+  }
+
+  const display =
+    applicant.username?.trim()
+      ? `@${applicant.username.trim()}`
+      : applicant.name?.trim() || applicant.email;
+  const reviewUrl = `${baseUrl.replace(/\/$/, "")}/admin/founding-creators`;
+  const profileUrl = applicant.username?.trim()
+    ? `${baseUrl.replace(/\/$/, "")}/profile/${encodeURIComponent(applicant.username.trim())}`
+    : null;
+
+  const html = wrapJournliEmail(`
+  <h2 style="font-size:1.25rem;margin-bottom:16px;">New founding creator claim</h2>
+  <p style="margin-bottom:16px;color:#4b5563;">
+    <strong>${escapeHtml(display)}</strong> (${escapeHtml(applicant.email)}) submitted a founding creator claim and is waiting for review.
+  </p>
+  <p style="margin-bottom:8px;color:#4b5563;">User ID: ${escapeHtml(applicant.userId)}</p>
+  ${
+    profileUrl
+      ? `<p style="margin:12px 0;"><a href="${profileUrl}" style="color:#0e7490;text-decoration:underline;font-weight:600;">View profile</a></p>`
+      : ""
+  }
+  <p style="margin:16px 0;"><a href="${reviewUrl}" style="color:#0e7490;text-decoration:underline;font-weight:600;">Review applications</a></p>
+  `);
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: recipients,
+      subject: `New founding creator claim: ${display} – Journli`,
+      html,
+    });
+    if (error) {
+      console.error("Resend founding admin notification error:", error);
+      return { success: false, error: error.message };
+    }
+    console.log("Founding admin claim notification sent:", data?.id);
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Resend founding admin notification failed:", message);
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Notifies the applicant that their founding creator claim was approved.
+ */
+export async function sendFoundingCreatorApprovedEmail(
+  person: FoundingCreatorEmailPerson,
+  baseUrl: string,
+  opts?: { customMessage?: string | null; expiresAt?: string | null }
+): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set, skipping founding approved email");
+    return { success: false, error: "Resend not configured" };
+  }
+
+  const to = person.email?.trim();
+  if (!to) return { success: false, error: "Missing applicant email" };
+
+  const greetingName =
+    person.username?.trim() || person.name?.trim() || "there";
+  const expiresLabel = opts?.expiresAt
+    ? new Date(opts.expiresAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+  const createUrl = `${baseUrl.replace(/\/$/, "")}/create`;
+
+  const html = wrapJournliEmail(`
+  <h2 style="font-size:1.25rem;margin-bottom:16px;">You're a founding creator</h2>
+  <p style="margin-bottom:8px;">Hi ${escapeHtml(greetingName)},</p>
+  <p style="margin-bottom:16px;color:#4b5563;">
+    Great news — your founding creator claim was approved. Pro is now active on your account
+    ${expiresLabel ? ` through <strong>${escapeHtml(expiresLabel)}</strong>` : " for one year"}.
+  </p>
+  ${customMessageBlock(opts?.customMessage)}
+  <p style="margin-bottom:16px;color:#4b5563;">
+    You can create unlimited itineraries, enjoy lower selling fees, and get featured as part of the founding cohort.
+  </p>
+  <p style="margin:16px 0;"><a href="${createUrl}" style="color:#0e7490;text-decoration:underline;font-weight:600;">Start creating</a></p>
+  `);
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "You're approved as a founding creator – Journli",
+      html,
+    });
+    if (error) {
+      console.error("Resend founding approved email error:", error);
+      return { success: false, error: error.message };
+    }
+    console.log("Founding approved email sent:", data?.id, "to", to);
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Resend founding approved email failed:", message);
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Notifies the applicant that their founding creator claim was rejected.
+ */
+export async function sendFoundingCreatorRejectedEmail(
+  person: FoundingCreatorEmailPerson,
+  baseUrl: string,
+  customMessage?: string | null
+): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set, skipping founding rejected email");
+    return { success: false, error: "Resend not configured" };
+  }
+
+  const to = person.email?.trim();
+  if (!to) return { success: false, error: "Missing applicant email" };
+
+  const greetingName =
+    person.username?.trim() || person.name?.trim() || "there";
+  const claimUrl = `${baseUrl.replace(/\/$/, "")}/become-a-creator`;
+
+  const html = wrapJournliEmail(`
+  <h2 style="font-size:1.25rem;margin-bottom:16px;">Update on your founding creator claim</h2>
+  <p style="margin-bottom:8px;">Hi ${escapeHtml(greetingName)},</p>
+  <p style="margin-bottom:16px;color:#4b5563;">
+    Thanks for applying to the Journli founding creator program. After review, we’re not able to approve your claim at this time.
+  </p>
+  ${customMessageBlock(customMessage)}
+  <p style="margin-bottom:16px;color:#4b5563;">
+    You’re welcome to improve your profile or itinerary and claim again if spots remain.
+  </p>
+  <p style="margin:16px 0;"><a href="${claimUrl}" style="color:#0e7490;text-decoration:underline;font-weight:600;">Back to founding creator page</a></p>
+  `);
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Update on your founding creator claim – Journli",
+      html,
+    });
+    if (error) {
+      console.error("Resend founding rejected email error:", error);
+      return { success: false, error: error.message };
+    }
+    console.log("Founding rejected email sent:", data?.id, "to", to);
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Resend founding rejected email failed:", message);
+    return { success: false, error: message };
+  }
+}

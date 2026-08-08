@@ -17,7 +17,7 @@ export function PopularItinerariesSection({
       <div className="mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
               Popular itineraries
             </h2>
             <p className="text-gray-600 text-sm md:text-base mt-1">

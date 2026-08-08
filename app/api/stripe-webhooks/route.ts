@@ -14,6 +14,7 @@ import {
   recordStripePayoutFailure,
   syncStripeConnectAccountById,
 } from "@/lib/sync-stripe-connect-account";
+import { resolvePlanAfterStripeChange } from "@/lib/founding-creator";
 
 // Prevent static analysis during build
 export const dynamic = 'force-dynamic'
@@ -170,7 +171,14 @@ export async function POST(request: NextRequest) {
         }
 
         const priceId = subscription.items.data[0]?.price.id;
-        const plan = getPriceToPlanMap()[priceId] || "pro";
+        const mappedPlan = getPriceToPlanMap()[priceId] || "pro";
+        const stripeActive =
+          subscription.status === "active" || subscription.status === "trialing";
+        const plan = stripeActive
+          ? mappedPlan === "standard" || mappedPlan === "premium"
+            ? "pro"
+            : mappedPlan
+          : await resolvePlanAfterStripeChange(userId, subscription.status);
 
         const subscriptionPayload: Parameters<typeof updateUserSubscriptionSettings>[1] = {
           stripe_customer_id: subscription.customer as string,
@@ -202,18 +210,20 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Downgrade to free plan when subscription is cancelled
+        // Keep founding Pro if grant still active; otherwise free
+        const plan = await resolvePlanAfterStripeChange(userId, "canceled");
+
         await updateUserSubscriptionSettings(userId, {
           stripe_customer_id: subscription.customer as string,
           stripe_subscription_id: subscription.id,
           stripe_subscription_status: 'canceled',
           stripe_subscription_created_date: new Date(subscription.created * 1000).toISOString(),
-          plan: 'free',
+          plan,
           stripe_subscription_ends_at:
             subscriptionEndsAtForUserSettings(subscription),
         });
 
-        console.log(`Subscription cancelled for user ${userId}, downgraded to free`);
+        console.log(`Subscription cancelled for user ${userId}, plan=${plan}`);
         break;
       }
 
