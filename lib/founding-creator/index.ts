@@ -422,10 +422,8 @@ export async function claimFoundingCreator(userId: string): Promise<{
 
   const afterStatus = normalizeStatus(after?.founding_creator_status)
   if (afterStatus === "pending") {
-    // Only email when this request transitioned into pending (avoid double-sends)
-    if (existingStatus !== "pending") {
-      await notifyFoundingClaimSubmitted(userId)
-    }
+    // existingStatus is null | rejected | expired here (pending/active already returned)
+    await notifyFoundingClaimSubmitted(userId)
     return { success: true, status: "pending" }
   }
 
