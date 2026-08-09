@@ -27,7 +27,30 @@ type BeforeUserCreatedPayload = {
  * 1. Supabase → Authentication → Hooks → Before User Created → HTTPS
  * 2. URL: https://YOUR_DOMAIN/api/auth/hooks/before-user-created
  * 3. Copy the hook secret into SUPABASE_AUTH_HOOK_SECRET (v1,whsec_...)
+ *    Must match exactly; redeploy after changing Vercel env vars.
  */
+function normalizeHookSecret(raw: string): string {
+  // Dashboard / docs format: v1,whsec_<base64>
+  // standardwebhooks expects the base64 key (it also accepts a whsec_ prefix).
+  let secret = raw.trim()
+  if (
+    (secret.startsWith('"') && secret.endsWith('"')) ||
+    (secret.startsWith("'") && secret.endsWith("'"))
+  ) {
+    secret = secret.slice(1, -1).trim()
+  }
+  if (secret.startsWith("v1,whsec_")) {
+    return secret.slice("v1,whsec_".length)
+  }
+  if (secret.startsWith("v1,")) {
+    return secret.slice("v1,".length)
+  }
+  if (secret.startsWith("whsec_")) {
+    return secret.slice("whsec_".length)
+  }
+  return secret
+}
+
 export async function POST(request: NextRequest) {
   const secretRaw = process.env.SUPABASE_AUTH_HOOK_SECRET?.trim()
   if (!secretRaw) {
@@ -43,8 +66,19 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Secrets from the dashboard look like: v1,whsec_xxxxx
-  const secret = secretRaw.replace(/^v1,/, "")
+  const secret = normalizeHookSecret(secretRaw)
+  if (!secret) {
+    console.error("SUPABASE_AUTH_HOOK_SECRET is empty after normalization")
+    return NextResponse.json(
+      {
+        error: {
+          http_code: 500,
+          message: "Signup protection is temporarily unavailable.",
+        },
+      },
+      { status: 500 }
+    )
+  }
 
   const payload = await request.text()
   const headers = Object.fromEntries(request.headers.entries())
@@ -55,6 +89,18 @@ export async function POST(request: NextRequest) {
     parsed = wh.verify(payload, headers) as BeforeUserCreatedPayload
   } catch (err) {
     console.error("Auth hook signature verification failed:", err)
+    console.error(
+      "Hook secret debug (no secret value):",
+      JSON.stringify({
+        rawLength: secretRaw.length,
+        normalizedLength: secret.length,
+        rawStartsWithV1: secretRaw.startsWith("v1,"),
+        rawHasWhsec: secretRaw.includes("whsec_"),
+        hasWebhookId: Boolean(headers["webhook-id"]),
+        hasWebhookSignature: Boolean(headers["webhook-signature"]),
+        hasWebhookTimestamp: Boolean(headers["webhook-timestamp"]),
+      })
+    )
     return NextResponse.json(
       {
         error: {
