@@ -14,7 +14,8 @@ import { AiOutlineYoutube } from "react-icons/ai";
 import { redirect } from "next/navigation";
 import ProfileActions from "./profile-actions";
 import { JsonLd, buildPersonJsonLd } from "@/lib/seo/json-ld";
-import { resolveOgImages, resolveOgImageUrls } from "@/lib/seo/og";
+import { FoundingCreatorBadge, isActiveFoundingCreatorFromSettings } from "@/components/profile/founding-creator-badge"
+import { createClient as createAdminClient } from "@/utils/supabase/server-admin"
 
 type ProfilePageParams = { username: string };
 
@@ -136,6 +137,20 @@ const savedList = currentUserSaves
   : null;
 
   const profile = userData[0];
+
+  let isFoundingCreator = false
+  try {
+    const admin = createAdminClient()
+    const { data: foundingSettings } = await admin
+      .from("users_settings")
+      .select("founding_creator_status, founding_creator_expires_at")
+      .eq("user_id", userId)
+      .maybeSingle()
+    isFoundingCreator = isActiveFoundingCreatorFromSettings(foundingSettings)
+  } catch (err) {
+    console.error("Failed to load founding creator badge:", err)
+  }
+
   const personJsonLd =
     !isPrivate && !isBlockedByViewer
       ? buildPersonJsonLd({
@@ -181,7 +196,10 @@ const savedList = currentUserSaves
                     { !isPrivate && !isBlockedByViewer ? (
                     <div className="flex flex-col gap-2 items-center justify-center">
                       <div className="flex flex-col items-center justify-center gap-1">
-                        <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                          <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
+                          {isFoundingCreator && <FoundingCreatorBadge />}
+                        </div>
                         <p className="text-gray-600 text-center">@ {userData[0].username}</p>
                       </div>
                       <p className="text-gray-700 text-center px-0 sm:px-4 text-sm md:text-md max-w-[500px] mx-4">{userData[0].bio}</p>
@@ -204,7 +222,10 @@ const savedList = currentUserSaves
                     </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center">
-                        <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                          <h1 className="text-4xl font-semibold">{userData[0].name}</h1>
+                          {isFoundingCreator && <FoundingCreatorBadge />}
+                        </div>
                         <p className="text-gray-600 text-center">@{userData[0].username}</p>
                         <p className="text-gray-700 flex mt-2 text-center gap-1">
                           {isPrivate && (

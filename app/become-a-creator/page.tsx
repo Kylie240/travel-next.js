@@ -24,6 +24,8 @@ import {
   FOUNDING_BIO_MIN_LENGTH,
   FOUNDING_CREATOR_CAP,
 } from "@/lib/founding-creator/constants"
+import { MdOutlineSupportAgent } from "react-icons/md"
+import { LuBadgeCheck } from "react-icons/lu"
 
 const WHY_CREATE = [
   {
@@ -91,6 +93,18 @@ const FOUNDING_PERKS = [
     title: "Featured placement",
     description:
       "Get highlighted on the site so early creators reach a wider audience from day one.",
+  },
+  {
+    icon: LuBadgeCheck,
+    title: "Founding Creator Badge",
+    description:
+      "Get a badge on your profile that shows you're a founding creator and are a reputable source of travel information.",
+  },
+  {
+    icon: MdOutlineSupportAgent,
+    title: "Priority Support",
+    description:
+      "Get priority support from our team when you need help with your itineraries or account.",
   },
 ]
 
@@ -231,7 +245,7 @@ export default async function BecomeACreatorPage() {
               inspire and earn.
             </p>
           </div>
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
             {WHY_CREATE.map((item) => (
               <div key={item.title} className="text-center md:text-left max-w-sm mx-auto">
                 <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-cyan-700 text-white md:mx-0">

@@ -14,15 +14,17 @@ import { getFollowingById } from "@/lib/actions/user.actions"
 import { Followers } from "@/types/followers"
 import { FaUserLarge } from "react-icons/fa6";
 import ShareProfileButton from "@/app/profile/[username]/share-profile"
+import { FoundingCreatorBadge } from "@/components/profile/founding-creator-badge"
 
 interface ProfileHeaderProps {
   disableEdit?: boolean
   onFollowToggle?: (userId: string) => void
   user?: UserData | null
   userStats: UserStats
+  isFoundingCreator?: boolean
 }
 
-export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderProps) {
+export function ProfileHeader({onFollowToggle, user, userStats, isFoundingCreator = false }: ProfileHeaderProps) {
   const [showFollowers, setShowFollowers] = useState(false)
   const [showFollowing, setShowFollowing] = useState(false)
   const [followers, setFollowers] = useState<Followers[]>([])
@@ -99,7 +101,10 @@ export function ProfileHeader({onFollowToggle, user, userStats }: ProfileHeaderP
         </div>
         <div className="flex-1 text-center md:text-left px-2 sm:px-4 md:px-8">
           <div className="flex flex-col items-center justify-center mt-2 gap-1">
-            <h1 className="text-4xl font-semibold">{user.name}</h1>
+            <div className="flex flex-wrap items-center justify-center gap-1">
+              <h1 className="text-4xl font-semibold">{user.name}</h1>
+              {isFoundingCreator && <FoundingCreatorBadge />}
+            </div>
             <p className="text-gray-600">@{user.username}</p>
           </div>
           <div className="grid py-2 grid-cols-3 gap-6 lg:gap-2 xl:gap-6 mb-4">

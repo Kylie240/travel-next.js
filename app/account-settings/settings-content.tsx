@@ -27,6 +27,7 @@ import { OnboardingTour } from "@/components/ui/onboarding-tour"
 import type { StripeBillingSummary } from "@/types/stripe-billing"
 import { LuEyeClosed } from "react-icons/lu"
 import { optimizeImageOnServer } from "@/lib/utils/optimize-image-client"
+import { isActiveFoundingCreatorFromSettings } from "@/components/profile/founding-creator-badge"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -939,6 +940,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             <ProfileHeader 
               user={updatedUserData}
               userStats={userStats}
+              isFoundingCreator={isActiveFoundingCreatorFromSettings(userSettings)}
             />
             <div className="border-t pt-4 border-gray-200 py-4">
               <h2 className="text-2xl font-medium mb-4 pl-2 md:pl-4 pt-4 md:pt-8 lg:pt-0">Settings</h2>
