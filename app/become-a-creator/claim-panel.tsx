@@ -32,12 +32,17 @@ export function FoundingClaimPanel({
   const handleClaim = () => {
     setError(null)
     startTransition(async () => {
-      const result = await claimFoundingCreatorAction()
-      if (!result.success) {
-        setError(result.error || "Could not submit application")
-        return
+      try {
+        const result = await claimFoundingCreatorAction()
+        if (!result?.success) {
+          setError(result?.error || "Could not submit application")
+          return
+        }
+        setPendingStatus("pending")
+      } catch (err) {
+        console.error("claimFoundingCreatorAction client:", err)
+        setError("Could not submit application. Please refresh and try again.")
       }
-      setPendingStatus("pending")
     })
   }
 

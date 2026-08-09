@@ -120,7 +120,7 @@ const LOOKING_FOR = [
   `A complete profile: name, username, avatar, and bio (at least ${FOUNDING_BIO_MIN_LENGTH} characters)`,
   "At least one linked social account so buyers can verify who they’re buying from",
   "At least one published public itinerary with cover image, clear title, and description",
-  "Day-by-day structure (2+ days) with useful tips travelers can follow",
+  "Day-by-day structure (3+ days) with useful tips travelers can follow",
   "Original, non-spam content that reflects real travel know-how",
 ]
 

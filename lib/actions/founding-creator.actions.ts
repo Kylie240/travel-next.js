@@ -42,13 +42,22 @@ export async function getMyFoundingCreatorStateAction() {
 }
 
 export async function claimFoundingCreatorAction() {
-  const user = await requireUser()
-  const result = await claimFoundingCreator(user.id)
-  if (result.success) {
-    revalidatePath("/become-a-creator")
-    revalidatePath("/admin/founding-creators")
+  try {
+    const user = await requireUser()
+    const result = await claimFoundingCreator(user.id)
+    if (result.success) {
+      revalidatePath("/become-a-creator")
+      revalidatePath("/admin/founding-creators")
+    }
+    return result
+  } catch (err) {
+    console.error("claimFoundingCreatorAction:", err)
+    const message =
+      err instanceof Error && err.message === "Not authenticated"
+        ? "Please log in again to claim."
+        : "Could not submit application. Try again."
+    return { success: false, error: message }
   }
-  return result
 }
 
 export async function listFoundingApplicationsAction(

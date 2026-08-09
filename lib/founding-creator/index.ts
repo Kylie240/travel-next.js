@@ -315,7 +315,7 @@ export async function evaluateFoundingCreatorEligibility(
   }
   if (!qualityItineraryId) {
     reasons.push(
-      "Publish at least one quality public itinerary (cover image, clear title & description, 2+ days, not spam)."
+      "Publish at least one quality public itinerary (cover image, clear title & description, 3+ days, not spam)."
     )
   }
 
@@ -389,8 +389,10 @@ export async function claimFoundingCreator(userId: string): Promise<{
         founding_creator_reviewed_by: null,
       })
       .eq("user_id", userId)
-      .or("founding_creator_status.is.null,founding_creator_status.eq.rejected,founding_creator_status.eq.expired")
-      .select("user_id")
+      .or(
+        "founding_creator_status.is.null,founding_creator_status.eq.rejected,founding_creator_status.eq.expired"
+      )
+      .select("user_id, founding_creator_status")
 
     if (error) {
       console.error("claimFoundingCreator:", error.message)
@@ -402,17 +404,43 @@ export async function claimFoundingCreator(userId: string): Promise<{
         error: "Could not submit application. Refresh and try again.",
       }
     }
+    // Detect billing protect trigger silently reverting founding columns
+    if (normalizeStatus(data[0]?.founding_creator_status) !== "pending") {
+      console.error(
+        "claimFoundingCreator: status not persisted (billing protect trigger may be blocking service_role writes). Apply 20260810_fix_billing_protect_service_role.sql"
+      )
+      return {
+        success: false,
+        error:
+          "Could not save your application. Please try again shortly, or contact support.",
+      }
+    }
   } else {
-    const { error: insertError } = await admin.from("users_settings").insert({
-      user_id: userId,
-      is_private: false,
-      email_notifications: true,
-      founding_creator_status: "pending",
-      founding_creator_applied_at: now,
-    })
+    const { data: inserted, error: insertError } = await admin
+      .from("users_settings")
+      .insert({
+        user_id: userId,
+        is_private: false,
+        email_notifications: true,
+        founding_creator_status: "pending",
+        founding_creator_applied_at: now,
+        stripe_connect_requirements_currently_due: [],
+      })
+      .select("user_id, founding_creator_status")
+
     if (insertError) {
       console.error("claimFoundingCreator insert:", insertError.message)
       return { success: false, error: "Could not submit application. Try again." }
+    }
+    if (normalizeStatus(inserted?.[0]?.founding_creator_status) !== "pending") {
+      console.error(
+        "claimFoundingCreator insert: status not persisted (billing protect trigger). Apply 20260810_fix_billing_protect_service_role.sql"
+      )
+      return {
+        success: false,
+        error:
+          "Could not save your application. Please try again shortly, or contact support.",
+      }
     }
   }
 

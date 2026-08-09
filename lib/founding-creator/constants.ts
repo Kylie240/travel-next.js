@@ -6,7 +6,7 @@ export const FOUNDING_PRO_DURATION_MS = 365 * 24 * 60 * 60 * 1000
 export const FOUNDING_BIO_MIN_LENGTH = 40
 export const FOUNDING_TITLE_MIN_LENGTH = 10
 export const FOUNDING_DESCRIPTION_MIN_LENGTH = 40
-export const FOUNDING_MIN_DURATION_DAYS = 2
+export const FOUNDING_MIN_DURATION_DAYS = 3
 
 export type FoundingCreatorStatus =
   | "pending"

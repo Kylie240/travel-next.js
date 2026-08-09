@@ -13,7 +13,7 @@ export function PopularItinerariesSection({
   if (!itineraries.length) return null
 
   return (
-    <section className="max-w-6xl px-4 sm:px-8 bg-white">
+    <section className="width-full px-4 sm:px-8 bg-white">
       <div className="mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
           <div>
@@ -27,7 +27,7 @@ export function PopularItinerariesSection({
         </div>
 
         <div>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory px-4 sm:px-8 pb-2 lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:snap-none">
+          <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory px-4 sm:px-8 pb-2 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 lg:snap-none">
             {itineraries.map((itinerary) => (
               <Link
                 key={itinerary.id}
