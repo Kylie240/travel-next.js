@@ -34,7 +34,7 @@ const WHY_CREATE = [
     icon: Compass,
     title: "Create What You Love",
     description:
-      "Turn trips you’ve already planned into polished itineraries—no quotas, no clients, just your expertise.",
+      "Turn trips you’ve already planned into polished itineraries, giving viewers a detailed look into your travels.",
   },
   {
     icon: Users,
@@ -61,13 +61,13 @@ const HOW_IT_WORKS = [
     step: "2",
     title: "Publish Quality Work",
     description:
-      "Share a clear day-by-day itinerary with a cover photo and helpful tips.",
+      "Share a clear day-by-day itinerary (3+ days) with a cover photo and helpful tips.",
   },
   {
     step: "3",
-    title: "Claim for Review",
+    title: "Claim Your Spot",
     description:
-      "Pass the checklist and submit your claim. Spots are limited to 100 founding creators.",
+      "Publish your first quality itinerary, then claim your Founding Creator spot for review.",
   },
   {
     step: "4",
@@ -94,7 +94,7 @@ const FOUNDING_PERKS = [
     icon: Star,
     title: "Featured placement",
     description:
-      "Your public itineraries are boosted in Explore and on the homepage popular section while your founding grant is active.",
+      "Your public itineraries receive additional visibility in Explore and may be featured on the homepage during the founding program.",
   },
   {
     icon: LuBadgeCheck,
@@ -192,8 +192,8 @@ export default async function BecomeACreatorPage() {
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base text-gray-600 md:text-lg">
             Join as a founding creator. Publish itineraries travelers can
-            follow, earn when they purchase, and get Pro free for a year—plus
-            featured placement and a chance at social promotion.
+            follow, earn when they purchase, and get Pro free for a year plus
+            featured placement and a chance at social promotion. Only 100 spots available.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="#claim">
@@ -250,7 +250,7 @@ export default async function BecomeACreatorPage() {
               Why Create on Journli
             </h2>
             <p className="mt-3 text-gray-600">
-              A marketplace for real traveler plans—built so your expertise can
+              A marketplace for real traveler plans, built so your expertise can
               inspire and earn.
             </p>
           </div>
@@ -267,6 +267,9 @@ export default async function BecomeACreatorPage() {
               </div>
             ))}
           </div>
+          <p className="mt-12 text-gray-600 text-center max-w-xl px-4 mx-auto">
+            Your travel content on other platform provides highlights, but on Journli you can share your entire trip with a detailed schedule, tips, and insights.
+          </p>
         </div>
       </section>
 
@@ -298,7 +301,7 @@ export default async function BecomeACreatorPage() {
                 <h3 className="text-xl font-semibold md:text-2xl">Plan</h3>
                 <p className="mt-2 text-gray-600 leading-relaxed">
                   Capture days, places, and tips in a structured itinerary
-                  anyone can follow—whether you’re documenting last year’s trip
+                  anyone can follow - whether you’re documenting last year’s trip
                   or mapping the next one.
                 </p>
               </div>
@@ -433,6 +436,8 @@ export default async function BecomeACreatorPage() {
             What We're Looking For
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-center text-gray-600">
+            As a new marketplace, we're looking for passionate travelers who
+            able to generate quality content for our buyers.
             Joining means showing craft through itineraries that reflect real
             travel know-how—similar to how creator programs review quality
             work.
@@ -473,7 +478,7 @@ export default async function BecomeACreatorPage() {
       <section className="bg-gray-900 py-16 md:py-20">
         <div className="container mx-auto max-w-3xl px-4 text-center sm:px-6">
           <h2 className="text-2xl font-bold text-white md:text-3xl">
-            Sign Up and Start Creating
+            Join the 100 Founding Creators
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-gray-300">
             Join the founding creator cohort. Publish your first itinerary and

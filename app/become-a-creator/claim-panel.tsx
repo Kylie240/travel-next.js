@@ -45,7 +45,7 @@ export function FoundingClaimPanel({
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-6 text-center sm:p-8">
         <h3 className="text-xl font-semibold text-gray-900">
-          Ready to join the founding cohort?
+          Ready to join the Founding Creators cohort?
         </h3>
         <p className="mt-2 text-gray-600">
           Create an account, complete your profile with at least one social
@@ -55,7 +55,7 @@ export function FoundingClaimPanel({
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link href="/login?mode=signup">
             <Button className="bg-cyan-700 text-white hover:bg-cyan-800">
-              Sign up to apply
+              Join Now
             </Button>
           </Link>
           <Link href="/login?mode=login">
