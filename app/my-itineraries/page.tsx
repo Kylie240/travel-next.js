@@ -73,11 +73,23 @@ export default function MyItinerariesPage() {
       try {
         const { data } = await supabase
           .from("users_settings")
-          .select("plan")
+          .select(
+            "plan, stripe_subscription_status, founding_creator_status, founding_creator_expires_at"
+          )
           .eq("user_id", currentUser.id)
           .maybeSingle()
         if (!mounted || currentRequest !== requestId) return
-        setUserPlan(data?.plan || "free")
+        const { resolveEffectivePlan } = await import(
+          "@/lib/founding-creator/plan"
+        )
+        setUserPlan(
+          resolveEffectivePlan({
+            plan: data?.plan,
+            stripe_subscription_status: data?.stripe_subscription_status,
+            founding_creator_status: data?.founding_creator_status,
+            founding_creator_expires_at: data?.founding_creator_expires_at,
+          })
+        )
       } catch (error) {
         console.error("Error fetching user plan:", error)
         if (!mounted || currentRequest !== requestId) return

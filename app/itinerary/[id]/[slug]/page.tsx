@@ -127,10 +127,19 @@ async function loadItineraryPage(idPrefix: string, slug: string) {
   if (currentUserId) {
     const { data: userPlan } = await supabase
       .from("users_settings")
-      .select("plan")
+      .select(
+        "plan, stripe_subscription_status, founding_creator_status, founding_creator_expires_at"
+      )
       .eq("user_id", currentUserId)
       .single()
-    paidUser = userPlan?.plan != "free"
+    const { resolveEffectivePlan } = await import("@/lib/founding-creator/plan")
+    paidUser =
+      resolveEffectivePlan({
+        plan: userPlan?.plan,
+        stripe_subscription_status: userPlan?.stripe_subscription_status,
+        founding_creator_status: userPlan?.founding_creator_status,
+        founding_creator_expires_at: userPlan?.founding_creator_expires_at,
+      }) === "pro"
   }
 
   let canEdit = false

@@ -35,17 +35,23 @@ export function FoundingAdminClient({
   cap: number
 }) {
   const [rows, setRows] = useState(initialApplications)
+  const [liveActiveCount, setLiveActiveCount] = useState(activeCount)
   const [filter, setFilter] = useState<"pending" | "all">("pending")
   const [message, setMessage] = useState<string | null>(null)
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [isPending, startTransition] = useTransition()
 
+  const cohortFull = liveActiveCount >= cap
   const visible =
     filter === "pending"
       ? rows.filter((r) => r.status === "pending")
       : rows
 
   const onApprove = (userId: string) => {
+    if (liveActiveCount >= cap) {
+      setMessage(`Cohort is full (${cap} active founding creators).`)
+      return
+    }
     const customMessage = notes[userId]?.trim() || undefined
     setMessage(null)
     startTransition(async () => {
@@ -54,6 +60,7 @@ export function FoundingAdminClient({
         setMessage(result.error || "Approve failed")
         return
       }
+      setLiveActiveCount((n) => Math.min(cap, n + 1))
       setRows((prev) =>
         prev.map((r) =>
           r.userId === userId
@@ -113,8 +120,11 @@ export function FoundingAdminClient({
         <p className="text-sm text-gray-600">
           Active founding creators:{" "}
           <span className="font-semibold text-gray-900">
-            {activeCount}/{cap}
+            {liveActiveCount}/{cap}
           </span>
+          {cohortFull ? (
+            <span className="ml-2 text-amber-700">(cohort full — approve disabled)</span>
+          ) : null}
         </p>
         <div className="flex gap-2">
           <Button
@@ -230,7 +240,7 @@ export function FoundingAdminClient({
                       <Button
                         size="sm"
                         className="bg-cyan-700 text-white hover:bg-cyan-800"
-                        disabled={isPending}
+                        disabled={isPending || cohortFull}
                         onClick={() => onApprove(app.userId)}
                       >
                         Approve &amp; email

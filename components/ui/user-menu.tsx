@@ -50,13 +50,21 @@ export function UserMenu() {
 
     const { data } = await supabase
       .from("users_settings")
-      .select("plan, stripe_account_id")
+      .select(
+        "plan, stripe_account_id, stripe_subscription_status, founding_creator_status, founding_creator_expires_at"
+      )
       .eq("user_id", user.id)
       .maybeSingle()
 
-    const plan =
-      typeof data?.plan === "string" ? data.plan.trim().toLowerCase() : "free"
-    setBillingPlan(plan)
+    const { resolveEffectivePlan } = await import("@/lib/founding-creator/plan")
+    setBillingPlan(
+      resolveEffectivePlan({
+        plan: data?.plan,
+        stripe_subscription_status: data?.stripe_subscription_status,
+        founding_creator_status: data?.founding_creator_status,
+        founding_creator_expires_at: data?.founding_creator_expires_at,
+      })
+    )
     setIsSeller(Boolean(data?.stripe_account_id))
   }, [user?.id, isAuthFlowPage, supabase])
 

@@ -26,6 +26,8 @@ import {
 } from "@/lib/founding-creator/constants"
 import { MdOutlineSupportAgent } from "react-icons/md"
 import { LuBadgeCheck } from "react-icons/lu"
+import { MdAccessTime } from "react-icons/md"
+import { HiBadgeCheck } from "react-icons/hi"
 
 const WHY_CREATE = [
   {
@@ -53,7 +55,7 @@ const HOW_IT_WORKS = [
     step: "1",
     title: "Sign Up",
     description:
-      "Create a free Journli account and complete your public creator profile.",
+      "Create a free Journli account and complete your public creator profile, including at least one social link.",
   },
   {
     step: "2",
@@ -71,7 +73,7 @@ const HOW_IT_WORKS = [
     step: "4",
     title: "Get Approved & Earn",
     description:
-      "We review applications. If approved, you get Pro free for a year—then sell when you’re ready.",
+      "We review applications. If approved, you get Pro free for a year, then sell when you’re ready.",
   },
 ]
 
@@ -92,7 +94,7 @@ const FOUNDING_PERKS = [
     icon: Star,
     title: "Featured placement",
     description:
-      "Get highlighted on the site so early creators reach a wider audience from day one.",
+      "Your public itineraries are boosted in Explore and on the homepage popular section while your founding grant is active.",
   },
   {
     icon: LuBadgeCheck,
@@ -104,12 +106,19 @@ const FOUNDING_PERKS = [
     icon: MdOutlineSupportAgent,
     title: "Priority Support",
     description:
-      "Get priority support from our team when you need help with your itineraries or account.",
+      "Founding creators are flagged in support so we can respond to your account and itinerary questions first.",
+  },
+  {
+    icon: MdAccessTime,
+    title: "Early Access",
+    description:
+      "Be first to hear about new creator tools — we’ll invite founding creators when betas open.",
   },
 ]
 
 const LOOKING_FOR = [
   `A complete profile: name, username, avatar, and bio (at least ${FOUNDING_BIO_MIN_LENGTH} characters)`,
+  "At least one linked social account so buyers can verify who they’re buying from",
   "At least one published public itinerary with cover image, clear title, and description",
   "Day-by-day structure (2+ days) with useful tips travelers can follow",
   "Original, non-spam content that reflects real travel know-how",
@@ -118,7 +127,7 @@ const LOOKING_FOR = [
 const FAQS = [
   {
     q: "How do I become a founding creator?",
-    a: `Complete your profile, publish a quality itinerary, then use Claim for review on this page. We manually approve applications. There are ${FOUNDING_CREATOR_CAP} spots.`,
+    a: `Complete your profile (including at least one social account), publish a quality itinerary, then use Claim for review on this page. We manually approve applications. There are ${FOUNDING_CREATOR_CAP} spots.`,
   },
   {
     q: "When do I get Pro free for a year?",
@@ -161,7 +170,7 @@ export default async function BecomeACreatorPage() {
   const emptyEligibility = {
     eligible: false,
     reasons: [
-      "Sign up, complete your profile, and publish a quality itinerary to claim.",
+      "Sign up, complete your profile with at least one social account, and publish a quality itinerary to claim.",
     ],
     missingProfile: [] as string[],
     qualityItineraryId: null as string | null,
@@ -175,8 +184,8 @@ export default async function BecomeACreatorPage() {
       {/* Hero — Canva-style centered intro */}
       <section className="border-b border-gray-100 bg-gradient-to-b from-white to-gray-50">
         <div className="container mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 md:py-24">
-          <p className="mb-3 text-sm font-medium uppercase tracking-wide text-cyan-700">
-            Journli Founding Creators
+          <p className="flex items-center justify-center gap-1 mb-3 text-sm font-medium uppercase tracking-wide text-cyan-700">
+            Journli Founding Creators <HiBadgeCheck className="h-5 w-5" aria-hidden />
           </p>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
             Share Your Trips with the World

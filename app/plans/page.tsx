@@ -37,13 +37,18 @@ export default async function PlansPage() {
   if (user) {
     const { data: settings } = await supabase
       .from("users_settings")
-      .select("plan")
+      .select(
+        "plan, stripe_subscription_status, founding_creator_status, founding_creator_expires_at"
+      )
       .eq("user_id", user.id)
       .maybeSingle()
-    userPlan =
-      typeof settings?.plan === "string"
-        ? settings.plan.trim().toLowerCase()
-        : "free"
+    const { resolveEffectivePlan } = await import("@/lib/founding-creator/plan")
+    userPlan = resolveEffectivePlan({
+      plan: settings?.plan,
+      stripe_subscription_status: settings?.stripe_subscription_status,
+      founding_creator_status: settings?.founding_creator_status,
+      founding_creator_expires_at: settings?.founding_creator_expires_at,
+    })
   }
 
   const isOnStandardOrHigher =

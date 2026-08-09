@@ -27,7 +27,8 @@ import { OnboardingTour } from "@/components/ui/onboarding-tour"
 import type { StripeBillingSummary } from "@/types/stripe-billing"
 import { LuEyeClosed } from "react-icons/lu"
 import { optimizeImageOnServer } from "@/lib/utils/optimize-image-client"
-import { isActiveFoundingCreatorFromSettings } from "@/components/profile/founding-creator-badge"
+import { isActiveFoundingCreatorFromSettings, FoundingCreatorBadge } from "@/components/profile/founding-creator-badge"
+import { resolveEffectivePlan } from "@/lib/founding-creator/plan"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -122,6 +123,12 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false)
   const [uploadedAvatar, setUploadedAvatar] = useState<File | null>(null)
+  const effectivePlan = resolveEffectivePlan({
+    plan: userSettings.plan,
+    stripe_subscription_status: userSettings.stripe_subscription_status,
+    founding_creator_status: userSettings.founding_creator_status,
+    founding_creator_expires_at: userSettings.founding_creator_expires_at,
+  })
   const planDetails = [
     {
       title: "free",
@@ -807,14 +814,24 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           <div>
             <label className="text-sm text-gray-600">Current plan</label>
             <p className="block text-md font-semibold mt-2">
-              {userSettings.plan.charAt(0).toUpperCase() + userSettings.plan.slice(1)} Plan
+              {effectivePlan.charAt(0).toUpperCase() + effectivePlan.slice(1)} Plan
             </p>
-            {planDetails.find(plan => plan.title === userSettings.plan)?.description && (
+            {planDetails.find(plan => plan.title === effectivePlan)?.description && (
               <p className="text-sm text-gray-600">
-                {planDetails.find(plan => plan.title === userSettings.plan)?.description}
+                {planDetails.find(plan => plan.title === effectivePlan)?.description}
               </p>
             )}
-            {userSettings.plan !== 'free' && (
+            {isActiveFoundingCreatorFromSettings(userSettings) && (
+              <p className="mt-2 text-sm text-cyan-800">
+                Pro is included with your founding creator grant
+                {formatSettingsDate(userSettings.founding_creator_expires_at)
+                  ? ` through ${formatSettingsDate(userSettings.founding_creator_expires_at)}`
+                  : ""}
+                .
+              </p>
+            )}
+            {(userSettings.stripe_subscription_status === "active" ||
+              userSettings.stripe_subscription_status === "trialing") && (
               <button
                 type="button"
                 onClick={openBillingPortal}
@@ -824,11 +841,91 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               </button>
             )}
           </div>
-          {userSettings.plan !== 'free' && (
+
+          {userSettings.founding_creator_status && (
             <div>
-              <label className="block text-md font-semibold mb-2">Subscription Status</label>
-              <p className="text-sm text-gray-600 mb-4">
-                Your {userSettings.plan === 'free' ? 'plan' : 'subscription status'} is {userSettings.plan === 'free' ? 'active' : userSettings.stripe_subscription_status}.
+              <label className="block text-md font-semibold mb-2">
+                Founding creator
+              </label>
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                {isActiveFoundingCreatorFromSettings(userSettings) && (
+                  <FoundingCreatorBadge />
+                )}
+                <span className="text-sm font-medium capitalize text-gray-900">
+                  {userSettings.founding_creator_status}
+                </span>
+              </div>
+              {userSettings.founding_creator_status === "pending" && (
+                <p className="text-sm text-gray-600">
+                  Your claim is in review. We&apos;ll email you when it&apos;s approved
+                  or if we need changes.
+                  {formatSettingsDate(userSettings.founding_creator_applied_at)
+                    ? ` Applied ${formatSettingsDate(userSettings.founding_creator_applied_at)}.`
+                    : ""}
+                </p>
+              )}
+              {isActiveFoundingCreatorFromSettings(userSettings) && (
+                <p className="text-sm text-gray-600">
+                  You&apos;re an active founding creator
+                  {formatSettingsDate(userSettings.founding_creator_expires_at)
+                    ? `. Complimentary Pro ends ${formatSettingsDate(userSettings.founding_creator_expires_at)}`
+                    : ""}
+                  .
+                </p>
+              )}
+              {userSettings.founding_creator_status === "rejected" && (
+                <p className="text-sm text-gray-600">
+                  {userSettings.founding_creator_reject_reason?.trim()
+                    ? userSettings.founding_creator_reject_reason
+                    : "Your claim was not approved. You can update your profile or itinerary and claim again if spots remain."}
+                </p>
+              )}
+              {userSettings.founding_creator_status === "expired" && (
+                <p className="text-sm text-gray-600">
+                  Your founding creator year has ended
+                  {formatSettingsDate(userSettings.founding_creator_expires_at)
+                    ? ` (${formatSettingsDate(userSettings.founding_creator_expires_at)})`
+                    : ""}
+                  . Subscribe on Plans to keep Pro features.
+                </p>
+              )}
+              {(userSettings.founding_creator_status === "rejected" ||
+                userSettings.founding_creator_status === "expired" ||
+                userSettings.founding_creator_status === "pending") && (
+                <button
+                  type="button"
+                  onClick={() => router.push("/become-a-creator")}
+                  className="mt-3 block text-left text-sm underline cursor-pointer hover:text-cyan-800"
+                >
+                  View founding creator page
+                </button>
+              )}
+            </div>
+          )}
+
+          {effectivePlan !== "free" &&
+            (userSettings.stripe_subscription_status === "active" ||
+              userSettings.stripe_subscription_status === "trialing") && (
+            <div>
+              <label className="block text-md font-semibold mb-2">
+                Subscription Status
+              </label>
+              <p className="mb-4 text-sm text-gray-600">
+                Your subscription status is {userSettings.stripe_subscription_status}.
+              </p>
+            </div>
+          )}
+          {effectivePlan !== "free" &&
+            isActiveFoundingCreatorFromSettings(userSettings) &&
+            userSettings.stripe_subscription_status !== "active" &&
+            userSettings.stripe_subscription_status !== "trialing" && (
+            <div>
+              <label className="block text-md font-semibold mb-2">
+                Subscription Status
+              </label>
+              <p className="mb-4 text-sm text-gray-600">
+                No paid Stripe subscription — Pro is provided by your founding
+                creator grant.
               </p>
             </div>
           )}
@@ -876,7 +973,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           )} */}
           <div>
             <label className="block text-md font-semibold mb-2">Plan details</label>
-              {planDetails.find(plan => plan.title === userSettings.plan)?.features.map((feature) => (
+              {planDetails.find(plan => plan.title === effectivePlan)?.features.map((feature) => (
                 <div key={feature}>
                   <div className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -885,25 +982,23 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                 </div>
               ))}
           </div>
-          { userSettings.plan === 'free' && (
+          { effectivePlan === 'free' && (
           <div className="mt-12">
-            <label className="block text-md font-semibold mb-2">{userSettings.plan === 'free' ? 'Upgrade and subsribe' : 'Upgrade to Pro'}</label>
-            {userSettings.plan === 'free' && (
-              <>
-                <p className="text-sm text-gray-600 mb-4">
-                  Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, sell for a reduced fee, and more.
-                </p>
-                <form action="api/checkout-session" method="POST">
-                  <Button className="bg-cyan-600" type="submit">
-                    Upgrade to Pro
-                  </Button>
-                </form>
-              </>
-            )}
+            <label className="block text-md font-semibold mb-2">Upgrade and subscribe</label>
+            <>
+              <p className="text-sm text-gray-600 mb-4">
+                Upgrading to a paid plan will give you access to more features, allow you to create unlimited itineraries, sell for a reduced fee, and more.
+              </p>
+              <form action="api/checkout-session" method="POST">
+                <Button className="bg-cyan-600" type="submit">
+                  Upgrade to Pro
+                </Button>
+              </form>
+            </>
           </div>
           )}
           <Button variant="outline" onClick={() => router.push('/plans')}>Explore All Plans</Button>
-          { userSettings.plan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
+          { effectivePlan !== 'free' && userSettings.stripe_subscription_status === 'active' && (
           <div className="mt-12">
             <label className="block text-md font-semibold mb-2">Unsubscribe</label>
             <p className="text-sm text-gray-600 mb-4">

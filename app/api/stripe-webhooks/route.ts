@@ -252,7 +252,12 @@ export async function POST(request: NextRequest) {
         }
 
         const priceId = subscription.items.data[0]?.price.id;
-        const plan = getPriceToPlanMap()[priceId] || 'standard';
+        const mappedPlan = getPriceToPlanMap()[priceId] || "pro";
+        // Normalize legacy price map values so UI `plan === 'pro'` checks keep working
+        const plan =
+          mappedPlan === "standard" || mappedPlan === "premium"
+            ? "pro"
+            : mappedPlan;
 
         // Re-sync `stripe_subscription_ends_at` from a live subscription read (covers missed
         // or thin `customer.subscription.updated` webhooks, e.g. local CLI). Same helper as
@@ -264,7 +269,7 @@ export async function POST(request: NextRequest) {
           stripe_subscription_created_date: new Date(
             subscription.created * 1000
           ).toISOString(),
-          plan: plan,
+          plan,
           stripe_subscription_ends_at:
             subscriptionEndsAtForUserSettings(subscription),
         });

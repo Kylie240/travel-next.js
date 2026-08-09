@@ -21,7 +21,7 @@ export function PopularItinerariesSection({
               Popular itineraries
             </h2>
             <p className="text-gray-600 text-sm md:text-base mt-1">
-              Trips travelers are loving right now
+              Trips travelers are loving right now — including founding creators
             </p>
           </div>
         </div>

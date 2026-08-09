@@ -13,6 +13,7 @@ import {
   getPlatformFeeRateForPlan,
   parsePlatformFeeRateFromMetadata,
 } from "@/lib/seller-fees";
+import { resolveEffectivePlan } from "@/lib/founding-creator/plan";
 
 function stripeId(
   value: string | Stripe.PaymentIntent | null | undefined
@@ -266,12 +267,22 @@ export async function syncItineraryCartPurchase(
       const sellerId = sellerIdByItineraryId[purchasesNeedingTx[0].itinerary_id];
       const { data: sellerSettings } = await supabase
         .from("users_settings")
-        .select("plan")
+        .select(
+          "plan, stripe_subscription_status, founding_creator_status, founding_creator_expires_at"
+        )
         .eq("user_id", sellerId)
         .maybeSingle();
+      const sellerPlan = resolveEffectivePlan({
+        plan: sellerSettings?.plan as string | null,
+        stripe_subscription_status:
+          sellerSettings?.stripe_subscription_status as string | null,
+        founding_creator_status:
+          sellerSettings?.founding_creator_status as string | null,
+        founding_creator_expires_at:
+          sellerSettings?.founding_creator_expires_at as string | null,
+      });
       platformFeeRate = getPlatformFeeRateForPlan(
-        (sellerSettings?.plan as string | null | undefined) ??
-          session.metadata?.seller_plan
+        sellerPlan || session.metadata?.seller_plan
       );
     }
 

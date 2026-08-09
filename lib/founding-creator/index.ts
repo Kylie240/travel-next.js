@@ -9,6 +9,7 @@ import {
   sendFoundingCreatorAdminClaimNotificationEmail,
   sendFoundingCreatorApprovedEmail,
   sendFoundingCreatorClaimConfirmationEmail,
+  sendFoundingCreatorExpiredEmail,
   sendFoundingCreatorRejectedEmail,
 } from "@/lib/email"
 import { getSiteUrl } from "@/lib/site-url"
@@ -22,6 +23,18 @@ import {
   type EligibilityResult,
   type FoundingCreatorStatus,
 } from "./constants"
+import {
+  hasActiveStripePro,
+  isFoundingProActive,
+  resolveEffectivePlan,
+} from "./plan"
+
+export {
+  hasActiveStripePro,
+  isFoundingProActive,
+  normalizeStoredPlan,
+  resolveEffectivePlan,
+} from "./plan"
 
 function normalizeStatus(value: unknown): FoundingCreatorStatus {
   if (
@@ -52,23 +65,6 @@ export function isFoundingAdmin(user: User | null | undefined): boolean {
   return getFoundingAdminEmails().includes(email)
 }
 
-export function hasActiveStripePro(
-  stripeStatus: string | null | undefined
-): boolean {
-  const s = (stripeStatus || "").toLowerCase()
-  return s === "active" || s === "trialing"
-}
-
-export function isFoundingProActive(input: {
-  founding_creator_status?: string | null
-  founding_creator_expires_at?: string | null
-}): boolean {
-  const status = normalizeStatus(input.founding_creator_status)
-  if (status !== "active" || !input.founding_creator_expires_at) return false
-  const expires = new Date(input.founding_creator_expires_at).getTime()
-  return Number.isFinite(expires) && expires > Date.now()
-}
-
 export async function getFoundingFieldsForUser(userId: string) {
   const admin = createAdminClient()
   const { data } = await admin
@@ -92,43 +88,52 @@ export async function resolvePlanAfterStripeChange(
   if (hasActiveStripePro(stripeStatus)) return "pro"
 
   const fields = await getFoundingFieldsForUser(userId)
-  if (
-    isFoundingProActive({
-      founding_creator_status: fields?.founding_creator_status as string | null,
-      founding_creator_expires_at: fields?.founding_creator_expires_at as
-        | string
-        | null,
-    })
-  ) {
-    return "pro"
-  }
-
-  return "free"
+  return resolveEffectivePlan({
+    plan: fields?.plan as string | null,
+    stripe_subscription_status: stripeStatus,
+    founding_creator_status: fields?.founding_creator_status as string | null,
+    founding_creator_expires_at: fields?.founding_creator_expires_at as
+      | string
+      | null,
+  })
 }
 
-/** Prefer Stripe Pro; else founding grant if still within expiry. */
-export function resolveEffectivePlan(input: {
-  plan?: string | null
-  stripe_subscription_status?: string | null
-  founding_creator_status?: string | null
-  founding_creator_expires_at?: string | null
-}): "pro" | "free" {
-  if (hasActiveStripePro(input.stripe_subscription_status)) {
-    return "pro"
+/** Effective plan for a user; repairs stale `plan: pro` when grant/Stripe ended. */
+export async function getEffectivePlanForUser(
+  userId: string
+): Promise<"pro" | "free"> {
+  const fields = await getFoundingFieldsForUser(userId)
+  const effective = resolveEffectivePlan({
+    plan: fields?.plan as string | null,
+    stripe_subscription_status: fields?.stripe_subscription_status as
+      | string
+      | null,
+    founding_creator_status: fields?.founding_creator_status as string | null,
+    founding_creator_expires_at: fields?.founding_creator_expires_at as
+      | string
+      | null,
+  })
+
+  const stored = String(fields?.plan || "").toLowerCase()
+  if (effective === "free" && (stored === "pro" || stored === "standard" || stored === "premium")) {
+    // Soft-repair denormalized plan when grant expired before cron ran
+    const admin = createAdminClient()
+    void admin
+      .from("users_settings")
+      .update({ plan: "free" })
+      .eq("user_id", userId)
+      .then(({ error }) => {
+        if (error) console.error("getEffectivePlanForUser repair:", error.message)
+      })
   }
 
-  if (
-    isFoundingProActive({
-      founding_creator_status: input.founding_creator_status,
-      founding_creator_expires_at: input.founding_creator_expires_at,
-    })
-  ) {
-    return "pro"
-  }
-
-  return "free"
+  return effective
 }
 
+/**
+ * Fail closed: on query error treat cohort as full so we never oversell
+ * when the migration/columns are missing.
+ */
 export async function countActiveFoundingCreators(): Promise<number> {
   try {
     const admin = createAdminClient()
@@ -140,18 +145,39 @@ export async function countActiveFoundingCreators(): Promise<number> {
       .gt("founding_creator_expires_at", nowIso)
 
     if (error) {
-      // Missing migration / column → treat as empty cohort (not full).
       console.error(
         "countActiveFoundingCreators:",
         error.message,
-        "(returning 0 — apply 20260808_founding_creators.sql if columns are missing)"
+        `(fail-closed as full — apply founding migrations if columns are missing)`
       )
-      return 0
+      return FOUNDING_CREATOR_CAP
     }
     return count ?? 0
   } catch (err) {
     console.error("countActiveFoundingCreators failed:", err)
-    return 0
+    return FOUNDING_CREATOR_CAP
+  }
+}
+
+/** Active, unexpired founding creator user ids (for featured placement). */
+export async function getActiveFoundingCreatorIds(): Promise<Set<string>> {
+  try {
+    const admin = createAdminClient()
+    const nowIso = new Date().toISOString()
+    const { data, error } = await admin
+      .from("users_settings")
+      .select("user_id")
+      .eq("founding_creator_status", "active")
+      .gt("founding_creator_expires_at", nowIso)
+
+    if (error) {
+      console.error("getActiveFoundingCreatorIds:", error.message)
+      return new Set()
+    }
+    return new Set((data || []).map((r) => String(r.user_id)))
+  } catch (err) {
+    console.error("getActiveFoundingCreatorIds failed:", err)
+    return new Set()
   }
 }
 
@@ -229,7 +255,9 @@ export async function evaluateFoundingCreatorEligibility(
   const [{ data: profile }, { data: settings }] = await Promise.all([
     admin
       .from("users")
-      .select("name, username, avatar, bio")
+      .select(
+        "name, username, avatar, bio, facebook, instagram, twitter, pinterest, tiktok, youtube"
+      )
       .eq("id", userId)
       .maybeSingle(),
     admin
@@ -247,12 +275,25 @@ export async function evaluateFoundingCreatorEligibility(
   const username = String(profile?.username || "").trim()
   const avatar = String(profile?.avatar || "").trim()
   const bio = String(profile?.bio || "").trim()
+  const hasSocialAccount = [
+    profile?.facebook,
+    profile?.instagram,
+    profile?.twitter,
+    profile?.pinterest,
+    profile?.tiktok,
+    profile?.youtube,
+  ].some((value) => String(value || "").trim().length > 0)
 
   if (!name || name.length < 2) missingProfile.push("name")
   if (!username || username.length < 3) missingProfile.push("username")
   if (!avatar) missingProfile.push("avatar")
   if (bio.length < FOUNDING_BIO_MIN_LENGTH) {
     missingProfile.push(`bio (at least ${FOUNDING_BIO_MIN_LENGTH} characters)`)
+  }
+  if (!hasSocialAccount) {
+    missingProfile.push(
+      "at least one social account (Instagram, TikTok, YouTube, X, Facebook, or Pinterest)"
+    )
   }
 
   const qualityItineraryId = await findQualityItineraryId(userId)
@@ -319,24 +360,49 @@ export async function claimFoundingCreator(userId: string): Promise<{
     return { success: false, error: "The founding creator cohort is full." }
   }
 
-  const { data, error } = await admin
+  const { data: existing } = await admin
     .from("users_settings")
-    .update({
-      founding_creator_status: "pending",
-      founding_creator_applied_at: now,
-      founding_creator_reject_reason: null,
-      founding_creator_reviewed_at: null,
-      founding_creator_reviewed_by: null,
-    })
+    .select("founding_creator_status")
     .eq("user_id", userId)
-    .select("user_id")
+    .maybeSingle()
 
-  if (error) {
-    console.error("claimFoundingCreator:", error.message)
-    return { success: false, error: "Could not submit application. Try again." }
+  const existingStatus = normalizeStatus(existing?.founding_creator_status)
+  if (existingStatus === "active" || existingStatus === "pending") {
+    return {
+      success: false,
+      error:
+        existingStatus === "active"
+          ? "You are already an active founding creator."
+          : "Your application is already pending admin review.",
+      status: existingStatus,
+    }
   }
 
-  if (!data?.length) {
+  if (existing) {
+    const { data, error } = await admin
+      .from("users_settings")
+      .update({
+        founding_creator_status: "pending",
+        founding_creator_applied_at: now,
+        founding_creator_reject_reason: null,
+        founding_creator_reviewed_at: null,
+        founding_creator_reviewed_by: null,
+      })
+      .eq("user_id", userId)
+      .or("founding_creator_status.is.null,founding_creator_status.eq.rejected,founding_creator_status.eq.expired")
+      .select("user_id")
+
+    if (error) {
+      console.error("claimFoundingCreator:", error.message)
+      return { success: false, error: "Could not submit application. Try again." }
+    }
+    if (!data?.length) {
+      return {
+        success: false,
+        error: "Could not submit application. Refresh and try again.",
+      }
+    }
+  } else {
     const { error: insertError } = await admin.from("users_settings").insert({
       user_id: userId,
       is_private: false,
@@ -399,6 +465,77 @@ export async function approveFoundingCreator(input: {
   customMessage?: string | null
 }): Promise<{ success: boolean; error?: string }> {
   const admin = createAdminClient()
+
+  // Re-validate eligibility at approve time (profile / itinerary may have changed)
+  const eligibility = await evaluateFoundingCreatorEligibility(input.targetUserId)
+  // evaluate treats pending as not eligible — check pieces directly
+  if (eligibility.missingProfile.length || !eligibility.qualityItineraryId) {
+    return {
+      success: false,
+      error:
+        eligibility.reasons.find((r) => !r.includes("pending")) ||
+        "Applicant no longer meets profile/itinerary requirements.",
+    }
+  }
+
+  const expires = new Date(Date.now() + FOUNDING_PRO_DURATION_MS)
+
+  // Atomic cap + status transition (see 20260809_founding_creator_atomic_approve.sql)
+  const { data: rpcData, error: rpcError } = await admin.rpc(
+    "approve_founding_creator",
+    {
+      p_user_id: input.targetUserId,
+      p_admin_id: input.adminUserId,
+      p_expires_at: expires.toISOString(),
+      p_cap: FOUNDING_CREATOR_CAP,
+    }
+  )
+
+  if (rpcError) {
+    console.error("approveFoundingCreator rpc:", rpcError.message)
+    // Fallback for environments that have not applied the atomic RPC yet
+    return approveFoundingCreatorLegacy(input, expires)
+  }
+
+  const result = rpcData as { ok?: boolean; error?: string } | null
+  if (!result?.ok) {
+    return {
+      success: false,
+      error: result?.error || "Approve failed. Try again.",
+    }
+  }
+
+  const person = await loadUserForEmail(input.targetUserId)
+  if (person?.email) {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "") || getSiteUrl()
+    await sendFoundingCreatorApprovedEmail(
+      {
+        email: String(person.email),
+        name: (person.name as string) || null,
+        username: (person.username as string) || null,
+      },
+      baseUrl,
+      {
+        customMessage: input.customMessage,
+        expiresAt: expires.toISOString(),
+      }
+    ).catch((err) => console.error("approve email failed:", err))
+  }
+
+  return { success: true }
+}
+
+/** Non-atomic fallback when RPC migration is not applied yet. */
+async function approveFoundingCreatorLegacy(
+  input: {
+    targetUserId: string
+    adminUserId: string
+    customMessage?: string | null
+  },
+  expires: Date
+): Promise<{ success: boolean; error?: string }> {
+  const admin = createAdminClient()
   const activeCount = await countActiveFoundingCreators()
   if (activeCount >= FOUNDING_CREATOR_CAP) {
     return { success: false, error: "Cohort is full (100 active founding creators)." }
@@ -418,21 +555,7 @@ export async function approveFoundingCreator(input: {
     return { success: false, error: "User has no pending application." }
   }
 
-  // Re-validate eligibility at approve time (profile / itinerary may have changed)
-  const eligibility = await evaluateFoundingCreatorEligibility(input.targetUserId)
-  // evaluate treats pending as not eligible — check pieces directly
-  if (eligibility.missingProfile.length || !eligibility.qualityItineraryId) {
-    return {
-      success: false,
-      error:
-        eligibility.reasons.find((r) => !r.includes("pending")) ||
-        "Applicant no longer meets profile/itinerary requirements.",
-    }
-  }
-
   const now = new Date()
-  const expires = new Date(now.getTime() + FOUNDING_PRO_DURATION_MS)
-
   const { data, error } = await admin
     .from("users_settings")
     .update({
@@ -449,10 +572,9 @@ export async function approveFoundingCreator(input: {
     .select("user_id")
 
   if (error) {
-    console.error("approveFoundingCreator:", error.message)
+    console.error("approveFoundingCreatorLegacy:", error.message)
     return { success: false, error: "Approve failed. Try again." }
   }
-
   if (!data?.length) {
     return { success: false, error: "Application was not pending (or already reviewed)." }
   }
@@ -537,7 +659,7 @@ export async function expireFoundingCreators(): Promise<{
 
   const { data: rows, error } = await admin
     .from("users_settings")
-    .select("user_id, stripe_subscription_status")
+    .select("user_id, stripe_subscription_status, founding_creator_expires_at")
     .eq("founding_creator_status", "active")
     .lte("founding_creator_expires_at", nowIso)
 
@@ -548,6 +670,8 @@ export async function expireFoundingCreators(): Promise<{
 
   let expired = 0
   let downgraded = 0
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "") || getSiteUrl()
 
   for (const row of rows || []) {
     const userId = String(row.user_id)
@@ -571,6 +695,22 @@ export async function expireFoundingCreators(): Promise<{
       continue
     }
     expired += 1
+
+    const person = await loadUserForEmail(userId)
+    if (person?.email) {
+      await sendFoundingCreatorExpiredEmail(
+        {
+          email: String(person.email),
+          name: (person.name as string) || null,
+          username: (person.username as string) || null,
+        },
+        baseUrl,
+        {
+          keptProViaStripe: keepPro,
+          expiresAt: (row.founding_creator_expires_at as string) || null,
+        }
+      ).catch((err) => console.error("expire email failed:", userId, err))
+    }
   }
 
   return { expired, downgraded }

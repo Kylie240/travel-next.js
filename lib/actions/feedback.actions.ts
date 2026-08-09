@@ -53,11 +53,24 @@ export async function submitUserFeedback(input: SubmitFeedbackInput) {
     throw new Error(error.message);
   }
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("name, username")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: profile }, { data: settings }] = await Promise.all([
+    supabase
+      .from("users")
+      .select("name, username")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("users_settings")
+      .select("founding_creator_status, founding_creator_expires_at")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
+
+  const { isFoundingProActive } = await import("@/lib/founding-creator/plan");
+  const isFoundingCreator = isFoundingProActive({
+    founding_creator_status: settings?.founding_creator_status,
+    founding_creator_expires_at: settings?.founding_creator_expires_at,
+  });
 
   const emailResult = await sendFeedbackNotificationEmail({
     submitterUserId: user.id,
@@ -67,6 +80,7 @@ export async function submitUserFeedback(input: SubmitFeedbackInput) {
     rating: input.rating,
     selectedIssues: input.selectedIssues,
     comment: input.comment,
+    isFoundingCreator,
   });
 
   if (!emailResult.success) {

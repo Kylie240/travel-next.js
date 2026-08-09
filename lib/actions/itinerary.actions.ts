@@ -15,8 +15,26 @@ import type { ExploreItinerariesResult } from "@/types/explore";
 import { itineraryTagsMap, activityTagsMap } from "@/lib/constants/tags";
 import { getCountryNamesForContinents } from "@/lib/constants/country-continents";
 import { assertItineraryNotSpam } from "@/lib/moderation/itinerary-spam";
+import { getActiveFoundingCreatorIds } from "@/lib/founding-creator";
 
 export type { ItineraryTemplate };
+
+/** Boost active founding creators toward the top of a result list. */
+function sortWithFoundingBoost<T extends { creatorId: string; likes?: number }>(
+  items: T[],
+  foundingIds: Set<string>
+): T[] {
+  if (!foundingIds.size || items.length < 2) return items
+  return [...items].sort((a, b) => {
+    const aF = foundingIds.has(a.creatorId) ? 1 : 0
+    const bF = foundingIds.has(b.creatorId) ? 1 : 0
+    if (bF !== aF) return bF - aF
+    const aL = a.likes ?? 0
+    const bL = b.likes ?? 0
+    if (bL !== aL) return bL - aL
+    return 0
+  })
+}
 
 function parseDurationRange(duration?: string): {
   min?: number
@@ -593,9 +611,18 @@ export const getItineraries = async (
     }
   })
 
-  const total = count ?? mapped.length
+  // Featured placement: boost founding creators on default/popular sorts
+  const shouldBoostFounding =
+    resolvedSort === "most-recent" ||
+    resolvedSort === "most-viewed" ||
+    resolvedSort === "best-rated"
+  const ranked = shouldBoostFounding
+    ? sortWithFoundingBoost(mapped, await getActiveFoundingCreatorIds())
+    : mapped
+
+  const total = count ?? ranked.length
   return {
-    data: mapped,
+    data: ranked,
     total,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
     currentPage: page,
@@ -735,12 +762,26 @@ export const getPopularItineraries = async (
     }
   })
 
+  const foundingIds = await getActiveFoundingCreatorIds()
   mapped.sort((a, b) => {
+    const aF = foundingIds.has(a.creatorId) ? 1 : 0
+    const bF = foundingIds.has(b.creatorId) ? 1 : 0
+    if (bF !== aF) return bF - aF
     if (b.likes !== a.likes) return b.likes - a.likes
     return 0
   })
 
-  return mapped.slice(0, take)
+  // Prefer at least half the slots for founding creators when available
+  const founding = mapped.filter((m) => foundingIds.has(m.creatorId))
+  const others = mapped.filter((m) => !foundingIds.has(m.creatorId))
+  const foundingSlots = Math.min(founding.length, Math.ceil(take / 2))
+  const picked = [
+    ...founding.slice(0, foundingSlots),
+    ...others,
+    ...founding.slice(foundingSlots),
+  ]
+
+  return picked.slice(0, take)
 }
 
 export const getItineraryDataByUserId = async (userId: string, currentUserId: string) => {

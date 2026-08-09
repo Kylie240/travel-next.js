@@ -48,8 +48,9 @@ export function FoundingClaimPanel({
           Ready to join the founding cohort?
         </h3>
         <p className="mt-2 text-gray-600">
-          Create an account, complete your profile, publish a quality itinerary,
-          then claim your spot for admin review.
+          Create an account, complete your profile with at least one social
+          account, publish a quality itinerary, then claim your spot for admin
+          review.
         </p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link href="/login?mode=signup">

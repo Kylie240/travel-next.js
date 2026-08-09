@@ -320,6 +320,7 @@ export type FeedbackNotificationContext = {
   rating?: number | null;
   selectedIssues: string[];
   comment?: string | null;
+  isFoundingCreator?: boolean;
 };
 
 function getFeedbackNotificationRecipient(): string {
@@ -371,6 +372,11 @@ export async function sendFeedbackNotificationEmail(
 <body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:0 auto;padding:24px;">
   <h1 style="font-size:1.5rem;margin-bottom:16px;">Journli</h1>
   <h2 style="font-size:1.25rem;margin-bottom:16px;">New user feedback</h2>
+  ${
+    context.isFoundingCreator
+      ? `<p style="margin-bottom:16px;padding:10px 12px;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;color:#0e7490;font-weight:600;">⭐ Priority — founding creator</p>`
+      : ""
+  }
   <p style="margin-bottom:16px;color:#4b5563;"><strong>From:</strong> ${escapeHtml(submitterLabel)}</p>
   <p style="margin-bottom:8px;color:#4b5563;"><strong>User ID:</strong> ${escapeHtml(context.submitterUserId)}</p>
   ${
@@ -391,7 +397,7 @@ export async function sendFeedbackNotificationEmail(
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: `New feedback from ${submitterLabel.replace(/^@/, "")} – Journli`,
+      subject: `${context.isFoundingCreator ? "[Founding] " : ""}New feedback from ${submitterLabel.replace(/^@/, "")} – Journli`,
       html,
     });
 
@@ -607,6 +613,77 @@ export async function sendFoundingCreatorApprovedEmail(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Resend founding approved email failed:", message);
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Notifies a founding creator that their complimentary Pro year has ended.
+ */
+export async function sendFoundingCreatorExpiredEmail(
+  person: FoundingCreatorEmailPerson,
+  baseUrl: string,
+  opts?: { keptProViaStripe?: boolean; expiresAt?: string | null }
+): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set, skipping founding expired email");
+    return { success: false, error: "Resend not configured" };
+  }
+
+  const to = person.email?.trim();
+  if (!to) return { success: false, error: "Missing applicant email" };
+
+  const greetingName =
+    person.username?.trim() || person.name?.trim() || "there";
+  const plansUrl = `${baseUrl.replace(/\/$/, "")}/plans`;
+  const expiresLabel = opts?.expiresAt
+    ? new Date(opts.expiresAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+
+  const body = opts?.keptProViaStripe
+    ? `<p style="margin-bottom:16px;color:#4b5563;">
+    Your founding creator complimentary year
+    ${expiresLabel ? `(ended ${escapeHtml(expiresLabel)})` : "has ended"}.
+    Your paid Explorer (Pro) subscription is still active, so you keep Pro access.
+  </p>`
+    : `<p style="margin-bottom:16px;color:#4b5563;">
+    Your founding creator complimentary Pro year
+    ${expiresLabel ? `ended on <strong>${escapeHtml(expiresLabel)}</strong>` : "has ended"}.
+    Your account is back on the free plan. Subscribe anytime to keep unlimited itineraries and lower selling fees.
+  </p>
+  <p style="margin:16px 0;"><a href="${plansUrl}" style="color:#0e7490;text-decoration:underline;font-weight:600;">View plans</a></p>`;
+
+  const html = wrapJournliEmail(`
+  <h2 style="font-size:1.25rem;margin-bottom:16px;">Your founding creator year has ended</h2>
+  <p style="margin-bottom:8px;">Hi ${escapeHtml(greetingName)},</p>
+  ${body}
+  <p style="margin-bottom:16px;color:#4b5563;">
+    Thanks for being part of the founding cohort — your badge may no longer appear, but we’re glad you helped shape Journli.
+  </p>
+  `);
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: opts?.keptProViaStripe
+        ? "Your founding creator year ended – Journli"
+        : "Your founding Pro year ended – keep creating on Journli",
+      html,
+    });
+    if (error) {
+      console.error("Resend founding expired email error:", error);
+      return { success: false, error: error.message };
+    }
+    console.log("Founding expired email sent:", data?.id, "to", to);
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Resend founding expired email failed:", message);
     return { success: false, error: message };
   }
 }

@@ -1118,12 +1118,24 @@ export default function CreatePage() {
       try {
         const { data: settings } = await supabase
           .from("users_settings")
-          .select("plan")
+          .select(
+            "plan, stripe_subscription_status, founding_creator_status, founding_creator_expires_at"
+          )
           .eq("user_id", userId)
           .single()
 
-        if (!cancelled && settings?.plan) {
-          setUserPlan(settings.plan)
+        if (!cancelled && settings) {
+          const { resolveEffectivePlan } = await import(
+            "@/lib/founding-creator/plan"
+          )
+          setUserPlan(
+            resolveEffectivePlan({
+              plan: settings.plan,
+              stripe_subscription_status: settings.stripe_subscription_status,
+              founding_creator_status: settings.founding_creator_status,
+              founding_creator_expires_at: settings.founding_creator_expires_at,
+            })
+          )
         }
       } catch (error) {
         console.error("Error fetching user plan:", error)

@@ -3,6 +3,7 @@ import "server-only"
 import type Stripe from "stripe"
 import { createClient as createAdminClient } from "@/utils/supabase/server-admin"
 import { stripe } from "@/lib/stripe"
+import { resolveEffectivePlan } from "@/lib/founding-creator/plan"
 
 /**
  * After Connect onboarding, capability flags often lag a few seconds.
@@ -66,13 +67,24 @@ export async function getSellerStripeStatusForUser(
   const supabase = createAdminClient()
   const { data: settings } = await supabase
     .from("users_settings")
-    .select("stripe_account_id, plan")
+    .select(
+      "stripe_account_id, plan, stripe_subscription_status, founding_creator_status, founding_creator_expires_at"
+    )
     .eq("user_id", userId)
     .maybeSingle()
 
   const stripeAccountId =
     (settings?.stripe_account_id as string | null | undefined) ?? null
-  const plan = (settings?.plan as string | null | undefined) ?? null
+  const plan = resolveEffectivePlan({
+    plan: settings?.plan as string | null,
+    stripe_subscription_status: settings?.stripe_subscription_status as
+      | string
+      | null,
+    founding_creator_status: settings?.founding_creator_status as string | null,
+    founding_creator_expires_at: settings?.founding_creator_expires_at as
+      | string
+      | null,
+  })
 
   if (!stripeAccountId) {
     return { stripeAccountId: null, sellerAccountReady: false, plan }

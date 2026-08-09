@@ -31,17 +31,23 @@ const PdfExportElement = ({
       if (user?.id) {
         const { data: planData } = await supabase
           .from('users_settings')
-          .select('plan')
+          .select(
+            'plan, stripe_subscription_status, founding_creator_status, founding_creator_expires_at'
+          )
           .eq('user_id', user.id)
           .single()
-        
-        const plan = planData?.plan || null
+
+        const { resolveEffectivePlan } = await import('@/lib/founding-creator/plan')
+        const plan = resolveEffectivePlan({
+          plan: planData?.plan,
+          stripe_subscription_status: planData?.stripe_subscription_status,
+          founding_creator_status: planData?.founding_creator_status,
+          founding_creator_expires_at: planData?.founding_creator_expires_at,
+        })
         setUserPlan(plan)
-        
-        // Check if user has PDF access
-        const planNum = typeof plan === 'string' && !isNaN(parseInt(plan)) ? parseInt(plan) : null
-        const hasAccess = (planNum !== null && planNum > 1) || (typeof plan === 'string' && plan !== 'free' && plan !== '1')
-        setHasPdfAccess(hasAccess && itineraryStatus === ItineraryStatusEnum.published && plan !== "free")
+        setHasPdfAccess(
+          plan === 'pro' && itineraryStatus === ItineraryStatusEnum.published
+        )
       } else {
         setHasPdfAccess(false)
       }
@@ -58,15 +64,27 @@ const PdfExportElement = ({
         // Fetch user plan on auth change
         supabase
           .from('users_settings')
-          .select('plan')
+          .select(
+            'plan, stripe_subscription_status, founding_creator_status, founding_creator_expires_at'
+          )
           .eq('user_id', session.user.id)
           .single()
-          .then(({ data: planData }) => {
-            const plan = planData?.plan || null
+          .then(async ({ data: planData }) => {
+            const { resolveEffectivePlan } = await import(
+              '@/lib/founding-creator/plan'
+            )
+            const plan = resolveEffectivePlan({
+              plan: planData?.plan,
+              stripe_subscription_status: planData?.stripe_subscription_status,
+              founding_creator_status: planData?.founding_creator_status,
+              founding_creator_expires_at:
+                planData?.founding_creator_expires_at,
+            })
             setUserPlan(plan)
-            const planNum = typeof plan === 'string' && !isNaN(parseInt(plan)) ? parseInt(plan) : null
-            const hasAccess = (planNum !== null && planNum > 1) || (typeof plan === 'string' && plan !== 'free' && plan !== '1')
-            setHasPdfAccess(hasAccess && itineraryStatus === ItineraryStatusEnum.published && plan !== "free")
+            setHasPdfAccess(
+              plan === 'pro' &&
+                itineraryStatus === ItineraryStatusEnum.published
+            )
           })
       } else {
         setUserPlan(null)
