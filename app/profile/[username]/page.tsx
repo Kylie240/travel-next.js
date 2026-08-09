@@ -14,6 +14,7 @@ import { AiOutlineYoutube } from "react-icons/ai";
 import { redirect } from "next/navigation";
 import ProfileActions from "./profile-actions";
 import { JsonLd, buildPersonJsonLd } from "@/lib/seo/json-ld";
+import { resolveOgImages, resolveOgImageUrls } from "@/lib/seo/og";
 import { FoundingCreatorBadge, isActiveFoundingCreatorFromSettings } from "@/components/profile/founding-creator-badge"
 import { createClient as createAdminClient } from "@/utils/supabase/server-admin"
 
