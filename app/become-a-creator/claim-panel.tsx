@@ -81,11 +81,17 @@ export function FoundingClaimPanel({
               You&apos;re a founding creator
             </h3>
             <p className="mt-2 text-gray-600">
+              Thank you for joining the founding cohort — we&apos;re excited to
+              have you on Journli and can&apos;t wait to see the trips you share
+              with travelers.
+            </p>
+            <p className="mt-2 text-gray-600">
               Pro is active
               {expiresAt
                 ? ` until ${new Date(expiresAt).toLocaleDateString()}`
                 : " for your founding year"}
-              .
+              . Keep publishing quality itineraries, and we&apos;ll help more
+              people find your work.
             </p>
             <Link href={primaryHref} className="mt-4 inline-flex">
               <Button className="bg-cyan-700 text-white hover:bg-cyan-800">

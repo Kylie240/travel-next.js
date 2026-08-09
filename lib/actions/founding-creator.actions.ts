@@ -41,6 +41,14 @@ export async function getMyFoundingCreatorStateAction() {
   return getMyFoundingCreatorState(user.id)
 }
 
+export async function isCurrentUserFoundingAdminAction(): Promise<boolean> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return isFoundingAdmin(user)
+}
+
 export async function claimFoundingCreatorAction() {
   try {
     const user = await requireUser()

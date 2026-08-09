@@ -1,12 +1,13 @@
 "use client"
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { ChevronDown, LogOut, Settings, PenSquare, User, ChevronUp, Info, Globe, Bookmark, UserCircle, MessageSquare } from "lucide-react"
+import { ChevronDown, LogOut, Settings, PenSquare, User, ChevronUp, Bookmark, MessageSquare, Shield } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useToast } from "./use-toast"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { CiPassport1 } from "react-icons/ci";
 import { getUserProfileById } from "@/lib/actions/user.actions"
+import { isCurrentUserFoundingAdminAction } from "@/lib/actions/founding-creator.actions"
 import { FaUserAlt } from "react-icons/fa"
 import { listenToAvatarUpdates, listenToProfileUpdates } from "@/lib/utils/avatar-events"
 import Image from "next/image"
@@ -30,6 +31,7 @@ export function UserMenu() {
   const { loading, error, user } = useUser()
   const [billingPlan, setBillingPlan] = useState<string | null>(null)
   const [isSeller, setIsSeller] = useState(false)
+  const [isFoundingAdmin, setIsFoundingAdmin] = useState(false)
 
   const showSellerDashboard =
     billingPlan === "pro"
@@ -107,6 +109,24 @@ export function UserMenu() {
   useEffect(() => {
     void fetchBillingPlan()
   }, [fetchBillingPlan, pathname])
+
+  useEffect(() => {
+    let cancelled = false
+    if (!user?.id || isAuthFlowPage) {
+      setIsFoundingAdmin(false)
+      return
+    }
+    void isCurrentUserFoundingAdminAction()
+      .then((ok) => {
+        if (!cancelled) setIsFoundingAdmin(ok)
+      })
+      .catch(() => {
+        if (!cancelled) setIsFoundingAdmin(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id, isAuthFlowPage])
 
   // Refresh plan whenever the menu opens so upgrades show without a hard reload
   useEffect(() => {
@@ -246,6 +266,16 @@ export function UserMenu() {
                   <AiOutlineDashboard className="mr-2" size={18} strokeWidth={.75} />
                   {isSeller ? "Seller Dashboard" : "Become a Seller"}
                 </DropdownMenu.Item>
+
+              {isFoundingAdmin && (
+                <DropdownMenu.Item
+                  className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                  onClick={() => router.push("/admin/founding-creators")}
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  Founding Creators
+                </DropdownMenu.Item>
+              )}
 
               <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
               
