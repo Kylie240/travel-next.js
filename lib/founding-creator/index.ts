@@ -343,22 +343,9 @@ export async function claimFoundingCreator(userId: string): Promise<{
   status?: FoundingCreatorStatus
 }> {
   const eligibility = await evaluateFoundingCreatorEligibility(userId)
-  if (!eligibility.eligible) {
-    return {
-      success: false,
-      error: eligibility.reasons[0] || "Not eligible",
-      status: eligibility.status,
-    }
-  }
 
   const admin = createAdminClient()
   const now = new Date().toISOString()
-
-  // Re-check slots inside update window
-  const activeCount = await countActiveFoundingCreators()
-  if (activeCount >= FOUNDING_CREATOR_CAP) {
-    return { success: false, error: "The founding creator cohort is full." }
-  }
 
   const { data: existing } = await admin
     .from("users_settings")
@@ -367,19 +354,35 @@ export async function claimFoundingCreator(userId: string): Promise<{
     .maybeSingle()
 
   const existingStatus = normalizeStatus(existing?.founding_creator_status)
-  if (existingStatus === "active" || existingStatus === "pending") {
+
+  // Idempotent: concurrent double-clicks often hit this after the first write wins.
+  if (existingStatus === "pending") {
+    return { success: true, status: "pending" }
+  }
+
+  if (existingStatus === "active") {
     return {
       success: false,
-      error:
-        existingStatus === "active"
-          ? "You are already an active founding creator."
-          : "Your application is already pending admin review.",
+      error: "You are already an active founding creator.",
+      status: "active",
+    }
+  }
+
+  if (!eligibility.eligible) {
+    return {
+      success: false,
+      error: eligibility.reasons[0] || "Not eligible",
       status: existingStatus,
     }
   }
 
+  const activeCount = await countActiveFoundingCreators()
+  if (activeCount >= FOUNDING_CREATOR_CAP) {
+    return { success: false, error: "The founding creator cohort is full." }
+  }
+
   if (existing) {
-    const { data, error } = await admin
+    const { error } = await admin
       .from("users_settings")
       .update({
         founding_creator_status: "pending",
@@ -389,79 +392,90 @@ export async function claimFoundingCreator(userId: string): Promise<{
         founding_creator_reviewed_by: null,
       })
       .eq("user_id", userId)
-      .or(
-        "founding_creator_status.is.null,founding_creator_status.eq.rejected,founding_creator_status.eq.expired"
-      )
-      .select("user_id, founding_creator_status")
 
     if (error) {
       console.error("claimFoundingCreator:", error.message)
       return { success: false, error: "Could not submit application. Try again." }
     }
-    if (!data?.length) {
-      return {
-        success: false,
-        error: "Could not submit application. Refresh and try again.",
-      }
-    }
-    // Detect billing protect trigger silently reverting founding columns
-    if (normalizeStatus(data[0]?.founding_creator_status) !== "pending") {
-      console.error(
-        "claimFoundingCreator: status not persisted (billing protect trigger may be blocking service_role writes). Apply 20260810_fix_billing_protect_service_role.sql"
-      )
-      return {
-        success: false,
-        error:
-          "Could not save your application. Please try again shortly, or contact support.",
-      }
-    }
   } else {
-    const { data: inserted, error: insertError } = await admin
-      .from("users_settings")
-      .insert({
-        user_id: userId,
-        is_private: false,
-        email_notifications: true,
-        founding_creator_status: "pending",
-        founding_creator_applied_at: now,
-        stripe_connect_requirements_currently_due: [],
-      })
-      .select("user_id, founding_creator_status")
-
+    const { error: insertError } = await admin.from("users_settings").insert({
+      user_id: userId,
+      is_private: false,
+      email_notifications: true,
+      founding_creator_status: "pending",
+      founding_creator_applied_at: now,
+      stripe_connect_requirements_currently_due: [],
+    })
     if (insertError) {
+      // Unique race: another request inserted settings first — re-check status below
       console.error("claimFoundingCreator insert:", insertError.message)
-      return { success: false, error: "Could not submit application. Try again." }
-    }
-    if (normalizeStatus(inserted?.[0]?.founding_creator_status) !== "pending") {
-      console.error(
-        "claimFoundingCreator insert: status not persisted (billing protect trigger). Apply 20260810_fix_billing_protect_service_role.sql"
-      )
-      return {
-        success: false,
-        error:
-          "Could not save your application. Please try again shortly, or contact support.",
-      }
     }
   }
 
-  await notifyFoundingClaimSubmitted(userId)
+  // Always re-read: Returning representations can be empty under RLS quirks,
+  // and concurrent claims may have already set pending.
+  const { data: after } = await admin
+    .from("users_settings")
+    .select("founding_creator_status")
+    .eq("user_id", userId)
+    .maybeSingle()
 
-  return { success: true, status: "pending" }
+  const afterStatus = normalizeStatus(after?.founding_creator_status)
+  if (afterStatus === "pending") {
+    // Only email when this request transitioned into pending (avoid double-sends)
+    if (existingStatus !== "pending") {
+      await notifyFoundingClaimSubmitted(userId)
+    }
+    return { success: true, status: "pending" }
+  }
+
+  if (afterStatus === "active") {
+    return {
+      success: false,
+      error: "You are already an active founding creator.",
+      status: "active",
+    }
+  }
+
+  console.error(
+    "claimFoundingCreator: status not persisted after write",
+    { userId, afterStatus }
+  )
+  return {
+    success: false,
+    error:
+      "Could not save your application. Please try again shortly, or contact support.",
+  }
 }
 
 async function loadUserForEmail(userId: string) {
   const admin = createAdminClient()
-  const { data } = await admin
+  const { data: profile } = await admin
     .from("users")
     .select("email, name, username")
     .eq("id", userId)
     .maybeSingle()
-  return data
+
+  let email = String(profile?.email || "").trim()
+  if (!email) {
+    // public.users.email can be empty; Auth is the source of truth for login email
+    const { data: authData, error } = await admin.auth.admin.getUserById(userId)
+    if (error) {
+      console.warn("loadUserForEmail auth lookup:", error.message)
+    }
+    email = authData?.user?.email?.trim() || ""
+  }
+
+  return {
+    email,
+    name: (profile?.name as string) || null,
+    username: (profile?.username as string) || null,
+  }
 }
 
 async function notifyFoundingClaimSubmitted(userId: string) {
   const person = await loadUserForEmail(userId)
-  const email = person?.email?.trim()
+  const email = person.email?.trim()
   if (!email) {
     console.warn("notifyFoundingClaimSubmitted: no email for", userId)
     return
@@ -472,12 +486,12 @@ async function notifyFoundingClaimSubmitted(userId: string) {
   const claimNote = process.env.FOUNDING_CREATOR_CLAIM_EMAIL_NOTE?.trim() || null
   const applicant = {
     email,
-    name: (person?.name as string) || null,
-    username: (person?.username as string) || null,
+    name: person.name,
+    username: person.username,
     userId,
   }
 
-  await Promise.allSettled([
+  const results = await Promise.allSettled([
     sendFoundingCreatorClaimConfirmationEmail(applicant, baseUrl, claimNote),
     sendFoundingCreatorAdminClaimNotificationEmail(
       getFoundingAdminEmails(),
@@ -485,6 +499,17 @@ async function notifyFoundingClaimSubmitted(userId: string) {
       baseUrl
     ),
   ])
+
+  results.forEach((result, i) => {
+    const label = i === 0 ? "claim confirmation" : "admin claim notify"
+    if (result.status === "rejected") {
+      console.error(`notifyFoundingClaimSubmitted ${label}:`, result.reason)
+      return
+    }
+    if (!result.value.success) {
+      console.error(`notifyFoundingClaimSubmitted ${label}:`, result.value.error)
+    }
+  })
 }
 
 export async function approveFoundingCreator(input: {
