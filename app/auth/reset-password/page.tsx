@@ -172,7 +172,7 @@ export default function ResetPasswordPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="pl-1 block text-sm font-medium mb-1">New password</label>
+              <label className="block text-sm font-medium mb-1">New password</label>
               <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
@@ -195,7 +195,7 @@ export default function ResetPasswordPage() {
             </div>
 
             <div>
-              <label className="pl-1 block text-sm font-medium mb-1">Confirm password</label>
+              <label className="block text-sm font-medium mb-1">Confirm password</label>
               <div className="relative">
                 <Input
                   type={showConfirmPassword ? "text" : "password"}

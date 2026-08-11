@@ -560,7 +560,7 @@ export const setNotificationData = async (
         return data
 }
 
-export const deleteAccount = async (userId?: string) => {
+export const deleteAccount = async (password: string, userId?: string) => {
     const supabase = await createClient()
     const {
         data: { user },
@@ -568,6 +568,25 @@ export const deleteAccount = async (userId?: string) => {
 
     if (!user) throw new Error("Not authenticated")
     if (userId && user.id !== userId) throw new Error("Forbidden")
+
+    const trimmedPassword = password?.trim() ?? ""
+    if (!trimmedPassword) {
+        throw new Error("Password is required to delete your account")
+    }
+
+    const email = user.email?.trim()
+    if (!email) {
+        throw new Error("Your account has no email address to verify")
+    }
+
+    // Re-authenticate before destructive delete
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email,
+        password: trimmedPassword,
+    })
+    if (reauthError) {
+        throw new Error("Incorrect password. Please try again.")
+    }
 
     const admin = createAdminClient()
     const targetId = user.id

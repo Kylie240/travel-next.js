@@ -101,9 +101,8 @@ export function ProfileHeader({onFollowToggle, user, userStats, isFoundingCreato
         </div>
         <div className="flex-1 text-center md:text-left px-2 sm:px-4 md:px-8">
           <div className="flex flex-col items-center justify-center mt-2 gap-1">
-            <div className="flex flex-wrap items-center justify-center gap-1">
-              <h1 className="text-4xl font-semibold">{user.name}</h1>
-              {isFoundingCreator && <FoundingCreatorBadge />}
+            <div className="flex flex-wrap items-center justify-center gap-1 text-center">
+              <h1 className="text-4xl font-semibold">{user.name} {isFoundingCreator && <FoundingCreatorBadge />}</h1>
             </div>
             <p className="text-gray-600">@{user.username}</p>
           </div>

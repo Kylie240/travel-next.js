@@ -120,8 +120,8 @@ const LOOKING_FOR = [
   `A complete profile: name, username, avatar, and bio (at least ${FOUNDING_BIO_MIN_LENGTH} characters)`,
   "At least one linked social account so buyers can verify who they’re buying from",
   "At least one published public itinerary with cover image, clear title, and description",
-  "Day-by-day structure (3+ days) with useful tips travelers can follow",
-  "Original, non-spam content that reflects real travel know-how",
+  "Published itinerary should be a complete trip (3+ days) with useful tips travelers can follow",
+  "Bonus points for experience in Japan, Italy, Greece, Portugal, or Spain",
 ]
 
 const FAQS = [
@@ -435,7 +435,7 @@ export default async function BecomeACreatorPage() {
           <h2 className="text-center text-2xl font-bold md:text-3xl">
             What We're Looking For
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-gray-600">
+          <p className="mx-auto mt-3 max-w-2xl text-center text-gray-600">
             As a new marketplace, we're looking for passionate travelers who
             able to generate quality content for our buyers.
             Joining means showing craft through itineraries that reflect real

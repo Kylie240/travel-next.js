@@ -90,15 +90,14 @@ export function FoundingClaimPanel({
               {expiresAt
                 ? ` until ${new Date(expiresAt).toLocaleDateString()}`
                 : " for your founding year"}
-              . Keep publishing quality itineraries, and we&apos;ll help more
-              people find your work.
+              . If you haven't already, connect your account to Stripe to start earning money from your itineraries.
             </p>
-            <Link href={primaryHref} className="mt-4 inline-flex">
+            <Link href="/seller-dashboard" className="mt-4 inline-flex">
               <Button className="bg-cyan-700 text-white hover:bg-cyan-800">
-                Create an itinerary
+                Connect to Stripe
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-            </Link>
+            </Link>  
           </div>
         </div>
       </div>

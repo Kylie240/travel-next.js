@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ProfileHeader } from "@/components/profile/profile-header"
 import { Input } from "@/components/ui/input"
@@ -29,6 +29,15 @@ import { LuEyeClosed } from "react-icons/lu"
 import { optimizeImageOnServer } from "@/lib/utils/optimize-image-client"
 import { isActiveFoundingCreatorFromSettings, FoundingCreatorBadge } from "@/components/profile/founding-creator-badge"
 import { resolveEffectivePlan } from "@/lib/founding-creator/plan"
+import { SELLER_PLATFORM_FEE_RATE } from "@/lib/seller-fees"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface SettingsContentProps {
   initialUser: UserType | null;
@@ -46,6 +55,17 @@ function formatSettingsDate(value: Date | string | null | undefined): string | n
   if (Number.isNaN(d.getTime())) return null
   return d.toLocaleDateString()
 }
+
+function msUntil(value: Date | string | null | undefined): number | null {
+  if (value == null) return null
+  const d = typeof value === "string" ? new Date(value) : value
+  if (Number.isNaN(d.getTime())) return null
+  return d.getTime() - Date.now()
+}
+
+const FOUNDING_EXPIRY_REMINDER_MS = 30 * 24 * 60 * 60 * 1000
+const PRO_FEE_PERCENT = Math.round(SELLER_PLATFORM_FEE_RATE.pro * 100)
+const FREE_FEE_PERCENT = Math.round(SELLER_PLATFORM_FEE_RATE.free * 100)
 
 async function openBillingPortal() {
   try {
@@ -123,6 +143,50 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false)
   const [uploadedAvatar, setUploadedAvatar] = useState<File | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletePassword, setDeletePassword] = useState("")
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  const [newEmail, setNewEmail] = useState(userData.email || initialUser?.email || "")
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false)
+  const [isSigningOutEverywhere, setIsSigningOutEverywhere] = useState(false)
+  const [isSettingPassword, setIsSettingPassword] = useState(false)
+
+  const authProviders = useMemo(() => {
+    const identities = initialUser?.identities ?? []
+    const providers = [
+      ...new Set(
+        identities
+          .map((identity) => identity.provider)
+          .filter((provider): provider is string => Boolean(provider))
+      ),
+    ]
+    // Fallbacks when identities aren't populated on the session user
+    if (!providers.length) {
+      const metaProvider = (initialUser?.app_metadata?.provider as string | undefined) || ""
+      if (metaProvider) providers.push(metaProvider)
+    }
+    const hasEmail = providers.includes("email")
+    const hasGoogle = providers.includes("google")
+    return {
+      providers: providers.length ? providers : ["email"],
+      hasEmail,
+      hasGoogle,
+      isOAuthOnly: !hasEmail && providers.some((p) => p !== "email"),
+    }
+  }, [initialUser])
+
+  const emailVerified = Boolean(initialUser?.email_confirmed_at)
+  const isFoundingActive = isActiveFoundingCreatorFromSettings(userSettings)
+  const foundingMsLeft = isFoundingActive
+    ? msUntil(userSettings.founding_creator_expires_at)
+    : null
+  const foundingExpiringSoon =
+    foundingMsLeft != null &&
+    foundingMsLeft > 0 &&
+    foundingMsLeft <= FOUNDING_EXPIRY_REMINDER_MS
+  const hasStripeConnect = Boolean(userSettings.stripe_account_id)
+  const showSellerStatus = hasStripeConnect || isFoundingActive
+
   const effectivePlan = resolveEffectivePlan({
     plan: userSettings.plan,
     stripe_subscription_status: userSettings.stripe_subscription_status,
@@ -302,31 +366,103 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       toast.error("Passwords do not match")
       return
     }
-    const supabase = createClient()
-    const { data, error } = await supabase.auth.updateUser({
-      password: newPassword
-    })
-    if (error) {
-      toast.error(error.message)
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters")
       return
     }
-    toast.success("Password updated")
-    router.refresh()
-    setNewPassword("")
-    setConfirmNewPassword("")
+    setIsSettingPassword(true)
+    try {
+      const client = createClient()
+      const { error } = await client.auth.updateUser({
+        password: newPassword,
+      })
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+      toast.success(
+        authProviders.isOAuthOnly
+          ? "Password set. You can now sign in with email and password."
+          : "Password updated"
+      )
+      setNewPassword("")
+      setConfirmNewPassword("")
+      router.refresh()
+    } finally {
+      setIsSettingPassword(false)
+    }
+  }
+
+  const handleUpdateEmail = async () => {
+    const trimmed = newEmail.trim().toLowerCase()
+    const current = (initialUser?.email || userData.email || "").trim().toLowerCase()
+    if (!trimmed) {
+      toast.error("Enter a valid email address")
+      return
+    }
+    if (trimmed === current) {
+      toast.error("That is already your current email")
+      return
+    }
+
+    setIsUpdatingEmail(true)
+    try {
+      const client = createClient()
+      const origin = window.location.origin
+      const { error } = await client.auth.updateUser(
+        { email: trimmed },
+        { emailRedirectTo: `${origin}/auth/callback?next=/account-settings` }
+      )
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+      toast.success(
+        "Check your new inbox for a confirmation link. Your email updates after you confirm."
+      )
+      router.refresh()
+    } finally {
+      setIsUpdatingEmail(false)
+    }
+  }
+
+  const handleSignOutEverywhere = async () => {
+    setIsSigningOutEverywhere(true)
+    try {
+      const client = createClient()
+      const { error } = await client.auth.signOut({ scope: "global" })
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+      toast.success("Signed out of all devices")
+      router.push("/login?mode=login")
+      router.refresh()
+    } finally {
+      setIsSigningOutEverywhere(false)
+    }
   }
 
   const handleDeleteAccount = async () => {
-    if (confirm('Are you sure you want to delete your account? This action is permanent and cannot be undone.')) {
-      try {
-          // await supabase.auth.admin.deleteUser(userData.id)
-          await deleteAccount(userData.id)
-          supabase.auth.signOut()
-          toast.success('Account deleted successfully')
-          router.push('/')
-      } catch (error) {
-          toast.error('Failed to delete account')
-      }
+    if (!deletePassword.trim()) {
+      toast.error("Enter your password to delete your account")
+      return
+    }
+
+    setIsDeletingAccount(true)
+    try {
+      await deleteAccount(deletePassword, userData.id)
+      setDeleteDialogOpen(false)
+      setDeletePassword("")
+      await supabase.auth.signOut()
+      toast.success("Account deleted successfully")
+      router.push("/")
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete account"
+      )
+    } finally {
+      setIsDeletingAccount(false)
     }
   }
 
@@ -422,17 +558,17 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           <div className="space-y-4">
             <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Profile Picture</label>
             {updatedUserData.avatar && updatedUserData.avatar !== "" ? (
-            <div className="w-[120px] h-[120px] overflow-hidden relative rounded-full ml-2">
+            <div className="w-[120px] h-[120px] relative overflow-hidden rounded-full ml-2">
                 <Image
                   src={updatedUserData.avatar}  
                   alt={updatedUserData.name}
-                  className="object-cover rounded-full"
-                  width={120}
-                  height={120}
+                  fill
+                  sizes="120px"
+                  className="object-cover"
                 />
               </div>
             ) : (
-              <div className="w-[120px] h-[120px] relative rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-[120px] h-[120px] relative rounded-full bg-gray-100 flex items-center justify-center ml-2">
                 <FaUserLarge className="h-12 w-12 text-gray-300" />
               </div>
             )}
@@ -453,7 +589,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Name</label>
+              <label className="block text-md font-medium text-gray-600 mb-2">Name</label>
               <Input
                 type="text"
                 value={formData.name}
@@ -463,7 +599,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               />
             </div>
             <div>
-              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Username</label>
+              <label className="block text-md font-medium text-gray-600 mb-2">Username</label>
               <Input
                 type="text"
                 value={formData.username}
@@ -474,7 +610,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             </div>
           </div>
           <div>
-            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Bio</label>
+            <label className="block text-md font-medium text-gray-600 mb-2">Bio</label>
             <textarea
               className="w-full p-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-travel-900 min-h-[100px]"
               value={formData.bio}
@@ -484,15 +620,37 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               />
           </div>
           <div>
-            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Email</label>
+            <label className="block text-md font-medium text-gray-600 mb-2">Email</label>
             <Input
-              type="text"
-              defaultValue={updatedUserData.email}
+              type="email"
+              value={newEmail}
               placeholder="Enter your email"
-              disabled
               className="rounded-xl"
-              onChange={(e) => setUpdatedUserData({ ...updatedUserData, email: e.target.value })}
+              onChange={(e) => setNewEmail(e.target.value)}
             />
+            <p className="mt-2 text-sm text-gray-600 pl-2">
+              Status:{" "}
+              {emailVerified ? (
+                <span className="font-medium text-green-700">Verified</span>
+              ) : (
+                <span className="font-medium text-amber-700">Unverified</span>
+              )}
+              . Changing email sends a confirmation link to the new address —
+              it won&apos;t update until you confirm.
+            </p>
+            <Button
+              className="mt-3"
+              variant="outline"
+              disabled={
+                isUpdatingEmail ||
+                !newEmail.trim() ||
+                newEmail.trim().toLowerCase() ===
+                  (initialUser?.email || userData.email || "").trim().toLowerCase()
+              }
+              onClick={() => void handleUpdateEmail()}
+            >
+              {isUpdatingEmail ? "Sending…" : "Update email"}
+            </Button>
           </div>
           {/* <div>
             <label className="block text-md font-semibold pl-2 mb-2">Traveler Type (Optional)</label>
@@ -515,8 +673,8 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               </SelectContent>
             </Select>
           </div> */}
-          <div>
-            <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Location</label>
+          {/* <div>
+            <label className="block text-md font-medium text-gray-600 mb-2">Location</label>
               <Input
                 type="text"
                 defaultValue={updatedUserData.location}
@@ -524,11 +682,11 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                 className="rounded-xl"
                 onChange={(e) => setUpdatedUserData({ ...updatedUserData, location: e.target.value })}
               />
-          </div>
-          <label className="block text-md font-semibold pl-2 mt-2">Social Links</label>
+          </div> */}
+          <label className="block text-md font-semibold mt-2">Social Links</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Facebook</label>
+              <label className="block text-md font-medium text-gray-600 mb-2">Facebook</label>
               <div className={socialLinkWrapperClass}>
                 <span className={socialLinkPrefixClass}>www.facebook.com/</span>
                 <input
@@ -541,7 +699,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               </div>
             </div>
             <div>
-              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Instagram</label>
+              <label className="block text-md font-medium text-gray-600 mb-2">Instagram</label>
               <div className={socialLinkWrapperClass}>
                 <span className={socialLinkPrefixClass}>www.instagram.com/</span>
                 <input
@@ -554,7 +712,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               </div>
             </div>
             <div>
-              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Twitter</label>
+              <label className="block text-md font-medium text-gray-600 mb-2">Twitter</label>
               <div className={socialLinkWrapperClass}>
                 <span className={socialLinkPrefixClass}>www.twitter.com/</span>
                 <input
@@ -567,7 +725,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               </div>
             </div>
             <div>
-              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Pinterest</label>
+              <label className="block text-md font-medium text-gray-600 mb-2">Pinterest</label>
               <div className={socialLinkWrapperClass}>
                 <span className={socialLinkPrefixClass}>www.pinterest.com/</span>
                 <input
@@ -580,7 +738,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               </div>
             </div>
             <div>
-              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Tiktok</label>
+              <label className="block text-md font-medium text-gray-600 mb-2">Tiktok</label>
               <div className={socialLinkWrapperClass}>
                 <span className={socialLinkPrefixClass}>www.tiktok.com/@</span>
                 <input
@@ -598,7 +756,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               </div>
             </div>
             <div>
-              <label className="block text-md font-medium text-gray-600 pl-2 mb-2">Youtube</label>
+              <label className="block text-md font-medium text-gray-600 mb-2">Youtube</label>
               <div className={socialLinkWrapperClass}>
                 <span className={socialLinkPrefixClass}>www.youtube.com/@</span>
                 <input
@@ -682,20 +840,68 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       content: (
         <div className="space-y-8">
           <div>
-            <label className="block text-md font-semibold pl-2 mb-2">New Password</label>
+            <label className="block text-md font-semibold mb-2">
+              Connected accounts
+            </label>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+                <span>Email &amp; password</span>
+                <span
+                  className={
+                    authProviders.hasEmail || !authProviders.isOAuthOnly
+                      ? "font-medium text-green-700"
+                      : "text-gray-500"
+                  }
+                >
+                  {authProviders.hasEmail || !authProviders.isOAuthOnly
+                    ? "Connected"
+                    : "Not set"}
+                </span>
+              </li>
+              <li className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+                <span>Google</span>
+                <span
+                  className={
+                    authProviders.hasGoogle
+                      ? "font-medium text-green-700"
+                      : "text-gray-500"
+                  }
+                >
+                  {authProviders.hasGoogle ? "Connected" : "Not connected"}
+                </span>
+              </li>
+            </ul>
+            {authProviders.isOAuthOnly && (
+              <p className="mt-2 text-sm text-amber-800">
+                You signed up with Google. Set a password below so you can also
+                sign in with email, and so you can confirm account deletion.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-md font-semibold">
+              {authProviders.isOAuthOnly ? "Set password" : "New Password"}
+            </label>
             <Input
               type="password"
-              placeholder="Enter your new password"
+              placeholder={
+                authProviders.isOAuthOnly
+                  ? "Create a password"
+                  : "Enter your new password"
+              }
               className="rounded-xl"
               onChange={(e) => setNewPassword(e.target.value)}
               value={newPassword}
             />
           </div>
           <div>
-            <label className="block text-md font-semibold pl-2 mb-2">Confirm New Password</label>
+            <label className="block text-md font-semibold">
+              Confirm {authProviders.isOAuthOnly ? "password" : "New Password"}
+            </label>
             <Input
               type="password"
-              placeholder="Confirm your new password"
+              placeholder="Confirm your password"
               className="rounded-xl"
               onChange={(e) => setConfirmNewPassword(e.target.value)}
               value={confirmNewPassword}
@@ -704,15 +910,58 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
               <p className="text-sm text-red-600">Passwords do not match</p>
             )}
           </div>
-          <Button disabled={!newPassword || !confirmNewPassword || newPassword !== confirmNewPassword} onClick={() => handleUpdatePassword()}>Update Password</Button>
+          <Button
+            disabled={
+              isSettingPassword ||
+              !newPassword ||
+              !confirmNewPassword ||
+              newPassword !== confirmNewPassword
+            }
+            onClick={() => void handleUpdatePassword()}
+          >
+            {isSettingPassword
+              ? "Saving…"
+              : authProviders.isOAuthOnly
+                ? "Set password"
+                : "Update Password"}
+          </Button>
+
+          <div className="mt-12">
+            <label className="block text-md font-semibold mb-2">Sessions</label>
+            <p className="text-sm text-gray-600 mb-4">
+              Sign out of Journli on every device and browser where you&apos;re
+              currently logged in. Useful after changing your password or if you
+              used a shared device.
+            </p>
+            <Button
+              variant="outline"
+              disabled={isSigningOutEverywhere}
+              onClick={() => void handleSignOutEverywhere()}
+            >
+              {isSigningOutEverywhere ? "Signing out…" : "Sign out everywhere"}
+            </Button>
+          </div>
+
           <div className="mt-12">
             <label className="block text-md font-semibold mb-2">Delete Account</label>
             <p className="text-sm text-gray-600 mb-4">
             Deleting your account means that your account will no longer be available. 
             You will not be able to log in and your profile will not be accessible. 
             Any reviews, photos, and tips that you have contributed may continue to be displayed on the site.
+            {authProviders.isOAuthOnly
+              ? " Set a password above first — we require it to confirm deletion."
+              : " You will need to enter your password to confirm."}
             </p>
-            <a className="underline cursor-pointer hover:text-red-600" onClick={() => handleDeleteAccount()}>Delete</a>
+            <button
+              type="button"
+              className="underline cursor-pointer hover:text-red-600 text-left"
+              onClick={() => {
+                setDeletePassword("")
+                setDeleteDialogOpen(true)
+              }}
+            >
+              Delete
+            </button>
           </div>
         </div>
       )
@@ -811,6 +1060,29 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       description: "Manage your subscription",
       content: (
         <div className="space-y-8">
+          {foundingExpiringSoon && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm font-medium text-amber-950">
+                Your founding Pro ends{" "}
+                {formatSettingsDate(userSettings.founding_creator_expires_at) ||
+                  "soon"}
+                .
+              </p>
+              <p className="mt-1 text-sm text-amber-900">
+                Subscribe before{" "}
+                {formatSettingsDate(userSettings.founding_creator_expires_at) ||
+                  "that date"}{" "}
+                to keep Pro features without interruption.
+              </p>
+              <Button
+                className="mt-3 bg-cyan-700 text-white hover:bg-cyan-800"
+                onClick={() => router.push("/plans")}
+              >
+                View plans
+              </Button>
+            </div>
+          )}
+
           <div>
             <label className="text-sm text-gray-600">Current plan</label>
             <p className="block text-md font-semibold mt-2">
@@ -821,7 +1093,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                 {planDetails.find(plan => plan.title === effectivePlan)?.description}
               </p>
             )}
-            {isActiveFoundingCreatorFromSettings(userSettings) && (
+            {isFoundingActive && (
               <p className="mt-2 text-sm text-cyan-800">
                 Pro is included with your founding creator grant
                 {formatSettingsDate(userSettings.founding_creator_expires_at)
@@ -842,13 +1114,52 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             )}
           </div>
 
+          {showSellerStatus && (
+            <div>
+              <label className="block text-md font-semibold mb-2">
+                Seller status
+              </label>
+              <p className="text-sm text-gray-600">
+                Stripe Connect:{" "}
+                <span className="font-medium text-gray-900">
+                  {hasStripeConnect ? "Connected" : "Not connected"}
+                </span>
+              </p>
+              <p className="mt-2 text-sm text-gray-600">
+                Platform fee on sales:{" "}
+                <span className="font-medium text-gray-900">
+                  {effectivePlan === "pro" ? PRO_FEE_PERCENT : FREE_FEE_PERCENT}%
+                </span>
+                {isFoundingActive && effectivePlan === "pro"
+                  ? " (Pro rate via your founding grant)"
+                  : effectivePlan === "pro"
+                    ? " (Pro rate)"
+                    : " (Free rate — upgrade to Pro to lower this)"}
+                .
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    hasStripeConnect ? "/seller-dashboard" : "/become-a-seller"
+                  )
+                }
+                className="mt-3 block text-left text-sm underline cursor-pointer hover:text-cyan-800"
+              >
+                {hasStripeConnect
+                  ? "Open Seller Dashboard"
+                  : "Connect Stripe to sell"}
+              </button>
+            </div>
+          )}
+
           {userSettings.founding_creator_status && (
             <div>
               <label className="block text-md font-semibold mb-2">
                 Founding creator
               </label>
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                {isActiveFoundingCreatorFromSettings(userSettings) && (
+                {isFoundingActive && (
                   <FoundingCreatorBadge />
                 )}
                 <span className="text-sm font-medium capitalize text-gray-900">
@@ -864,7 +1175,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
                     : ""}
                 </p>
               )}
-              {isActiveFoundingCreatorFromSettings(userSettings) && (
+              {isFoundingActive && (
                 <p className="text-sm text-gray-600">
                   You&apos;re an active founding creator
                   {formatSettingsDate(userSettings.founding_creator_expires_at)
@@ -916,7 +1227,7 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
             </div>
           )}
           {effectivePlan !== "free" &&
-            isActiveFoundingCreatorFromSettings(userSettings) &&
+            isFoundingActive &&
             userSettings.stripe_subscription_status !== "active" &&
             userSettings.stripe_subscription_status !== "trialing" && (
             <div>
@@ -1080,6 +1391,66 @@ export function SettingsContent({ initialUser, userData, userStats, searchParams
       >
         {settingsSections.find(section => section.title === activeSection)?.content}                                                                            
       </SettingsSidebar>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (isDeletingAccount) return
+          setDeleteDialogOpen(open)
+          if (!open) setDeletePassword("")
+        }}
+      >
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Delete your account?</DialogTitle>
+            <DialogDescription>
+              This is permanent and cannot be undone. Enter your password to
+              confirm.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="delete-account-password" className="text-sm font-medium">
+              Password
+            </label>
+            <Input
+              id="delete-account-password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              className="rounded-xl"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && deletePassword.trim() && !isDeletingAccount) {
+                  void handleDeleteAccount()
+                }
+              }}
+              disabled={isDeletingAccount}
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isDeletingAccount}
+              onClick={() => {
+                setDeleteDialogOpen(false)
+                setDeletePassword("")
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDeletingAccount || !deletePassword.trim()}
+              onClick={() => void handleDeleteAccount()}
+            >
+              {isDeletingAccount ? "Deleting…" : "Delete account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Onboarding tour for new users */}
       <OnboardingTour userName={userData?.name?.split(' ')[0]} userId={userData?.id} />
