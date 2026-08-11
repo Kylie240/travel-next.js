@@ -1,10 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { createServerClient } from "@supabase/ssr"
 import {
   checkRateLimit,
   pruneRateLimitBuckets,
 } from "@/lib/auth/rate-limit"
-import { verifyTurnstileToken } from "@/lib/auth/verify-turnstile"
 
 function clientIp(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for")
@@ -12,7 +10,7 @@ function clientIp(request: NextRequest): string {
   return request.headers.get("x-real-ip")?.trim() || "unknown"
 }
 
-/** Rate-limit + captcha gate for password reset / resend confirmation. */
+/** Rate-limit gate for password reset / resend confirmation. */
 export async function POST(request: NextRequest) {
   pruneRateLimitBuckets()
   const ip = clientIp(request)
@@ -32,21 +30,6 @@ export async function POST(request: NextRequest) {
         status: 429,
         headers: { "Retry-After": String(ipLimit.retryAfterSec) },
       }
-    )
-  }
-
-  let body: { captchaToken?: string } = {}
-  try {
-    body = await request.json()
-  } catch {
-    body = {}
-  }
-
-  const captcha = await verifyTurnstileToken(body.captchaToken, ip)
-  if (!captcha.ok) {
-    return NextResponse.json(
-      { error: captcha.error || "Captcha verification failed." },
-      { status: 400 }
     )
   }
 

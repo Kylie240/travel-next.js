@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import createClient from "@/utils/supabase/client"
-import { TurnstileField, isClientTurnstileEnabled } from "@/components/ui/turnstile-field"
 import { toast } from "sonner"
 
 const PENDING_EMAIL_KEY = "journli_pending_signup_email"
@@ -14,8 +13,6 @@ export default function ConfirmEmailPage() {
   const router = useRouter()
   const supabase = createClient()
   const [isResending, setIsResending] = useState(false)
-  const [captchaToken, setCaptchaToken] = useState("")
-  const [captchaKey, setCaptchaKey] = useState(0)
   const [message, setMessage] = useState("")
   const [email, setEmail] = useState("")
 
@@ -34,11 +31,6 @@ export default function ConfirmEmailPage() {
     })
   }, [supabase.auth])
 
-  const resetCaptcha = () => {
-    setCaptchaToken("")
-    setCaptchaKey((k) => k + 1)
-  }
-
   const handleResend = async () => {
     setMessage("")
     const targetEmail = email.trim().toLowerCase()
@@ -49,20 +41,14 @@ export default function ConfirmEmailPage() {
 
     setIsResending(true)
     try {
-      if (isClientTurnstileEnabled() && !captchaToken) {
-        setMessage("Please complete the captcha challenge.")
-        return
-      }
-
       const protectRes = await fetch("/api/auth/protect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ captchaToken: captchaToken || undefined }),
+        body: JSON.stringify({}),
       })
       const protectData = await protectRes.json().catch(() => ({}))
       if (!protectRes.ok) {
         setMessage(protectData.error || "Too many attempts. Please try again later.")
-        resetCaptcha()
         return
       }
 
@@ -70,24 +56,20 @@ export default function ConfirmEmailPage() {
         type: "signup",
         email: targetEmail,
         options: {
-          captchaToken: captchaToken || undefined,
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
       if (error) {
         setMessage(error.message)
-        resetCaptcha()
         return
       }
 
       sessionStorage.setItem(PENDING_EMAIL_KEY, targetEmail)
-      resetCaptcha()
       toast.success("Confirmation email resent. Check your inbox.")
       setMessage("Confirmation email resent. Check your inbox (and spam folder).")
     } catch (error: any) {
       setMessage(error?.message || "Failed to resend confirmation email.")
-      resetCaptcha()
     } finally {
       setIsResending(false)
     }
@@ -117,16 +99,6 @@ export default function ConfirmEmailPage() {
         />
       </div>
 
-      {isClientTurnstileEnabled() ? (
-        <div className="mb-4 w-full max-w-sm flex justify-center">
-          <TurnstileField
-            key={captchaKey}
-            onToken={setCaptchaToken}
-            onExpire={() => setCaptchaToken("")}
-          />
-        </div>
-      ) : null}
-
       {message ? (
         <p className="text-sm text-gray-700 mb-4 max-w-md">{message}</p>
       ) : null}
@@ -135,7 +107,7 @@ export default function ConfirmEmailPage() {
         <Button
           type="button"
           onClick={handleResend}
-          disabled={isResending || (isClientTurnstileEnabled() && !captchaToken)}
+          disabled={isResending}
         >
           {isResending ? "Sending…" : "Resend confirmation email"}
         </Button>

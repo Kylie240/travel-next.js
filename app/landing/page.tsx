@@ -144,7 +144,7 @@ function PopularItinerariesFallback() {
 function WhereToGoFallback() {
   return (
     <section className="py-14 px-4 sm:px-8 bg-white">
-      <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto">
         <div className="h-8 w-64 bg-gray-100 rounded mb-8 animate-pulse" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-4 gap-y-8">
           {Array.from({ length: 10 }).map((_, i) => (

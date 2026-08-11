@@ -219,7 +219,7 @@ async function getItineraryIdsByActivityTypes(
  * used for the Explore destinations dropdown.
  */
 export const getPublicDestinationCountries = async (): Promise<string[]> => {
-  const supabase = await createClient()
+    const supabase = await createClient()
 
   const { data: itineraries, error: itinerariesError } = await supabase
     .from("itineraries")
@@ -495,9 +495,9 @@ export const getItineraries = async (
   const rows = data || []
   if (rows.length === 0) {
     const total = count ?? 0
-    return {
+         return {
       data: [],
-      total,
+            total,
       totalPages: Math.max(1, Math.ceil(total / pageSize)),
       currentPage: page,
     }
@@ -835,7 +835,7 @@ export const createItinerary = async (itinerary: CreateItinerary) => {
 
         if (itineraryId && itinerary.title?.trim()) {
           try {
-            await syncItinerarySlug(supabase, itineraryId, itinerary.title)
+          await syncItinerarySlug(supabase, itineraryId, itinerary.title)
           } catch (slugError) {
             console.error("Slug sync failed after create:", slugError)
           }
@@ -867,7 +867,7 @@ export const updateItinerary = async (id: string, itinerary: CreateItinerary) =>
 
       if (itinerary.title?.trim()) {
         try {
-          await syncItinerarySlug(supabase, id, itinerary.title)
+        await syncItinerarySlug(supabase, id, itinerary.title)
         } catch (slugError) {
           console.error("Slug sync failed after update:", slugError)
         }
@@ -1061,7 +1061,7 @@ export const deleteItinerary = async (itineraryId: string) => {
     const {
         data: { user },
       } = await supabase.auth.getUser()
-
+    
       if (!user) throw new Error("Not authenticated")
 
         const { data: existing, error: fetchError } = await supabase
@@ -1400,11 +1400,11 @@ export const updateItineraryPricing = async (
 
   // Paid pricing requires Stripe Connect; unpaid/free listings do not.
   if (pricing.is_paid) {
-    const { data: userSettings, error: settingsError } = await supabase
-      .from('users_settings')
+  const { data: userSettings, error: settingsError } = await supabase
+    .from('users_settings')
       .select('stripe_account_id')
-      .eq('user_id', user.id)
-      .single()
+    .eq('user_id', user.id)
+    .single()
 
     if (settingsError) throw new Error("Could not verify seller account")
     if (!userSettings?.stripe_account_id) {

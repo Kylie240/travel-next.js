@@ -6,7 +6,6 @@ import {
   checkRateLimit,
   pruneRateLimitBuckets,
 } from "@/lib/auth/rate-limit"
-import { verifyTurnstileToken } from "@/lib/auth/verify-turnstile"
 
 const signupSchema = z.object({
   name: z
@@ -20,7 +19,6 @@ const signupSchema = z.object({
     .refine((s) => !s.includes(" "), "No spaces allowed"),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  captchaToken: z.string().optional(),
 })
 
 function clientIp(request: NextRequest): string {
@@ -71,7 +69,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 
-  const { name, username, email, password, captchaToken } = parsed.data
+  const { name, username, email, password } = parsed.data
   const normalizedEmail = email.trim().toLowerCase()
   const normalizedUsername = username.trim().toLowerCase()
 
@@ -103,34 +101,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Turnstile tokens are single-use. If Supabase Auth CAPTCHA is enabled (recommended),
-  // only pass the token to signUp — do NOT siteverify here or Supabase gets
-  // "invalid-input-response" on the already-consumed token.
-  // Set SUPABASE_CAPTCHA_ENABLED=false to verify locally instead (and omit captchaToken from signUp).
-  const supabaseCaptchaEnabled =
-    process.env.SUPABASE_CAPTCHA_ENABLED?.trim().toLowerCase() !== "false"
-  const turnstileConfigured = Boolean(
-    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ||
-      process.env.TURNSTILE_SECRET_KEY?.trim()
-  )
-
-  if (turnstileConfigured && !captchaToken?.trim()) {
-    return NextResponse.json(
-      { error: "Please complete the captcha challenge." },
-      { status: 400 }
-    )
-  }
-
-  if (!supabaseCaptchaEnabled) {
-    const captcha = await verifyTurnstileToken(captchaToken, ip)
-    if (!captcha.ok) {
-      return NextResponse.json(
-        { error: captcha.error || "Captcha verification failed." },
-        { status: 400 }
-      )
-    }
-  }
-
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
   if (!url || !anonKey) {
@@ -140,7 +110,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Use anon key so Supabase CAPTCHA protection (when enabled) is enforced.
   const supabase = createClient(url, anonKey, {
     auth: {
       autoRefreshToken: false,
@@ -154,10 +123,6 @@ export async function POST(request: NextRequest) {
     email: normalizedEmail,
     password,
     options: {
-      // Only pass token when Supabase is the verifier (tokens are single-use).
-      captchaToken: supabaseCaptchaEnabled
-        ? captchaToken || undefined
-        : undefined,
       emailRedirectTo: `${origin}/auth/callback`,
       data: {
         name: name.trim(),

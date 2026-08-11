@@ -13,10 +13,6 @@ import { createClientComponentClient, Session } from "@supabase/auth-helpers-nex
 import { toast } from "sonner"
 import Image from "next/image"
 import { linkPurchasesToUser, requestPasswordReset } from "@/lib/actions/user.actions"
-import {
-  TurnstileField,
-  isClientTurnstileEnabled,
-} from "@/components/ui/turnstile-field"
 
 const signUpSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
@@ -39,9 +35,6 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [captchaToken, setCaptchaToken] = useState("")
-  const [captchaKey, setCaptchaKey] = useState(0)
-  const turnstileEnabled = isClientTurnstileEnabled()
 
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema)
@@ -54,11 +47,6 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
   const currentForm = isSignUp ? signUpForm : signInForm
   const { handleSubmit, formState: { isSubmitting } } = currentForm
 
-  const resetCaptcha = () => {
-    setCaptchaToken("")
-    setCaptchaKey((k) => k + 1)
-  }
-
   const setSessionCookie = async (session: Session) => {
     document.cookie = `sb-access-token=${session?.access_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
     document.cookie = `sb-refresh-token=${session?.refresh_token}; path=/; expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toUTCString()}`;
@@ -70,11 +58,6 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     const username = 'username' in data ? data.username : undefined
     setAuthError("")
     try {
-      if (turnstileEnabled && !captchaToken) {
-        setAuthError("Please complete the captcha challenge.")
-        return
-      }
-
       if (isSignUp) {
         const res = await fetch("/api/auth/signup", {
           method: "POST",
@@ -84,13 +67,11 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             username,
             email,
             password,
-            captchaToken: captchaToken || undefined,
           }),
         })
         const result = await res.json().catch(() => ({}))
         if (!res.ok) {
           setAuthError(result.error || "Signup failed. Please try again.")
-          resetCaptcha()
           return
         }
 
@@ -98,7 +79,6 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         signUpForm.reset()
         signInForm.reset()
         setConfirmPassword("")
-        resetCaptcha()
 
         if (result.needsConfirmation) {
           sessionStorage.setItem(
@@ -125,19 +105,14 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         const { error, data: userCredential } = await supabase.auth.signInWithPassword({
           email,
           password,
-          options: {
-            captchaToken: captchaToken || undefined,
-          },
         })
         if (error) {
           setAuthError(error.message)
-          resetCaptcha()
           return
         }
 
         if (userCredential.user && !userCredential.user.email_confirmed_at) {
           setIsOpen(false)
-          resetCaptcha()
           router.push("/auth/confirm-email")
           return
         }
@@ -146,14 +121,12 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
         setIsOpen(false)
         signUpForm.reset()
         signInForm.reset()
-        resetCaptcha()
         await linkPurchasesToUser()
         router.refresh()
         toast.success("Successfully signed in")
       }
     } catch (error: any) {
       setAuthError(error.message)
-      resetCaptcha()
     }
   }
 
@@ -183,36 +156,27 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
     }
 
     try {
-      if (turnstileEnabled && !captchaToken) {
-        setAuthError("Please complete the captcha challenge.")
-        return
-      }
-
       const protectRes = await fetch("/api/auth/protect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ captchaToken: captchaToken || undefined }),
+        body: JSON.stringify({}),
       })
       const protectData = await protectRes.json().catch(() => ({}))
       if (!protectRes.ok) {
         setAuthError(protectData.error || "Too many attempts. Please try again later.")
-        resetCaptcha()
         return
       }
 
       const result = await requestPasswordReset(email, window.location.origin)
       if (!result.success) {
         setAuthError(result.error ?? "Failed to send reset email")
-        resetCaptcha()
         return
       }
-      resetCaptcha()
       toast.success("Password reset email sent. Check your inbox.")
       setIsOpen(false)
     } catch (error) {
       console.error("Forgot password error:", error)
       setAuthError("Failed to send reset email. Please try again.")
-      resetCaptcha()
     }
   }
 
@@ -302,16 +266,6 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             </div>
           )}
 
-          {turnstileEnabled ? (
-            <div className="flex justify-center">
-              <TurnstileField
-                key={captchaKey}
-                onToken={setCaptchaToken}
-                onExpire={() => setCaptchaToken("")}
-              />
-            </div>
-          ) : null}
-
           {authError && (
             <p className="text-sm text-red-500">{authError}</p>
           )}
@@ -329,8 +283,7 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
             className="w-full"
             disabled={
               isSubmitting ||
-              (isSignUp && confirmPassword !== signUpForm.watch("password")) ||
-              (turnstileEnabled && !captchaToken)
+              (isSignUp && confirmPassword !== signUpForm.watch("password"))
             }
           >
             {isSignUp ? "Sign Up" : "Log In"}
@@ -363,7 +316,6 @@ export function AuthDialogContent({ isOpen, setIsOpen, isSignUp, setIsSignUp }: 
               signUpForm.reset()
               signInForm.reset()
               setConfirmPassword("")
-              resetCaptcha()
             }}
           >
             {isSignUp ? "Log in" : "Sign up"}
