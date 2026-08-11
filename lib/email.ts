@@ -60,7 +60,8 @@ export async function sendPurchaseConfirmationEmail(
   itinerary: PurchaseItinerary,
   baseUrl: string,
   context?: PurchaseEmailContext,
-  pdfAttachment?: PurchaseEmailPdfAttachment | null
+  pdfAttachment?: PurchaseEmailPdfAttachment | null,
+  idempotencyKey?: string | null
 ): Promise<{ success: boolean; error?: string }> {
   if (!resend) {
     console.warn("RESEND_API_KEY not set, skipping purchase confirmation email");
@@ -124,21 +125,26 @@ export async function sendPurchaseConfirmationEmail(
   `.trim();
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: [to],
-      subject: "Your itinerary is here! – Journli",
-      html,
-      attachments:
-        pdfAttachment != null
-          ? [
-              {
-                filename: pdfAttachment.filename,
-                content: pdfAttachment.buffer,
-              },
-            ]
-          : undefined,
-    });
+    const { data, error } = await resend.emails.send(
+      {
+        from: FROM_EMAIL,
+        to: [to],
+        subject: "Your itinerary is here! – Journli",
+        html,
+        attachments:
+          pdfAttachment != null
+            ? [
+                {
+                  filename: pdfAttachment.filename,
+                  content: pdfAttachment.buffer,
+                },
+              ]
+            : undefined,
+      },
+      idempotencyKey?.trim()
+        ? { idempotencyKey: idempotencyKey.trim().slice(0, 256) }
+        : undefined
+    );
 
     if (error) {
       console.error("Resend purchase email error:", error);
@@ -170,7 +176,8 @@ export type CreatorPurchaseNotificationContext = {
 export async function sendCreatorPurchaseNotificationEmail(
   to: string,
   baseUrl: string,
-  context: CreatorPurchaseNotificationContext
+  context: CreatorPurchaseNotificationContext,
+  idempotencyKey?: string | null
 ): Promise<{ success: boolean; error?: string }> {
   if (!resend) {
     console.warn("RESEND_API_KEY not set, skipping creator purchase notification");
@@ -230,12 +237,17 @@ export async function sendCreatorPurchaseNotificationEmail(
   `.trim();
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: [to],
-      subject: `Journli sale confirmation for: ${title.slice(0, 50)}`,
-      html,
-    });
+    const { data, error } = await resend.emails.send(
+      {
+        from: FROM_EMAIL,
+        to: [to],
+        subject: `Journli sale confirmation for: ${title.slice(0, 50)}`,
+        html,
+      },
+      idempotencyKey?.trim()
+        ? { idempotencyKey: idempotencyKey.trim().slice(0, 256) }
+        : undefined
+    );
 
     if (error) {
       console.error("Resend creator purchase notification error:", error);

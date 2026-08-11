@@ -108,7 +108,6 @@ export async function syncItineraryCartPurchase(
 
   let insertedPurchases: PurchaseRow[] =
     (existingPurchases as PurchaseRow[] | null) || [];
-  let createdPurchasesThisRun = false;
 
   if (insertedPurchases.length === 0) {
     const amountPerItem = Math.round(
@@ -197,7 +196,6 @@ export async function syncItineraryCartPurchase(
       }
     } else {
       insertedPurchases = (data as PurchaseRow[] | null) || [];
-      createdPurchasesThisRun = insertedPurchases.length > 0;
       const userInfo = userId
         ? `user ${userId}`
         : `guest (${customerEmail})`;
@@ -325,11 +323,9 @@ export async function syncItineraryCartPurchase(
     }
   }
 
-  // Emails — only on first fulfillment (avoid spam on Stripe retries)
-  if (
-    customerEmail &&
-    (createdPurchasesThisRun || purchasesNeedingTx.length > 0)
-  ) {
+  // Emails — always attempt when we have a buyer email. Resend idempotency keys
+  // prevent duplicates when the webhook and success-page backup both run.
+  if (customerEmail) {
     try {
       await sendPurchaseEmails({
         customerEmail,
@@ -344,7 +340,7 @@ export async function syncItineraryCartPurchase(
     } catch (e) {
       console.error("Purchase email step threw:", e);
     }
-  } else if (!customerEmail) {
+  } else {
     console.warn(
       "No customer email on session; skipping purchase emails",
       session.id
@@ -468,7 +464,8 @@ async function sendPurchaseEmails(args: {
       it,
       base,
       emailContext,
-      pdfAttachment
+      pdfAttachment,
+      `purchase-confirm/${session.id}/${it.id}`
     );
     if (!success) {
       console.error(
@@ -483,16 +480,21 @@ async function sendPurchaseEmails(args: {
     const itSeller = itSellerId ? sellerById[itSellerId] : null;
     if (itSeller?.email && itSellerId !== userId) {
       const { success: creatorNotifyOk, error: creatorNotifyErr } =
-        await sendCreatorPurchaseNotificationEmail(itSeller.email, base, {
-          creatorUsername: itSeller.username,
-          itineraryTitle: it.title,
-          itineraryId: it.id,
-          itinerarySlug: it.slug,
-          buyerUsername: buyerUserRes.data?.username ?? null,
-          buyerName,
-          buyerEmail: customerEmail,
-          amountCents: amountPerItem,
-        });
+        await sendCreatorPurchaseNotificationEmail(
+          itSeller.email,
+          base,
+          {
+            creatorUsername: itSeller.username,
+            itineraryTitle: it.title,
+            itineraryId: it.id,
+            itinerarySlug: it.slug,
+            buyerUsername: buyerUserRes.data?.username ?? null,
+            buyerName,
+            buyerEmail: customerEmail,
+            amountCents: amountPerItem,
+          },
+          `purchase-seller/${session.id}/${it.id}`
+        );
       if (!creatorNotifyOk) {
         console.error(
           "Creator purchase notification failed:",
