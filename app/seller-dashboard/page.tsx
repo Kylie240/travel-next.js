@@ -7,22 +7,80 @@ import {
   TrendingUp,
   Loader2,
   FileText,
+  DollarSign,
+  Clock,
+  Receipt,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   getSellerDashboardSummary,
   SellerDashboardData,
+  SellerTransactionRow,
 } from "@/lib/actions/seller.actions";
 import createClient from "@/utils/supabase/client";
 import { StripeAccountButton } from "@/components/ui/stripe-account-button";
 import { SellerConnectEmbedded } from "@/components/connect/seller-connect-embedded";
 
-function formatCents(cents: number): string {
+function formatCents(cents: number | null | undefined): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 2,
-  }).format(cents / 100);
+  }).format((cents ?? 0) / 100);
+}
+
+function formatSaleDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function payoutStatusLabel(status: string): string {
+  const s = (status || "").trim().toLowerCase();
+  if (s === "paid") return "Paid out";
+  if (s === "pending") return "Pending";
+  if (s === "unpaid") return "Unpaid";
+  return status || "—";
+}
+
+function SaleRowMobile({ row }: { row: SellerTransactionRow }) {
+  return (
+    <li className="border-b border-gray-100 px-4 py-4 last:border-b-0 sm:hidden">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-medium text-gray-900 truncate">
+            {row.itinerary_title || "Itinerary"}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {formatSaleDate(row.created_at)} · {payoutStatusLabel(row.payout_status)}
+          </p>
+        </div>
+        <p className="shrink-0 font-semibold text-emerald-700">
+          {formatCents(row.seller_earnings_cents)}
+        </p>
+      </div>
+      <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <dt className="text-gray-500">Sale</dt>
+          <dd className="text-gray-900">{formatCents(row.gross_amount_cents)}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Journli fee</dt>
+          <dd className="text-gray-900">−{formatCents(row.platform_fee_cents)}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Stripe fee</dt>
+          <dd className="text-gray-900">
+            −{formatCents(row.stripe_fee_cents)}
+          </dd>
+        </div>
+      </dl>
+    </li>
+  );
 }
 
 export default function SellerDashboardPage() {
@@ -200,6 +258,8 @@ export default function SellerDashboardPage() {
 
   if (!user) return null;
 
+  const transactions = data?.transactions ?? [];
+
   return (
     <div className="min-h-screen bg-gray-50/80 py-8 sm:pt-[4rem]">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
@@ -212,8 +272,7 @@ export default function SellerDashboardPage() {
           </p>
         </div>
 
-        {/* Summary cards — Journli itinerary sales (your database) */}
-        {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -222,7 +281,7 @@ export default function SellerDashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">
-                    Total earnings
+                    Your earnings
                   </p>
                   <p className="text-xl font-semibold text-gray-900">
                     {formatCents(data?.totalEarningsCents ?? 0)}
@@ -263,7 +322,101 @@ export default function SellerDashboardPage() {
               </div>
             </CardContent>
           </Card>
-        </div> */}
+        </div>
+
+        <Card className="mb-6">
+          <CardContent className="p-0">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-medium text-gray-900">
+                Itinerary sales
+              </h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Sale price minus Journli platform fee and estimated Stripe
+                processing. Your earnings are what you receive after both fees.
+              </p>
+            </div>
+
+            {transactions.length === 0 ? (
+              <div className="px-4 py-12 text-center text-sm text-gray-600">
+                <p className="mb-4 max-w-md mx-auto">
+                  No paid itinerary sales yet. When buyers purchase your
+                  itineraries, each sale and fee breakdown will appear here.
+                </p>
+                <Link
+                  href="/my-itineraries"
+                  className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                >
+                  <FileText className="h-4 w-4" />
+                  My itineraries
+                </Link>
+              </div>
+            ) : (
+              <>
+                <ul className="sm:hidden">
+                  {transactions.map((row) => (
+                    <SaleRowMobile key={row.id} row={row} />
+                  ))}
+                </ul>
+
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 bg-gray-50/80 text-xs font-medium uppercase tracking-wide text-gray-500">
+                        <th className="px-4 sm:px-6 py-3 font-medium">Date</th>
+                        <th className="px-4 py-3 font-medium">Itinerary</th>
+                        <th className="px-4 py-3 font-medium text-right">
+                          Sale
+                        </th>
+                        <th className="px-4 py-3 font-medium text-right">
+                          Journli fee
+                        </th>
+                        <th className="px-4 py-3 font-medium text-right">
+                          Stripe fee
+                        </th>
+                        <th className="px-4 py-3 font-medium text-right">
+                          Your earnings
+                        </th>
+                        <th className="px-4 sm:px-6 py-3 font-medium text-right">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.map((row) => (
+                        <tr
+                          key={row.id}
+                          className="border-b border-gray-100 last:border-b-0"
+                        >
+                          <td className="px-4 sm:px-6 py-3 text-gray-600 whitespace-nowrap">
+                            {formatSaleDate(row.created_at)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-900 max-w-[200px] truncate">
+                            {row.itinerary_title || "Itinerary"}
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-900 tabular-nums">
+                            {formatCents(row.gross_amount_cents)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-600 tabular-nums">
+                            −{formatCents(row.platform_fee_cents)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-600 tabular-nums">
+                            −{formatCents(row.stripe_fee_cents)}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-emerald-700 tabular-nums">
+                            {formatCents(row.seller_earnings_cents)}
+                          </td>
+                          <td className="px-4 sm:px-6 py-3 text-right text-gray-600 whitespace-nowrap">
+                            {payoutStatusLabel(row.payout_status)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         {stripeAccountId && completeStripeAccountSetup && (
           <Card className="mb-6">
@@ -273,7 +426,7 @@ export default function SellerDashboardPage() {
                   Custom thank you message
                 </h2>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  Optional message for buyers after they purchase your itineraries. 
+                  Optional message for buyers after they purchase your itineraries.
                   Your Journli username is included automatically.
                 </p>
               </div>
@@ -338,21 +491,11 @@ export default function SellerDashboardPage() {
           <CardContent className="p-0">
             <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
               <h2 className="text-lg font-medium text-gray-900">
-                Stripe account activity
+                Stripe balances &amp; payouts
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">
-                Balances, payments, and payouts from your connected Stripe
-                account (loaded with a fresh{" "}
-                <a
-                  className="text-gray-700 underline hover:text-gray-900"
-                  href="https://docs.stripe.com/api/account_sessions"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Account Session
-                </a>{" "}
-                each visit). Summary cards above reflect itinerary sales
-                recorded on Journli.
+                Available balance and payout history from your connected Stripe
+                account. Sale-by-sale fees are listed in Itinerary sales above.
               </p>
             </div>
 
@@ -395,25 +538,7 @@ export default function SellerDashboardPage() {
                 <SellerConnectEmbedded />
               </>
             ) : (
-              <>
-                <SellerConnectEmbedded />
-                {(data?.transactionCount ?? 0) === 0 && (
-                  <div className="border-t border-gray-100 px-4 py-8 text-center text-sm text-gray-600">
-                    <p className="mb-4 max-w-md mx-auto">
-                      No paid itinerary sales on Journli yet. When buyers
-                      purchase your itineraries, totals in the cards above will
-                      update.
-                    </p>
-                    <Link
-                      href="/my-itineraries"
-                      className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-                    >
-                      <FileText className="h-4 w-4" />
-                      My itineraries
-                    </Link>
-                  </div>
-                )}
-              </>
+              <SellerConnectEmbedded />
             )}
           </CardContent>
         </Card>

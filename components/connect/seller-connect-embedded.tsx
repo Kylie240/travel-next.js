@@ -6,7 +6,6 @@ import {
   ConnectBalances,
   ConnectComponentsProvider,
   ConnectNotificationBanner,
-  ConnectPayments,
   ConnectPayouts,
 } from "@stripe/react-connect-js";
 import { Loader2 } from "lucide-react";
@@ -74,12 +73,6 @@ export function SellerConnectEmbedded() {
       <div className="space-y-6 p-4 sm:p-6">
         <ConnectNotificationBanner />
         <ConnectBalances />
-        <div>
-          <h3 className="text-sm font-medium text-gray-900 mb-3">
-            Payments &amp; transfers
-          </h3>
-          <ConnectPayments />
-        </div>
         <div>
           <h3 className="text-sm font-medium text-gray-900 mb-3">Payouts</h3>
           <ConnectPayouts />

@@ -39,7 +39,9 @@ export async function getSellerDashboardSummary(): Promise<SellerDashboardData |
   const admin = createAdminClient();
   const { data: rows, error } = await admin
     .from("seller_transactions")
-    .select("*")
+    .select(
+      "id, itinerary_id, itinerary_title, purchase_id, buyer_id, gross_amount_cents, platform_fee_cents, stripe_fee_cents, seller_earnings_cents, payout_status, created_at"
+    )
     .eq("seller_id", user.id)
     .order("created_at", { ascending: false });
 

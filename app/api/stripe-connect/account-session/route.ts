@@ -39,7 +39,7 @@ export async function POST() {
         notification_banner: { enabled: true },
         balances: { enabled: true },
         payouts: { enabled: true },
-        payments: { enabled: true },
+        // Sales + fee breakdown live in the Journli seller_transactions table UI.
       },
     });
 
