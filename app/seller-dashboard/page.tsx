@@ -286,6 +286,11 @@ export default function SellerDashboardPage() {
                   <p className="text-xl font-semibold text-gray-900">
                     {formatCents(data?.totalEarningsCents ?? 0)}
                   </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {data?.summarySource === "stripe"
+                      ? "Net from Stripe transfers"
+                      : "From recorded Journli sales"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -298,10 +303,15 @@ export default function SellerDashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">
-                    Pending payout
+                    In Stripe balance
                   </p>
                   <p className="text-xl font-semibold text-gray-900">
                     {formatCents(data?.totalPendingCents ?? 0)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {data?.summarySource === "stripe"
+                      ? "Available + pending on Stripe"
+                      : "Pending in Journli records"}
                   </p>
                 </div>
               </div>
@@ -318,11 +328,25 @@ export default function SellerDashboardPage() {
                   <p className="text-xl font-semibold text-gray-900">
                     {data?.transactionCount ?? 0}
                   </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {data?.summarySource === "stripe"
+                      ? "Stripe transfers to you"
+                      : "Recorded on Journli"}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {data?.summarySource === "stripe" &&
+          (data.transactionCount ?? 0) > (data.transactions?.length ?? 0) && (
+            <p className="mb-6 text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+              Stripe shows more sales than Journli has recorded with fee
+              details. Balances above are from Stripe; the table below only
+              lists sales saved in our database.
+            </p>
+          )}
 
         <Card className="mb-6">
           <CardContent className="p-0">
@@ -332,7 +356,8 @@ export default function SellerDashboardPage() {
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">
                 Sale price minus Journli platform fee and estimated Stripe
-                processing. Your earnings are what you receive after both fees.
+                processing, from Journli records. Summary cards prefer live
+                Stripe data when your Connect account is linked.
               </p>
             </div>
 
