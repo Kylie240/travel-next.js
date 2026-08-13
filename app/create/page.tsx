@@ -48,6 +48,7 @@ import { supabase } from "@/utils/supabase/superbase-client"
 import { ItineraryStatusEnum, viewPermissionEnum, editPermissionEnum } from "@/enums/itineraryStatusEnum"
 import { ItineraryStatus } from "@/types/itineraryStatus"
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog"
+import { LeaveToStripeDialog } from "@/components/create/leave-to-stripe-dialog"
 import { ItineraryPreviewDialog } from "@/components/create/itinerary-preview-dialog"
 import { ImportItineraryDialog } from "@/components/create/import-itinerary-dialog"
 import type { ImportedItineraryDraft } from "@/lib/import/itinerary-draft-schema"
@@ -340,7 +341,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
           </div>
           <div className="flex-1">
             <AccordionTrigger>
-              <div className="flex w-full items-center justify-between gap-4">
+              <div className="flex w-full items-center justify-between gap-4 mr-3">
                 <div className="flex-1 text-left">
                   <div className="flex items-center justify-between">
                     {form.watch(`days.${index}.title`) ? (
@@ -591,7 +592,7 @@ function SortableDay({ day, index, form, onRemoveDay, userId, itineraryId, disab
                         <AccordionItem value={activity.id} className="border-0">
                           <div className="flex-1">
                             <AccordionTrigger>
-                              <div className="flex w-full justify-between ml-2">
+                              <div className="flex w-full justify-between ml-2 mr-3">
                                 <p className="text-lg font-thin text-left line-clamp-1">{`${form.watch(`days.${index}.activities.${activityIndex}.title`)}` ? `${form.watch(`days.${index}.activities.${activityIndex}.title`)}` : `Activity ${activityIndex + 1}`}</p>
                                 <Button
                                     type="button"
@@ -1043,6 +1044,7 @@ export default function CreatePage() {
   const [itineraryLoading, setItineraryLoading] = useState(false)
   const [itineraryTags, _] = useState<Array<{id: number; name: string; icon: any}>>(itineraryTagsMap)
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
+  const [showStripeLeaveDialog, setShowStripeLeaveDialog] = useState(false)
   const [pendingItineraryData, setPendingItineraryData] = useState<any>(null)
   const [enableDates, setEnableDates] = useState(false)
   const countriesList = countries;
@@ -1069,10 +1071,12 @@ export default function CreatePage() {
   const [hasActiveStripeAccount, setHasActiveStripeAccount] = useState(false)
   const [stripeStatusLoading, setStripeStatusLoading] = useState(true)
   
-  // Step 4: only itinerary creators with a ready Stripe seller account.
-  const canAccessStep4 = isItineraryCreator && hasActiveStripeAccount
+  const isProUser = userPlan.trim().toLowerCase() === "pro"
+  // Step 4: creators with Stripe, or Pro users (pricing stays locked until Stripe is ready).
+  const canAccessStep4 =
+    isItineraryCreator && (hasActiveStripeAccount || isProUser)
+  const canSetPricing = hasActiveStripeAccount
   const totalSteps = canAccessStep4 ? 4 : 3
-  const isProUser = userPlan.trim().toLowerCase() === 'pro'
   const sellingFee = isProUser
     ? 1 - SELLER_PLATFORM_FEE_RATE.pro
     : 1 - SELLER_PLATFORM_FEE_RATE.free
@@ -1903,21 +1907,23 @@ export default function CreatePage() {
           return false
         }
 
-        try {
-          const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
-          await updateItineraryPricing(itineraryId, {
-            is_paid: isPaid,
-            price_cents: isPaid ? priceCents : 0
-          })
-        } catch (priceError) {
-          console.error('Error saving pricing:', priceError)
-          if (isPaid) {
-            toast.error(
-              priceError instanceof Error
-                ? priceError.message
-                : 'Itinerary saved, but pricing failed to update'
-            )
-            return false
+        if (canSetPricing) {
+          try {
+            const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
+            await updateItineraryPricing(itineraryId, {
+              is_paid: isPaid,
+              price_cents: isPaid ? priceCents : 0
+            })
+          } catch (priceError) {
+            console.error('Error saving pricing:', priceError)
+            if (isPaid) {
+              toast.error(
+                priceError instanceof Error
+                  ? priceError.message
+                  : 'Itinerary saved, but pricing failed to update'
+              )
+              return false
+            }
           }
         }
       }
@@ -1941,6 +1947,91 @@ export default function CreatePage() {
       router.push('/plans');
     }
   };
+
+  const goToSellerDashboard = () => {
+    window.location.assign("/seller-dashboard")
+  }
+
+  const saveCurrentItinerary = async (): Promise<boolean> => {
+    if (checkForEmptyValues()) {
+      toast.error("Please add a title and at least one day")
+      return false
+    }
+
+    setIsSubmitting(true)
+    try {
+      const itineraryData = buildItineraryData()
+      itineraryData.id = itineraryId
+
+      if (initialItineraryId) {
+        await updateItinerary(itineraryId, itineraryData)
+      } else {
+        await createItinerary(itineraryData)
+      }
+
+      await persistItineraryTemplate(itineraryId)
+      await persistItinerarySearchable(itineraryId)
+
+      if (canAccessStep4 && itineraryId) {
+        try {
+          await updateItineraryPermissions(itineraryId, buildPermissionsPayload())
+        } catch (permError) {
+          console.error("Error saving permissions:", permError)
+          toast.error(
+            permError instanceof Error
+              ? permError.message
+              : "Itinerary saved, but permissions failed to update"
+          )
+          return false
+        }
+
+        if (canSetPricing) {
+          try {
+            const priceCents = priceInDollars
+              ? Math.round(parseFloat(priceInDollars) * 100)
+              : 0
+            await updateItineraryPricing(itineraryId, {
+              is_paid: isPaid,
+              price_cents: isPaid ? priceCents : 0,
+            })
+          } catch (priceError) {
+            console.error("Error saving pricing:", priceError)
+            if (isPaid) {
+              toast.error(
+                priceError instanceof Error
+                  ? priceError.message
+                  : "Itinerary saved, but pricing failed to update"
+              )
+              return false
+            }
+          }
+        }
+      }
+
+      toast.success(
+        itineraryStatus === ItineraryStatusEnum.published
+          ? "Itinerary updated"
+          : "Itinerary saved as draft"
+      )
+      return true
+    } catch (error) {
+      console.error("Error saving itinerary:", error)
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save itinerary"
+      )
+      return false
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleSaveThenStripe = async () => {
+    const saved = await saveCurrentItinerary()
+    if (saved) {
+      setShowStripeLeaveDialog(false)
+      goToSellerDashboard()
+    }
+  }
 
   const handleSaveDraftClick = async () => {
     setShowUpgradeDialog(false);
@@ -1994,22 +2085,24 @@ export default function CreatePage() {
             return
           }
 
-          try {
-            const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
-            await updateItineraryPricing(itineraryId, {
-              is_paid: isPaid,
-              price_cents: isPaid ? priceCents : 0
-            })
-          } catch (priceError) {
-            console.error('Error saving pricing:', priceError)
-            // Free / unpaid itineraries should still publish if permissions succeeded
-            if (isPaid) {
-              toast.error(
-                priceError instanceof Error
-                  ? priceError.message
-                  : 'Itinerary saved, but pricing failed to update'
-              )
-              return
+          if (canSetPricing) {
+            try {
+              const priceCents = priceInDollars ? Math.round(parseFloat(priceInDollars) * 100) : 0
+              await updateItineraryPricing(itineraryId, {
+                is_paid: isPaid,
+                price_cents: isPaid ? priceCents : 0
+              })
+            } catch (priceError) {
+              console.error('Error saving pricing:', priceError)
+              // Free / unpaid itineraries should still publish if permissions succeeded
+              if (isPaid) {
+                toast.error(
+                  priceError instanceof Error
+                    ? priceError.message
+                    : 'Itinerary saved, but pricing failed to update'
+                )
+                return
+              }
             }
           }
         }
@@ -2784,7 +2877,6 @@ export default function CreatePage() {
                     <h2 className="text-xl font-semibold mb-2">Sharing & Pricing</h2>
                     <p className="text-gray-600 text-sm">Control who can view and edit this itinerary, and set pricing if you want to sell it.</p>                  </div>
 
-                  {/* Template */}
                   <div className="bg-gray-50 rounded-xl p-6">
                     <div className="flex items-center gap-3">
                       <DollarSign className="h-5 w-5 text-gray-700" />
@@ -2794,22 +2886,38 @@ export default function CreatePage() {
                       Set a price to sell this itinerary to other travelers
                     </p>
 
-                    <div className="space-y-4">
+                    {!canSetPricing && (
+                      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        <p className="font-medium">Connect Stripe to enable pricing</p>
+                        <p className="mt-1 text-amber-800">
+                          You need a connected Stripe seller account before you can sell this itinerary.
+                        </p>
+                        <button
+                          type="button"
+                          className="mt-2 inline-flex text-sm font-medium text-amber-950 underline underline-offset-2 hover:text-black"
+                          onClick={() => setShowStripeLeaveDialog(true)}
+                        >
+                          Connect Stripe
+                        </button>
+                      </div>
+                    )}
+
+                    <div className={`space-y-4 ${!canSetPricing ? "pointer-events-none select-none opacity-50" : ""}`}>
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
                           id="isPaidCreate"
-                          checked={isPaid}
+                          checked={canSetPricing && isPaid}
                           onChange={(e) => setIsPaid(e.target.checked)}
                           className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer"
-                          disabled={isFormDisabled}
+                          disabled={isFormDisabled || !canSetPricing}
                         />
                         <Label htmlFor="isPaidCreate" className="text-base font-medium cursor-pointer">
                           Enable paid access for this itinerary
                         </Label>
                       </div>
 
-                      {isPaid && (
+                      {canSetPricing && isPaid && (
                         <div className="flex flex-col gap-2">
                           <Label className="text-base font-medium">Price (USD)</Label>
                           <div className="relative max-w-xs">
@@ -3065,6 +3173,24 @@ export default function CreatePage() {
         onUpgrade={handleUpgradeClick}
         onSaveDraft={handleSaveDraftClick}
         showDraftButton={true}
+      />
+
+      <LeaveToStripeDialog
+        isOpen={showStripeLeaveDialog}
+        setIsOpen={setShowStripeLeaveDialog}
+        onSaveAndContinue={() => {
+          void handleSaveThenStripe()
+        }}
+        onLeaveWithoutSaving={() => {
+          setShowStripeLeaveDialog(false)
+          goToSellerDashboard()
+        }}
+        saveLabel={
+          itineraryStatus === ItineraryStatusEnum.published
+            ? "Update and continue"
+            : "Save draft and continue"
+        }
+        isSaving={isSubmitting}
       />
     </FormProvider>
   )

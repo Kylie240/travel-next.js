@@ -48,7 +48,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
           {/* Hero Section */}
           <div className="flex flex-col min-h-fit px-2 md:px-8 lg:px-[4rem] xl:px-[6rem] gap-4 md:gap-6 lg:flex-row lg:h-[520px] w-full" style={{maxWidth: "1600px"}}>
             <div className="w-full lg:h-full rounded-3xl shadow-xl">
-              <div className="flex-1 h-[450px] sm:h-[500px] md:h-[520px] relative rounded-3xl overflow-hidden">
+              <div className="flex-1 h-[550px] sm:h-[500px] md:h-[520px] relative rounded-3xl overflow-hidden">
                 {itinerary.mainImage && (
                   <Image
                     src={itinerary.mainImage}
@@ -58,7 +58,7 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
                     priority
                   />
                 )}
-                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute inset-0 flex items-end md:items-end">
                   <div className="container px-0 mx-0 lg:mx-auto">
                     <div className="flex flex-col text-white mx-2 p-4 sm:p-6 md:p-6 md:mb-4 md:ml-4 relative">
@@ -95,73 +95,53 @@ export default function BasicTemplate({ itinerary, countries, photos, canEdit, p
             </div>
     
             {/* Mobile Items List */}
-            <div className="flex mt-2 flex-col h-full lg:hidden justify-between px-4">
+            <div className="flex mt-2 flex-col h-full lg:hidden justify-between px-3">
               <div className="mb-2">
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-4">
                     {breadcrumbItems?.length ? (
                       <div>
                         <Breadcrumbs items={breadcrumbItems} className="mb-0" />
                       </div>
                     ) : null}
-                  <div className="flex w-full justify-between items-center mb-1">
-                    <h2 className="text-xl flex items-center font-semibold">Overview</h2>
-                    <div className="flex items-center">
-                        {currentUserId !== itinerary.creatorId && (
-                          <InteractionButtons 
-                            itineraryId={itinerary.id} 
-                            initialIsLiked={initialIsLiked}
-                            initialIsSaved={initialIsSaved}
-                          />
-                        )}
-                        {canEdit &&
-                          <Link href={`/create?itineraryId=${itinerary.id}`}>
-                            <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
-                          </Link>
-                        }
-                        {(!isRestrictedView || canEdit) && (
-                          <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
-                        )}
-                        {itinerary.status === ItineraryStatusEnum.published && 
-                          <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
-                        }
-                      </div>
-                  </div>
+                    <h2 className="text-xl flex items-end font-semibold">Overview</h2>
                 </div>
-                <div className="flex justify-center w-full text-sm sm:text-base px-2 sm:px-4">
-                  {/* <div className="flex mb-2 px-1 justify-between sm:hidden w-full max-w-[500px]">
-                    <div className="flex py-1 pr-3 gap-2 justify-center items-center">
-                      {itinerary.duration}
-                      <p>Day{itinerary.duration == 1 ? '' : 's'}</p>
-                    </div>
-                    <p className="mt-1">|</p>
-                    <div className="flex py-1 px-3 gap-2 justify-center items-center">
-                      {accommodationCount}
-                      <p>Accommodation{accommodationCount == 1 ? '' : 's'}</p>
-                    </div>
-                    <p className="mt-1">|</p>
-                    <div className="flex py-1 pl-3 gap-2 justify-center items-center">
-                      {activityCount}
-                      <p>Activit{activityCount == 1 ? 'y' : 'ies'}</p>
-                    </div>
-                  </div> */}
+                <div className="flex flex-wrap gap-2 mb-3 mt-1">
+                  {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => {
+                      const tagData = itineraryTagsMap.find(t => t.id === tag);
+                      if (!tagData) return null;
+                      return (
+                        <span
+                          key={tag}
+                          className="flex justify-center items-center flex-wrap px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm font-medium"
+                        >
+                          {tagData.name}
+                        </span>
+                      );
+                    })}
                 </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {itinerary.itineraryTags && itinerary.itineraryTags.map((tag: number) => {
-                        const tagData = itineraryTagsMap.find(t => t.id === tag);
-                        if (!tagData) return null;
-                        return (
-                          <span
-                            key={tag}
-                            className="flex justify-center items-center flex-wrap px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm font-medium"
-                          >
-                            {tagData.name}
-                          </span>
-                        );
-                      })}
-                  </div>
-                  <p className="text-sm md:text-md">
-                    {itinerary.shortDescription}
-                  </p>
+                <p className="text-sm md:text-md">
+                  {itinerary.shortDescription}
+                </p>
+              </div>
+              <div className="flex items-center justify-start">
+                {currentUserId !== itinerary.creatorId && (
+                  <InteractionButtons 
+                    itineraryId={itinerary.id} 
+                    initialIsLiked={initialIsLiked}
+                    initialIsSaved={initialIsSaved}
+                  />
+                )}
+                {canEdit &&
+                  <Link href={`/create?itineraryId=${itinerary.id}`}>
+                    <FiEdit size={35} className={`transition-colors cursor-pointer h-10 w-10 text-black hover:bg-gray-100 rounded-lg p-2`}/>
+                  </Link>
+                }
+                {(!isRestrictedView || canEdit) && (
+                  <PdfExportElement itineraryId={itinerary.id} itineraryStatus={itinerary.status} smallButton={false} />
+                )}
+                {itinerary.status === ItineraryStatusEnum.published && 
+                  <ShareElement id={itinerary.id} slug={itinerary.slug} title={itinerary.title} shape="square" backgroundColor="gray-100" color="black" />
+                }
               </div>
               <div className="p-4 border mt-4 rounded-md">
                 {creator.bio && creator.bio.length > 0 && (
