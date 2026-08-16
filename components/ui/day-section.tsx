@@ -210,7 +210,6 @@ export const DaySection = ({ day, isActive, onToggle, onClose, duration, templat
               // Check if activity has any additional information beyond title
               const hasAdditionalInfo = !!(
                 activity.description ||
-                activity.location ||
                 activity.duration ||
                 activity.link
               )
