@@ -3,7 +3,7 @@ export const TemplateEnum = {
     discover: 2,
     explore: 3,
     wonder: 4,
-    // journey: 5,
+    journey: 5,
 }
 
 export const TemplateMap = {
@@ -11,4 +11,5 @@ export const TemplateMap = {
     discover: "Discover",
     explore: "Explore",
     wonder: "Wonder",
+    journey: "Journey",
 }

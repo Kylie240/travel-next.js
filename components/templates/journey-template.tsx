@@ -16,7 +16,9 @@ import {
   Clock,
   DollarSign,
   Images,
+  InfoIcon,
   Lock,
+  LucideSquarePen,
   MapPin,
   Star,
 } from "lucide-react"
@@ -63,10 +65,86 @@ const formatTime = (time: string | null | undefined, duration: number | null | u
   return formattedTime
 }
 
-function JourneyDayContent({ day }: { day: Day }) {
+type SelectedView = number | "all" | "info" | "notes"
+
+function getDayPhotos(day: Day, dayIndex: number): PhotoItem[] {
+  const photos: PhotoItem[] = []
+
+  if (day.image?.trim()) {
+    photos.push({
+      id: `day-${dayIndex}`,
+      url: day.image.trim(),
+      title: day.title,
+      type: "day",
+      dayTitle: day.title,
+    })
+  }
+
+  day.activities?.forEach((activity, activityIndex) => {
+    if (activity.image) {
+      photos.push({
+        id: `activity-${dayIndex}-${activityIndex}`,
+        url: activity.image,
+        title: activity.title,
+        type: "activity",
+        dayTitle: day.title,
+        activityTitle: activity.title,
+      })
+    }
+    activity.photos?.forEach((photo, photoIndex) => {
+      photos.push({
+        id: `activity-photo-${dayIndex}-${activityIndex}-${photoIndex}`,
+        url: photo,
+        title: activity.title,
+        type: "activity",
+        dayTitle: day.title,
+        activityTitle: activity.title,
+      })
+    })
+  })
+
+  day.accommodation?.photos?.forEach((photo, photoIndex) => {
+    photos.push({
+      id: `accommodation-${dayIndex}-${photoIndex}`,
+      url: photo,
+      title: day.accommodation?.name || day.title,
+      type: "accommodation",
+      dayTitle: day.title,
+      accommodationName: day.accommodation?.name,
+    })
+  })
+
+  return photos
+}
+
+function railButtonClass(isSelected: boolean) {
+  return `flex w-12 h-12 bg-white shadow-lg rounded-md text-gray-900 font-semibold p-2 flex-col items-center justify-center text-center transition-all ${
+    isSelected ? "shadow-lg" : "shadow-sm"
+  }`
+}
+
+function JourneyDayContent({
+  day,
+  dayIndex,
+  onOpenGallery,
+}: {
+  day: Day
+  dayIndex: number
+  onOpenGallery: (index: number, photos: PhotoItem[]) => void
+}) {
+  const dayPhotos = getDayPhotos(day, dayIndex)
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <p className="text-sm text-gray-500">Day {day.id}</p>
+      {dayPhotos.length > 0 && (
+        <SwipeGallery
+          photos={dayPhotos}
+          title={day.title}
+          onOpenAt={(index) => onOpenGallery(index, dayPhotos)}
+          className="relative mb-4 h-[240px] w-full overflow-hidden group md:h-[320px]"
+        />
+      )}
       <h1 className="text-2xl font-bold">{day.title}</h1>
       {day.description && <p className="text-md">{day.description}</p>}
       {day.activities && day.activities.length > 0 && (
@@ -132,6 +210,131 @@ function JourneyDayContent({ day }: { day: Day }) {
   )
 }
 
+function JourneyInfoPanel({
+  itinerary,
+  countries,
+  creator,
+  currentUserId,
+  initialIsFollowing,
+}: {
+  itinerary: Itinerary
+  countries: string[]
+  creator: UserData
+  currentUserId: string
+  initialIsFollowing: boolean
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+        About this itinerary
+      </p>
+      {itinerary.itineraryTags && itinerary.itineraryTags.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {itinerary.itineraryTags.map((tag: number) => {
+            const tagData = itineraryTagsMap.find((t) => t.id === tag)
+            if (!tagData) return null
+            return (
+              <span
+                key={tag}
+                className="flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm font-medium"
+              >
+                {tagData.name}
+              </span>
+            )
+          })}
+        </div>
+      )}
+      {itinerary.shortDescription && (
+        <p className="text-sm leading-relaxed text-gray-900">
+          {itinerary.shortDescription}
+        </p>
+      )}
+      <div className="flex flex-col pt-4">
+        <Link
+          href={`/profile/${creator.username || ""}`}
+          className="min-w-[100px] md:w-full cursor-pointer"
+        >
+          <div className="flex items-center gap-2 px-1">
+            <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
+              {creator.avatar && creator.avatar.length > 0 ? (
+                <Image
+                  src={creator.avatar}
+                  alt={creator.name || "Creator"}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="relative h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                  <FaUserLarge className="h-10 w-10 mt-2 text-gray-300" />
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="flex flex-col">
+                <p className="text-xl font-medium">{creator.name}</p>
+                <p className="text-gray-500">@{creator.username}</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+        <p className="text-md mt-2">{creator.bio}</p>
+      </div>
+      <div className="flex w-fit gap-4 justify-end items-center">
+      <div className="md:w-1/2">
+        <Link href={`/profile/${creator.username}`}>
+          <Button
+            variant="outline"
+            className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100"
+          >
+            View Profile
+          </Button>
+        </Link>
+      </div>
+      {currentUserId === itinerary.creatorId ? (
+        <Link
+          className="min-w-[100px] md:w-1/2"
+          href={`/account-settings?tab=${encodeURIComponent("Profile")}`}
+        >
+          <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+            Edit Profile
+          </Button>
+        </Link>
+      ) : (
+        <div className="min-w-[100px] md:w-1/2">
+          <FollowButton
+            creatorId={itinerary.creatorId}
+            userId={currentUserId || ""}
+            initialIsFollowing={initialIsFollowing}
+          />
+        </div>
+      )}
+    </div>
+      
+      {itinerary.detailedOverview && (
+        <div className="mt-2">
+          <p className="text-lg font-semibold mb-2 text-gray-800">Trip Overview</p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-2 text-sm text-gray-700">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="h-4 w-4" />
+              {itinerary.duration} {itinerary.duration === 1 ? "day" : "days"}
+            </span>
+            {itinerary.budget != null && (
+              <span className="inline-flex items-center gap-1.5">
+                <DollarSign className="h-4 w-4" />
+                {itinerary.budget} / person
+              </span>
+            )}
+            <LocationLine countries={countries} />
+          </div>
+          <p className="text-sm leading-relaxed text-gray-900 whitespace-pre-line">
+            {itinerary.detailedOverview}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function LocationLine({ countries }: { countries: string[] }) {
   const line =
     countries.length > 0
@@ -145,14 +348,16 @@ function LocationLine({ countries }: { countries: string[] }) {
   )
 }
 
-function HeroSwipeGallery({
+function SwipeGallery({
   photos,
   title,
   onOpenAt,
+  className = "absolute inset-0 overflow-hidden group",
 }: {
   photos: PhotoItem[]
   title: string
   onOpenAt: (index: number) => void
+  className?: string
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(0)
@@ -181,11 +386,11 @@ function HeroSwipeGallery({
   }
 
   if (photos.length === 0) {
-    return <div className="absolute inset-0 bg-slate-200" />
+    return <div className={`${className} bg-slate-200`} />
   }
 
   return (
-    <div className="absolute inset-0 rounded-3xl overflow-hidden group">
+    <div className={className}>
       <div
         ref={scrollerRef}
         className="flex h-full w-full overflow-x-auto snap-x snap-mandatory no-scrollbar touch-pan-x"
@@ -264,14 +469,10 @@ export default function JourneyTemplate({
   breadcrumbItems,
 }: JourneyTemplateProps) {
   void _paidUser
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number | "all">(0)
+  const [selectedView, setSelectedView] = useState<SelectedView>(0)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState(0)
-
-  const openGalleryAt = (index: number) => {
-    setGalleryIndex(index)
-    setIsGalleryOpen(true)
-  }
+  const [galleryPhotos, setGalleryPhotos] = useState<PhotoItem[]>([])
 
   if (!itinerary || !creator) {
     return null
@@ -291,22 +492,35 @@ export default function JourneyTemplate({
           ]
         : []
 
+  const openGalleryAt = (index: number, photosToShow: PhotoItem[]) => {
+    setGalleryPhotos(photosToShow)
+    setGalleryIndex(index)
+    setIsGalleryOpen(true)
+  }
+
   const hasDays =
     !isRestrictedView &&
     Array.isArray(itinerary.days) &&
     itinerary.days.length > 0
 
+  const visibleDays =
+    selectedView === "all"
+      ? itinerary.days!.map((day, index) => ({ day, index }))
+      : typeof selectedView === "number" && itinerary.days?.[selectedView]
+        ? [{ day: itinerary.days[selectedView], index: selectedView }]
+        : null
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col pb-12">
+    <div className="min-h-screen bg-white flex flex-col pb-12">
       {/* Full-bleed hero + glass overlay (detail page style) */}
-      <div className="mt-2 px-3 md:px-6 w-full md:max-w-6xl md:mx-auto">
+      <div className="mt-2 w-full max-w-[1000px] mx-auto">
         {breadcrumbItems?.length ? (
             <Breadcrumbs items={breadcrumbItems} className="mb-3 ml-2" />
           ) : null}
           <h1 className="mt-2 ml-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             {itinerary.title}
           </h1>
-          <div className="w-full flex justify-start items-center mx-2 my-1">
+          <div className="w-full flex justify-start items-center mx-2 mt-1 mb-3">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-900">
               {typeof itinerary.rating === "number" &&
                 !Number.isNaN(itinerary.rating) && (
@@ -335,11 +549,11 @@ export default function JourneyTemplate({
               <LocationLine countries={countries} />
             </div>
           </div>
-        <div className="relative h-[calc(100svh-600px)] min-h-[400px] md:min-h-[520px] md:h-auto rounded-xl overflow-visible">
-          <HeroSwipeGallery
+        <div className="relative h-[calc(100svh-600px)] min-h-[400px] md:min-h-[520px] shadow-lg md:h-auto overflow-visible">
+          <SwipeGallery
             photos={heroPhotos}
             title={itinerary.title}
-            onOpenAt={openGalleryAt}
+            onOpenAt={(index) => openGalleryAt(index, heroPhotos)}
           />
 
           <div className="absolute top-6 right-6 z-10 flex flex-col items-center gap-3">
@@ -384,116 +598,10 @@ export default function JourneyTemplate({
           </div>
         </div>
       </div>
-
-      <div className="mx-auto relative max-w-2xl px-5 py-5 text-gray-900 sm:px-6 sm:py-6 pointer-events-auto">
-              <p className="text-xs mt-1 py-2 font-semibold uppercase tracking-wide text-gray-900 px-2">
-                About this itinerary
-              </p>
-              <div className="flex items-start gap-2">
-                {itinerary.shortDescription && (
-                  <div className="pb-4">
-                    <div className="flex flex-wrap gap-2 my-2">
-                      {itinerary.itineraryTags &&
-                        itinerary.itineraryTags.map((tag: number) => {
-                          const tagData = itineraryTagsMap.find(
-                            (t) => t.id === tag
-                          )
-                          if (!tagData) return null
-                          return (
-                            <span
-                              key={tag}
-                              className="flex justify-center items-center flex-wrap px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm font-medium"
-                            >
-                              {tagData.name}
-                            </span>
-                          )
-                        })}
-                    </div>
-                    <p className="mt-1 text-sm leading-relaxed text-gray-900 line-clamp-4 px-2">
-                      {itinerary.shortDescription}
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap w-full justify-between border-t border-gray-200 pt-4">
-                <div>
-                  <Link
-                    href={`/profile/${creator.username || ""}`}
-                    className="min-w-[100px] md:w-full cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 px-1">
-                      <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
-                        {creator.avatar && creator.avatar.length > 0 ? (
-                          <Image
-                            src={creator.avatar}
-                            alt={creator.name || "Creator"}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="relative h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                            <FaUserLarge className="h-10 w-10 mt-2 text-gray-300" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex flex-col">
-                          <p className="text-xl font-medium">{creator.name}</p>
-                          <p className="text-gray-500">@{creator.username}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-                <div className="flex w-fit gap-4 justify-end items-center">
-                  <div className="md:w-1/2">
-                    <Link href={`/profile/${creator.username}`}>
-                      <Button
-                        variant="outline"
-                        className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100"
-                      >
-                        View Profile
-                      </Button>
-                    </Link>
-                  </div>
-                  {currentUserId === itinerary.creatorId ? (
-                    <Link
-                      className="min-w-[100px] md:w-1/2"
-                      href={`/account-settings?tab=${encodeURIComponent("Profile")}`}
-                    >
-                      <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
-                        Edit Profile
-                      </Button>
-                    </Link>
-                  ) : (
-                    <div className="min-w-[100px] md:w-1/2">
-                      <FollowButton
-                        creatorId={itinerary.creatorId}
-                        userId={currentUserId || ""}
-                        initialIsFollowing={initialIsFollowing}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="text-xs line-height-1 mt-2 space-y-2" />
-            </div>
-
-      {itinerary.detailedOverview && (
-        <div className="mt-8 px-8 max-w-6xl mx-auto">
-          <p className="text-xl font-semibold mb-4 text-gray-700">
-            Trip Overview
-          </p>
-          <p className="mt-1 text-sm leading-relaxed text-gray-900 line-clamp-4">
-            {itinerary.detailedOverview}
-          </p>
-        </div>
-      )}
-
       {isGalleryOpen && (
         <PhotoGallery
           key={galleryIndex}
-          photos={heroPhotos}
+          photos={galleryPhotos.length > 0 ? galleryPhotos : heroPhotos}
           isOpen={isGalleryOpen}
           onClose={() => setIsGalleryOpen(false)}
           initialIndex={galleryIndex}
@@ -502,6 +610,114 @@ export default function JourneyTemplate({
 
       {isRestrictedView ? (
         <div className="px-8 max-w-6xl mx-auto">
+
+        <div className="w-full max-w-[1000px] mx-auto shadow-xl xl:shadow-none z-10">
+              <div className="mx-auto relative max-w-2xl px-5 py-5 text-gray-900 sm:px-6 sm:py-6 pointer-events-auto">
+                      <p className="text-xs mt-1 py-2 font-semibold uppercase tracking-wide text-gray-900 px-2">
+                        About this itinerary
+                      </p>
+                      <div className="flex items-start gap-2">
+                        {itinerary.shortDescription && (
+                          <div className="pb-4">
+                            <div className="flex flex-wrap gap-2 my-2">
+                              {itinerary.itineraryTags &&
+                                itinerary.itineraryTags.map((tag: number) => {
+                                  const tagData = itineraryTagsMap.find(
+                                    (t) => t.id === tag
+                                  )
+                                  if (!tagData) return null
+                                  return (
+                                    <span
+                                      key={tag}
+                                      className="flex justify-center items-center flex-wrap px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm font-medium"
+                                    >
+                                      {tagData.name}
+                                    </span>
+                                  )
+                                })}
+                            </div>
+                            <p className="mt-1 text-sm leading-relaxed text-gray-900 line-clamp-4 px-2">
+                              {itinerary.shortDescription}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap w-full justify-between border-t border-gray-200 pt-4">
+                        <div>
+                          <Link
+                            href={`/profile/${creator.username || ""}`}
+                            className="min-w-[100px] md:w-full cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2 px-1">
+                              <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200">
+                                {creator.avatar && creator.avatar.length > 0 ? (
+                                  <Image
+                                    src={creator.avatar}
+                                    alt={creator.name || "Creator"}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="relative h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                                    <FaUserLarge className="h-10 w-10 mt-2 text-gray-300" />
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <div className="flex flex-col">
+                                  <p className="text-xl font-medium">{creator.name}</p>
+                                  <p className="text-gray-500">@{creator.username}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+                        <div className="flex w-fit gap-4 justify-end items-center">
+                          <div className="md:w-1/2">
+                            <Link href={`/profile/${creator.username}`}>
+                              <Button
+                                variant="outline"
+                                className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-100"
+                              >
+                                View Profile
+                              </Button>
+                            </Link>
+                          </div>
+                          {currentUserId === itinerary.creatorId ? (
+                            <Link
+                              className="min-w-[100px] md:w-1/2"
+                              href={`/account-settings?tab=${encodeURIComponent("Profile")}`}
+                            >
+                              <Button className="cursor-pointer border flex justify-center items-center w-full p-2 hover:bg-gray-800 text-white">
+                                Edit Profile
+                              </Button>
+                            </Link>
+                          ) : (
+                            <div className="min-w-[100px] md:w-1/2">
+                              <FollowButton
+                                creatorId={itinerary.creatorId}
+                                userId={currentUserId || ""}
+                                initialIsFollowing={initialIsFollowing}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-xs line-height-1 mt-2 space-y-2" />
+                      {itinerary.detailedOverview && (
+                        <div className="mt-8 px-8 max-w-6xl mx-auto">
+                          <p className="text-xl font-semibold mb-4 text-gray-700">
+                            Trip Overview
+                          </p>
+                          <p className="mt-1 text-sm leading-relaxed text-gray-900 line-clamp-4">
+                            {itinerary.detailedOverview}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+          </div>
+          
           <div className="mt-8 p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
               <Lock className="w-8 h-8 text-gray-500" />
@@ -534,93 +750,91 @@ export default function JourneyTemplate({
         </div>
       ) : (
         hasDays && (
-          <div className="w-full max-w-[1000px] mx-auto mt-8">
-            <div className="flex gap-8">
+          <div className="w-full max-w-[1000px] bg-white mx-auto">
+            <div className="flex gap-8 mr-4">
               {/* Left day rail — scroll inside this column */}
-              <div className="sticky top-24 w-[60px] shrink-0 h-[calc(100vh-70px)] overflow-hidden">
+              <div className="sticky top-20 z-10 self-start shrink-0 h-[calc(100vh-5rem)] bg-slate-100 shadow-lg px-4 md:px-8 pb-8 pt-12">
                 <div
-                  className="h-full overflow-y-auto no-scrollbar px-1"
+                  className="h-full overflow-y-auto no-scrollbar"
                   aria-label="Day selector"
                 >
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-8 md:gap-12 items-center py-2">
                     <button
                       type="button"
-                      onClick={() => setSelectedDayIndex("all")}
-                      className={`flex w-full py-12 bg-white flex-col items-center justify-center text-center transition-all ${
-                        selectedDayIndex === "all"
-                          ? "text-gray-900 shadow-sm"
-                          : "text-gray-200"
-                      }`}
+                      onClick={() => setSelectedView("info")}
+                      className={railButtonClass(selectedView === "info")}
+                      aria-label="Itinerary information"
                     >
-                      <div className="rotate-[270deg]">
-                        <span className="text-md">All</span>
-                      </div>
+                      <InfoIcon className="w-6 h-6" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedView("all")}
+                      className={railButtonClass(selectedView === "all")}
+                    >
+                      All
                     </button>
                     {itinerary.days.map((day, index) => {
-                      const isSelected = selectedDayIndex === index
-                      const parsedDate = day.date ? new Date(day.date) : null
-                      const hasValidDate =
-                        parsedDate && !Number.isNaN(parsedDate.getTime())
-                      const formattedDate = hasValidDate
-                        ? parsedDate.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : null
+                      const isSelected = selectedView === index
                       return (
                         <button
                           key={day.id || index}
                           type="button"
-                          onClick={() => setSelectedDayIndex(index)}
-                          className={`flex w-full py-12 bg-white shadow-lg flex-col items-center justify-center text-center transition-all ${
-                            isSelected
-                              ? "text-gray-900 shadow-sm"
-                              : "text-gray-200"
-                          }`}
+                          onClick={() => setSelectedView(index)}
+                          className={railButtonClass(isSelected)}
                         >
-                          <div className="rotate-[270deg]">
-                            {formattedDate ? (
-                              <span className="text-md">
-                                {day.title}
-                              </span>
-                              // <span className="text-md">
-                              //   {formattedDate.split(" ")[1]}{" "}
-                              //   {formattedDate.split(" ")[0]}
-                              // </span>
-                            ) : (
-                              <span className="text-md">Day {day.id}</span>
-                            )}
-                          </div>
+                          {day.id}
                         </button>
                       )
                     })}
+                    {itinerary.notes && itinerary.notes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedView("notes")}
+                        className={railButtonClass(selectedView === "notes")}
+                        aria-label="Creator notes"
+                      >
+                        <LucideSquarePen className="w-6 h-6 text-gray-900" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="min-w-0 flex-1">
-                {selectedDayIndex === "all" ? (
+              <div className="min-w-0 flex-1 pt-8">
+                {selectedView === "info" && (
+                  <>
+                    <JourneyInfoPanel itinerary={itinerary} countries={countries} creator={creator} currentUserId={currentUserId} initialIsFollowing={initialIsFollowing} />
+                  </>
+                )}
+                {selectedView === "notes" && itinerary.notes && (
+                  <>
+                    {heroPhotos.length > 0 && (
+                      <SwipeGallery
+                        photos={heroPhotos}
+                        title={itinerary.title}
+                        onOpenAt={(index) => openGalleryAt(index, heroPhotos)}
+                        className="relative mb-6 h-[240px] w-full overflow-hidden rounded-2xl group md:h-[320px]"
+                      />
+                    )}
+                    <p className="text-xl font-medium mb-3">Creator Notes</p>
+                    <NoteSection notes={itinerary.notes} />
+                  </>
+                )}
+                {visibleDays && (
                   <div className="flex flex-col gap-12">
-                    {itinerary.days.map((day, index) => (
-                      <JourneyDayContent key={day.id || index} day={day} />
+                    {visibleDays.map(({ day, index }) => (
+                      <JourneyDayContent
+                        key={day.id || index}
+                        day={day}
+                        dayIndex={index}
+                        onOpenGallery={openGalleryAt}
+                      />
                     ))}
                   </div>
-                ) : (
-                  itinerary.days[selectedDayIndex] && (
-                    <JourneyDayContent day={itinerary.days[selectedDayIndex]} />
-                  )
                 )}
               </div>
             </div>
-
-            {itinerary.notes && itinerary.notes.length > 0 && (
-              <div className="w-full pb-10 mt-6 px-2 md:px-4">
-                <p className="text-xl text-center w-full font-medium mt-2 mb-3">
-                  Creator Notes
-                </p>
-                <NoteSection notes={itinerary.notes} />
-              </div>
-            )}
         </div>
         )
       )}
