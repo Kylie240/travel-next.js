@@ -145,34 +145,39 @@ function JourneyDayContent({
           className="relative mb-4 h-[240px] w-full overflow-hidden group md:h-[320px]"
         />
       )}
-      <h1 className="text-2xl font-bold">{day.title}</h1>
-      {day.description && <p className="text-md">{day.description}</p>}
+      <h1 className="text-2xl md:text-3xl font-bold">{day.title}</h1>
+      {day.description && <p className="text-sm md:text-md">{day.description}</p>}
       {day.activities && day.activities.length > 0 && (
         <>
-          <p className="text-xl mt-6">Activities</p>
+          <p className="text-lg mt-4 font-semibold">Activities</p>
           <div className="flex flex-col gap-6 mt-2">
             {day.activities.map((activity) => (
               <div key={activity.id}>
                 <div className="flex items-start gap-2">
-                  <div className="w-[100px]">
+                  <div className="w-[86px] md:w-[100px]">
                     {activity.time && !activity.duration && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm mt-1 text-gray-500">
                         {formatTime(activity.time, null) || ""}
                       </p>
                     )}
                     {activity.duration && activity.time && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm mt-1 text-gray-500">
                         {formatTime(activity.time, activity.duration) || ""}
                       </p>
                     )}
+                    {!activity.time && !activity.duration && (
+                      <div className="w-[86px] md:w-[100px] text-md mr-1 text-gray-500 flex items-center justify-end">
+                        -
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col">
-                    <p className="text-md font-semibold">{activity.title}</p>
+                    <p className="text-md font-medium">{activity.title}</p>
                     {activity.location && (
                       <p className="text-sm text-gray-500">{activity.location}</p>
                     )}
                     {activity.duration && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <Clock size={16} strokeWidth={2} className="text-gray-500" />
                         <p className="text-sm text-gray-500 mt-1">
                           Duration: {activity.duration} minutes
@@ -180,23 +185,23 @@ function JourneyDayContent({
                       </div>
                     )}
                     {activity.description && (
-                      <p className="text-sm text-gray-500">{activity.description}</p>
+                      <p className="text-sm md:text-md text-gray-500">{activity.description}</p>
                     )}
                     {activity.link && (
                       <div
-                        className="flex mt-2 w-full items-center text-sm cursor-pointer hover:bg-gray-100/50 text-gray-500 border p-2 rounded-xl shadow-md"
+                        className="flex my-2 w-full items-center text-sm cursor-pointer hover:bg-gray-100/50 text-gray-500 border p-2 rounded-xl shadow-md"
                         onClick={() => {
                           window.open(activity.link, "_blank")
                         }}
                       >
                         <div className="rounded-lg bg-gray-800 p-2">
                           <FiArrowUpRight
-                            size={20}
+                            size={16}
                             strokeWidth={4}
                             className="text-white"
                           />
                         </div>
-                        <span className="ml-2">Activity Link</span>
+                        <span className="ml-2 text-sm">Activity Link</span>
                       </div>
                     )}
                   </div>
@@ -361,6 +366,15 @@ function SwipeGallery({
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(0)
+  const skipClickRef = useRef(false)
+  const pointerRef = useRef<{
+    id: number
+    startX: number
+    startY: number
+    startLeft: number
+    axis: "undecided" | "x" | "y"
+    moved: boolean
+  } | null>(null)
 
   const syncIndex = useCallback(() => {
     const el = scrollerRef.current
@@ -385,6 +399,54 @@ function SwipeGallery({
     setIndex(clamped)
   }
 
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (photos.length <= 1 || e.pointerType === "mouse") return
+    const el = scrollerRef.current
+    if (!el) return
+    pointerRef.current = {
+      id: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startLeft: el.scrollLeft,
+      axis: "undecided",
+      moved: false,
+    }
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pointerRef.current
+    const el = scrollerRef.current
+    if (!p || p.id !== e.pointerId || !el) return
+    const dx = e.clientX - p.startX
+    const dy = e.clientY - p.startY
+    if (p.axis === "undecided") {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return
+      p.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y"
+      if (p.axis === "x") {
+        el.setPointerCapture(e.pointerId)
+      }
+    }
+    if (p.axis !== "x") return
+    p.moved = true
+    skipClickRef.current = true
+    el.scrollLeft = p.startLeft - dx
+  }
+
+  const endPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pointerRef.current
+    const el = scrollerRef.current
+    if (!p || p.id !== e.pointerId) {
+      pointerRef.current = null
+      return
+    }
+    if (p.axis === "x" && el) {
+      const width = el.clientWidth || 1
+      const predicted = p.startLeft - (e.clientX - p.startX)
+      scrollTo(Math.round(predicted / width))
+    }
+    pointerRef.current = null
+  }
+
   if (photos.length === 0) {
     return <div className={`${className} bg-slate-200`} />
   }
@@ -393,21 +455,36 @@ function SwipeGallery({
     <div className={className}>
       <div
         ref={scrollerRef}
-        className="flex h-full w-full overflow-x-auto snap-x snap-mandatory no-scrollbar touch-pan-x"
+        className={`flex h-full w-full no-scrollbar ${
+          photos.length > 1
+            ? "overflow-x-auto snap-x snap-mandatory touch-pan-y"
+            : "overflow-hidden touch-pan-y"
+        }`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endPointer}
+        onPointerCancel={endPointer}
       >
         {photos.map((photo, i) => (
           <button
             key={photo.id}
             type="button"
-            className="relative h-full w-full min-w-full shrink-0 snap-center"
-            onClick={() => onOpenAt(i)}
+            className="relative h-full w-full min-w-full shrink-0 snap-center touch-pan-y"
+            onClick={() => {
+              if (skipClickRef.current) {
+                skipClickRef.current = false
+                return
+              }
+              onOpenAt(i)
+            }}
             aria-label={`View photo ${i + 1} of ${photos.length}`}
           >
             <Image
               src={photo.url}
               alt={photo.title || title}
               fill
-              className="object-cover"
+              draggable={false}
+              className="pointer-events-none object-cover"
               priority={i === 0}
               sizes="(max-width: 768px) 100vw, 1152px"
             />
@@ -469,10 +546,29 @@ export default function JourneyTemplate({
   breadcrumbItems,
 }: JourneyTemplateProps) {
   void _paidUser
-  const [selectedView, setSelectedView] = useState<SelectedView>(0)
+  const [selectedView, setSelectedView] = useState<SelectedView>("info")
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [galleryPhotos, setGalleryPhotos] = useState<PhotoItem[]>([])
+  const dayContentRef = useRef<HTMLDivElement>(null)
+  const skipContentScrollRef = useRef(true)
+
+  const scrollToDayContent = useCallback(() => {
+    dayContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [])
+
+  useEffect(() => {
+    if (skipContentScrollRef.current) {
+      skipContentScrollRef.current = false
+      return
+    }
+    if (typeof selectedView !== "number") return
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToDayContent()
+      })
+    })
+  }, [selectedView, scrollToDayContent])
 
   if (!itinerary || !creator) {
     return null
@@ -751,9 +847,9 @@ export default function JourneyTemplate({
       ) : (
         hasDays && (
           <div className="w-full max-w-[1000px] bg-white mx-auto">
-            <div className="flex gap-8 mr-4">
+            <div className="flex gap-6 mr-4">
               {/* Left day rail — scroll inside this column */}
-              <div className="sticky top-20 z-10 self-start shrink-0 h-[calc(100vh-5rem)] bg-slate-100 shadow-lg px-4 md:px-8 pb-8 pt-12">
+              <div className="sticky top-[64px] z-10 self-start shrink-0 h-[calc(100vh-64px)] bg-slate-100 shadow-lg px-4 md:px-8 pb-8 pt-4">
                 <div
                   className="h-full overflow-y-auto no-scrollbar"
                   aria-label="Day selector"
@@ -801,7 +897,7 @@ export default function JourneyTemplate({
                 </div>
               </div>
 
-              <div className="min-w-0 flex-1 pt-8">
+              <div ref={dayContentRef} className="min-w-0 flex-1 scroll-mt-20 pt-8">
                 {selectedView === "info" && (
                   <>
                     <JourneyInfoPanel itinerary={itinerary} countries={countries} creator={creator} currentUserId={currentUserId} initialIsFollowing={initialIsFollowing} />
