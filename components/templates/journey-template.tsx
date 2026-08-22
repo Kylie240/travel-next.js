@@ -914,7 +914,12 @@ export default function JourneyTemplate({
                       />
                     )}
                     <p className="text-xl font-medium mb-3">Creator Notes</p>
-                    <NoteSection notes={itinerary.notes} />
+                    {itinerary.notes.map((note) => (
+                      <div key={note.id}>
+                        <p className="text-xl font-medium mb-3">{note.title}</p>
+                        <p className="text-md mb-3">{note.content}</p>
+                      </div>
+                    ))}
                   </>
                 )}
                 {visibleDays && (

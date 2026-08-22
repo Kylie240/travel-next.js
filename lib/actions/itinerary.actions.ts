@@ -1076,17 +1076,6 @@ export const deleteItinerary = async (itineraryId: string) => {
             throw new Error("You are not authorized to delete this itinerary")
         }
 
-        const { error: itineraryError } = await supabase
-        .from('itineraries')
-        .delete()
-        .eq('id', itineraryId)
-        .eq('creator_id', user.id);
-
-        if (itineraryError) {
-            throw itineraryError;
-        }
-
-        // await deleteFolderRecursively(user.id, itineraryId);
         const { error: galleryError } = await supabase
         .from('gallery_removal')
         .insert({
@@ -1095,6 +1084,16 @@ export const deleteItinerary = async (itineraryId: string) => {
 
         if (galleryError) {
             throw galleryError;
+        }
+
+        const { error: itineraryError } = await supabase
+        .from('itineraries')
+        .delete()
+        .eq('id', itineraryId)
+        .eq('creator_id', user.id);
+
+        if (itineraryError) {
+            throw itineraryError;
         }
 
         return { success: true };
